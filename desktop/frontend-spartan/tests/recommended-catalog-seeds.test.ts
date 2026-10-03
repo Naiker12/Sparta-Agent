@@ -146,7 +146,7 @@ test("an unlisted seed is sized from its id, and hidden when it cannot be", () =
   );
 });
 
-// Neither is unsloth-owned, and Recommended lists `owner: unsloth` only, so
+
 // their seed is the only row they ever get.
 const SDXL = "stabilityai/sdxl-turbo";
 const WAN = "Wan-AI/Wan2.2-TI2V-5B-Diffusers";
@@ -209,7 +209,7 @@ test("a listing row still overrides the catalog size it seeded with", () => {
   );
 });
 
-// unsloth owns this one, so the listing DOES report it, and the seed hands off.
+
 const BNB = "unsloth/Z-Image-Turbo-unsloth-bnb-4bit";
 
 test("a listing row inherits the curated size of the seed it takes over", () => {

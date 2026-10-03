@@ -1,9 +1,5 @@
 
-"""Deep Research inference must not be attributed to a third-party API caller.
-
-The supervisor reaches the local chat-completions endpoint with a minted sk-unsloth key,
-so without the internal-key check every research step opened the API monitor overlay.
-"""
+'Deep Research inference must not be attributed to a third-party API caller.\n\nso without the internal-key check every research step opened the API monitor overlay.'
 
 from __future__ import annotations
 

@@ -1,6 +1,4 @@
-# Model defaults for unsloth/Qwen3-30B-A3B-Instruct-2507
 # Based on Qwen3_MoE.py
-# Also applies to: Qwen/Qwen3-30B-A3B-Instruct-2507, unsloth/Qwen3-30B-A3B-Instruct-2507-bnb-4bit
 # MoE model - includes gate_up_proj for MoE layers
 
 training:

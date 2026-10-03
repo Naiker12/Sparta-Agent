@@ -64,13 +64,7 @@ def normalize_path(path: str) -> str:
 
 
 def is_local_path(path: str) -> bool:
-    """
-    Check if path is a local filesystem path vs HuggingFace model identifier.
-
-    Examples:
-        True: /home/user/model, C:\\models, ./model, ~/model
-        False: unsloth/llama-3.1-8b, microsoft/phi-2
-    """
+    '\n    Check if path is a local filesystem path vs HuggingFace model identifier.\n\n    Examples:\n        True: /home/user/model, C:\\models, ./model, ~/model\n    '
     if not path:
         return False
 

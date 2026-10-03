@@ -1,33 +1,5 @@
 
-"""Diffusion LoRA training for Unsloth Studio (text-to-image, SDXL).
-
-Trains a LoRA adapter on the U-Net of an SDXL pipeline from an image + caption dataset
-and exports it as a diffusers-format ``.safetensors`` that the Studio diffusion backend
-(and any diffusers pipeline via ``load_lora_weights``) can load.
-
-Design:
-- Family-agnostic building blocks (dataset discovery, config normalisation + validation,
-  event emission, the stop protocol, adapter publishing, and the family/trainer registry)
-  live in ``diffusion_train_common`` and are shared with the DiT trainers. They are
-  re-exported here so existing import paths keep working.
-- ``run_diffusion_lora_training`` is the SDXL training loop. It reports progress through an
-  ``on_event`` callback whose payloads match the training worker's event protocol
-  (``{"type": ..., "ts": ...}``) so it can be spawned as a subprocess and streamed to the
-  UI, and it polls a ``should_stop`` callback so a stop request ends it cleanly (with a
-  partial save).
-- ``run_diffusion_training_process`` is the thin mp.Queue adapter; it dispatches to the
-  trainer registered for the resolved family (SDXL here, DiT families in a follow-up).
-  ``main`` is a CLI.
-
-Memory/perf: captions are encoded once up front and the CLIP text encoders freed; VAE
-latents are likewise precomputed into a small CPU cache (``cache_latents``) and the VAE
-freed. The cache stores the posterior's affine pair (mean/std, scale folded in), so every
-step still draws a fresh VAE sample -- distribution-identical to encoding in the loop,
-without keeping the VAE resident or paying a per-step encode. TF32 matmuls + cudnn
-autotuning are enabled for the run under ``cfg.enable_tf32``, and the U-Net's repeated
-transformer blocks are regionally torch.compiled (``cfg.compile_transformer``, never
-fatal -- any failure falls back to eager with a warning event).
-"""
+'\nTrains a LoRA adapter on the U-Net of an SDXL pipeline from an image + caption dataset\nand exports it as a diffusers-format ``.safetensors`` that the Studio diffusion backend\n(and any diffusers pipeline via ``load_lora_weights``) can load.\n\nDesign:\n- Family-agnostic building blocks (dataset discovery, config normalisation + validation,\n  event emission, the stop protocol, adapter publishing, and the family/trainer registry)\n  live in ``diffusion_train_common`` and are shared with the DiT trainers. They are\n  re-exported here so existing import paths keep working.\n- ``run_diffusion_lora_training`` is the SDXL training loop. It reports progress through an\n  ``on_event`` callback whose payloads match the training worker\'s event protocol\n  (``{"type": ..., "ts": ...}``) so it can be spawned as a subprocess and streamed to the\n  UI, and it polls a ``should_stop`` callback so a stop request ends it cleanly (with a\n  partial save).\n- ``run_diffusion_training_process`` is the thin mp.Queue adapter; it dispatches to the\n  trainer registered for the resolved family (SDXL here, DiT families in a follow-up).\n  ``main`` is a CLI.\n\nMemory/perf: captions are encoded once up front and the CLIP text encoders freed; VAE\nlatents are likewise precomputed into a small CPU cache (``cache_latents``) and the VAE\nfreed. The cache stores the posterior\'s affine pair (mean/std, scale folded in), so every\nstep still draws a fresh VAE sample -- distribution-identical to encoding in the loop,\nwithout keeping the VAE resident or paying a per-step encode. TF32 matmuls + cudnn\nautotuning are enabled for the run under ``cfg.enable_tf32``, and the U-Net\'s repeated\ntransformer blocks are regionally torch.compiled (``cfg.compile_transformer``, never\nfatal -- any failure falls back to eager with a warning event).'
 
 from __future__ import annotations
 
@@ -771,10 +743,7 @@ def run_diffusion_lora_training(
 
 
 def _make_lora_optimizer(params: list, lr: float) -> Any:
-    """8-bit AdamW (bitsandbytes) by default -- half the optimizer state, no meaningful
-    quality cost for LoRA -- falling back to torch AdamW (fused on CUDA) when unavailable.
-    UNSLOTH_DIFFUSION_FP32_OPTIM forces plain (non-fused) AdamW: the accuracy guard wants the
-    reference optimizer, so it must not take the fused path."""
+    '8-bit AdamW (bitsandbytes) by default -- half the optimizer state, no meaningful\n    quality cost for LoRA -- falling back to torch AdamW (fused on CUDA) when unavailable.\n    reference optimizer, so it must not take the fused path.'
     import torch
 
     if os.environ.get("UNSLOTH_DIFFUSION_FP32_OPTIM", "") in ("1", "true"):

@@ -262,7 +262,7 @@ def _handle_load(backend, cmd: dict, resp_queue: Any) -> None:
             any(sub in _cp_lower for sub in _NEMOTRON_TRUST_SUBSTRINGS)
             and (_cp_lower.startswith("unsloth/") or _cp_lower.startswith("nvidia/"))
             # Genuine first-party Hub repo only (not a local/spoof name starting
-            # with "unsloth/"); authenticated so private repos resolve.
+
             and is_trusted_org_repo(checkpoint_path, hf_token = cmd.get("hf_token"))
         ):
             trust_remote_code = True
@@ -553,7 +553,7 @@ def run_export_process(*, cmd_queue: Any, resp_queue: Any, config: dict) -> None
 
     checkpoint_path = config["checkpoint_path"]
 
-    # ── 1. Activate correct transformers version BEFORE any ML imports ──
+
     with _offline_window_if_unreachable(step = "activating transformers"):
         try:
             _activate_transformers_version(checkpoint_path, config.get("hf_token") or None)
@@ -583,12 +583,12 @@ def run_export_process(*, cmd_queue: Any, resp_queue: Any, config: dict) -> None
 
     # ── 1c. Stub torchao on Windows ROCm ──
     # See core/_torchao_stub.py: torchao crashes on Windows ROCm (RCCL absent).
-    # No-op off Windows ROCm. Must run before importing transformers / unsloth_zoo.
+
     from core._torchao_stub import install_torchao_windows_rocm_stub
 
     install_torchao_windows_rocm_stub()
 
-    # ── 2. Import ML libraries (fresh in this clean process) ──
+
     try:
         _send_response(
             resp_queue,
@@ -603,7 +603,7 @@ def run_export_process(*, cmd_queue: Any, resp_queue: Any, config: dict) -> None
         if backend_path not in sys.path:
             sys.path.insert(0, backend_path)
 
-        # Recover from any namespace-package shadow before importing Unsloth.
+
         from core.import_guards import ensure_real_packages
 
         ensure_real_packages("unsloth_zoo", "unsloth")
@@ -626,7 +626,7 @@ def run_export_process(*, cmd_queue: Any, resp_queue: Any, config: dict) -> None
         )
         return
 
-    # ── 3. Create export backend and load initial checkpoint ──
+
     try:
         backend = ExportBackend()
 
@@ -647,7 +647,7 @@ def run_export_process(*, cmd_queue: Any, resp_queue: Any, config: dict) -> None
         )
         return
 
-    # ── 4. Command loop — process commands until shutdown ──
+
     logger.info("Export subprocess ready, entering command loop")
 
     while True:

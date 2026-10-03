@@ -1,20 +1,9 @@
-
-"""Free Cloudflare quick tunnel for Unsloth's 0.0.0.0 launches.
-
-The raw http://<ip>:<port> is often unreachable (https-vs-http, blocked ports,
-closed security groups); a cloudflared quick tunnel gives a free
-https://*.trycloudflare.com URL that works anywhere, with no account or domain.
-
-Best-effort throughout: any failure collapses to "no URL" and Unsloth keeps
-running. Stdlib only (back-end imports are lazy) so it is safe to import early.
-"""
-
 from __future__ import annotations
 
 import os
 import platform
 import re
-import shutil
+# import shutil
 import subprocess
 import sys
 import threading
@@ -153,7 +142,7 @@ def _cache_path() -> Optional[Path]:
 
 
 def find_cloudflared() -> Optional[str]:
-    """Locate an existing cloudflared: PATH first, then the Unsloth bin cache."""
+    ''
     on_path = shutil.which("cloudflared")
     if on_path:
         return on_path
@@ -582,7 +571,7 @@ class CloudflareTunnel:
             return running
 
 
-# Single serving process per Unsloth launch, so one module-level tunnel handle is
+
 # enough; the lock guards the start/stop/shutdown races.
 _active_tunnel: Optional[CloudflareTunnel] = None
 _active_lock = threading.Lock()

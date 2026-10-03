@@ -11,10 +11,7 @@ import tempfile
 
 
 def _infer_studio_home_from_venv() -> Path | None:
-    """Return parent of sys.prefix as STUDIO_HOME when running from an
-    installer-managed unsloth_studio venv. Sentinel-gated (share/studio.conf
-    or bin shim) so a dev venv named unsloth_studio isn't misidentified.
-    """
+    'Return parent of sys.prefix as STUDIO_HOME when running from an\n    '
     try:
         prefix = Path(sys.prefix).resolve()
     except (OSError, ValueError):
@@ -35,12 +32,7 @@ def _infer_studio_home_from_venv() -> Path | None:
 
 
 def studio_root() -> Path:
-    """Unsloth install root.
-
-    Priority: UNSLOTH_STUDIO_HOME, then STUDIO_HOME alias, then sys.prefix
-    inference, then legacy ~/.unsloth/studio. UNSLOTH_STUDIO_HOME wins if
-    both are set (specific signal beats generic alias).
-    """
+    '\n    both are set (specific signal beats generic alias).\n    '
     override = (os.environ.get("UNSLOTH_STUDIO_HOME") or "").strip()
     if not override:
         override = (os.environ.get("STUDIO_HOME") or "").strip()
@@ -66,7 +58,7 @@ def llama_slot_cache_root() -> Path:
 
 
 def studio_bin_root() -> Path:
-    """Dir for Unsloth-managed executables (the `unsloth` shim, downloaded tools like cloudflared)."""
+    ''
     return studio_root() / "bin"
 
 
@@ -221,16 +213,12 @@ def ensure_dir(path: Path) -> Path:
 
 
 def legacy_hf_cache_dir() -> Path:
-    """Old Unsloth-specific HF hub cache, kept for backward-compat scans."""
+    ''
     return cache_root() / "huggingface" / "hub"
 
 
 def hf_default_cache_dir() -> Path:
-    """Platform default HuggingFace hub cache (ignoring env overrides).
-
-    Where HF caches when no ``HF_HUB_CACHE`` / ``HF_HOME`` is set. Scanned
-    so models downloaded *before* installing Unsloth Studio are discovered.
-    """
+    'Platform default HuggingFace hub cache (ignoring env overrides).\n\n    Where HF caches when no ``HF_HUB_CACHE`` / ``HF_HOME`` is set. Scanned\n    '
     return Path.home() / ".cache" / "huggingface" / "hub"
 
 
@@ -325,10 +313,10 @@ def _setup_cache_env() -> None:
     defaults: dict[str, str] = {
         "UV_CACHE_DIR": str(root / "uv"),
         "VLLM_CACHE_ROOT": str(root / "vllm"),
-        # unsloth_zoo defaults this to a bare relative name, which resolves
+
         # against the CWD, and the Windows launcher runs Studio with
         # WorkingDirectory=%USERPROFILE%, so the cache landed in the user home.
-        # Must be set before unsloth_zoo.compiler imports: it reads the value
+
         # at import time and puts it on sys.path.
         "UNSLOTH_COMPILE_LOCATION": str(root.parent / "compiled_cache"),
     }
@@ -357,12 +345,7 @@ def _setup_cache_env() -> None:
 
 
 def setup_cache_env() -> None:
-    """Seed the cache env vars without creating every studio directory.
-
-    For `uvicorn main:app`, which bypasses run.py and so never reaches
-    ensure_studio_directories, but still has to pin UNSLOTH_COMPILE_LOCATION
-    before unsloth_zoo.compiler is imported.
-    """
+    'Seed the cache env vars without creating every studio directory.\n\n    For `uvicorn main:app`, which bypasses run.py and so never reaches\n    '
     _setup_cache_env()
 
 
@@ -498,13 +481,7 @@ def resolve_export_dir(path_value: str | None = None) -> Path:
 
 
 def resolve_export_write_dir(path_value: str | None = None) -> Path:
-    """Resolve an export save directory — accepts absolute paths.
-
-    Unlike :func:`resolve_export_dir`, this function passes absolute
-    paths through as-is so users can target a different drive when
-    their Unsloth install lives on a constrained system volume
-    (see :gh-issue:`6082`). Used only by the export write path.
-    """
+    'Resolve an export save directory — accepts absolute paths.\n\n    Unlike :func:`resolve_export_dir`, this function passes absolute\n    paths through as-is so users can target a different drive when\n    (see :gh-issue:`6082`). Used only by the export write path.\n    '
     if not path_value or not str(path_value).strip():
         return exports_root()
     raw = str(path_value).strip()

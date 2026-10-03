@@ -21,7 +21,7 @@ import os
 from pathlib import Path
 from typing import Any, Callable, Optional
 
-# ── the model's grid ─────────────────────────────────────────────────────────
+
 #
 # Every constant here is a checkpoint contract, mirrored from
 # ``diffusers.modular_pipelines.minimax_h3`` (which the trainer cannot import without pulling

@@ -1,15 +1,5 @@
 
-"""A cached snapshot that loads from a subdirectory must still resolve.
-
-``unsloth/Spark-TTS-0.5B`` keeps everything trainable under ``LLM/``; its snapshot root
-holds only ``README.md`` and ``config.yaml`` (verified against the Hub file listing), so a
-resolver that insists on a root-level ``config.json`` plus root-level weights finds
-nothing. The remote preflight already expands those load roots through
-``load_scan_target``, and ``security_load_subdirs`` reports ``("LLM",)`` for BiCodec, so
-the cached path has to agree or a perfectly good cache is reported as absent:
-``_apply_model_cache_pin`` warns "not found on disk; downloading" and, offline, the start
-route turns the same ``None`` into a 409 ``hf_model_not_cached_offline``.
-"""
+'A cached snapshot that loads from a subdirectory must still resolve.\n\nholds only ``README.md`` and ``config.yaml`` (verified against the Hub file listing), so a\nresolver that insists on a root-level ``config.json`` plus root-level weights finds\nnothing. The remote preflight already expands those load roots through\n``load_scan_target``, and ``security_load_subdirs`` reports ``("LLM",)`` for BiCodec, so\nthe cached path has to agree or a perfectly good cache is reported as absent:\n``_apply_model_cache_pin`` warns "not found on disk; downloading" and, offline, the start\nroute turns the same ``None`` into a 409 ``hf_model_not_cached_offline``.'
 
 import json
 

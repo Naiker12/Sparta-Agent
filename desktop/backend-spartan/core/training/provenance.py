@@ -521,14 +521,7 @@ def attest_loaded_dataset(repo_id: Any, *datasets: Any) -> tuple[Optional[str], 
 
 
 def _object_value(value: Any, key: str) -> Any:
-    """Read ``key`` off a loaded model object, whatever shape it is.
-
-    Attribute access has to come first: ``mlx.nn.Module`` subclasses ``dict``, so a
-    mapping-first lookup answers ``None`` for every attribute an MLX model carries and
-    the whole MLX attestation path below goes blind. The mapping lookup stays as the
-    fallback for the plain dicts that also flow through here (``quantization_config``,
-    ``_unsloth_quantization_policy``), whose keys are never attributes.
-    """
+    'Read ``key`` off a loaded model object, whatever shape it is.\n\n    Attribute access has to come first: ``mlx.nn.Module`` subclasses ``dict``, so a\n    mapping-first lookup answers ``None`` for every attribute an MLX model carries and\n    the whole MLX attestation path below goes blind. The mapping lookup stays as the\n    fallback for the plain dicts that also flow through here (``quantization_config``,\n    '
     try:
         found = getattr(value, key, None)
     except Exception:

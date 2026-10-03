@@ -265,7 +265,7 @@ def test_application_failure_propagates_not_fallback():
 
 
 def test_preset_tokenizer_markers_used_directly():
-    # Preset unsloth marker attrs skip detection; zoo reuses them on a bare call.
+
     class _Tok:
         _unsloth_input_part = "<I>"
         _unsloth_output_part = "<O>"

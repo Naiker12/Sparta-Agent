@@ -455,7 +455,7 @@ def test_already_in_target_state_explicit_off_still_mismatches_mtp_backend():
     )
 
 
-# User override via extra_args (unsloth run / unsloth studio run).
+
 
 
 @pytest.mark.parametrize(
@@ -519,7 +519,7 @@ def test_windows_full_offload_flags_use_current_llama_server_args():
     assert stale_checkpoint_flag not in src
 
 
-# Backend-wide guard: Unsloth must never inject --no-cache-prompt into a llama-server
+
 # command. It disables in-VRAM prompt-prefix reuse, re-prefilling every repeated prompt
 # (#5692 only needed --cache-ram / --ctx-checkpoints off; #7260 dropped the stray flag).
 # Detecting it (_is_real) or honouring a user-supplied one (_prompt_cache_off) is fine.
@@ -704,7 +704,7 @@ def test_already_in_target_state_vision_off_matches_vision_backend():
 @pytest.mark.parametrize(
     "arch, nextn",
     [
-        # Verified against real Unsloth MTP GGUFs (qwen35 / qwen35moe).
+
         ("qwen35", 1),
         ("qwen35moe", 1),
         # Future-proofing: any arch + n>0 should match.
@@ -827,11 +827,7 @@ _PRE_DFLASH_SPEC_HELP = "--spec-type none,draft-mtp,ngram-mod".ljust(len(_DFLASH
 
 @_NEEDS_BASH
 def test_probe_server_capabilities_rereads_a_binary_replaced_in_the_same_second(tmp_path):
-    """`unsloth studio update` overwrites llama-server in place. Keyed on whole
-    seconds, an update landing in the second the old build was probed in kept the key
-    identical and the new build was answered with the old one's capabilities -- and
-    "the user just installed the missing capability" is exactly the moment the cache
-    has to notice."""
+    '    seconds, an update landing in the second the old build was probed in kept the key\n    identical and the new build was answered with the old one\'s capabilities -- and\n    "the user just installed the missing capability" is exactly the moment the cache\n    has to notice.'
     binary = _make_fake_llama_server(tmp_path / "llama-server", _PRE_DFLASH_SPEC_HELP)
     _pin_mtime(binary, nanos = 100_000)
     _clear_caps_cache()
@@ -1479,7 +1475,7 @@ def test_already_in_target_state_2b_falls_back_to_ngram_below_threshold(monkeypa
     )
 
 
-# usage backfill from timings (Unsloth UI t/s widget fix).
+
 
 
 def test_backfill_usage_from_timings_fills_when_completion_tokens_zero():
@@ -1769,9 +1765,9 @@ def test_build_speculative_flags_dspark_blames_the_binary_not_the_missing_sideca
 # ── Auto defaults to DSpark, and only where a sidecar actually exists ──
 #
 # The three shapes are the real published repos, checked against the Hub:
-#   unsloth/DeepSeek-V4-Flash-0731-GGUF  -> dspark-*.gguf at the root and in dspark/
-#   unsloth/gemma-4-12b-it-GGUF          -> MTP/mtp-gemma-4-12b-it-*.gguf, no dspark
-#   unsloth/Qwen3.5-4B-MTP-GGUF          -> head baked into the main GGUF, neither file
+
+
+
 
 
 def test_auto_defaults_to_dspark_when_a_sidecar_is_available(monkeypatch, tmp_path):
@@ -2004,7 +2000,7 @@ def test_forced_mtp_ngram_on_non_mtp_model_keeps_ngram(monkeypatch):
 # bench), so Auto downgrades it to ngram-mod (or spec-off). The clean
 # metadata separator from non-MLA MTP (Qwen, kept on draft-mtp) is
 # self._kv_lora_rank. Forced mtp / mtp+ngram and separate drafters (Gemma)
-# stay on draft-mtp; UNSLOTH_MLA_MTP_ENABLED=1 re-enables Auto promotion.
+
 
 # GLM-5.2's repo name has no "MTP" marker, so its MTP signal is metadata-only
 # (nextn_predict_layers) -- exactly the embedded-MLA case we gate.
@@ -2157,7 +2153,7 @@ def test_forced_mtp_on_mla_still_engages(monkeypatch, mode, expect_spec_type, ex
 
 
 def test_env_flag_reenables_auto_mla_mtp(monkeypatch):
-    # UNSLOTH_MLA_MTP_ENABLED=1 -> Auto promotes MLA embedded MTP to draft-mtp
+
     # again (the forward hook for when llama.cpp optimizes the path).
     monkeypatch.setenv("UNSLOTH_MLA_MTP_ENABLED", "1")
     backend = _mla_resolver_backend(monkeypatch)
@@ -2276,7 +2272,7 @@ def test_reload_forced_mtp_bounces_auto_mla():
     )
 
 
-# ── Full named-repo resolver matrix (the shipping Unsloth families) ─────
+
 #
 # Locks auto / off / forced-mtp routing for every Qwen3.5 (MTP + plain) and
 # gemma-4 (regular + QAT) GGUF repo, including the giant MoEs that stay
@@ -2661,7 +2657,7 @@ def test_already_in_target_state_retries_after_hf_drafter_not_found():
 # ── A binary that has since gained the drafter ───────────────────────
 #
 # Standing down on speculative decoding because llama-server cannot run it tells the
-# user to run `unsloth studio update`. The update changes nothing about the request, so
+
 # the comparators see the same intent and skip the reload: the one load the update
 # exists to fix is the one that never happens again.
 

@@ -1,4 +1,4 @@
-// Full-page monitor for Unsloth's OpenAI-compatible API server. Settings still owns
+
 // configuration (keys, auto-switch, examples); this page owns observability.
 
 import { Button } from "@/components/ui/button";

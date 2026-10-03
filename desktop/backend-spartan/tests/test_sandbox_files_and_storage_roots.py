@@ -1,11 +1,5 @@
 
-"""Where a chat's files live, and how a user gets them back.
-
-Every assertion here failed before: the sandbox ignored UNSLOTH_STUDIO_HOME, only
-images could be fetched, nothing listed a chat's files, bash reported none, the
-compiled cache landed in the launcher's CWD, and a deleted chat left its folder
-behind. Verified on Windows, macOS and Linux.
-"""
+"Where a chat's files live, and how a user gets them back.\n\nimages could be fetched, nothing listed a chat's files, bash reported none, the\ncompiled cache landed in the launcher's CWD, and a deleted chat left its folder\nbehind. Verified on Windows, macOS and Linux."
 
 import functools
 import hashlib
@@ -92,8 +86,8 @@ def test_sandbox_lives_under_the_studio_home(tmp_path, monkeypatch):
     wd = Path(tools.get_sandbox_workdir("__LOCALID_aB3xY7q"))
     print(f"\n[{platform.system()}] sandbox workdir = {wd}")
 
-    # It follows UNSLOTH_STUDIO_HOME instead of dropping a third folder in the
-    # user's home next to .unsloth.
+
+
     assert str(wd).startswith(str(studio_home)), wd
     assert not str(wd).startswith(str(fake_home / "studio_sandbox")), wd
     assert wd.parent.name == "sandbox"
@@ -356,7 +350,7 @@ def test_reading_a_sandbox_never_creates_it(tmp_path, monkeypatch):
 
 
 def test_clearing_the_compiled_cache_covers_the_configured_location(tmp_path, monkeypatch):
-    """The cleanup must follow UNSLOTH_COMPILE_LOCATION, not just the defaults."""
+    ''
     pinned = tmp_path / "home" / "compiled_cache"
     pinned.mkdir(parents = True)
     (pinned / "unsloth_compiled_module_gemma3.py").write_text("x = 1\n")
@@ -732,8 +726,7 @@ def test_deleting_a_chat_right_after_an_upgrade_finds_its_legacy_sandbox(tmp_pat
 
 
 def test_a_configured_cache_that_holds_other_files_is_never_deleted(tmp_path, monkeypatch):
-    """UNSLOTH_COMPILE_LOCATION is user-set. Pointed at a shared directory it
-    would otherwise be rmtree'd at startup, taking whatever else lives there."""
+    "    would otherwise be rmtree'd at startup, taking whatever else lives there."
     shared = tmp_path / "shared"
     (shared / "important").mkdir(parents = True)
     (shared / "important" / "notes.txt").write_text("user data")
@@ -868,8 +861,7 @@ def test_a_user_file_named_like_scratch_is_kept(tmp_path, monkeypatch):
 
 
 def test_an_existing_sandbox_override_keeps_its_permissions(tmp_path, monkeypatch):
-    """UNSLOTH_STUDIO_SANDBOX_HOME can name a shared directory; locking it down
-    to 0o700 would cut off everything else using it."""
+    '    to 0o700 would cut off everything else using it.'
     shared = tmp_path / "shared"
     shared.mkdir(mode = 0o755)
     before = shared.stat().st_mode & 0o777
@@ -930,7 +922,7 @@ def test_generated_modules_identify_a_cache_without_a_marker(tmp_path, monkeypat
     cache = tmp_path / "old_cache"
     cache.mkdir()
     (cache / "unsloth_compiled_module_gemma3.py").write_text("x = 1\n", encoding = "utf-8")
-    # Their own file, and Unsloth*Trainer.py is a name a user's subclass can
+
     # carry: without the marker there is nothing to say we wrote it.
     (cache / "UnslothCustomTrainer.py").write_text("class X: pass\n", encoding = "utf-8")
     monkeypatch.setenv("UNSLOTH_COMPILE_LOCATION", str(cache))
@@ -984,8 +976,7 @@ def test_a_cached_sandbox_path_is_re_checked(tmp_path, monkeypatch):
 
 
 def test_a_shared_compile_location_loses_only_generated_files(tmp_path, monkeypatch):
-    """UNSLOTH_COMPILE_LOCATION=$HOME/.cache after one compile made the whole
-    directory look like ours; only the compiler's own output is."""
+    "    directory look like ours; only the compiler's own output is."
     shared = tmp_path / "dot_cache"
     (shared / "pip").mkdir(parents = True)
     (shared / "pip" / "wheel.whl").write_text("wheel")
@@ -2286,8 +2277,7 @@ def test_a_link_inside_the_root_is_stepped_around(tmp_path, monkeypatch):
 
 
 def test_an_unowned_cache_of_trainers_is_not_put_on_sys_path(tmp_path, monkeypatch):
-    """Unsloth*Trainer.py is a name a user's own subclass carries, and anything
-    else in that directory would then shadow real modules for every worker."""
+    '    else in that directory would then shadow real modules for every worker.'
     import sys as _sys
 
     theirs = tmp_path / "unsloth_compiled_cache"
@@ -3990,8 +3980,7 @@ def test_a_chat_cannot_claim_another_chats_directory(tmp_path, monkeypatch):
 
 
 def test_a_users_own_marker_file_survives_the_migration(tmp_path, monkeypatch):
-    """The name was not reserved before this change, so a chat that wrote its
-    own .unsloth_sandbox has a real file there."""
+    'The name was not reserved before this change, so a chat that wrote its'
     fake_home = tmp_path / "userprofile"
     session = "__LOCALID_marker1"
     legacy = fake_home / "studio_sandbox" / session
@@ -4553,8 +4542,7 @@ def test_a_pending_workspace_is_collected_by_a_plain_delete(tmp_path, monkeypatc
 
 
 def test_a_nested_file_named_like_the_marker_is_a_file(tmp_path, monkeypatch):
-    """Only the sandbox's own bookkeeping is hidden: a tool that wrote
-    archive/.unsloth_sandbox made an ordinary file."""
+    "Only the sandbox's own bookkeeping is hidden: a tool that wrote"
     monkeypatch.setenv("UNSLOTH_STUDIO_HOME", str(tmp_path / "home"))
 
     from core.inference import tools

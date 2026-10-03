@@ -1,11 +1,5 @@
 
-"""Tests for the server identity handshake (`GET /api/auth/identity`).
-
-The endpoint lets a client confirm an endpoint is really this Unsloth install
-before sending it a credential: the client sends a random nonce and checks the
-returned HMAC against one computed from the install identity secret. A process
-that cannot read this same-user secret cannot forge a matching proof.
-"""
+'Tests for the server identity handshake (`GET /api/auth/identity`).\n\nbefore sending it a credential: the client sends a random nonce and checks the\nreturned HMAC against one computed from the install identity secret. A process\nthat cannot read this same-user secret cannot forge a matching proof.'
 
 import base64
 import hashlib

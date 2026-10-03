@@ -305,18 +305,7 @@ def _looks_like_model_dir(directory: Path) -> bool:
 def _build_browse_allowlist(
     media_roots: Optional[list[Path]] = None, drive_roots: Optional[list[Path]] = None
 ) -> list[Path]:
-    """Return the root directories the folder browser may walk.
-
-    The same list seeds the sidebar suggestion chips, so chip targets are
-    always reachable. Roots: HOME, resolved HF cache dirs, Unsloth's
-    outputs/exports/studio root, registered scan folders, and well-known
-    local-LLM dirs (LM Studio, Ollama, ``~/models``); each added only if
-    it resolves to a real directory.
-
-    *media_roots* / *drive_roots* let the caller pass already-probed
-    removable-media and Windows drive roots so they aren't scanned again (a
-    disconnected mapped drive can make each probe slow); probed here when ``None``.
-    """
+    "Return the root directories the folder browser may walk.\n\n    The same list seeds the sidebar suggestion chips, so chip targets are\n    outputs/exports/studio root, registered scan folders, and well-known\n    local-LLM dirs (LM Studio, Ollama, ``~/models``); each added only if\n    it resolves to a real directory.\n\n    *media_roots* / *drive_roots* let the caller pass already-probed\n    removable-media and Windows drive roots so they aren't scanned again (a\n    disconnected mapped drive can make each probe slow); probed here when ``None``.\n    "
     from utils.paths import (
         hf_default_cache_dir,
         legacy_hf_cache_dir,
@@ -876,13 +865,7 @@ _EXPORT_SIZE_CACHE: dict[str, tuple[int, int, str]] = {}
 
 
 def _is_sizable_local_path(model: str) -> bool:
-    """True only for local paths under an Unsloth data root.
-
-    Containment is decided lexically (no filesystem access) before the path is
-    touched, then the path is symlink-resolved and re-checked so a symlink
-    inside a root can't point the sizer outside it. A user-controlled path thus
-    can't trigger a scan of an arbitrary dir.
-    """
+    "\n    Containment is decided lexically (no filesystem access) before the path is\n    touched, then the path is symlink-resolved and re-checked so a symlink\n    inside a root can't point the sizer outside it. A user-controlled path thus\n    can't trigger a scan of an arbitrary dir.\n    "
     from utils.paths import outputs_root, exports_root, studio_root
     from utils.paths.storage_roots import cache_root
 

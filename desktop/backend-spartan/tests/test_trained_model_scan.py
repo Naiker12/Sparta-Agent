@@ -1,5 +1,5 @@
 
-"""Tests for Unsloth trained-model discovery used by Chat."""
+''
 
 import json
 from pathlib import Path

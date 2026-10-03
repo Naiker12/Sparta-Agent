@@ -6770,7 +6770,7 @@ def _build_safe_env(workdir: str) -> dict[str, str]:
     never inherited — they could shadow auto-safe terminal commands.
     """
     # Start from the running interpreter's dir so 'python'/'pip' resolve to the
-    # same environment the Unsloth server runs in.
+
     exe_dir = os.path.dirname(sys.executable)
     path_entries = [exe_dir] if exe_dir else []
 
@@ -7091,35 +7091,20 @@ def _sandbox_preexec():
 
 
 def _bypass_preexec():
-    """Minimal pre-exec for bypass exec: os.setsid() only.
-
-    Required, not a restriction: _kill_process_tree does killpg(getpgid(child)),
-    so without a new session a timeout/cancel would kill the Unsloth server too.
-    """
+    'Minimal pre-exec for bypass exec: os.setsid() only.\n\n    Required, not a restriction: _kill_process_tree does killpg(getpgid(child)),\n    '
     try:
         os.setsid()
     except OSError:
         pass
 
 
-# Hardening the Unsloth parent is done once (PR_SET_DUMPABLE is process-global
+
 # and sticky); guarded so repeated bypass calls do not re-issue the prctl.
 _parent_proc_hardened = False
 
 
 def _harden_parent_against_proc_env_leak() -> bool:
-    """Make the Unsloth process's /proc/<pid>/environ unreadable to its children.
-
-    Stripping the child env is not enough on Linux: a bypassed same-UID child
-    can read /proc/<getppid()>/environ to recover the parent's unfiltered
-    secrets. Clearing PR_SET_DUMPABLE reparents this process's /proc entries to
-    root, closing that read.
-
-    Returns True when hardened or unnecessary (off Linux), False when needed but
-    unappliable (e.g. prctl denied by seccomp); callers must then fail closed.
-    This is a mitigation, not a full boundary - a bypassed tool can still walk
-    /proc to an ancestor or read creds by path. Applied lazily on first bypass.
-    """
+    "\n    Stripping the child env is not enough on Linux: a bypassed same-UID child\n    can read /proc/<getppid()>/environ to recover the parent's unfiltered\n    secrets. Clearing PR_SET_DUMPABLE reparents this process's /proc entries to\n    root, closing that read.\n\n    Returns True when hardened or unnecessary (off Linux), False when needed but\n    unappliable (e.g. prctl denied by seccomp); callers must then fail closed.\n    This is a mitigation, not a full boundary - a bypassed tool can still walk\n    /proc to an ancestor or read creds by path. Applied lazily on first bypass.\n    "
     global _parent_proc_hardened
     if _parent_proc_hardened:
         return True
@@ -7801,13 +7786,7 @@ def _sandbox_name(session_id: str) -> str:
 
 
 def _preserve_foreign_marker(workdir: str, name: "str | None" = None) -> None:
-    """Move aside a marker-named entry that this migration did not write.
-
-    This name was not reserved before the change, so a chat that wrote its own
-    .unsloth_sandbox has a real file there, and a short note like "notes" reads
-    as a perfectly good session name. Only the exact marker this move is about
-    to write is left alone; everything else is renamed, not removed.
-    """
+    'Move aside a marker-named entry that this migration did not write.\n\n    This name was not reserved before the change, so a chat that wrote its own\n    as a perfectly good session name. Only the exact marker this move is about\n    to write is left alone; everything else is renamed, not removed.\n    '
     marker = os.path.join(workdir, _SANDBOX_MARKER)
     if not os.path.lexists(marker):
         return
@@ -8075,12 +8054,7 @@ def _legacy_sandbox_root() -> str:
 
 
 def sandbox_root() -> str:
-    """Root of the per-session tool sandboxes.
-
-    Under the studio home, so UNSLOTH_STUDIO_HOME keeps everything in one place
-    instead of leaving a stray ~/studio_sandbox. Falls back to the legacy path
-    only if the studio root cannot be resolved.
-    """
+    'Root of the per-session tool sandboxes.\n\n    instead of leaving a stray ~/studio_sandbox. Falls back to the legacy path\n    only if the studio root cannot be resolved.\n    '
     override = (os.environ.get("UNSLOTH_STUDIO_SANDBOX_HOME") or "").strip()
     if override:
         return os.path.expanduser(override)
@@ -9528,7 +9502,7 @@ _FULL_ACCESS_SUBSTITUTIONS = (
 #                               basename collapse and no anti-clobber
 #   python, other missing parent -> the fallback keeps only the base name, and
 #                               raises when an UNRELATED file holds it; the
-#                               .unsloth_sandbox_remap.json sidecar lets a rewrite
+
 #                               of the same invented path re-serve its own target
 #   python, prefix present   -> a real /mnt/data mount is never shadowed, so a
 #                               prefix is special only while absent, which is why
@@ -9821,7 +9795,7 @@ def _connected_workspace_for_tool(session_id: "str | None") -> "tuple[str | None
         from storage.studio_db import get_chat_project
         from state.project_files import connected_workspace
         project = get_chat_project(session_id[len(_PROJECT_SESSION_PREFIX) :])
-        return connected_workspace(project or {}), "write", ""
+        return connected_workspace(project or {}), (project or {}).get("workspaceAccess") or "read", ""
     except RuntimeError as exc:
         return None, None, f"Error: {exc}"
 
@@ -10603,10 +10577,10 @@ def execute_tool(
         return get_weather_for_model(arguments)
     if name == "memory_search":
         from core.inference.memory_actions import search_memory_for_model
-        return search_memory_for_model(arguments)
+        return search_memory_for_model(arguments, thread_id)
     if name == "memory_save":
         from core.inference.memory_actions import save_memory_for_model
-        return save_memory_for_model(arguments)
+        return save_memory_for_model(arguments, thread_id)
     if name == "list_skills":
         from core.inference.skill_actions import list_skills_for_model
         return list_skills_for_model(arguments)
@@ -12043,9 +12017,7 @@ def _web_search(
 
 
 def _check_signal_escape_patterns(code: str):
-    """Check for patterns that could escape signal-based timeouts. Returns
-    (safe: bool, details: dict). Vendored from unsloth_zoo.rl_environments to
-    avoid importing unsloth_zoo (needs GPU drivers; fails on Apple Silicon)."""
+    'Check for patterns that could escape signal-based timeouts. Returns'
     try:
         tree = ast.parse(code)
     except SyntaxError as e:
@@ -12254,7 +12226,7 @@ def _check_signal_escape_patterns(code: str):
                         }
                     )
 
-            # --- Shell escape detection ---
+
             # Resolve the FQ function name for os.*/subprocess.*
             shell_func = None
             if isinstance(func, ast.Attribute):
@@ -13198,15 +13170,7 @@ def _windows_pid_identity(pid: int) -> "str | None":
 
 
 def _windows_taskkill_tree(pid: int, identity: "str | None" = None) -> bool:
-    """``taskkill /T /F`` a pid and its descendants. True when it succeeded.
-
-    Every tool call runs under a shell wrapper, and Windows has no process
-    groups, so a bare ``proc.kill()`` reaps the wrapper and orphans the payload
-    (usually the venv python), which then blocks `unsloth studio update`.
-
-    ``identity`` is the creation time captured at spawn; a mismatch means the pid
-    now belongs to something else, so nothing is signalled.
-    """
+    '``taskkill /T /F`` a pid and its descendants. True when it succeeded.\n\n    Every tool call runs under a shell wrapper, and Windows has no process\n    groups, so a bare ``proc.kill()`` reaps the wrapper and orphans the payload\n\n    ``identity`` is the creation time captured at spawn; a mismatch means the pid\n    now belongs to something else, so nothing is signalled.\n    '
     if os.name != "nt":
         return False
     if identity is not None and _windows_pid_identity(pid) != identity:
@@ -13318,7 +13282,7 @@ def _truncate(text: str, limit: int = _MAX_OUTPUT_CHARS) -> str:
 
 
 # ChatGPT code-interpreter path conventions models write out of habit; none
-# exist in the Unsloth sandbox, so a failure on one earns the retry hint.
+
 _MISSING_PATH_PREFIXES = (
     "/mnt/data",
     "/mnt/outputs",
@@ -13633,7 +13597,7 @@ def _snapshot_workdir_files(workdir: str | None) -> "dict[str, tuple]":
             else [d for d in dirs if not d.startswith(".") and _servable_segment(d)]
         )
         for name in names:
-            # Only at the top: a tool that wrote archive/.unsloth_sandbox made an
+
             # ordinary file, and dropping it hid it from every listing while
             # still counting it as a reason to keep the sandbox.
             if base == workdir and name in _INTERNAL_SANDBOX_FILES:

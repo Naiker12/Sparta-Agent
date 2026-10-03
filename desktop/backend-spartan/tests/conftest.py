@@ -1,13 +1,5 @@
 
-"""Shared pytest configuration for the backend test suite.
-
-Puts the backend root on sys.path (mirrors app launch) and provides a hybrid
-``studio_server`` session fixture for end-to-end tests with two modes:
-external server (``UNSLOTH_E2E_BASE_URL``/``UNSLOTH_E2E_API_KEY``) for fast
-iteration, or a fixture-managed server started/torn down per session for CI.
-Model/variant for the managed mode resolve from ``--unsloth-model`` /
-``--unsloth-gguf-variant``, then env vars, then ``test_studio_api.py`` defaults.
-"""
+'Shared pytest configuration for the backend test suite.\n\nPuts the backend root on sys.path (mirrors app launch) and provides a hybrid\n``studio_server`` session fixture for end-to-end tests with two modes:\niteration, or a fixture-managed server started/torn down per session for CI.'
 
 # --- torch.compile cache isolation -------------------------------------------------
 # Must run before torch is imported anywhere below, so it is here rather than in a
@@ -40,10 +32,10 @@ _backend_root = Path(__file__).resolve().parent.parent
 if str(_backend_root) not in sys.path:
     sys.path.insert(0, str(_backend_root))
 
-# Let the diffusion patch backend lazily import unsloth_zoo on a CPU-only test host: unsloth_zoo runs accelerator
+
 # detection at import and raises without a GPU unless this is set. setdefault so an explicit override wins.
 os.environ.setdefault("UNSLOTH_ALLOW_CPU", "1")
-# The other half of the same guard: unsloth_zoo.__init__ refuses to import unless this is present, normally set by `import spartan_agent`. Without it
+
 # the patch backend's only route to the helpers is that ~940 MB import, which a CPU-only host cannot complete. run.py and main.py do the same.
 os.environ.setdefault("UNSLOTH_IS_PRESENT", "1")
 # The on-demand attention-backend installer defaults to "auto", so ANY test that loads a
@@ -132,12 +124,7 @@ def pytest_addoption(parser):
 
 @pytest.fixture(scope = "session", autouse = True)
 def _isolate_xet_health_home(tmp_path_factory):
-    """Point HF_HOME at a temp dir for the whole session, before any server is spawned.
-
-    Session scope is load-bearing: pytest builds higher-scoped fixtures first, so setting HF_HOME
-    function-scoped landed AFTER ``studio_server`` snapshotted os.environ, leaving that server
-    rewriting the developer's real unsloth_xet_health.json.
-    """
+    'Point HF_HOME at a temp dir for the whole session, before any server is spawned.\n\n    Session scope is load-bearing: pytest builds higher-scoped fixtures first, so setting HF_HOME\n    function-scoped landed AFTER ``studio_server`` snapshotted os.environ, leaving that server\n    '
     from _pytest.monkeypatch import MonkeyPatch
 
     from huggingface_hub import constants as hf_constants
@@ -147,7 +134,7 @@ def _isolate_xet_health_home(tmp_path_factory):
     # Pin these to what the hub resolved from the REAL environment before moving HF_HOME, which
     # also defaults HF_HUB_CACHE, HF_XET_CACHE and HF_TOKEN_PATH: moving it alone would send the
     # E2E server to an empty cache and token store, so a ~1.1GB GGUF redownload inside the 120s
-    # startup deadline and no credentials for a private --unsloth-model.
+
     mp.setenv("HF_HUB_CACHE", hf_constants.HF_HUB_CACHE)
     mp.setenv("HF_TOKEN_PATH", hf_constants.HF_TOKEN_PATH)
     xet_cache = getattr(hf_constants, "HF_XET_CACHE", None)
@@ -167,7 +154,7 @@ def _isolate_xet_health_state():
     That reproduced: `test_shim_injects_studio_prepare_on_http_retry` saw the fallback without the
     Xet attempt it asserts. Clean CI runners hide it, developer machines do not.
     """
-    # Load it the way the shim does: a bare `from unsloth_zoo import ...` raises NotImplementedError
+
     # on a CPU-only host (its __init__ runs accelerator detection), so a plain import would skip
     # this isolation on exactly the hosts the shim's GPU-init retry exists to support.
     from utils.hf_xet_fallback import _load_optional
@@ -666,12 +653,7 @@ def _hub_reachable_without_probing(monkeypatch):
 
 @pytest.fixture(scope = "session")
 def studio_server(request):
-    """Yield ``(base_url, api_key)`` for e2e tests.
-
-    Uses ``UNSLOTH_E2E_BASE_URL`` (requires ``UNSLOTH_E2E_API_KEY``) if set,
-    else starts/tears down a fresh server via ``_start_server``. Session-scoped
-    and lazy so the GGUF load happens at most once and only when requested.
-    """
+    'Yield ``(base_url, api_key)`` for e2e tests.\n\n    else starts/tears down a fresh server via ``_start_server``. Session-scoped\n    and lazy so the GGUF load happens at most once and only when requested.\n    '
     external_url = os.environ.get("UNSLOTH_E2E_BASE_URL")
     if external_url:
         api_key = os.environ.get("UNSLOTH_E2E_API_KEY")
@@ -707,13 +689,13 @@ def studio_server(request):
 
 @pytest.fixture
 def base_url(studio_server):
-    """Base URL for the e2e Unsloth server (from ``studio_server``)."""
+    ''
     return studio_server[0]
 
 
 @pytest.fixture
 def api_key(studio_server):
-    """API key for the e2e Unsloth server (from ``studio_server``)."""
+    ''
     return studio_server[1]
 
 
@@ -745,11 +727,7 @@ def linkable_temp_base(tmp_path_factory):
 
 @pytest.fixture
 def rag_home(tmp_path, monkeypatch, linkable_temp_base):
-    """Isolate the RAG database under a fresh UNSLOTH_STUDIO_HOME per test.
-
-    Points the storage root at a linkable directory and resets the lazy schema flag so
-    each test starts from an empty rag.db. Yields the temp home path.
-    """
+    '\n    Points the storage root at a linkable directory and resets the lazy schema flag so\n    each test starts from an empty rag.db. Yields the temp home path.\n    '
     from hub.storage.scan_folders import is_denied_system_path
     from storage import rag_db
 

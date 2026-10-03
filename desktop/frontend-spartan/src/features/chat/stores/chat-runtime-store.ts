@@ -2204,7 +2204,7 @@ export function loadedGpuMemoryFields(resp: {
           // DROPPING a manual split. Restore the ask when the response carries it (a
           // refresh has none left in memory), else keep what is standing. Resetting the
           // slider would turn the ask into manual/-1, unapplyable even after the
-          // unsloth_zoo upgrade that adds --ngl.
+
           ...(resp.is_diffusion
             ? droppedSplit != null
               ? { gpuLayers: droppedSplit }
@@ -2370,10 +2370,10 @@ type ChatRuntimeStore = {
   ragOcrScanned: boolean;
   // Describe figures/charts at ingest time (vision model required).
   ragCaptionFigures: boolean;
-  /**
-   * When on, local Unsloth tool calls pause for an explicit allow/deny in the
-   * chat before they run.
-   */
+
+
+
+
   confirmToolCalls: boolean;
   /**
    * Bypass Permissions: when on, tool calls run with no confirmation gate
@@ -2490,9 +2490,9 @@ type ChatRuntimeStore = {
   tensorParallel: boolean;
   /** Backend-reported tensor-parallel state; null until first hydrated. */
   loadedTensorParallel: boolean | null;
-  /** GPU memory strategy for GGUF loads. "auto" = Unsloth picks GPUs and context
-   *  to fit; "manual" = you own the offload (gpuLayers < 0 = Auto/--fit, >= 0
-   *  pins layers + nCpuMoe). */
+
+
+
   gpuMemoryMode: "auto" | "manual";
   /** Backend-reported gpu memory mode; null until first hydrated. */
   loadedGpuMemoryMode: "auto" | "manual" | null;
@@ -4820,7 +4820,7 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
     })),
 }));
 
-// Mirror token edits made through the shared store (e.g. Unsloth's field).
+
 const unsubscribeHfTokenMirror = mirrorHfTokenInto(useChatRuntimeStore);
 if (import.meta.hot) {
   import.meta.hot.dispose(unsubscribeHfTokenMirror);

@@ -1,20 +1,5 @@
 
-"""Regression tests for trust_remote_code in the native-template fallback.
-
-``render_native_template`` re-fetches a model's native chat template from its
-repo when an Unsloth override template (mistral, gemma-4) dropped the tools
-schema. For a model loaded with ``trust_remote_code=True`` whose tokenizer repo
-carries custom code, the secondary ``AutoTokenizer.from_pretrained`` must re-use
-that same consent or transformers raises (it requires ``trust_remote_code`` to
-instantiate a custom tokenizer class), the ``except`` swallows it, and the
-request silently keeps the tool-dropping prompt even though the user already
-consented to remote code for the model load.
-
-These tests pin that the stored ``trust_remote_code`` is threaded to the reload,
-that the reload is skipped (returns ``None`` without executing code) when no
-consent is stored, and that both backend ``model_info`` dicts persist the flag at
-load time so the read lands on a value ``load_model`` actually set.
-"""
+"Regression tests for trust_remote_code in the native-template fallback.\n\n``render_native_template`` re-fetches a model's native chat template from its\nschema. For a model loaded with ``trust_remote_code=True`` whose tokenizer repo\ncarries custom code, the secondary ``AutoTokenizer.from_pretrained`` must re-use\nthat same consent or transformers raises (it requires ``trust_remote_code`` to\ninstantiate a custom tokenizer class), the ``except`` swallows it, and the\nrequest silently keeps the tool-dropping prompt even though the user already\nconsented to remote code for the model load.\n\nThese tests pin that the stored ``trust_remote_code`` is threaded to the reload,\nthat the reload is skipped (returns ``None`` without executing code) when no\nconsent is stored, and that both backend ``model_info`` dicts persist the flag at\nload time so the read lands on a value ``load_model`` actually set."
 
 from __future__ import annotations
 
@@ -31,7 +16,7 @@ if _BACKEND_DIR not in sys.path:
 
 # ``chat_template_helpers`` is dependency-light (copy / logging / typing, with the
 # transformers import deferred inside the function). Load it directly so the test
-# runs without importing the heavy ``core.inference`` package (unsloth / torch).
+
 _HELPERS_PATH = Path(_BACKEND_DIR) / "core" / "inference" / "chat_template_helpers.py"
 _spec = importlib.util.spec_from_file_location("_native_tpl_trc_test", _HELPERS_PATH)
 chat_template_helpers = importlib.util.module_from_spec(_spec)

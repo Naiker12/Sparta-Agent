@@ -79,7 +79,7 @@ _SYNTHESIS_CONTEXT_RESERVE_TOKENS = 4_096
 _AUTO_SCRAPE_MIN_CONTEXT_TOKENS = 8_192
 # Optionally ground synthesis in page text: the top results are ingested into an ephemeral RAG
 # scope (deleted after, so the user's knowledge base is untouched) and hybrid-retrieved into
-# <chunk> evidence. OFF by default, opt in via UNSLOTH_RESEARCH_AUTO_SCRAPE=1: benchmarking
+
 # showed no reliable factoid-accuracy gain over snippets on a local model (snippets usually
 # already carry the fact) while adding latency. Gated per run by budgets["maxAutoScrape"]
 # (absent/0 means no scrape, so existing runs keep legacy behavior). Safe only with the context
@@ -153,9 +153,7 @@ def _synthesis_needs_recovery(report: str, finish_reason: str | None) -> bool:
 
 
 def _auto_scrape_default() -> int:
-    """Server default for ``budgets["maxAutoScrape"]``: 0 (off) unless
-    ``UNSLOTH_RESEARCH_AUTO_SCRAPE`` enables it (``1``/``true`` -> ``_AUTO_SCRAPE_TOP_K``, or an
-    explicit count clamped to ``[0, _AUTO_SCRAPE_TOP_K]``)."""
+    'Server default for ``budgets["maxAutoScrape"]``: 0 (off) unless\n    explicit count clamped to ``[0, _AUTO_SCRAPE_TOP_K]``).'
     raw = os.environ.get("UNSLOTH_RESEARCH_AUTO_SCRAPE", "").strip().lower()
     if not raw:
         return 0

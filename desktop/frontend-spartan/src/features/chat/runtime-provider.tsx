@@ -1,4 +1,5 @@
 import { authFetch } from "@/features/auth";
+import { withRunErrorStatus } from "./utils/run-error-status";
 import {
   AssistantRuntimeProvider,
   type Attachment,
@@ -826,16 +827,22 @@ function createStudioDbAdapter(
     },
 
     initialize(threadId: string) {
+      const remoteId = isAssistantLocalThreadId(threadId)
+        ? crypto.randomUUID()
+        : threadId;
       // assistant-ui withholds the first message until this resolves, so the row write is tracked, not awaited.
       // Captured here, not inside the creator: a retry belongs to the send that initialized it,
       // not to a later incognito or checkpoint selection.
       const runtimeStateAtInit = useChatRuntimeStore.getState();
       const incognitoAtInit = runtimeStateAtInit.incognito;
+      if (incognitoAtInit && isAssistantLocalThreadId(threadId)) {
+        markThreadIncognito(remoteId);
+      }
       const modelIdAtInit = runtimeStateAtInit.params.checkpoint ?? "";
       const createdAtInit = Date.now();
-      trackStoredChatThreadRecord(threadId, () =>
+      trackStoredChatThreadRecord(remoteId, () =>
         ensureThreadRecord({
-          threadId,
+          threadId: remoteId,
           modelType,
           pairId,
           projectId,
@@ -847,8 +854,8 @@ function createStudioDbAdapter(
       // A run already streaming on this thread filed its handles under "__default" because
       // the id did not exist yet. Re-key them now, or the sidebar row and Stop look up an
       // id nothing is registered against.
-      useChatRuntimeStore.getState().adoptDefaultThreadRun(threadId);
-      return Promise.resolve({ remoteId: threadId, externalId: undefined });
+      useChatRuntimeStore.getState().adoptDefaultThreadRun(remoteId);
+      return Promise.resolve({ remoteId, externalId: undefined });
     },
 
     async rename(remoteId: string, newTitle: string) {
@@ -1078,7 +1085,7 @@ async function waitForRunStartHistoryAppend(
 function createPersistedRunAdapter(
   adapter: ChatModelAdapter,
 ): ChatModelAdapter {
-  return {
+  return withRunErrorStatus({
     ...adapter,
     async *run(options) {
       const trackedRunStartThreadIds = runStartThreadIdsForMessages(
@@ -1135,7 +1142,8 @@ function createPersistedRunAdapter(
       // before the await. Hand the run its real id so a first turn never files its handles
       // under the unresolved key that concurrent runs share.
       const result = adapter.run(
-        !options.unstable_threadId && adoptedThreadId
+        (!options.unstable_threadId ||
+          isAssistantLocalThreadId(options.unstable_threadId)) && adoptedThreadId
           ? { ...options, unstable_threadId: adoptedThreadId }
           : options,
       );
@@ -1148,7 +1156,7 @@ function createPersistedRunAdapter(
       }
       yield await result;
     },
-  };
+  });
 }
 
 function useStudioRuntimeAdapters(

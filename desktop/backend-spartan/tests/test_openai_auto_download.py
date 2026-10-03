@@ -806,10 +806,7 @@ def _download_rows():
 
 
 def test_a_ui_session_download_is_not_marked_as_api_traffic(hub):
-    """The monitor overlay auto-opens on via_api_key, which exists to separate
-    "someone is serving other clients" from "someone is using Unsloth". Studio's
-    own chat hits these same /v1 endpoints with a session JWT, so hardcoding the
-    flag on the download row popped the panel open mid-chat."""
+    'The monitor overlay auto-opens on via_api_key, which exists to separate\n    own chat hits these same /v1 endpoints with a session JWT, so hardcoding the\n    flag on the download row popped the panel open mid-chat.'
     from fastapi import HTTPException
     from core.inference.api_monitor import api_monitor
 
@@ -861,7 +858,7 @@ def test_an_api_key_caller_waiting_on_someone_elses_download_gets_a_row(hub):
     seeded = {row["id"] for row in api_monitor.snapshot(subject = "unsloth")}
 
     with pytest.raises(HTTPException) as excinfo:
-        # The adopted-download branch: same repo, an sk-unsloth key this time.
+
         _hook(
             "unsloth/x-GGUF",
             _Req(headers = {"authorization": f"Bearer {API_KEY_PREFIX}abc123"}),
@@ -1688,7 +1685,7 @@ def test_an_advertised_alias_for_the_resident_weights_is_still_served(monkeypatc
 
 
 def test_a_rejected_token_says_so_instead_of_asking_for_a_retry(hub):
-    # Hugging Face 401s an expired X-Unsloth-HF-Token. Only 403/404 were handled, so it
+
     # fell through to a 503 telling the caller to retry something that cannot work.
     from huggingface_hub.utils import HfHubHTTPError
 

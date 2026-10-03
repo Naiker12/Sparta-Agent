@@ -265,11 +265,7 @@ def security_load_subdirs(
 
 
 def load_scan_target(model_name: str, load_subdirs: tuple) -> tuple:
-    """Map a load alias to the ``(repo_id, load_subdirs)`` the load actually fetches. The
-    Spark-TTS / BiCodec alias ``<parent>/LLM`` is downloaded by the trainer as
-    ``unsloth/<parent>`` and loaded from ``LLM/``, so scan that repo with ``LLM`` as a
-    load root (the literal alias 404s and fails open). Everything else is unchanged.
-    """
+    'Map a load alias to the ``(repo_id, load_subdirs)`` the load actually fetches. The\n    Spark-TTS / BiCodec alias ``<parent>/LLM`` is downloaded by the trainer as\n    load root (the literal alias 404s and fails open). Everything else is unchanged.\n    '
     try:
         from utils.paths import is_local_path
         if is_local_path(model_name):
@@ -277,7 +273,7 @@ def load_scan_target(model_name: str, load_subdirs: tuple) -> tuple:
     except Exception:
         return model_name, load_subdirs
     name = (model_name or "").strip().strip("/")
-    # Rewrite ONLY a registry-known bicodec alias: "evil/LLM" would scan unsloth/evil and fail open.
+
     if name.endswith("/LLM") and name.count("/") == 1:
         try:
             from utils.models.model_config import load_model_defaults

@@ -212,7 +212,7 @@ export function WindowTitlebar({
 
   const titlebarNavigationWidth =
     showSidebarSurface && !pinned ? "7rem" : sidebarWidth;
-  const contentBorderLeft = pinned ? `calc(${sidebarWidth} + 12px)` : "0px";
+  const contentBorderLeft = sidebarWidth;
 
   const refreshMaximized = useCallback(async () => {
     if (!enabled) {
@@ -348,24 +348,12 @@ export function WindowTitlebar({
         <div
           data-slot="window-titlebar-decoration"
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 top-[var(--studio-custom-titlebar-height)] z-[45] h-3"
+          className="pointer-events-none absolute inset-x-0 top-[var(--studio-custom-titlebar-height)] z-[45] h-px"
         >
-          {pinned && (
-            <div
-              className="absolute top-0 size-3 -translate-x-px bg-sidebar"
-              style={{ left: sidebarWidth }}
-            />
-          )}
           <div
             className="absolute top-0 h-px bg-sidebar-border"
             style={{ left: contentBorderLeft, right: 0 }}
           />
-          {pinned && (
-            <div
-              className="absolute top-0 size-3 -translate-x-px rounded-tl-[12px] border-l border-t border-sidebar-border bg-background"
-              style={{ left: sidebarWidth }}
-            />
-          )}
         </div>
       )}
       <header
@@ -437,7 +425,7 @@ export function WindowTitlebar({
             label="Close window"
             // No optimistic overlay here. Rust raises it only once the quit confirmations
             // have passed, and one of those can be a dialog asking whether to keep
-            // training: painting "Closing Unsloth Desktop..." behind that question would
+
             // answer it before the user does. The wait this covers is the reap, and Rust's
             // app-closing arrives well ahead of that.
             onClick={() => runWindowAction((appWindow) => appWindow.close())}

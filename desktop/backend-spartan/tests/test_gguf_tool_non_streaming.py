@@ -1,14 +1,5 @@
 
-"""Regression tests for `stream:false` on the GGUF agentic tool path (#6570).
-
-When server-side tools are enabled (e.g. `unsloth studio run --model ...`,
-which forces the tool policy on process-wide), a plain chat request used to be
-routed into the tool loop, which returned an SSE body *regardless* of
-`stream:false` -- breaking non-streaming clients and health checks like
-LiteLLM. These tests drive the real route with a fake tool-capable backend and
-assert the non-streaming path now returns a single JSON `chat.completion`,
-while `stream:true` still streams.
-"""
+'Regression tests for `stream:false` on the GGUF agentic tool path (#6570).\n\nwhich forces the tool policy on process-wide), a plain chat request used to be\nrouted into the tool loop, which returned an SSE body *regardless* of\n`stream:false` -- breaking non-streaming clients and health checks like\nLiteLLM. These tests drive the real route with a fake tool-capable backend and\nassert the non-streaming path now returns a single JSON `chat.completion`,\nwhile `stream:true` still streams.'
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient

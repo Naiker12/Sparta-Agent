@@ -586,7 +586,7 @@ def _apply_mistral_reasoning_controls(
 # handles every provider without storing credentials.
 def _create_shared_http_client() -> httpx.AsyncClient:
     # Unsupported env proxy schemes (socks:// etc) raise at construction and
-    # would crash Unsloth startup (#6090); retry ignoring env proxies instead.
+
     try:
         return httpx.AsyncClient()
     except (ImportError, ValueError) as exc:
@@ -888,7 +888,7 @@ class ExternalProviderClient:
                 "/"
             ) == "/v1beta/openai":
                 self.base_url = self.base_url[: -len("/openai")]
-        self.api_key = api_key
+        self.api_key = api_key.strip()
         self._timeout = httpx.Timeout(timeout, connect = 10.0)
         # Generous per-byte read timeout: reasoning models pause tens of seconds
         # between bytes, but a dead upstream must eventually error, not hang forever.
@@ -979,7 +979,7 @@ class ExternalProviderClient:
         if not self._is_openai_compatible():
             # Gemini speaks its own native REST shape (contents/parts);
             # `_stream_gemini` translates request/response into the OpenAI
-            # Chat Completions chunk format the rest of Unsloth expects.
+
             # API ref: https://ai.google.dev/gemini-api/docs
             if self.provider_type == "gemini":
                 async for line in self._stream_gemini(
@@ -1153,7 +1153,7 @@ class ExternalProviderClient:
         # https://openrouter.ai/docs/guides/best-practices/reasoning-tokens
         if self.provider_type == "openrouter":
             normalized_or_model = model.strip().lower()
-            if reasoning_effort in ("low", "medium", "high"):
+            if reasoning_effort in ("minimal", "low", "medium", "high", "xhigh", "max") and enable_thinking is not False:
                 body["reasoning"] = {"effort": reasoning_effort}
             elif enable_thinking is True:
                 body["reasoning"] = {"enabled": True}
@@ -1514,7 +1514,7 @@ class ExternalProviderClient:
             url,
         )
 
-        # ---- First call: collect the model's $web_search tool_call ----
+
         tool_calls_acc: dict[int, dict[str, Any]] = {}
         try:
             async with _http_client.stream(
@@ -1690,7 +1690,7 @@ class ExternalProviderClient:
         # UI card sits in "running" through the whole second-call answer.
         yield _build_kimi_tool_end(_synthetic_chunk, tool_call_id, [])
 
-        # ---- Second call: echo the tool_calls back and stream answer ----
+
         assistant_msg = {
             "role": "assistant",
             "content": "",
@@ -1887,7 +1887,7 @@ class ExternalProviderClient:
                 # Translate OpenAI multimodal parts -> Anthropic native shapes.
                 # - `image_url`     -> `{type:"image", source:...}`
                 # - `input_document` -> `{type:"document", source:...}`
-                #   (Unsloth extension; mirrors Anthropic's document block,
+
                 #   which supports PDFs as base64 or URL per
                 #   https://platform.claude.com/docs/en/build-with-claude/vision)
                 anthropic_parts: list[dict[str, Any]] = []
@@ -1930,7 +1930,7 @@ class ExternalProviderClient:
                                 }
                             )
                     elif part.get("type") == "input_document":
-                        # Unsloth's normalised PDF/doc type (file_data data-URI or
+
                         # file_url) -> Anthropic's native `document` block.
                         url = part.get("file_url") or ""
                         data_uri = part.get("file_data") or ""
@@ -4935,7 +4935,7 @@ class ExternalProviderClient:
                                 {"type": "image_generation_call", "id": call_id}
                             )
                     elif part_type == "input_document":
-                        # Map Unsloth's `input_document` onto Responses' `input_file`.
+
                         # https://developers.openai.com/api/docs/guides/images-vision
                         file_url = part.get("file_url")
                         file_data = part.get("file_data")
@@ -6300,7 +6300,7 @@ class ExternalProviderClient:
             if not models and self.provider_type == "ollama":
                 models = await self._list_ollama_native_models()
             # Gemini's native /v1beta/models uses a different shape; repackage
-            # into the OpenAI-compatible one Unsloth expects.
+
             if not models and self.provider_type == "gemini":
                 models = self._parse_gemini_models(data)
             return models
@@ -6370,6 +6370,29 @@ class ExternalProviderClient:
             for entry in raw_models
             if isinstance(entry, dict) and entry.get("name", "").strip()
         ]
+
+    async def verify_api_key(self) -> None:
+        """Validate OpenRouter credentials without a paid generation request."""
+        if not self.api_key:
+            raise ValueError("Falta la clave API de OpenRouter. Añádela y guarda la conexión.")
+        try:
+            response = await _http_client.get(
+                f"{self.base_url}/key",
+                headers = self._auth_headers(),
+                timeout = self._timeout,
+            )
+            if response.status_code in (401, 403):
+                raise ValueError("OpenRouter rechazó la clave API. Verifica que esté activa y vuelve a guardarla.")
+            if response.status_code == 429:
+                raise ValueError("OpenRouter limitó temporalmente las solicitudes. Reintenta en unos minutos.")
+            response.raise_for_status()
+            payload = response.json()
+            if not isinstance(payload, dict) or not isinstance(payload.get("data"), dict):
+                raise ValueError("OpenRouter devolvió una respuesta de autenticación inesperada. Revisa la URL de la conexión.")
+        except httpx.TimeoutException as exc:
+            raise ValueError("OpenRouter tardó demasiado en responder. Revisa tu conexión y reintenta.") from exc
+        except httpx.RequestError as exc:
+            raise ValueError("No se pudo conectar con OpenRouter. Revisa internet, el proxy y la URL de la conexión.") from exc
 
     async def verify_models_endpoint_lightweight(self) -> None:
         """
@@ -6503,7 +6526,7 @@ def _friendly_provider_error_text(
     *,
     model: str | None = None,
 ) -> str:
-    """Rewrite common provider errors into actionable Unsloth copy."""
+    ''
     if status_code == 404 and model:
         lowered = raw_message.lower()
         if "not found" in lowered or "not_found" in lowered:

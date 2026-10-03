@@ -1,12 +1,5 @@
 
-"""
-Training backend — subprocess orchestrator.
-
-Each job runs in a fresh spawn subprocess (solving transformers version-switching);
-the in-process UnslothTrainer singleton is only used inside the worker. This file
-orchestrates the subprocess lifecycle, pumps events from the worker's mp.Queue, and
-exposes the same API to routes/training.py. Pattern follows data_recipe/jobs/manager.py.
-"""
+"\nTraining backend — subprocess orchestrator.\n\nEach job runs in a fresh spawn subprocess (solving transformers version-switching);\norchestrates the subprocess lifecycle, pumps events from the worker's mp.Queue, and\nexposes the same API to routes/training.py. Pattern follows data_recipe/jobs/manager.py."
 
 import json as _json
 import math
@@ -168,7 +161,7 @@ def should_use_mlx_training_backend(*, device: Optional[Any] = None) -> bool:
 
 
 def _build_training_worker_config(values: dict[str, Any]) -> dict[str, Any]:
-    """Build the normalized worker config shared by Unsloth and the CLI adapter."""
+    ''
     config = {
         "model_name": values["model_name"],
         "project_name": values.get("project_name"),
@@ -605,7 +598,7 @@ PLOT_HEIGHT = 3.5
 
 @dataclass
 class TrainingProgress:
-    """Shared training progress payload for Unsloth and backend-aware trainers."""
+    ''
 
     epoch: float = 0
     step: int = 0
@@ -631,7 +624,7 @@ class TrainingProgress:
 
 
 class _MLXTrainerAdapter:
-    """Adapts the legacy UnslothTrainer API to the shared Unsloth MLX worker path."""
+    ''
 
     def __init__(self):
         self.model = None
@@ -798,7 +791,7 @@ class _MLXTrainerAdapter:
         max_train_rows: Optional[int] = None,
         max_train_rows_seed: int = 3407,
     ) -> Optional[tuple]:
-        # Signature must match UnslothTrainer, which hands back this adapter on an
+
         # MLX host. The MLX worker loads its own data and derives the row bound from
         # its config, so the two bound arguments are accepted and deliberately not
         # forwarded: a copy here would be a second source of truth.
@@ -1153,7 +1146,7 @@ class TrainingBackend:
 
         logger.info("TrainingBackend initialized (subprocess mode)")
 
-    # --- Public API (called by routes/training.py) ---
+
 
     def reserve_start_request(
         self, start_request_id: str, job_id: str
@@ -2607,7 +2600,7 @@ class TrainingBackend:
         """Compatibility shim for routes that access backend.trainer.*"""
         return self._TrainerShim(self)
 
-    # --- Event pump (background thread) ---
+
 
     def _safe_handle_event(self, event: dict) -> None:
         """Apply one event, swallowing any handler error.
@@ -3032,7 +3025,7 @@ class TrainingBackend:
                 }
                 self._terminal_finalize_payload = dict(db_action_kwargs)
 
-        # --- DB I/O outside the lock ---
+
         if db_action == "create_run":
             self._ensure_db_run_created()
             if self._db_run_created:
@@ -3328,7 +3321,7 @@ class TrainingBackend:
                 )
                 return events
 
-    # --- Plot generation ---
+
 
     def _create_loss_plot(
         self,
@@ -3454,7 +3447,7 @@ class TrainingBackend:
         return fig
 
 
-# ========== GLOBAL INSTANCE ==========
+
 _training_backend = None
 
 

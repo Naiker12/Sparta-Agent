@@ -1,12 +1,5 @@
 
-"""Audio (TTS) generation applies recommended sampling + operator pins, like chat.
-
-Regression guard for the fix that moved the sampling fill ahead of the audio generators: a
-prior version resolved sampling only after the audio branches returned, so `unsloth run
---temperature` (UNSLOTH_SAMPLING_*) and per-model recommendations never reached audio
-generation. These exercise the transformers TTS path of ``generate_audio`` (the direct
-``/audio/generate`` route, which the chat-completions audio branches also delegate to).
-"""
+'Audio (TTS) generation applies recommended sampling + operator pins, like chat.\n\nRegression guard for the fix that moved the sampling fill ahead of the audio generators: a\ngeneration. These exercise the transformers TTS path of ``generate_audio`` (the direct\n``/audio/generate`` route, which the chat-completions audio branches also delegate to).'
 
 import asyncio
 import json

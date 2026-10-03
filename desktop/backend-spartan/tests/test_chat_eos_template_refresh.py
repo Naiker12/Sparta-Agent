@@ -16,7 +16,7 @@ if str(_BACKEND) not in sys.path:
     sys.path.insert(0, str(_BACKEND))
 
 # These tests construct InferenceBackend, pulling the full stack. CI may lack
-# unsloth/unsloth_zoo (ImportError) or have a broken CUDA/bitsandbytes setup
+
 # (RuntimeError); skip at module level so collection is not aborted (exit 2).
 try:
     from core.inference import inference as inf_mod  # noqa: E402

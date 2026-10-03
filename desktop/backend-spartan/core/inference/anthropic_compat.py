@@ -667,12 +667,7 @@ class AnthropicPassthroughEmitter:
         *,
         disable_parallel_tool_use: bool = False,
     ) -> None:
-        """Promote text-form tool calls in streamed content to tool_use blocks.
-
-        Only calls naming a tool in ``allowed_tools`` (the client's declared
-        tools) are promoted; everything else streams as text exactly as before.
-        Never enabled for Unsloth's own tool loop.
-        """
+        "Promote text-form tool calls in streamed content to tool_use blocks.\n\n        Only calls naming a tool in ``allowed_tools`` (the client's declared\n        tools) are promoted; everything else streams as text exactly as before.\n        "
         from core.inference.passthrough_healing import StreamToolCallHealer
 
         self._healer = StreamToolCallHealer(allowed_tools, tools)
@@ -725,7 +720,7 @@ class AnthropicPassthroughEmitter:
         delta = choice.get("delta") or {}
         finish_reason = choice.get("finish_reason")
 
-        # ── Structured tool calls take precedence over healing ──
+
         # Grammar mode worked: flush anything the healer held (it preceded the
         # call in the model's output) and relay verbatim from here on.
         if delta.get("tool_calls") and self._healer is not None and not self._healer.dormant:
@@ -733,7 +728,7 @@ class AnthropicPassthroughEmitter:
                 if kind == "text" and value:
                     events.extend(self._emit_text_delta(value))
 
-        # ── Text content ──
+
         content = delta.get("content")
         if content and self._healer is not None and not self._healer.dormant:
             # Route text through the healer: held/promoted portions become
@@ -746,7 +741,7 @@ class AnthropicPassthroughEmitter:
         elif content:
             events.extend(self._emit_text_delta(content))
 
-        # ── Tool calls (streaming deltas) ──
+
         tool_calls = delta.get("tool_calls") or []
         for tc in tool_calls:
             tc_idx = tc.get("index", 0)
@@ -806,7 +801,7 @@ class AnthropicPassthroughEmitter:
                     )
                 )
 
-        # ── Finish reason ──
+
         if finish_reason:
             self._stop_reason = openai_finish_to_anthropic_stop(finish_reason)
 

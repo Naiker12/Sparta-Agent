@@ -152,8 +152,7 @@ def _fake_torch(
 
 
 def _binary_with_marker(tmp_path, payload):
-    """Lay out ``<root>/UNSLOTH_PREBUILT_INFO.json`` with the binary path below
-    it, matching the managed install layout the marker walk-up covers."""
+    '    it, matching the managed install layout the marker walk-up covers.'
     (tmp_path / "UNSLOTH_PREBUILT_INFO.json").write_text(json.dumps(payload), encoding = "utf-8")
     return str(tmp_path / "build" / "bin" / "llama-server")
 
@@ -1872,7 +1871,7 @@ class TestUnifiedMemoryOptOut:
         assert env.get("GGML_CUDA_ENABLE_UNIFIED_MEMORY") == value
 
     def test_the_disable_switch_keeps_it_unset(self, tmp_path, monkeypatch, probe_env):
-        """The switch users can find, mirroring UNSLOTH_DISABLE_DC_TUNING."""
+        ''
         _cmd, env = self._load(tmp_path, monkeypatch, {"UNSLOTH_DISABLE_UNIFIED_MEMORY": "1"})[0]
         assert "GGML_CUDA_ENABLE_UNIFIED_MEMORY" not in env
 

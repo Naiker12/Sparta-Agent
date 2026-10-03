@@ -12,6 +12,7 @@ import {
   shouldUseNativeMacWindowTitlebar,
 } from "@/components/tauri/window-titlebar";
 import { Toaster } from "@/components/ui/sonner";
+import { AutomationNotifications } from "@/features/tasks/automation-notifications";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { WebUpdateBanner } from "@/components/web/update-banner";
 import { fetchDeviceType } from "@/config/env";
@@ -577,8 +578,8 @@ function DesktopChromeVarsEffect({
 }
 
 /**
- * Frame the workspace, not the brand header. The corner joins the horizontal
- * seam to the sidebar edge and follows its live width during resizing.
+ * Join the workspace seam directly to the sidebar's live edge. Keep this
+ * straight: a painted corner makes the content look like a detached card.
  */
 function ElectronTitlebarDivider() {
   const { pinned } = useSidebarPin();
@@ -598,17 +599,12 @@ function ElectronTitlebarDivider() {
     <div
       aria-hidden="true"
       data-slot="electron-workspace-seam"
-      className="pointer-events-none fixed right-0 top-[var(--studio-custom-titlebar-height,38px)] z-[45] h-3"
+      className="pointer-events-none fixed right-0 top-[var(--studio-custom-titlebar-height,38px)] z-[45] h-px"
       style={{ left }}
     >
-      {hasSidebar && (
-        <div className="absolute left-0 top-0 size-3 bg-sidebar">
-          <div className="size-3 rounded-tl-xl border-l border-t border-sidebar-border bg-background" />
-        </div>
-      )}
       <div
         className="absolute right-0 top-0 h-px bg-sidebar-border"
-        style={{ left: hasSidebar ? 12 : 0 }}
+        style={{ left: 0 }}
       />
     </div>
   );
@@ -1041,6 +1037,7 @@ export function AppProvider({ children }: AppProviderProps) {
       <TooltipProvider>
         <AppearanceCustomizationEffect />
         <WorkspaceRelayEffect />
+        <AutomationNotifications />
         <DeepLinkHandler />
         <TauriWrapper>{children}</TauriWrapper>
         <Toaster

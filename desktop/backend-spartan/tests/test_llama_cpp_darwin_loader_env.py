@@ -491,13 +491,7 @@ class TestAnExplicitPinOutranksInferredOwnership:
 
 
 class TestTheCpuFallbackGateIsUnchangedForLinkedTrees:
-    """--with-llama-cpp-dir is not something `unsloth studio update` can fix.
-
-    Teaching _is_unsloth_managed_binary that also changed the gate on the
-    Vulkan CPU fallback, which needs only to read and copy the tree, so those
-    installs lost the fallback on Linux and Windows. The two questions are
-    asked separately now.
-    """
+    '\n    Vulkan CPU fallback, which needs only to read and copy the tree, so those\n    installs lost the fallback on Linux and Windows. The two questions are\n    asked separately now.\n    '
 
     @staticmethod
     def _linked_tree(tmp_path, monkeypatch):
@@ -563,13 +557,7 @@ class TestAWrapperChainIsFollowedToTheEnd:
 
 
 class TestOnlyTheInstallersOwnEntrypointIsSkipped:
-    """UNSLOTH_LLAMA_CPP_PATH makes a user's checkout read as managed.
-
-    _llama_install_root treats the directory named by that variable as the
-    active install with no marker file needed, so provenance alone said "ours"
-    for a wrapper at the root of somebody's own tree, and its exports were lost.
-    The installer writes a fixed three-line wrapper; anything else is theirs.
-    """
+    '\n    _llama_install_root treats the directory named by that variable as the\n    active install with no marker file needed, so provenance alone said "ours"\n    for a wrapper at the root of somebody\'s own tree, and its exports were lost.\n    The installer writes a fixed three-line wrapper; anything else is theirs.\n    '
 
     @staticmethod
     def _tree(tmp_path, wrapper_body):

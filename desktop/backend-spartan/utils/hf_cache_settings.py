@@ -1,10 +1,5 @@
 
-"""Live, persisted Hugging Face cache routing for Unsloth Studio.
-
-Hugging Face reads cache environment variables at import time.  Studio therefore
-owns an explicit cache snapshot for each operation instead of trying to refresh
-``huggingface_hub.constants`` in the long-running API process.
-"""
+'\nHugging Face reads cache environment variables at import time.  Studio therefore\nowns an explicit cache snapshot for each operation instead of trying to refresh\n``huggingface_hub.constants`` in the long-running API process.'
 
 from __future__ import annotations
 
@@ -198,7 +193,7 @@ def child_environment_for_spawn(environment: Mapping[str, str]) -> Iterator[None
     from utils.utils import hf_environment_restored_for_spawn
 
     # Also exclude the Xet shim's GPU-init override window: a child spawned inside it inherits the
-    # flag for life, whereupon unsloth_zoo hands it STUB triton and bitsandbytes and the run
+
     # silently produces nothing. Filtering a child env dict cannot help here, since spawn copies the
     # live environment and takes no env argument.
     with _spawn_env_lock, _xet_loader_barrier(), hf_environment_restored_for_spawn():

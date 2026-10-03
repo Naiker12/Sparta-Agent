@@ -19,8 +19,7 @@ import {
   Server,
   Sparkles,
 } from "lucide-react";
-import { Component, useEffect, useMemo, useState } from "react";
-import type { ErrorInfo, ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Mention = {
   id: string;
@@ -61,23 +60,6 @@ function getItemIcon(type: string) {
 }
 
 /** Native assistant-ui @ mention surface. Selecting only serializes context; it never runs a tool. */
-class ComposerMentionsBoundary extends Component<
-  { children: ReactNode },
-  { failed: boolean }
-> {
-  state = { failed: false };
-
-  static getDerivedStateFromError(): { failed: boolean } {
-    return { failed: true };
-  }
-
-  componentDidCatch(_error: Error, _info: ErrorInfo): void {}
-
-  render(): ReactNode {
-    return this.state.failed ? null : this.props.children;
-  }
-}
-
 function ComposerMentionsContent({ threadId }: { threadId: string | null }) {
   const t = useT();
   const activeProjectId = useChatRuntimeStore((s) => s.activeProjectId);
@@ -273,8 +255,6 @@ function ComposerMentionsContent({ threadId }: { threadId: string | null }) {
 
 export function ComposerMentions({ threadId }: { threadId: string | null }) {
   return (
-    <ComposerMentionsBoundary key={threadId ?? "new"}>
-      <ComposerMentionsContent threadId={threadId} />
-    </ComposerMentionsBoundary>
+    <ComposerMentionsContent threadId={threadId} />
   );
 }

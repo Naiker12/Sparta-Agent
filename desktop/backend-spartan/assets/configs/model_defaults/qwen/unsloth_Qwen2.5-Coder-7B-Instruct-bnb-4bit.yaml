@@ -1,6 +1,4 @@
-# Model defaults for unsloth/Qwen2.5-Coder-7B-Instruct-bnb-4bit
 # Based on CodeForces-cot-Finetune_for_Reasoning_on_CodeForces.ipynb
-# Also applies to: unsloth/Qwen2.5-Coder-7B-Instruct, Qwen/Qwen2.5-Coder-7B-Instruct
 
 training:
   max_seq_length: 32768

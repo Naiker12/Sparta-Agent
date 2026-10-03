@@ -54,16 +54,7 @@ def hf_cache_repo_id(path: Optional[str]) -> Optional[str]:
 
 
 def public_model_id(identifier: Optional[str]) -> Optional[str]:
-    """Return a clean, path-free public id for *identifier*.
-
-    - HF cache path -> the repo id it came from, e.g.
-      ``~/.cache/huggingface/hub/models--unsloth--X-GGUF/snapshots/<sha>`` ->
-      ``unsloth/X-GGUF``.
-    - Other local GGUF path -> the file stem with ``.gguf`` stripped, e.g.
-      ``/srv/models/Qwen3-30B-A3B-Q4_K_M.gguf`` -> ``Qwen3-30B-A3B-Q4_K_M``.
-    - HF repo id (``org/model``) and already-clean names -> returned unchanged.
-    - ``None`` / empty -> returned unchanged.
-    """
+    'Return a clean, path-free public id for *identifier*.\n\n    - HF cache path -> the repo id it came from, e.g.\n    - Other local GGUF path -> the file stem with ``.gguf`` stripped, e.g.\n      ``/srv/models/Qwen3-30B-A3B-Q4_K_M.gguf`` -> ``Qwen3-30B-A3B-Q4_K_M``.\n    - HF repo id (``org/model``) and already-clean names -> returned unchanged.\n    - ``None`` / empty -> returned unchanged.\n    '
     if not identifier:
         return identifier
     if not _looks_like_path(identifier):

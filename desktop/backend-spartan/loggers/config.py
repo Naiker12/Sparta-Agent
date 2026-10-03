@@ -99,7 +99,7 @@ def _truncate_exception_processor(logger, method_name, event_dict):
 
 
 def _plain_tracebacks_enabled() -> bool:
-    """Echo readable tracebacks? ``UNSLOTH_STUDIO_PLAIN_TRACEBACKS=0`` turns it off."""
+    ''
     return (os.environ.get("UNSLOTH_STUDIO_PLAIN_TRACEBACKS") or "").strip().lower() not in (
         "0",
         "off",
@@ -227,26 +227,7 @@ def _cap_echoed_lines(lines: list[str], limit: int) -> str:
 
 
 def with_readable_traceback(renderer):
-    """Wrap the JSON renderer so an exception is ALSO echoed as a real multi-line traceback
-    on the lines after the record.
-
-    ~/.unsloth/studio/logs is a tee of stdout and stdout is JSON, so every traceback
-    reached its reader as one enormous line with newlines escaped to ``\\n`` -- correct
-    JSON, unreadable prose. The reported Image Transform failure ("RuntimeError: Input type
-    (float) and bias type (c10::BFloat16)...") arrived that way, and so does every crash
-    anyone is asked to send in.
-
-    The JSON record is emitted UNCHANGED, so record-by-record readers see what they always
-    saw, and every echoed line is prefixed so it cannot parse as a record. Non-JSON lines
-    in that file are already expected -- faulthandler dumps native stacks to the same
-    handle.
-
-    Returned as part of the SAME string rather than written to another stream, so one
-    ``print`` under ``PrintLogger``'s lock keeps record and traceback adjacent and ordered:
-    a processor runs BEFORE that print, and the export worker reads stdout and stderr on
-    separate pipes.
-
-    JSON only. ConsoleRenderer (development) already prints tracebacks as tracebacks."""
+    'Wrap the JSON renderer so an exception is ALSO echoed as a real multi-line traceback\n    on the lines after the record.\n\n    reached its reader as one enormous line with newlines escaped to ``\\n`` -- correct\n    JSON, unreadable prose. The reported Image Transform failure ("RuntimeError: Input type\n    (float) and bias type (c10::BFloat16)...") arrived that way, and so does every crash\n    anyone is asked to send in.\n\n    The JSON record is emitted UNCHANGED, so record-by-record readers see what they always\n    saw, and every echoed line is prefixed so it cannot parse as a record. Non-JSON lines\n    in that file are already expected -- faulthandler dumps native stacks to the same\n    handle.\n\n    Returned as part of the SAME string rather than written to another stream, so one\n    ``print`` under ``PrintLogger``\'s lock keeps record and traceback adjacent and ordered:\n    a processor runs BEFORE that print, and the export worker reads stdout and stderr on\n    separate pipes.\n\n    JSON only. ConsoleRenderer (development) already prints tracebacks as tracebacks.'
 
     def _render(logger, method_name, event_dict):
         exception = event_dict.get("exception")
@@ -282,8 +263,7 @@ def _env_is_true(value: str) -> bool:
 
 
 def _verbose_logging_requested() -> bool:
-    """True when `unsloth studio --verbose` asked for every line back. The CLI signals
-    it by zeroing both access-log dedup windows, which is what the workers inherit."""
+    '    it by zeroing both access-log dedup windows, which is what the workers inherit.'
 
     def _zero(name: str) -> bool:
         raw = (os.environ.get(name) or "").strip()

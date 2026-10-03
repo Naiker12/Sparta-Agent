@@ -42,12 +42,7 @@ _REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def _inference_module():
-    """``core.inference.inference`` or a skip.
-
-    It imports unsloth at module scope, which raises ImportError("Unsloth: torch not
-    found") without torch. ``pytest.importorskip`` does not skip on that, because the error
-    comes from spartan_agent rather than from the module named here, so the guard is explicit.
-    """
+    '``core.inference.inference`` or a skip.\n\n    found") without torch. ``pytest.importorskip`` does not skip on that, because the error\n    comes from spartan_agent rather than from the module named here, so the guard is explicit.\n    '
     try:
         import core.inference.inference as inference_module
     except ImportError as exc:  # pragma: no cover - depends on the runner's deps
@@ -262,7 +257,7 @@ def test_openai_content_parts_are_rewritten_in_place():
 
 
 def _unsloth_template(name: str) -> str:
-    """Read a template literal out of unsloth/chat_templates.py without importing it."""
+    ''
     source = (_REPO_ROOT / "unsloth" / "chat_templates.py").read_text(encoding = "utf-8")
     for node in ast.parse(source).body:
         if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == name:

@@ -75,7 +75,7 @@ validate_extra_args = _lsa.validate_extra_args
         # Reasoning controls
         ["--reasoning-format", "deepseek"],
         ["-rea", "auto"],
-        # Soft-managed: user flags last-wins over Unsloth's auto-set version.
+
         # --parallel / -np / --n-parallel are hard-denied; use Parallel Slots.
         ["-c", "131072"],
         ["--ctx-size", "8192"],
@@ -179,7 +179,7 @@ def test_a_bare_positional_is_rejected():
         "--mmproj",
         "-mmu",
         "--mmproj-url",
-        # Networking (Unsloth binds + proxies)
+
         "--host",
         "--port",
         "--path",
@@ -205,13 +205,13 @@ def test_a_bare_positional_is_rejected():
         "--models-autoload",
         "--no-models-autoload",
         # Server-mode flips: --embedding / --rerank restrict llama-server to
-        # those endpoints and break Unsloth's chat hop.
+
         "--embedding",
         "--embeddings",
         "--rerank",
         "--reranking",
         "--pooling",
-        # llama-server's own --tools clashes with Unsloth's tool policy.
+
         "--tools",
         # --agent is --tools by another name ("enable CORS proxy and ALL built-in
         # tools", which includes exec_shell_command), and --tools-runtime says where
@@ -224,7 +224,7 @@ def test_a_bare_positional_is_rejected():
         # MCP servers are the same capability from a file or an inline blob.
         "--mcp-servers-config",
         "--mcp-servers-json",
-        # Unsloth terminates browser access at its own origin.
+
         "--cors-origins",
         "--cors-headers",
         "--cors-methods",
@@ -296,7 +296,7 @@ def test_slot_save_path_is_managed_in_all_forms():
             validate_extra_args(args)
     assert is_managed_flag("--slot-save-path") is True
     assert is_managed_flag("--slot-save-path=/tmp/x") is True
-    # Endpoint exposure stays a user choice: Unsloth reads GET /props and never
+
     # /slots, so neither flag can strand it.
     assert is_managed_flag("--slots") is False
     assert is_managed_flag("--no-slots") is False
@@ -450,7 +450,7 @@ def test_strip_shadowing_flags_keeps_spec_when_spec_disabled():
 
 
 def test_strip_shadowing_flags_keeps_device_by_default():
-    # --device is pass-through by default (users may pin when Unsloth auto-selects).
+
     out = strip_shadowing_flags(
         ["--device", "Vulkan1", "--top-k", "20"],
         strip_context = False,
@@ -707,7 +707,7 @@ def test_split_mode_passes_through(args):
 @pytest.mark.parametrize("args", [["--split-mode=row"], ["-sm=tensor"]])
 def test_the_attached_split_mode_spelling_is_refused(args):
     # The parsers below still read the attached form, since they also run over
-    # Unsloth's own emitted flags; the boundary is where the user's spelling of it
+
     # is turned back, while the message can still reach them.
     with pytest.raises(ValueError, match = "two separate arguments"):
         validate_extra_args(args)
@@ -812,7 +812,7 @@ def test_extra_args_disable_mmproj_last_wins():
 
 
 def test_strip_shadowing_flags_drops_model_draft_with_spec():
-    # --model-draft (and aliases) are Unsloth-managed since the separate
+
     # MTP drafter support: an inherited copy must not last-wins-override
     # the auto-detected drafter.
     out = strip_shadowing_flags(
@@ -837,7 +837,7 @@ def test_strip_shadowing_flags_drops_model_draft_with_spec():
 )
 def test_strip_shadowing_flags_drops_hf_drafter_selectors_with_spec(selector):
     # HF drafter selectors must reset on inherit like local --model-draft, or a
-    # stale inherited HF drafter last-wins over Unsloth's re-derived spec choice.
+
     out = strip_shadowing_flags(
         selector + ["--top-k", "20"],
         strip_context = False,
@@ -983,7 +983,7 @@ def test_strip_context_only_preserves_none_and_empty():
 
 def test_strip_shadowing_flags_drops_tensor_split_with_split_mode():
     # --tensor-split is coupled to the split mode: stripped together so a stale
-    # ratio can't override Unsloth's computed tensor split. Other flags survive.
+
     out = strip_shadowing_flags(
         ["--split-mode", "row", "--tensor-split", "1,1", "--top-k", "20"],
         strip_context = False,
@@ -1165,7 +1165,7 @@ def test_every_denied_flag_with_a_twin_in_the_help_is_scrubbed():
 
 
 def test_the_projector_env_twins_survive_the_scrub():
-    # --mmproj is refused in the box because Unsloth resolves the projector itself,
+
     # but the environment twin is an INPUT: _launch_has_mmproj reads both names to
     # know the launch has a projector at all, which is what keeps the vision and
     # audio state of a model loaded through an inherited one. Scrubbing them made

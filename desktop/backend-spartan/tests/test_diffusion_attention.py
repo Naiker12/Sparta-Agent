@@ -386,10 +386,7 @@ class _CapturingLogger:
 
 
 def test_a_private_mirrors_credentials_never_reach_the_log(monkeypatch):
-    """UNSLOTH_PYTORCH_MIRROR is allowed to be an authenticated index, and the wheel URL is
-    built from it -- so logging the URL as the package name wrote the token into the backend
-    log on every install. pip is still handed the real URL; only the log is redacted, and
-    pip's own stderr echoes the URL back, so that is redacted too."""
+    "    built from it -- so logging the URL as the package name wrote the token into the backend\n    log on every install. pip is still handed the real URL; only the log is redacted, and\n    pip's own stderr echoes the URL back, so that is redacted too."
     monkeypatch.setenv("UNSLOTH_DIFFUSION_ATTENTION_INSTALL", "auto")
     import importlib.util
     import subprocess as sp

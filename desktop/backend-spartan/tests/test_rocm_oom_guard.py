@@ -1,16 +1,5 @@
 
-"""Unit tests for the ROCm OOM guard: device classification and fraction selection.
-
-Classification paths: (1) canonical gcnArchName, (2) alternate-spelling attr,
-(3) all arch attrs absent -> device-name substring match.
-
-Fraction selection: the unified-Linux reserve crossover, the discrete cap, the
-Windows budget-exact 1.0, and the UNSLOTH_ROCM_MEM_FRACTION override.
-
-Regression: Strix Halo (gfx1151) was misclassified as discrete on Radeon wheels
-that set props.name="Radeon 8060S Graphics" but no gcnArchName, applying the
-wrong headroom factor on a 128 GiB unified-memory pool.
-"""
+'Unit tests for the ROCm OOM guard: device classification and fraction selection.\n\nClassification paths: (1) canonical gcnArchName, (2) alternate-spelling attr,\n(3) all arch attrs absent -> device-name substring match.\n\nFraction selection: the unified-Linux reserve crossover, the discrete cap, the\n\nRegression: Strix Halo (gfx1151) was misclassified as discrete on Radeon wheels\nthat set props.name="Radeon 8060S Graphics" but no gcnArchName, applying the\nwrong headroom factor on a 128 GiB unified-memory pool.'
 
 from __future__ import annotations
 
@@ -60,10 +49,7 @@ def _props(**kwargs) -> SimpleNamespace:
 
 
 class TestIsIntegratedSignal:
-    """hipDeviceProp_t.integrated wins when truthy; 0/absent never downgrades.
-
-    Same universal gate PR #5988's UMA safetensors fast-load uses -- keeps
-    Unsloth's two unified-memory consumers on one signal."""
+    "hipDeviceProp_t.integrated wins when truthy; 0/absent never downgrades.\n\n    Same universal gate PR #5988's UMA safetensors fast-load uses -- keeps"
 
     def test_integrated_upgrades_unknown_apu(self) -> None:
         # gfx1103 Phoenix iGPU: outside the hardcoded arch set, but the
@@ -446,9 +432,7 @@ class TestAllocatorDenominator:
 
 
 class TestMemFractionEnvOverride:
-    """UNSLOTH_ROCM_MEM_FRACTION is the escape hatch for hosts the formula
-    gets wrong. Bad values are ignored, never fatal -- a typo in an env var
-    must not take down a training run."""
+    '    gets wrong. Bad values are ignored, never fatal -- a typo in an env var\n    must not take down a training run.'
 
     def test_override_wins_over_computed(self) -> None:
         assert _rocm_memory_fraction(128 * GIB, True, "linux", "0.95") == 0.95

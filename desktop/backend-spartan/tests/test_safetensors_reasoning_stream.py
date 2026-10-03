@@ -32,29 +32,7 @@ _STUBBED: list[str] = []
 
 
 def _stub_if_missing(name, attrs):
-    """Register a stub module for a dep the backend pytest job does not install.
-
-    Same helper and reason as test_audio_type_inconclusive.py and
-    test_trainer_stdout_quiet.py: ``core.inference.inference`` imports ``unsloth``
-    (and through it ``unsloth_zoo``) at module scope, while the pytest matrix in
-    studio-backend-ci.yml installs studio.txt plus torch and transformers and
-    deliberately stops there. A real install is left alone.
-
-    This file used to have no stub at all. The three tests below reach
-    ``core.inference.inference`` through ``pytest.importorskip`` inside the test
-    body, which is lazy enough that the module-scope guard in
-    test_backend_tests_stub_heavy_imports.py does not look at it, so the omission
-    was invisible. They passed anyway, because some earlier file in the same
-    session had installed this stub and left the imported module in
-    ``sys.modules`` for them. Run this file first, or on its own, and the import
-    raises ``ImportError: Please install unsloth_zoo``, which pytest 8.2+ no
-    longer converts to a skip (only ``ModuleNotFoundError`` does that), so it is
-    a hard failure rather than the intended skip.
-
-    Stubbing here rather than switching to skipif keeps the coverage: the module
-    under test is the real ``core.inference.inference``, and only ``unsloth``
-    itself is faked.
-    """
+    'Register a stub module for a dep the backend pytest job does not install.\n\n    Same helper and reason as test_audio_type_inconclusive.py and\n    studio-backend-ci.yml installs studio.txt plus torch and transformers and\n    deliberately stops there. A real install is left alone.\n\n    This file used to have no stub at all. The three tests below reach\n    ``core.inference.inference`` through ``pytest.importorskip`` inside the test\n    body, which is lazy enough that the module-scope guard in\n    test_backend_tests_stub_heavy_imports.py does not look at it, so the omission\n    was invisible. They passed anyway, because some earlier file in the same\n    session had installed this stub and left the imported module in\n    ``sys.modules`` for them. Run this file first, or on its own, and the import\n    longer converts to a skip (only ``ModuleNotFoundError`` does that), so it is\n    a hard failure rather than the intended skip.\n\n    Stubbing here rather than switching to skipif keeps the coverage: the module\n    itself is faked.\n    '
     if name in sys.modules:
         return
     try:

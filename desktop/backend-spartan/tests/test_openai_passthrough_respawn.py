@@ -382,7 +382,7 @@ def test_non_streaming_does_not_replay_a_slow_generation(monkeypatch):
 
 
 class _RotatingKeyBackend(_Backend):
-    """llama-server mints a fresh --api-key on every launch (UNSLOTH_DIRECT_STREAM)."""
+    ''
 
     def __init__(self, **kw):
         super().__init__(**kw)

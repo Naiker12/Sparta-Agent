@@ -296,7 +296,7 @@ class TestStableAbiPatchReleases:
 
 class TestPytorchMirror:
     def test_the_wheel_url_follows_the_configured_mirror(self, monkeypatch):
-        # An air-gapped install has one lever, UNSLOTH_PYTORCH_MIRROR, and the rest of the
+
         # installer stack already honours it. A hard-coded download.pytorch.org here was the
         # one path that could not reach a mirror-only host.
         monkeypatch.setenv("UNSLOTH_PYTORCH_MIRROR", "https://mirror.example/pytorch/whl/")

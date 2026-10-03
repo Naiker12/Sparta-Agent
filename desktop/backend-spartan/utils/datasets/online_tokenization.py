@@ -1,34 +1,5 @@
 
-"""Online (overlapped) dataset tokenization for the plain-text SFT path.
-
-TRL's ``_prepare_dataset`` maps over every row before ``train()`` may begin: the
-largest fixed startup cost (97s of 106s of preparation on 100k rows of
-OpenMathReasoning at ``dataset_num_proc = 8``), and all of it overlappable with
-the GPU.  This module moves it into the DataLoader workers.  Four pieces, all
-needed together:
-
-1. ``datasets.Dataset.with_transform`` attaches a per-batch tokenizer that runs
-   on ``__getitem__``.  It returns an immutable *view*; ``set_transform`` would
-   mutate the caller's object, which the preview/eval code also holds.
-2. TRL gets ``dataset_kwargs = {"skip_prepare_dataset": True}`` so it does not
-   map over the view, materialising the pass we are avoiding.  Studio already
-   uses that hook for the VLM branch.
-3. ``dataloader_num_workers`` > 0 with prefetch and persistent workers, so the
-   tokenizer runs overlapped with the GPU.
-4. A prewarm barrier pulls ``max(grad_accum, workers * prefetch)`` microbatches
-   before ``train()``: plain prefetch does not promise the first ``__next__``.
-
-The transform reproduces ``unsloth_zoo.dataset_utils.sft_prepare_dataset``'s
-tokenize step exactly (truncation, ``max_length``, double-BOS rule), so rows are
-byte-identical to the eager path.  Anything where that is not provable stays
-eager; see :func:`decide_online_tokenization`.
-
-Two costs worth stating.  The pass gate counts TRAIN passes only: a lazy eval
-split is re-tokenized on every evaluation where the eager map tokenized once,
-which scales with ``eval_steps``.  And the workers are persistent by design (the
-barrier's workers must survive into ``train()``), so they need explicit shutdown
-at the end; see :func:`release_train_dataloader`.
-"""
+'Online (overlapped) dataset tokenization for the plain-text SFT path.\n\nTRL\'s ``_prepare_dataset`` maps over every row before ``train()`` may begin: the\nlargest fixed startup cost (97s of 106s of preparation on 100k rows of\nOpenMathReasoning at ``dataset_num_proc = 8``), and all of it overlappable with\nthe GPU.  This module moves it into the DataLoader workers.  Four pieces, all\nneeded together:\n\n1. ``datasets.Dataset.with_transform`` attaches a per-batch tokenizer that runs\n   on ``__getitem__``.  It returns an immutable *view*; ``set_transform`` would\n   mutate the caller\'s object, which the preview/eval code also holds.\n2. TRL gets ``dataset_kwargs = {"skip_prepare_dataset": True}`` so it does not\n   map over the view, materialising the pass we are avoiding.  Studio already\n   uses that hook for the VLM branch.\n3. ``dataloader_num_workers`` > 0 with prefetch and persistent workers, so the\n   tokenizer runs overlapped with the GPU.\n4. A prewarm barrier pulls ``max(grad_accum, workers * prefetch)`` microbatches\n   before ``train()``: plain prefetch does not promise the first ``__next__``.\n\ntokenize step exactly (truncation, ``max_length``, double-BOS rule), so rows are\nbyte-identical to the eager path.  Anything where that is not provable stays\neager; see :func:`decide_online_tokenization`.\n\nTwo costs worth stating.  The pass gate counts TRAIN passes only: a lazy eval\nsplit is re-tokenized on every evaluation where the eager map tokenized once,\nwhich scales with ``eval_steps``.  And the workers are persistent by design (the\nbarrier\'s workers must survive into ``train()``), so they need explicit shutdown\nat the end; see :func:`release_train_dataloader`.'
 
 from __future__ import annotations
 
@@ -61,7 +32,7 @@ ENV_FLAG = "UNSLOTH_STUDIO_ONLINE_TOKENIZATION"
 # tokenizes with a different function.
 _PRETOKENIZED_COLUMNS = ("input_ids", "labels", "prompt", "completion")
 
-# Stamped on the view by :func:`attach_online_tokenization`; unsloth's
+
 # `max_length` scan reads it as proof every row is already truncated to that
 # width, instead of reading every row of a lazy split -- the eager pass again.
 TRUNCATION_ATTESTATION_ATTR = "_unsloth_truncated_to"
@@ -93,12 +64,7 @@ class OnlineTokenizationDecision:
 
 
 def env_override() -> Optional[bool]:
-    """``UNSLOTH_STUDIO_ONLINE_TOKENIZATION``: 0/false forces off, 1/true forces on.
-
-    Unset returns None and the gates decide.  Forcing on only drops the heuristic
-    gates (row count, epoch count); correctness gates always stand, since the
-    lazy path on a VLM or pre-tokenized split does not train differently, it fails.
-    """
+    '\n    Unset returns None and the gates decide.  Forcing on only drops the heuristic\n    gates (row count, epoch count); correctness gates always stand, since the\n    lazy path on a VLM or pre-tokenized split does not train differently, it fails.\n    '
     raw = os.environ.get(ENV_FLAG)
     if raw is None:
         return None
@@ -364,7 +330,7 @@ def decide_online_tokenization(
     if override is False:
         return veto(f"{ENV_FLAG}=0")
 
-    # ---- correctness gates: never overridable ----
+
     if not platform_supports_dataloader_workers():
         if sys.platform in ("win32", "darwin"):
             return veto(f"{sys.platform} spawns DataLoader workers")
@@ -426,7 +392,7 @@ def decide_online_tokenization(
         return veto("not enough CPU workers to stay ahead of the GPU")
     checks.append(("correctness gates", True))
 
-    # ---- cost gates: the escape hatch may override these ----
+
     forced = override is True
 
     if row_count is None:
@@ -522,19 +488,7 @@ def build_tokenizing_transform(
 def attach_online_tokenization(
     dataset: Any, *, tokenizer: Any, text_field: str, max_length: int, add_special_tokens: bool
 ):
-    """Return an immutable lazily-tokenizing view of ``dataset``.
-
-    ``with_transform``, not ``set_transform``: the caller's object is also held by
-    the dataset preview and row-count checks, and mutating it in place would
-    silently change what those see.
-
-    ``columns = [text_field]`` avoids materialising large unused columns on every
-    ``__getitem__``.
-
-    The view is stamped with :data:`TRUNCATION_ATTESTATION_ATTR` so unsloth's
-    ``max_length`` enforcement trusts the cap instead of reading every row, which
-    on a lazy split is the eager tokenize pass again.
-    """
+    "Return an immutable lazily-tokenizing view of ``dataset``.\n\n    ``with_transform``, not ``set_transform``: the caller's object is also held by\n    the dataset preview and row-count checks, and mutating it in place would\n    silently change what those see.\n\n    ``columns = [text_field]`` avoids materialising large unused columns on every\n    ``__getitem__``.\n\n    ``max_length`` enforcement trusts the cap instead of reading every row, which\n    on a lazy split is the eager tokenize pass again.\n    "
     transform = build_tokenizing_transform(tokenizer, text_field, max_length, add_special_tokens)
     try:
         view = dataset.with_transform(transform, columns = [text_field])

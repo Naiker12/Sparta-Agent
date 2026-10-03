@@ -100,12 +100,7 @@ def coerce_fraction(value: Any) -> Optional[float]:
 
 
 def _env_fraction() -> Optional[float]:
-    """``UNSLOTH_VRAM_FRACTION``, or None when unset or unusable.
-
-    Read here rather than at import so tests can monkeypatch the environment
-    without reloading the module, and so a value exported after startup is picked
-    up by the next load.
-    """
+    '\n    Read here rather than at import so tests can monkeypatch the environment\n    without reloading the module, and so a value exported after startup is picked\n    up by the next load.\n    '
     return coerce_fraction(os.environ.get(VRAM_FRACTION_ENV_VAR))
 
 

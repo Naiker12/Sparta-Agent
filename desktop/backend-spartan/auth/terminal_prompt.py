@@ -1,14 +1,5 @@
 
-"""Interactive terminal prompt that forces a bootstrap password change before
-Unsloth is exposed on a public Cloudflare URL (``--secure`` / ``--cloudflare``).
-
-Masked input echoes one ``*`` per keystroke (unlike ``getpass``). Works on
-Windows (``msvcrt``) and Linux/macOS (``termios``). All output goes to stderr so
-redirected stdout never swallows the prompt.
-
-Mirrored for the CLI at ``spartan_agent_cli/commands/_password_prompt.py`` (the CLI
-cannot import the Unsloth backend package); keep the two in sync.
-"""
+'Interactive terminal prompt that forces a bootstrap password change before\n\nMasked input echoes one ``*`` per keystroke (unlike ``getpass``). Works on\nWindows (``msvcrt``) and Linux/macOS (``termios``). All output goes to stderr so\nredirected stdout never swallows the prompt.\n\nMirrored for the CLI at ``spartan_agent_cli/commands/_password_prompt.py`` (the CLI'
 
 from __future__ import annotations
 
@@ -260,13 +251,7 @@ def prompt_for_password_change(
 
 
 def resolve_supplied_password(cli_value: "str | None", out: "TextIO | None" = None) -> "str | None":
-    """Resolve a non-interactive initial admin password, or None if unset.
-
-    Precedence: an explicit ``--password`` (literal ``-`` reads a line from
-    stdin), then the ``UNSLOTH_STUDIO_PASSWORD`` env var; empty/omitted means off.
-    A literal argv value is visible in the process list, so a note points at the
-    env var or stdin instead. Mirror of the CLI helper -- keep the two in sync.
-    """
+    'Resolve a non-interactive initial admin password, or None if unset.\n\n    Precedence: an explicit ``--password`` (literal ``-`` reads a line from\n    A literal argv value is visible in the process list, so a note points at the\n    env var or stdin instead. Mirror of the CLI helper -- keep the two in sync.\n    '
     if out is None:
         out = sys.stderr
     if cli_value == "-":

@@ -1,37 +1,5 @@
 
-"""Verify TLS against the OS trust store (corporate TLS-inspection proxies).
-
-Python's ``ssl`` trusts only certifi's roots, so behind a TLS-inspecting proxy
-(Cisco Umbrella, Zscaler, Netskope) every huggingface.co request fails with
-``CERTIFICATE_VERIFY_FAILED``: the proxy re-signs traffic with a corporate CA
-that lives only in the OS store. A shell user can export ``SSL_CERT_FILE``, but
-GUI launches (macOS ``.app``, desktop shortcuts) never read shell profiles.
-
-``truststore.inject_into_ssl()`` makes ``ssl.SSLContext`` verify against the OS
-store instead, the runtime counterpart of ``UV_NATIVE_TLS`` in install.sh.
-Injection is process-wide but does not survive a spawn, so every
-network-touching entry point calls :func:`activate_native_tls` before its first
-TLS connection; the ``python -c`` probes and the standalone prebuilt installers
-carry an inline copy of the gating because they cannot import backend modules.
-
-truststore is vendored at ``backend/vendor/`` rather than depended on, so no
-Studio user gains a package for a proxy they do not have; see the README there.
-Every consumer appends that directory to ``sys.path`` and imports the top-level
-name, which keeps a truststore the user installed themselves in front of ours.
-
-Defaults mirror install.sh: on for macOS and Windows, opt-in on Linux via
-``UNSLOTH_STUDIO_NATIVE_TLS=1`` (distro OpenSSL configurations vary), opt-out
-anywhere with ``0``. Explicit ``SSL_CERT_FILE``/``REQUESTS_CA_BUNDLE`` keep
-working, but become additive rather than exclusive, since truststore keeps the
-OS anchors alongside them; ``0`` is the way back to a bundle being the only
-trust root.
-
-Client side only: the injected class verifies a peer chain on every handshake,
-so an ``SSLContext`` built after activation cannot serve TLS. Studio serves
-plain HTTP on loopback and ``test_native_tls_entrypoints.py`` keeps it that way;
-a future in-process HTTPS listener needs ``truststore.SSLContext`` for outbound
-connections instead of this process-wide injection.
-"""
+"Verify TLS against the OS trust store (corporate TLS-inspection proxies).\n\nPython's ``ssl`` trusts only certifi's roots, so behind a TLS-inspecting proxy\n(Cisco Umbrella, Zscaler, Netskope) every huggingface.co request fails with\n``CERTIFICATE_VERIFY_FAILED``: the proxy re-signs traffic with a corporate CA\nthat lives only in the OS store. A shell user can export ``SSL_CERT_FILE``, but\nGUI launches (macOS ``.app``, desktop shortcuts) never read shell profiles.\n\n``truststore.inject_into_ssl()`` makes ``ssl.SSLContext`` verify against the OS\nstore instead, the runtime counterpart of ``UV_NATIVE_TLS`` in install.sh.\nInjection is process-wide but does not survive a spawn, so every\nnetwork-touching entry point calls :func:`activate_native_tls` before its first\nTLS connection; the ``python -c`` probes and the standalone prebuilt installers\ncarry an inline copy of the gating because they cannot import backend modules.\n\ntruststore is vendored at ``backend/vendor/`` rather than depended on, so no\nStudio user gains a package for a proxy they do not have; see the README there.\nEvery consumer appends that directory to ``sys.path`` and imports the top-level\nname, which keeps a truststore the user installed themselves in front of ours.\n\nDefaults mirror install.sh: on for macOS and Windows, opt-in on Linux via\nanywhere with ``0``. Explicit ``SSL_CERT_FILE``/``REQUESTS_CA_BUNDLE`` keep\nworking, but become additive rather than exclusive, since truststore keeps the\nOS anchors alongside them; ``0`` is the way back to a bundle being the only\ntrust root.\n\nClient side only: the injected class verifies a peer chain on every handshake,\nso an ``SSLContext`` built after activation cannot serve TLS. Studio serves\nplain HTTP on loopback and ``test_native_tls_entrypoints.py`` keeps it that way;\na future in-process HTTPS listener needs ``truststore.SSLContext`` for outbound\nconnections instead of this process-wide injection."
 
 from __future__ import annotations
 
@@ -54,7 +22,7 @@ _activated = False
 
 
 def native_tls_enabled() -> bool:
-    """Resolve ``UNSLOTH_STUDIO_NATIVE_TLS`` against the platform default."""
+    ''
     flag = os.environ.get(_NATIVE_TLS_ENV, "").strip().lower()
     if flag in _TRUTHY:
         return True

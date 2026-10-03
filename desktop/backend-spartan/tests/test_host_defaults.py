@@ -1,9 +1,5 @@
 
-"""Tests that Unsloth Studio defaults to 127.0.0.1 (loopback) not 0.0.0.0.
-
-Uses AST parsing to inspect source-level defaults without requiring the
-full studio venv (run.py has heavy dependencies like structlog/uvicorn).
-"""
+'\nUses AST parsing to inspect source-level defaults without requiring the\nfull studio venv (run.py has heavy dependencies like structlog/uvicorn).'
 
 import ast
 from pathlib import Path

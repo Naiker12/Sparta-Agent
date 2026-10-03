@@ -34,7 +34,7 @@ from utils.hardware import get_device, prepare_gpu_selection
 from utils.utils import hf_env_offline
 
 # Re-exported from the shared helper so GGUF, training and inference share one type.
-# Via PEP 562, not a module-level import: resolving the name imports unsloth_zoo, hence
+
 # torch, and routes/inference.py imports this module at startup only for GenStream*.
 DownloadStallError: type
 
@@ -236,9 +236,9 @@ class InferenceOrchestrator:
         # fetching from __init__ would call huggingface.co on every boot. First reader starts it.
         self._top_models_started = False
 
-    # ------------------------------------------------------------------
+
     # Default models (top GGUFs fetched dynamically from HF)
-    # ------------------------------------------------------------------
+
 
     def _refresh_static_models_if_stale(self) -> None:
         """Recompute the curated defaults if hardware was re-detected since."""
@@ -335,9 +335,9 @@ class InferenceOrchestrator:
         finally:
             self._top_models_ready.set()
 
-    # ------------------------------------------------------------------
+
     # Subprocess lifecycle
-    # ------------------------------------------------------------------
+
 
     def _spawn_subprocess(self, config: dict) -> None:
         """Spawn a new inference subprocess."""
@@ -528,9 +528,9 @@ class InferenceOrchestrator:
 
         return f"{message} Details: pid={pid}, exitcode={exitcode}."
 
-    # ------------------------------------------------------------------
+
     # Queue helpers
-    # ------------------------------------------------------------------
+
 
     def _send_cmd(self, cmd: dict) -> None:
         """Send a command to the subprocess."""
@@ -566,7 +566,7 @@ class InferenceOrchestrator:
         message, so long-running operations (large downloads, slow loads)
         survive as long as the subprocess keeps reporting progress.
         """
-        # Local: resolving this name runs the shim's lazy unsloth_zoo load, which pulls torch.
+
         # The shim caches its pick, so this site and load_model()'s `except` see one class.
         from utils.hf_xet_fallback import DownloadStallError
 
@@ -718,9 +718,9 @@ class InferenceOrchestrator:
                 return
         logger.warning("Timed out waiting for gen_done after cancel")
 
-    # ------------------------------------------------------------------
+
     # Generation command + token-stream helpers (shared by all paths)
-    # ------------------------------------------------------------------
+
 
     def _build_generate_cmd(
         self,
@@ -851,9 +851,9 @@ class InferenceOrchestrator:
                 yield GenStreamError(f"Error: {resp.get('error', 'Unknown error')}")
                 return
 
-    # ------------------------------------------------------------------
+
     # Dispatcher — per-request mailbox routing for compare mode
-    # ------------------------------------------------------------------
+
 
     def _start_dispatcher(self) -> bool:
         """Start the dispatcher thread if not already running.
@@ -1242,9 +1242,9 @@ class InferenceOrchestrator:
 
             raise RuntimeError("Timeout waiting for distributed object share")
 
-    # ------------------------------------------------------------------
+
     # Public API — same interface as InferenceBackend
-    # ------------------------------------------------------------------
+
 
     # Monotonic count of PUBLISHED loads; lets the install route detect a load
     # (including a same-model reload) that completed while it waited on the gate.
@@ -1270,11 +1270,7 @@ class InferenceOrchestrator:
         chat_template_override: Optional[str] = None,
         load_cancel_event: Optional[threading.Event] = None,
     ) -> bool:
-        """Load a model for inference.
-
-        Always spawns a fresh subprocess per load for a clean interpreter (no
-        stale unsloth patches, torch.compile caches, or getsource failures).
-        """
+        'Load a model for inference.\n\n        Always spawns a fresh subprocess per load for a clean interpreter (no\n        '
         from utils.transformers_version import needs_transformers_5
 
         # Same lazy-shim reason as _wait_response(); see the note there.
@@ -1337,7 +1333,7 @@ class InferenceOrchestrator:
                 )
 
             # Always kill the existing subprocess and spawn fresh: reusing one
-            # after unsloth patches torch internals breaks getsource on reload.
+
             if self._ensure_subprocess_alive():
                 self._cancel_generation()
                 time.sleep(0.3)
@@ -1531,7 +1527,7 @@ class InferenceOrchestrator:
         self.models.clear()
         return True
 
-    # --- Dictation models -------------------------------------------------
+
     # These run in the STT sidecars (whisper-server, llama-server, and the
     # Transformers spawn child), not the chat worker. Their lifecycle goes
     # through here all the same, so one object knows everything that is
@@ -2085,9 +2081,9 @@ class InferenceOrchestrator:
         except RuntimeError:
             pass
 
-    # ------------------------------------------------------------------
+
     # Audio generation — TTS, ASR, audio input
-    # ------------------------------------------------------------------
+
 
     def generate_audio_response(
         self,
@@ -2398,9 +2394,9 @@ class InferenceOrchestrator:
                 self._release_worker(cancel_event)
                 release_mailbox()
 
-    # ------------------------------------------------------------------
+
     # Local helpers (no subprocess needed)
-    # ------------------------------------------------------------------
+
 
     def resize_image(
         self,
@@ -2449,7 +2445,7 @@ class InferenceOrchestrator:
         return is_gpt_oss_model_name(model_name or self.active_model_name or "")
 
 
-# ========== GLOBAL INSTANCE ==========
+
 _inference_backend = None
 # Guards the lazy construction below. The first build runs hardware detection, seconds cold,
 # and first-paint routes call this getter from executor threads. Unlocked, several would see

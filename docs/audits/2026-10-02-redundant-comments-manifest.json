@@ -1,0 +1,53 @@
+{
+  "files": [
+    {
+      "file": "desktop/frontend-spartan/src/components/tauri/startup-screen.tsx",
+      "removed": 9
+    },
+    {
+      "file": "desktop/frontend-spartan/src/features/audio/audio-page.tsx",
+      "removed": 8
+    },
+    {
+      "file": "desktop/frontend-spartan/src/features/chat/adapters/studio-model-dictation-adapter.ts",
+      "removed": 1
+    },
+    {
+      "file": "desktop/frontend-spartan/src/features/chat/shared-composer.tsx",
+      "removed": 4
+    },
+    {
+      "file": "desktop/frontend-spartan/src/features/chat/shared-composer/compare-handles.tsx",
+      "removed": 8
+    },
+    {
+      "file": "desktop/frontend-spartan/src/features/chat/shared-composer/compare-model-types.ts",
+      "removed": 5
+    },
+    {
+      "file": "desktop/frontend-spartan/src/features/chat/shared-composer/composer-ui-helpers.tsx",
+      "removed": 12
+    },
+    {
+      "file": "desktop/frontend-spartan/src/features/model-picker/model-config/llama-extra-args.ts",
+      "removed": 1
+    },
+    {
+      "file": "desktop/frontend-spartan/src/features/settings/components/appearance-custom-controls.tsx",
+      "removed": 7
+    },
+    {
+      "file": "desktop/frontend-spartan/src/features/settings/components/color-picker.tsx",
+      "removed": 2
+    },
+    {
+      "file": "desktop/frontend-spartan/src/features/settings/stores/appearance-custom-store.ts",
+      "removed": 1
+    },
+    {
+      "file": "desktop/frontend-spartan/src/hooks/use-hf-dataset-splits.ts",
+      "removed": 6
+    }
+  ],
+  "removed": 64
+}

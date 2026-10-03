@@ -1,14 +1,5 @@
 
-"""Row bound for a max_steps run.
-
-TRL prepares the whole train_dataset in the SFTTrainer constructor and never looks
-at max_steps, so a 30-step run over a large corpus tokenizes millions of rows to
-read a few hundred. The count is known before any of that work happens.
-
-This module holds no torch and no unsloth imports: both loaders use it, and the
-MLX one runs on hosts where importing core.training.trainer would drag in a torch
-stack that need not exist.
-"""
+'Row bound for a max_steps run.\n\nTRL prepares the whole train_dataset in the SFTTrainer constructor and never looks\nat max_steps, so a 30-step run over a large corpus tokenizes millions of rows to\nread a few hundred. The count is known before any of that work happens.\n\nMLX one runs on hosts where importing core.training.trainer would drag in a torch\nstack that need not exist.'
 
 import json
 import os

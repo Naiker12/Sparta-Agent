@@ -131,18 +131,7 @@ def _stdio_log_id(url: str) -> str:
 
 
 def stdio_mcp_enabled() -> bool:
-    """stdio MCP servers spawn local processes as the backend user (bypassing the
-    sandbox), so allowed only when the host is the user's own machine. On startup
-    a loopback bind defaults UNSLOTH_STUDIO_ALLOW_STDIO_MCP=1 (see
-    utils.host_policy.apply_stdio_mcp_loopback_default, called from run.py); the
-    Tauri app does the same. Off for Colab and any network (0.0.0.0) bind unless
-    an operator sets the var out-of-band; set it to 0 to force-disable.
-
-    When stdio is on only because of that loopback auto-default, an explicit
-    `unsloth studio run --disable-tools` turns it back off (a local stdio command
-    is server-side code execution). An explicit operator opt-in via the env var
-    still wins -- including the documented `=1` network opt-in, where the process
-    tool policy is False merely by the external-host default, not by choice."""
+    "stdio MCP servers spawn local processes as the backend user (bypassing the\n    sandbox), so allowed only when the host is the user's own machine. On startup\n    utils.host_policy.apply_stdio_mcp_loopback_default, called from run.py); the\n    Tauri app does the same. Off for Colab and any network (0.0.0.0) bind unless\n    an operator sets the var out-of-band; set it to 0 to force-disable.\n\n    When stdio is on only because of that loopback auto-default, an explicit\n    is server-side code execution). An explicit operator opt-in via the env var\n    still wins -- including the documented `=1` network opt-in, where the process\n    tool policy is False merely by the external-host default, not by choice."
     if os.environ.get("UNSLOTH_STUDIO_ALLOW_STDIO_MCP") != "1":
         return False
     from state.tool_policy import get_tool_policy
@@ -154,11 +143,7 @@ def stdio_mcp_enabled() -> bool:
 
 
 def stdio_mcp_disabled_reason() -> str:
-    """User-facing reason local commands are off, mirroring stdio_mcp_enabled().
-
-    Telling a user whose gate is suspended by an active tunnel to set
-    UNSLOTH_STUDIO_ALLOW_STDIO_MCP=1 would re-enable local command execution on
-    a published API, so the suspended cases must name their actual cause."""
+    'User-facing reason local commands are off, mirroring stdio_mcp_enabled().\n\n    Telling a user whose gate is suspended by an active tunnel to set\n    a published API, so the suspended cases must name their actual cause.'
     from state.tool_policy import get_tool_policy
     from utils.host_policy import loopback_default_active, remote_connector_active
 
@@ -994,7 +979,7 @@ def _call_stdio_tool(
     def _remaining() -> Optional[float]:
         return None if deadline is None else max(0.0, deadline - time.monotonic())
 
-    # Callers without an Unsloth session id must retain the former one-shot
+
     # behavior: no browser/cookie/tool state can leak into another request.
     # Use an ephemeral key (and close it below) rather than the shared empty
     # scope that the persistent-session cache used previously.

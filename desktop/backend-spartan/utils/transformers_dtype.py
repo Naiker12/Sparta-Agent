@@ -1,23 +1,5 @@
 
-"""Version-safe fp-dtype kwarg for transformers/sentence-transformers loads.
-
-transformers renamed the ``torch_dtype`` kwarg to ``dtype`` in 4.56.0, and emits
-``torch_dtype is deprecated! Use dtype instead!`` when the old name is passed. But our floor (``transformers>=4.51.3``) predates ``dtype`` and only
-accepts ``torch_dtype``, so a bare rename would ``TypeError`` on the floor. Pick
-the name the installed version accepts instead.
-
-Answers the same question as ``unsloth_zoo.hf_utils.HAS_TORCH_DTYPE`` but derives
-it independently, for two reasons. It uses a ``packaging.version`` check rather
-than that constant's ``"torch_dtype" in PretrainedConfig.__doc__`` sniffing, which
-raises ``TypeError`` under ``python -OO`` / ``PYTHONOPTIMIZE=2`` (docstrings are
-stripped to ``None``, and ``"torch_dtype" in None`` is a type error). And it avoids
-importing the constant at all: the RAG
-embedder warms here at startup in the lean main process, and reading it would run
-``unsloth_zoo``'s package ``__init__`` (torch import, GPU/Pytorch checks, the
-patching banner) as a side effect. The embedder is deliberately torch-optional (it
-degrades to the ``llama-server`` GGUF backend), so it must not drag in that
-heavyweight import just to read one bool.
-"""
+'Version-safe fp-dtype kwarg for transformers/sentence-transformers loads.\n\ntransformers renamed the ``torch_dtype`` kwarg to ``dtype`` in 4.56.0, and emits\n``torch_dtype is deprecated! Use dtype instead!`` when the old name is passed. But our floor (``transformers>=4.51.3``) predates ``dtype`` and only\naccepts ``torch_dtype``, so a bare rename would ``TypeError`` on the floor. Pick\nthe name the installed version accepts instead.\n\nit independently, for two reasons. It uses a ``packaging.version`` check rather\nthan that constant\'s ``"torch_dtype" in PretrainedConfig.__doc__`` sniffing, which\nraises ``TypeError`` under ``python -OO`` / ``PYTHONOPTIMIZE=2`` (docstrings are\nstripped to ``None``, and ``"torch_dtype" in None`` is a type error). And it avoids\nimporting the constant at all: the RAG\nembedder warms here at startup in the lean main process, and reading it would run\npatching banner) as a side effect. The embedder is deliberately torch-optional (it\ndegrades to the ``llama-server`` GGUF backend), so it must not drag in that\nheavyweight import just to read one bool.'
 
 from functools import lru_cache
 

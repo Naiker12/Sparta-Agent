@@ -463,7 +463,7 @@ def detect_multimodal_dataset(dataset):
     audio_columns = []
     modality_types = set()
 
-    # ── Image detection ─────────────────────────────────────
+
     # Pass 1: column-name heuristic (word-boundary match)
     for col_name in column_names:
         for keyword in image_keywords:
@@ -482,7 +482,7 @@ def detect_multimodal_dataset(dataset):
             multimodal_columns.append(col_name)
             modality_types.add("image")
 
-    # ── Audio detection ─────────────────────────────────────
+
     # Pass 1: column-name heuristic (word-boundary match)
     for col_name in column_names:
         for keyword in audio_keywords:

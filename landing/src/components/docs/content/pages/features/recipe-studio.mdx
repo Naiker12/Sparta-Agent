@@ -1,15 +1,17 @@
 ---
 title: "Recetas y datos"
-description: "Organiza procesos de datos y comprueba las dependencias de cada receta."
+description: "Distingue la configuración de recetas de las capacidades disponibles en la edición actual."
 ---
 
 ## Qué prepara una receta
 
-Una receta describe un proceso de datos y sus configuraciones. Revisa entradas, modelos y destino antes de ejecutar un trabajo.
+Una receta describe entradas, pasos y resultados de un proceso. Antes de utilizar una pantalla de recetas, comprueba qué operaciones admite la versión instalada y qué proveedor requiere cada paso.
 
 ## Antes de ejecutar
 
-Comprueba el formato del dataset y empieza con una muestra pequeña. Las capacidades de entrenamiento y generación de datos pueden necesitar dependencias y hardware adicionales al chat.
+La edición actual está centrada en proveedores por API. No incluye entrenamiento local con Torch o Transformers ni descarga integrada de modelos. La existencia de pantallas o módulos históricos en el repositorio no garantiza que esas operaciones estén disponibles.
+
+Para procesos admitidos por tu instalación, comprueba el formato de entrada y empieza con una muestra pequeña. Revisa el proveedor, los permisos y el destino de los resultados.
 
 ## Resultados
 
@@ -18,3 +20,5 @@ Revisa el estado del trabajo y el artefacto producido. Que una configuración se
 ## Reproducibilidad
 
 Conserva la configuración, la versión del modelo y una referencia a las entradas. No registres credenciales dentro de recetas compartidas.
+
+Consulta [Estado y alcance](/docs/project/status-and-scope) para conocer los límites de esta edición y [Modelos y proveedores](/docs/core-concepts/models-and-providers) para configurar el acceso por API.

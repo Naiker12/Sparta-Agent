@@ -17,51 +17,32 @@ env:
 
 jobs:
   build:
-    # electron-builder writes one latest-mac.yml for both macOS architectures.
-    # Serializing the matrix via max-parallel: 1 prevents concurrent uploads from overwriting it.
     strategy:
       fail-fast: false
-      max-parallel: 1
       matrix:
         include:
           - os: windows-latest
             platform: win32-x64
           - os: macos-latest
             platform: darwin-arm64
-          - os: macos-13
+          - os: macos-15-intel
             platform: darwin-x64
           - os: ubuntu-latest
             platform: linux-x64
-
     runs-on: ${{ matrix.os }}
-
     steps:
       - uses: actions/checkout@v5
-
       - name: Validate release tag matches package version
-        if: startsWith(github.ref, 'refs/tags/')
         shell: bash
         run: |
-          VERSION="$(node -p 'JSON.parse(require("fs").readFileSync("package.json", "utf8")).version')"
-          TAG_VERSION="${GITHUB_REF_NAME#v}"
-          test "$TAG_VERSION" = "$VERSION" || {
-            echo "Tag v$TAG_VERSION does not match package version v$VERSION"
-            exit 1
-          }
-
+          VERSION="$(node -p 'require("./package.json").version')"
+          test "$GITHUB_REF_NAME" = "v$VERSION"
       - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
-
-      # Rust toolchain for sparta-security NAPI build
-      # Install JS deps (triggers prebuild → rust:napi automatically)
       - run: npm ci
-
-      - name: Install desktop frontend dependencies
-        run: npm --prefix desktop/frontend-spartan ci
-
-      # Build: tsc → vite build → electron-builder
+      - run: npm --prefix desktop/frontend-spartan ci
       - name: Verify release quality gates
         run: |
           npm run lint
@@ -69,27 +50,56 @@ jobs:
           npm test
           npm --prefix desktop/frontend-spartan run test:electron
           npm --prefix desktop/frontend-spartan run i18n:check
-
-      - run: npm run build
+      - name: Build without publishing
+        run: npm run build
         env:
           TARGET_PLATFORM: ${{ matrix.platform }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Publish artifacts to GitHub Release
-      - uses: softprops/action-gh-release@v3
+      - uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-          generate_release_notes: true
-          body_path: docs/releases/${{ github.ref_name }}.md
-          files: |
+          name: release-${{ matrix.platform }}
+          if-no-files-found: error
+          retention-days: 14
+          path: |
             release/*/*.exe
             release/*/*.dmg
             release/*/*.zip
             release/*/*.AppImage
             release/*/*.yml
             release/*/*.blockmap
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: release-input
+      - name: Validate installers and merge macOS updater metadata
+        run: node scripts/prepare-release-assets.mjs release-input release-output "$(node -p 'require("./package.json").version')"
+      - run: npm --prefix desktop/frontend-spartan ci
+      - run: npm --prefix landing ci
+      - name: Validate and build landing
+        run: |
+          npm --prefix landing run docs:check
+          npm --prefix landing run build:gh
+      - uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Sparta Agent ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          body_path: docs/releases/${{ github.ref_name }}.md
+          fail_on_unmatched_files: true
+          files: release-output/*
+      - uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./landing/dist
+          force_orphan: true

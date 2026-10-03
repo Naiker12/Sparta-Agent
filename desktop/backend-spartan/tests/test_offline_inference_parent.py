@@ -151,7 +151,7 @@ class TestLoraDetectOffline:
 
         monkeypatch.setenv("HF_HUB_OFFLINE", "1")
 
-        # Unsloth catches Exception broadly; pin that the call still happens
+
         # (so cached LoRAs aren't missed) and returns fast via the mock.
         class _OfflineModeIsEnabled(Exception):
             pass
@@ -556,7 +556,7 @@ class TestFullCheckpointBaseKeepsTheProbe:
             "both": ({"base_model_name_or_path": "org/a"}, {"model_name": "org/c"}, False),
             "bare": (None, None, False),
             # Adapter-only LoRAs: no JSON at all, so the resolver falls back to the
-            # unsloth_<model>_<timestamp> dir-name convention.
+
             "unsloth_llama-3_1700000000": (None, None, True),
             "unsloth_a_b_1700000000": (None, None, True),
             "plain_adapter_dir": (None, None, True),
@@ -579,8 +579,7 @@ class TestFullCheckpointBaseKeepsTheProbe:
             assert (base or str(d)) == resolved, name
 
     def test_an_adapter_only_lora_keeps_the_probe(self, tmp_path):
-        """No JSON on disk, but the dir name resolves to a remote unsloth/... base that
-        tier activation reads Hub metadata for."""
+        '        tier activation reads Hub metadata for.'
         d = tmp_path / "unsloth_llama-3_1700000000"
         d.mkdir()
         (d / "adapter_model.safetensors").write_bytes(b"")

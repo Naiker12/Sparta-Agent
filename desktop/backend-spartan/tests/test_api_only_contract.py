@@ -25,6 +25,9 @@ def test_active_requirements_exclude_local_ml_stack():
         assert retired_dependency not in requirements
     assert "fastapi" in requirements
     assert "httpx" in requirements
+    assert "numpy" in requirements
+    assert "pillow" in requirements
+    assert "filelock" in requirements
 
 
 def test_openai_chat_route_refuses_local_execution():

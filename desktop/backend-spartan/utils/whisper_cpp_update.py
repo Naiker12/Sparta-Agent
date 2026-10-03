@@ -62,9 +62,7 @@ _rocm_install_args = _flow.rocm_install_args
 
 
 def _find_binary() -> Optional[str]:
-    """Locate the active whisper-server binary via the STT sidecar's own resolver
-    so update targets exactly what Unsloth runs. Lazy import keeps the heavy
-    inference module off this module's import path."""
+    "Locate the active whisper-server binary via the STT sidecar's own resolver\n    inference module off this module's import path."
     try:
         from core.inference.stt_ggml_sidecar import find_whisper_server_binary
         return find_whisper_server_binary()
@@ -74,9 +72,7 @@ def _find_binary() -> Optional[str]:
 
 
 def _install_dir_for(binary_path: Optional[str]) -> Optional[Path]:
-    """The directory holding UNSLOTH_WHISPER_PREBUILT_INFO.json: the install root
-    install_whisper_prebuilt.py wrote (``<install-dir>`` whose canonical server is
-    ``build/bin/whisper-server``) and the one we re-install into."""
+    '    install_whisper_prebuilt.py wrote (``<install-dir>`` whose canonical server is\n    ``build/bin/whisper-server``) and the one we re-install into.'
     root = canonical_install_root(binary_path)
     if root is not None and (root / _INSTALL_MARKER_NAME).is_file():
         return root
@@ -84,13 +80,13 @@ def _install_dir_for(binary_path: Optional[str]) -> Optional[Path]:
 
 
 def _installer_script() -> Optional[Path]:
-    """Locate install_whisper_prebuilt.py (UNSLOTH_WHISPER_INSTALLER wins)."""
+    ''
     return _flow.find_installer_script(
         env_var = "UNSLOTH_WHISPER_INSTALLER", script_name = "install_whisper_prebuilt.py"
     )
 
 
-# Markerless (source-build) installs have no UNSLOTH_WHISPER_PREBUILT_INFO.json,
+
 # so we ask the installer whether an official prebuilt now exists for this host.
 _resolve_memo: dict = {}
 
@@ -136,8 +132,7 @@ def _installed_whisper_version(binary: Optional[str]) -> Optional[str]:
 
 
 def _whisper_install_root(binary: Optional[str]) -> Optional[Path]:
-    """The Unsloth-managed whisper.cpp root the active binary lives under, or None
-    when the binary is unmanaged (see update_flow.managed_install_root)."""
+    '    when the binary is unmanaged (see update_flow.managed_install_root).'
     return _flow.managed_install_root(
         binary,
         marker_root = _install_dir_for(binary),

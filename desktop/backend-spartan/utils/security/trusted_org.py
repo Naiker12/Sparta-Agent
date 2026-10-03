@@ -1,11 +1,5 @@
 
-"""Trusted-org checks for the ``trust_remote_code`` auto-enable paths.
-
-A bare ``name.startswith("unsloth/")`` is spoofable by a local path like
-``./unsloth/evil``. ``is_trusted_org_repo`` rejects local paths, requires an
-``org/repo`` under a trusted org, and (online) confirms via the Hub. Fails CLOSED
-on any uncertainty and never raises; a False just means "do not auto-enable".
-"""
+'Trusted-org checks for the ``trust_remote_code`` auto-enable paths.\n\n``org/repo`` under a trusted org, and (online) confirms via the Hub. Fails CLOSED\non any uncertainty and never raises; a False just means "do not auto-enable".'
 
 from __future__ import annotations
 

@@ -467,7 +467,7 @@ def test_the_native_plan_preflights_its_companion_repos_too(monkeypatch):
         gguf_filename = "z-image-turbo-Q4_K_M.gguf",
         model_kind = "gguf",
     )
-    # The companion is the unsloth mirror now, not the community repack: this PR repointed the
+
     # table, and no legacy copy is cached here so prefer_cached_legacy_source keeps the mirror.
     assert {e["repo_id"] for e in plan["entries"]} == {
         "unsloth/Z-Image-Turbo-GGUF",
@@ -1038,10 +1038,7 @@ def test_the_native_fetch_reuses_a_base_asset_cached_under_the_other_root(monkey
 
 
 def test_a_gated_base_with_a_live_mirror_is_not_refused(monkeypatch):
-    """The other side of every refusal above, and the reason the probe moved onto the fetch repo:
-    #7952 sends a gated base to its ungated unsloth mirror, so the bytes never touch the vendor id,
-    and a preflight still probing the upstream would turn those working loads into a 400 -- worse
-    than the bare token error this whole preflight replaced."""
+    'The other side of every refusal above, and the reason the probe moved onto the fetch repo:\n    and a preflight still probing the upstream would turn those working loads into a 400 -- worse\n    than the bare token error this whole preflight replaced.'
     mirror = "unsloth/FLUX.1-dev"
     probed: list = []
 

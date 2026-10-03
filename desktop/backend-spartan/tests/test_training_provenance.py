@@ -411,12 +411,7 @@ def test_mlx_runtime_4bit_metadata_attests_unpinned_hub_load(tmp_path):
 
 
 class _MappingModel(dict):
-    """Stand-in for the shape ``mlx.nn.Module`` has: an object that is also a ``dict``.
-
-    MLX models keep their parameters in the mapping and everything unsloth_zoo records
-    about the load (``_hf_repo``, ``_unsloth_quantized_source``, ...) as plain attributes,
-    so a mapping-first read answers ``None`` for all of them.
-    """
+    'Stand-in for the shape ``mlx.nn.Module`` has: an object that is also a ``dict``.\n\n    so a mapping-first read answers ``None`` for all of them.\n    '
 
     def __init__(self, **attrs):
         super().__init__()

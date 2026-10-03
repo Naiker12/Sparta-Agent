@@ -747,7 +747,7 @@ test("keeps a details tag inside a fence, a code span or a comment literal", () 
 
 test("keeps a citation destination from decoding into another host", () => {
   // &commat; is an entity reference in a destination: a viewer resolves this to
-  // docs.unsloth.ai@evil.test, which is credentials on evil.test.
+
   assert.equal(
     renderConversationBlocks([
       {

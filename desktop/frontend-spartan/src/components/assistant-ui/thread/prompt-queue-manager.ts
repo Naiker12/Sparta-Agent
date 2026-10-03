@@ -1,9 +1,3 @@
-/**
- * Sparta Agent - Gestor del Motor de Cola de Prompts
- * Controla el despacho secuencial, polling de estado, reintentos con backoff
- * y reordenamiento de turnos pendientes entre conversaciones.
- */
-
 import {
   PROMPT_QUEUE_RUN_FAILED_EVENT,
   PROMPT_QUEUE_STOP_EVENT,
@@ -31,6 +25,10 @@ import {
 } from "@/features/rag/api/rag-api";
 import { useRagAvailabilityStore } from "@/features/rag/api/rag-availability";
 import { createContext } from "react";
+import { toast } from "@/lib/toast";
+import { AUTH_SESSION_CLEARED_EVENT, getAuthSessionEpoch } from "@/features/auth";
+import type { SavedPromptQueue } from "@/features/chat/api/prompt-queues-api";
+import { attachQueuePersistence, checkpointPromptQueue } from "./prompt-queue-persistence";
 import {
   PROMPT_QUEUE_DISPATCH_RETRY_MS,
   PROMPT_QUEUE_INDEXING_RETRY_MS,
@@ -49,6 +47,59 @@ const promptQueueRunOrder: string[] = [];
 let promptQueueStoreUnsub: (() => void) | null = null;
 let promptQueuePumpTimer: ReturnType<typeof setTimeout> | null = null;
 let promptQueueRoundRobinCursor = 0;
+const checkpointErrors = new Set<string>();
+
+function saveQueueInBackground(run: PromptQueueRun, empty = false): void {
+  if (run.persistence && run.persistence.epoch !== getAuthSessionEpoch()) return;
+  void checkpointPromptQueue(run, empty).then(() => checkpointErrors.delete(run.id)).catch((error) => {
+    if (run.persistence && run.persistence.epoch !== getAuthSessionEpoch()) return;
+    if (checkpointErrors.has(run.id)) return;
+    checkpointErrors.add(run.id);
+    toast.error("No se pudo guardar la cola", {
+      description: error instanceof Error ? error.message : "Los siguientes mensajes esperarán hasta poder guardar su estado.",
+    });
+  });
+}
+
+async function prepareQueuePersistence(run: PromptQueueRun): Promise<void> {
+  const target = getActivePromptQueueItem(run)?.target;
+  if (!target || target.temporary || !target.prepareDurableThread || run.persistence) return;
+  if (!run.persistenceSetup) {
+    const generation = run.generation;
+    run.persistenceSetup = (async () => {
+      const threadId = await target.prepareDurableThread!();
+      if (promptQueueRuns.get(run.id) !== run || generation !== run.generation) return;
+      attachQueuePersistence(run, threadId);
+      startQueueObservationHeartbeat(run);
+      await checkpointPromptQueue(run);
+    })().finally(() => { run.persistenceSetup = undefined; });
+  }
+  await run.persistenceSetup;
+}
+
+function startQueueObservationHeartbeat(run: PromptQueueRun): void {
+  if (!run.persistence || run.persistence.heartbeat) return;
+  run.persistence.heartbeat = setInterval(() => {
+    const item = getActivePromptQueueItem(run);
+    if (promptQueueRuns.get(run.id) === run && item?.dispatched && !item.result) {
+      saveQueueInBackground(run);
+    }
+  }, 10_000);
+}
+
+function stopQueueObservationHeartbeat(run: PromptQueueRun): void {
+  if (run.persistence?.heartbeat) clearInterval(run.persistence.heartbeat);
+}
+
+function observeQueueResult(run: PromptQueueRun, failed = false): void {
+  const item = getActivePromptQueueItem(run);
+  if (!item?.dispatched || item.target.temporary) return;
+  const observed = item.target.getExecutionResult?.();
+  item.result = failed
+    ? { status: "failed", messageId: observed?.messageId ?? null, summary: observed?.summary ?? "", reason: "error" }
+    : observed ?? { status: "needs_review", messageId: null, summary: "", reason: "unknown" };
+  saveQueueInBackground(run);
+}
 
 export function compactIds(ids: Array<string | null | undefined>): string[] {
   return Array.from(new Set(ids.filter((id): id is string => Boolean(id))));
@@ -86,6 +137,8 @@ function clearPromptQueueRetryTimer(run: PromptQueueRun): void {
 }
 
 export function deletePromptQueueRun(run: PromptQueueRun): void {
+  stopQueueObservationHeartbeat(run);
+  saveQueueInBackground(run, true);
   run.generation += 1;
   clearPromptQueueRetryTimer(run);
   promptQueueActiveRunIds.delete(run.id);
@@ -112,6 +165,8 @@ export function deletePromptQueueRun(run: PromptQueueRun): void {
 
 export function resetPromptQueues(): void {
   for (const run of promptQueueRuns.values()) {
+    stopQueueObservationHeartbeat(run);
+    saveQueueInBackground(run, true);
     run.generation += 1;
     clearPromptQueueRetryTimer(run);
   }
@@ -166,6 +221,7 @@ function consumePromptQueueDeepResearch(
   for (const queueItem of run.items) {
     queueItem.target.consumeDeepResearch();
   }
+  syncPromptQueueUI();
 }
 
 function appendQueuedPrompt(run: PromptQueueRun, item: PromptQueueItem): void {
@@ -372,6 +428,24 @@ async function dispatchQueuedPrompt(
   if (!isActivePromptQueueItem(run, item, generation)) {
     return;
   }
+  if (!item.target.temporary && item.target.prepareDurableThread) {
+    try {
+      await prepareQueuePersistence(run);
+      if (!isActivePromptQueueItem(run, item, generation)) return;
+      // Persist every pending item and the active dispatch marker before append.
+      item.dispatched = true;
+      await checkpointPromptQueue(run);
+      if (!isActivePromptQueueItem(run, item, generation)) return;
+      item.dispatched = false;
+    } catch {
+      item.dispatched = false;
+      if (isActivePromptQueueItem(run, item, generation)) {
+        saveQueueInBackground(run);
+        scheduleQueuedPromptDispatch(run, item, 2_000);
+      }
+      return;
+    }
+  }
   appendQueuedPrompt(run, item);
 }
 
@@ -551,6 +625,7 @@ export function syncPromptQueueUI(): void {
   for (const run of promptQueueRuns.values()) {
     const { current: runCurrent, total: runTotal } =
       getPromptQueueRunProgress(run);
+    saveQueueInBackground(run);
     current += runCurrent;
     total += runTotal;
     items.push(...getPromptQueueUIItemsForRun(run));
@@ -722,6 +797,7 @@ export function isPromptQueueRunTargetRunning(
 }
 
 export function advancePromptQueue(run: PromptQueueRun): void {
+  observeQueueResult(run);
   clearPromptQueueRetryTimer(run);
   promptQueueActiveRunIds.delete(run.id);
   getActivePromptQueueItem(run)?.target.complete();
@@ -874,6 +950,13 @@ export function startPromptQueue(
   };
   promptQueueRuns.set(run.id, run);
   promptQueueRunOrder.push(run.id);
+  void prepareQueuePersistence(run).catch(() => {
+    if (promptQueueRuns.get(run.id) === run) {
+      toast.error("No se pudo guardar la cola", {
+        description: "Los mensajes siguen en esta sesión. Se intentará guardar antes de enviarlos.",
+      });
+    }
+  });
   syncPromptQueueUI();
   ensurePromptQueueSubscription();
   if (shouldWaitForCurrentRun) {
@@ -885,6 +968,32 @@ export function startPromptQueue(
   } else {
     requestPromptQueuePump(50);
   }
+}
+
+/** Rebuild callbacks only after an explicit recovery gesture. Never replay dispatched items. */
+export function restorePromptQueue(saved: SavedPromptQueue, targets: PromptQueueTarget[]): boolean {
+  const pending = saved.checkpoint.items.filter((item) => !item.dispatched);
+  if (pending.length === 0 || pending.length !== targets.length ||
+      targets.some((target) => target.temporary ||
+        target.getDocumentThreadId() !== saved.checkpoint.threadId ||
+        findPromptQueueRunByTarget(target))) return false;
+  const run: PromptQueueRun = {
+    id: saved.id,
+    items: pending.map((item, index) => ({
+      id: item.id, prompt: item.prompt, target: targets[index],
+      dispatched: false, dispatchRetries: 0,
+    })),
+    index: 0, generation: 0, prevStoreRunning: false,
+    waitingForTargetIdle: false, retryTimer: null, deepResearchConsumed: false,
+  };
+  attachQueuePersistence(run, saved.checkpoint.threadId, saved.revision);
+  startQueueObservationHeartbeat(run);
+  promptQueueRuns.set(run.id, run);
+  promptQueueRunOrder.push(run.id);
+  syncPromptQueueUI();
+  ensurePromptQueueSubscription();
+  requestPromptQueuePump(50);
+  return true;
 }
 
 export function getPromptQueueRunsForThreadIds(
@@ -1013,6 +1122,8 @@ export function retainPendingPromptQueueItemsAfterFailure(
     return false;
   }
 
+  observeQueueResult(run, true);
+
   activeItem.target.complete();
   run.items.splice(activeIndex, 1);
   if (!getActivePromptQueueItem(run)) {
@@ -1086,6 +1197,7 @@ export function handlePromptQueueRunFailed(threadId?: string | null): void {
 }
 
 if (typeof window !== "undefined") {
+  window.addEventListener(AUTH_SESSION_CLEARED_EVENT, stopAllPromptQueueRuns);
   window.addEventListener(PROMPT_QUEUE_STOP_EVENT, (event) => {
     const { threadIds, temporaryOnly, localOnly } =
       (event as CustomEvent<PromptQueueStopEventDetail>).detail ?? {};

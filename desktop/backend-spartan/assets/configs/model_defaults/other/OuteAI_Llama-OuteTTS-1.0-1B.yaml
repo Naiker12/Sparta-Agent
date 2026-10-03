@@ -1,7 +1,6 @@
 # Model defaults for OuteAI/Llama-OuteTTS-1.0-1B
 # Based on Oute_TTS_(1B).ipynb
 # Also applies to: OuteAI/Llama-OuteTTS-1.0-1B
-# added inference parameters from unsloth notebook
 
 audio_type: dac
 

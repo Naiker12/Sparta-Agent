@@ -780,13 +780,7 @@ def test_a_tokenless_run_takes_the_mirror_even_with_the_vendor_repo_cached(
 
 @pytest.mark.parametrize("no_mirror_env", [False, True])
 def test_a_tokenless_run_keeps_a_cached_ungated_base(monkeypatch, no_mirror_env):
-    """The override is for gates, not for mirrors in general.
-
-    Most of the mirror table is ungated: those exist to keep the fetch inside unsloth/*, and the
-    upstream answers anonymously. Overriding the cache preference there would throw away a
-    complete local snapshot and re-pull gigabytes, or fail outright with no network. Klein base-4B
-    is the one that matters most here, since it is a default trainable base AND mirrored.
-    """
+    'The override is for gates, not for mirrors in general.\n\n    upstream answers anonymously. Overriding the cache preference there would throw away a\n    complete local snapshot and re-pull gigabytes, or fail outright with no network. Klein base-4B\n    is the one that matters most here, since it is a default trainable base AND mirrored.\n    '
     from core.inference import diffusion_families
     from core.training.diffusion_train_common import DiffusionLoraConfig
 
@@ -2040,9 +2034,9 @@ def test_route_start_refuses_ltx2_without_the_pipeline_before_freeing_gpu(client
 
 
 def test_route_start_refuses_a_component_repo_before_freeing_gpu(client, monkeypatch):
-    # unsloth/LTX-2-FP8 holds pre-cast component archives, not a pipeline: no model_index.json,
+
     # no VAE. The name still carries the "ltx-2" token so the family detector claimed it, the
-    # unsloth/* trust gate passed it, and the gated-access probe ignores the model_index.json 404
+
     # (a 404 is not an access problem) -- so the start evicted the resident models and only then
     # failed inside from_pretrained.
     import routes.training as tr

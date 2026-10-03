@@ -21,7 +21,14 @@
     "noFallthroughCasesInSwitch": true,
 
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "streamdown": ["./node_modules/streamdown/dist/index.d.ts"],
+      "react": ["./node_modules/@types/react/index.d.ts"],
+      "react/jsx-runtime": ["./node_modules/@types/react/jsx-runtime.d.ts"],
+      "@blobatar/react": ["./node_modules/@blobatar/react/dist/index.d.ts"],
+      "blobatar/expression": ["./node_modules/blobatar/dist/expression.d.ts"],
+      "@radix-ui/react-slot": ["./node_modules/@radix-ui/react-slot/dist/index.d.ts"],
+      "class-variance-authority": ["./node_modules/class-variance-authority/dist/index.d.ts"]
     }
   },
   "include": ["src", "src/vite-env.d.ts"]

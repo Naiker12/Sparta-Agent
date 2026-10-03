@@ -582,11 +582,11 @@ export function applyActiveModelStatusToStore(
   }
 }
 
-/**
- * Adopt the model already loaded on the inference server (e.g. via
- * ``unsloth studio run -m``) into the chat UI checkpoint without
- * triggering a new /api/inference/load.
- */
+
+
+
+
+
 export async function tryAdoptServerActiveModel(): Promise<boolean> {
   const store = useChatRuntimeStore.getState();
   if (store.params.checkpoint) {

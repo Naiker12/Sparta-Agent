@@ -194,9 +194,7 @@ def test_the_zoo_decides_and_studio_does_not_second_guess_it(monkeypatch):
 
 
 def test_high_performance_is_cleared_even_without_the_tuning_module(monkeypatch):
-    """An unsloth_zoo with no `hf_xet_tuning` is exactly the version that sets
-    HF_XET_HIGH_PERFORMANCE=1 at import, so routing the clear through the (then empty) overrides
-    would hand the worker a 64GB buffer ceiling on the installs Studio alone cannot fix."""
+    '    HF_XET_HIGH_PERFORMANCE=1 at import, so routing the clear through the (then empty) overrides\n    would hand the worker a 64GB buffer ceiling on the installs Studio alone cannot fix.'
     import utils.hf_xet_fallback as shim
 
     monkeypatch.setattr(shim, "apply_xet_env", lambda *a, **k: None)
@@ -317,7 +315,7 @@ def test_stall_watchdog_survives_an_already_exited_worker(monkeypatch):
 
 
 def test_missing_watchdog_degrades_quietly(monkeypatch):
-    """An older unsloth_zoo without start_watchdog must not break downloads, only stall detection."""
+    ''
     fake = _types.ModuleType("utils.hf_xet_fallback")
     monkeypatch.setitem(sys.modules, "utils.hf_xet_fallback", fake)
     assert (
@@ -400,9 +398,7 @@ def test_capabilities_stay_optimistic_when_health_raises(monkeypatch):
 
 
 def test_optional_loader_retries_with_gpu_init_disabled(monkeypatch):
-    """unsloth_zoo.__init__ runs torch accelerator detection and raises on a CPU-only host, which is
-    exactly the small machine these caps protect, so without the retry they switch off where they
-    are needed."""
+    '    exactly the small machine these caps protect, so without the retry they switch off where they\n    are needed.'
     import importlib
 
     import utils.hf_xet_fallback as shim
@@ -505,13 +501,7 @@ def test_download_start_probe_loads_health_after_cached_browse(monkeypatch):
 
 
 def test_gpu_init_override_is_serialized(monkeypatch):
-    """The optional-module retry must not leak the process-wide GPU-init override: a leaked
-    UNSLOTH_ZOO_DISABLE_GPU_INIT=1 is inherited by every spawned worker for the life of the process.
-
-    Scope: this races the loader against itself. The cross-loader interleave with _load_shared is
-    not reproducible by thread timing, and is established by construction instead (both take the
-    same `_load_lock` around their save/set/restore) -- see the test below.
-    """
+    'The optional-module retry must not leak the process-wide GPU-init override: a leaked\n\n    Scope: this races the loader against itself. The cross-loader interleave with _load_shared is\n    not reproducible by thread timing, and is established by construction instead (both take the\n    same `_load_lock` around their save/set/restore) -- see the test below.\n    '
     import importlib
     import os
     import threading
@@ -554,10 +544,7 @@ def test_both_loaders_share_one_env_lock():
 
 
 def test_the_worker_never_gets_the_flag_and_our_caps_together(monkeypatch):
-    """End to end against whichever unsloth_zoo is installed, with nothing stubbed. Which of the
-    two the zoo picks is its call and changes with the version; what must never happen either way
-    is both at once, because xet-core applies the preset after reading the environment, so it
-    voids the limit while still honouring the smaller per-file and concurrency numbers."""
+    '    two the zoo picks is its call and changes with the version; what must never happen either way\n    is both at once, because xet-core applies the preset after reading the environment, so it\n    voids the limit while still honouring the smaller per-file and concurrency numbers.'
     env = _spawn_env(monkeypatch, use_xet = True, parent_env = {"HF_XET_HIGH_PERFORMANCE": "1"})
     flag_on = env.get("HF_XET_HIGH_PERFORMANCE", "0").strip().lower() in ("1", "true", "yes", "on")
     sized = "HF_XET_RECONSTRUCTION_DOWNLOAD_BUFFER_PERFILE_SIZE" in env
@@ -685,8 +672,7 @@ def test_the_probe_survives_a_shim_without_the_free_ram_helper(monkeypatch):
 
 
 def test_the_gate_runs_when_health_has_no_verdict(monkeypatch):
-    """Health lives in unsloth_zoo.hf_xet_health, free RAM in unsloth_zoo.hf_xet_tuning. A zoo too
-    old for the first says nothing about the second, so "no opinion" must not skip the RAM read."""
+    '    old for the first says nothing about the second, so "no opinion" must not skip the RAM read.'
     monkeypatch.setattr(dl, "resolve_effective_use_xet", lambda requested: requested)
     fake = _types.ModuleType("utils.hf_xet_fallback")
     fake.xet_health = lambda **kw: None
@@ -785,13 +771,7 @@ def test_a_failed_spawn_releases_its_reservation(monkeypatch):
 
 
 def test_the_force_xet_escape_hatch_still_wins_over_the_free_ram_gate(monkeypatch):
-    """`UNSLOTH_FORCE_XET=1` is an operator override, not a measurement.
-
-    `unsloth_zoo.hf_xet_health` stamps `source = "forced"` on both env verdicts, and the OFF
-    switches already win (the `not health.use_xet` return above). Without the same stand-down for
-    the ON switch the pair is asymmetric: the zoo's own log tells the operator to "set
-    UNSLOTH_FORCE_XET=1 to override", and the new RAM gate would ignore it. Buffers are still
-    clamped to free RAM, so forcing costs the transport choice, not the memory bound."""
+    '\n    switches already win (the `not health.use_xet` return above). Without the same stand-down for\n    the ON switch the pair is asymmetric: the zoo\'s own log tells the operator to "set\n    clamped to free RAM, so forcing costs the transport choice, not the memory bound.'
     monkeypatch.setattr(dl, "resolve_effective_use_xet", lambda requested: requested)
 
     forced = _types.SimpleNamespace(
@@ -820,8 +800,7 @@ def test_the_force_xet_escape_hatch_still_wins_over_the_free_ram_gate(monkeypatc
 
 
 def test_the_capabilities_probe_agrees_about_a_forced_verdict(monkeypatch):
-    """The probe is where the UI's Auto is actually resolved, so it must stand down identically or
-    the picker and the API caller disagree about what UNSLOTH_FORCE_XET means."""
+    "The probe is where the UI's Auto is actually resolved, so it must stand down identically or"
     forced = _types.SimpleNamespace(
         use_xet = True, reason = "Xet forced by environment", source = "forced"
     )

@@ -501,7 +501,7 @@ export async function exportConversationShareGPT(
 }
 
 // OpenAI/ChatML JSONL: {"messages": [{"role","content"}, ...]} per conversation;
-// Unsloth reads this as a ChatML dataset.
+
 export async function exportConversationRawJsonl(
   threadId: string,
 ): Promise<void> {
@@ -643,7 +643,7 @@ async function buildThreadContent(
   }
 
   if (format === "jsonl-raw") {
-    // OpenAI/ChatML: Unsloth reads the "messages" key as ChatML.
+
     const oaiMsgs: OAIMessage[] = messages.flatMap((msg) =>
       messageToOpenAI(msg),
     );
@@ -809,7 +809,7 @@ export async function exportProjectConversations(
 
 // ── Fine-tuning export ─────────────────────────────────────────────────────
 // One JSONL line per conversation: {"messages": [{"role", "content"}]} with
-// string-only content in system/user/assistant turns. Unsloth's training tab
+
 // detects this as ChatML natively (no column mapping, no standardization) and
 // it works with train-on-completions masking, which only trains on assistant
 // turns. Reasoning, tool calls, and images are dropped: clean SFT targets.

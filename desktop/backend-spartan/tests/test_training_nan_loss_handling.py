@@ -1,12 +1,5 @@
 
-"""Pin Unsloth's behavior when a training event reports non-finite (NaN/Inf) loss.
-
-The training event handler used to filter NaN/Inf to None silently while
-leaving the previous finite loss in progress.loss — so the API kept reporting
-the stale value as if everything were fine. We now drop the stale value:
-clients see loss=None at the affected step and a one-shot warning is logged.
-Training continues; the run is not marked failed.
-"""
+'\nThe training event handler used to filter NaN/Inf to None silently while\nleaving the previous finite loss in progress.loss — so the API kept reporting\nthe stale value as if everything were fine. We now drop the stale value:\nclients see loss=None at the affected step and a one-shot warning is logged.\nTraining continues; the run is not marked failed.'
 
 from __future__ import annotations
 

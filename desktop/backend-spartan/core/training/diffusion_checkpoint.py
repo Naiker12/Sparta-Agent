@@ -77,7 +77,7 @@ class ResumeError(ValueError):
     """A resume request that cannot be honoured. The message is shown to the user."""
 
 
-# ── identity ──────────────────────────────────────────────────────────────────
+
 # Human labels for the identity fields that HARD-REJECT a resume, in report order.
 _IDENTITY_LABELS: tuple[tuple[str, str], ...] = (
     ("kind", "training type"),
@@ -106,7 +106,7 @@ _IDENTITY_LABELS: tuple[tuple[str, str], ...] = (
     ("cache_latents", "latent caching"),
     ("cache_mode", "latent cache path"),
     # The mode the LOOP actually ran in, which the request does not settle:
-    # UNSLOTH_DIFFUSION_NO_LATENT_CACHE turns it off, and an over-budget cache falls back to
+
     # encoding in-loop. The two paths draw their crops and flips from different streams
     # (variant_rng versus the loop rng), so a restored RNG state does not reproduce the run.
     ("cache_variants", "cached crop variants"),
@@ -643,7 +643,7 @@ def identity_for_config(
     )
 
 
-# ── RNG capture / restore ─────────────────────────────────────────────────────
+
 def capture_rng_state(streams: Optional[dict[str, Any]] = None) -> dict[str, Any]:
     """Snapshot every random stream a diffusion run draws from.
 
@@ -785,7 +785,7 @@ def _random_state_from_json(value: Any) -> Optional[tuple]:
         return None
 
 
-# ── writing ───────────────────────────────────────────────────────────────────
+
 def save_checkpoint(
     *,
     output_dir: str | os.PathLike[str],
@@ -921,7 +921,7 @@ def save_checkpoint(
             "ema_updates": int(ema_updates),
             # Which optimizer wrote the moments. bitsandbytes AdamW8bit stores "state1"/"state2",
             # torch AdamW stores "exp_avg"/"exp_avg_sq", and the trainers pick between them from
-            # the host (bnb present, fused kernel available, UNSLOTH_DIFFUSION_FP32_OPTIM). Both
+
             # accept the other's state_dict and then KeyError on the first step, so the resume
             # has to compare this instead.
             "optimizer_class": optimizer_class,
@@ -1492,7 +1492,7 @@ def _bundle_identity(path: Path) -> Optional[tuple]:
     return (manifest.get("created_at"), manifest.get("global_step"))
 
 
-# ── reading + validation ──────────────────────────────────────────────────────
+
 def checkpoint_step(path: Path) -> int:
     """The step encoded in a ``checkpoint-<N>`` directory name, or -1."""
     name = path.name
@@ -1822,7 +1822,7 @@ def describe_resume_state(
     }
 
 
-# ── resume preflight ──────────────────────────────────────────────────────────
+
 def resolve_resume_dir(path_value: str) -> Path:
     """Contain a client-supplied resume path under the Studio outputs root.
 
@@ -2089,7 +2089,7 @@ def _validated_resume(
     return str(path), step
 
 
-# ── loading ───────────────────────────────────────────────────────────────────
+
 @dataclass
 class LoadedCheckpoint:
     """A validated bundle, with its tensors read lazily so a preflight never pays for them."""

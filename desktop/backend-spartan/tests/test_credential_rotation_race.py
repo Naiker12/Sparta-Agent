@@ -1,11 +1,5 @@
 
-"""A password rotation must not leave a session minted from the replaced credential.
-
-`unsloth studio reset-password` rotates in place against a live server, so a login
-can verify the old password, have the rotation land, and only then mint its tokens.
-Issuance is bound to the credential version that was verified, so such a login gets
-tokens that are already dead rather than a session that outlives the reset.
-"""
+'A password rotation must not leave a session minted from the replaced credential.\n\ncan verify the old password, have the rotation land, and only then mint its tokens.\nIssuance is bound to the credential version that was verified, so such a login gets\ntokens that are already dead rather than a session that outlives the reset.'
 
 import secrets
 from datetime import datetime, timedelta, timezone

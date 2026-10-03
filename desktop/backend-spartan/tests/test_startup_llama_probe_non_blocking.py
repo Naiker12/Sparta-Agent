@@ -97,7 +97,7 @@ def test_probe_does_not_block_startup(monkeypatch):
 
 
 def test_disable_env_skips_probe_entirely(monkeypatch):
-    """UNSLOTH_DISABLE_UPDATE_CHECK=1 starts no probe thread and makes no call."""
+    ''
     calls: list[int] = []
 
     def _freshness(_bin, **_kw):

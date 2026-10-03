@@ -89,12 +89,12 @@ export interface LoadModelRequest {
   n_batch?: number | null;
   /** prompt micro-batch size (--ubatch-size), 1..65536; omit/null = llama.cpp default 512, capped at the batch size */
   n_ubatch?: number | null;
-  /**
-   * Pass-through llama-server args, one argv token per entry, appended after
-   * Unsloth's own flags so llama.cpp's last-wins parser takes these. Flags Unsloth
-   * manages are refused with a 4xx naming the flag. Omit/null inherits the stored
-   * per-model value; [] launches with none. GGUF only.
-   */
+
+
+
+
+
+
   // biome-ignore lint/style/useNamingConvention: API schema
   llama_extra_args?: string[] | null;
   /**
@@ -102,9 +102,9 @@ export interface LoadModelRequest {
    * of by layer for GGUF models. Multi-GPU only; no effect on a single GPU.
    */
   tensor_parallel?: boolean | null;
-  /** GPU memory strategy for GGUF models. "auto" (default): Unsloth selects GPUs
-   *  and caps context to fit VRAM. "manual": you own the offload -- gpu_layers
-   *  -1 (Auto) hands sizing to llama.cpp's --fit, >= 0 pins layers/n_cpu_moe. */
+
+
+
   gpu_memory_mode?: "auto" | "manual";
   /** Manual mode: layers to offload to GPU (--gpu-layers, --fit off); -1 = Auto (--fit). */
   gpu_layers?: number;

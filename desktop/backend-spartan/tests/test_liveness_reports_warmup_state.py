@@ -1,25 +1,5 @@
 
-"""Invariant: /api/liveness says whether the backend is still warming up, and stays cheap.
-
-The desktop health watchdog probes this route every 15s and kills the backend after 3
-consecutive misses. It cannot use /api/health for that -- health awaits hardware detection,
-so a probe is billed for the warm thread's `import torch` -- and it cannot treat one reply
-as "startup finished" either, because those C-extension imports hold the GIL and stall the
-next probes on a process that is perfectly healthy. So liveness carries a
-`torch_warm_in_progress` marker and the watchdog holds its startup grace open until a reply
-omits it. See studio/src-tauri/src/commands.rs.
-
-That marker tracks the whole coordinated warm, not hardware detection alone: detection is
-only the first of utils/torch_warmup.py's stages and the inference_backend, transformers,
-datasets and unsloth_zoo imports that follow it are the ones that stall a probe. The older
-`hardware_detecting` marker stays exactly what it was, a "this verdict is provisional"
-signal the frontend reads, and is still published beside it.
-
-The markers must not cost what health costs: liveness reads settled snapshots, it must
-never start detection or wait on it.
-
-CPU-only, no network, no GPU, no weights: the subprocess tests stub detection.
-"""
+'Invariant: /api/liveness says whether the backend is still warming up, and stays cheap.\n\nThe desktop health watchdog probes this route every 15s and kills the backend after 3\nconsecutive misses. It cannot use /api/health for that -- health awaits hardware detection,\nso a probe is billed for the warm thread\'s `import torch` -- and it cannot treat one reply\nas "startup finished" either, because those C-extension imports hold the GIL and stall the\nnext probes on a process that is perfectly healthy. So liveness carries a\n`torch_warm_in_progress` marker and the watchdog holds its startup grace open until a reply\nomits it. See studio/src-tauri/src/commands.rs.\n\nThat marker tracks the whole coordinated warm, not hardware detection alone: detection is\nonly the first of utils/torch_warmup.py\'s stages and the inference_backend, transformers,\n`hardware_detecting` marker stays exactly what it was, a "this verdict is provisional"\nsignal the frontend reads, and is still published beside it.\n\nThe markers must not cost what health costs: liveness reads settled snapshots, it must\nnever start detection or wait on it.\n\nCPU-only, no network, no GPU, no weights: the subprocess tests stub detection.'
 
 from __future__ import annotations
 
@@ -155,14 +135,7 @@ def test_an_unsettled_verdict_is_published_as_still_warming_up():
 
 
 def test_a_late_warm_stage_still_holds_the_startup_grace_open():
-    """The regression: hardware detection is _STAGES[0], and inference_backend,
-    transformers, datasets and unsloth_zoo import after it.
-
-    So hardware_detecting is already gone while the warm is at its most expensive. A
-    watchdog reading only that marker ends its grace mid-warm and the next GIL stall,
-    which is exactly what the reported "torch warm finished in 8190.4ms" timeline shows
-    happening well after detection, is billed as three dead probes against a healthy
-    backend."""
+    'The regression: hardware detection is _STAGES[0], and inference_backend,\n\n    So hardware_detecting is already gone while the warm is at its most expensive. A\n    watchdog reading only that marker ends its grace mid-warm and the next GIL stall,\n    which is exactly what the reported "torch warm finished in 8190.4ms" timeline shows\n    happening well after detection, is billed as three dead probes against a healthy\n    backend.'
     result = _probe(settled = True, warm = "running")
 
     assert not result["has_detecting_key"], (
@@ -193,8 +166,7 @@ def test_a_settled_verdict_carries_no_warming_up_marker():
 
 
 def test_a_deferred_warm_says_so_instead_of_looking_like_a_slow_start():
-    """With UNSLOTH_STUDIO_DISABLE_TORCH_WARM=1 nothing will settle the verdict, so a bare
-    hardware_detecting would be indistinguishable from a backend still importing torch."""
+    '    hardware_detecting would be indistinguishable from a backend still importing torch.'
     result = _probe(settled = False, deferred = True, warm = "never")
 
     assert result["hardware_detecting"] is True

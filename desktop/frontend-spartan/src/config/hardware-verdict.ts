@@ -24,9 +24,9 @@ export function isProvisionalVerdict(data: HealthVerdict): boolean {
   return data.hardware_detecting === true;
 }
 
-/** True when the backend deferred detection rather than started it.
- * UNSLOTH_STUDIO_DISABLE_TORCH_WARM=1 stops health kicking detection at all, so nothing
- * settles until a hardware-dependent operation runs, and waiting would stall every load. */
+
+
+
 export function isDetectionDeferred(data: HealthVerdict): boolean {
   return data.hardware_detection_deferred === true;
 }

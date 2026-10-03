@@ -12,6 +12,7 @@ import {
   updateStoredChatProject,
 } from "../utils/chat-history-storage";
 import { offerToDeleteKeptSandboxes } from "../utils/offer-kept-sandbox-files";
+import { workspacePathKey } from "../utils/workspace-path-key";
 import type { SidebarItem } from "./use-chat-sidebar-items";
 
 let cachedProjects: ProjectRecord[] = [];
@@ -83,6 +84,8 @@ export function useChatProjects(): {
   projects: ProjectRecord[];
   isLoading: boolean;
   hasLoaded: boolean;
+  error: string | null;
+  retry: () => void;
 } {
   const projects = useSyncExternalStore(
     subscribeToProjects,
@@ -91,6 +94,7 @@ export function useChatProjects(): {
   );
   const [isLoading, setIsLoading] = useState(!projectsLoaded);
   const [hasLoaded, setHasLoaded] = useState(projectsLoaded);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -104,6 +108,9 @@ export function useChatProjects(): {
       }
       try {
         await loadProjects(force, followUpIfPending);
+        if (!cancelled) setError(null);
+      } catch (cause) {
+        if (!cancelled) setError(cause instanceof Error ? cause.message : "No se pudieron cargar los proyectos.");
       } finally {
         if (!cancelled) {
           setHasLoaded(true);
@@ -130,7 +137,7 @@ export function useChatProjects(): {
     };
   }, []);
 
-  return { projects, isLoading, hasLoaded };
+  return { projects, isLoading, hasLoaded, error, retry: () => window.dispatchEvent(new Event(CHAT_PROJECTS_UPDATED_EVENT)) };
 }
 
 export async function createChatProject(name: string): Promise<ProjectRecord> {
@@ -222,6 +229,7 @@ type NativeFilesystem = {
     root: string,
     access?: "read" | "write",
   ) => Promise<{ success: boolean; error?: string }>;
+  setWorkspaceBinding?: (bindingId: string, root: string, access: "read" | "write" | "write_no_delete") => Promise<{success: boolean; error?: string}>;
   clearWorkspaceRoot?: (
     projectId: string,
   ) => Promise<{ success: boolean; error?: string }>;
@@ -345,6 +353,23 @@ export async function setChatProjectWorkspace(
 
 export function getProjectNativeFilesystem(): NativeFilesystem | null {
   return nativeFilesystem();
+}
+
+let folderProjectOperation: Promise<ProjectRecord> | null = null;
+export async function ensureFolderProject(folder: string): Promise<ProjectRecord> {
+  if (folderProjectOperation) { await folderProjectOperation; }
+  const operation = (async () => {
+    const projects = await listStoredChatProjects({includeArchived: false});
+    const existing = projects.find(p => p.connectedFolderPath && workspacePathKey(p.connectedFolderPath) === workspacePathKey(folder));
+    if (existing) return existing;
+    const project = await createChatProject(folder.split(/[\\/]/).filter(Boolean).pop() ?? "Carpeta de trabajo");
+    // Grouping does not grant edits to other chats. Their own binding decides access.
+    await setChatProjectWorkspace(project.id, folder, "read");
+    return {...project, connectedFolderPath: folder, workspaceAccess: "read" as const};
+  })();
+  folderProjectOperation = operation;
+  try { return await operation; }
+  finally { if (folderProjectOperation === operation) folderProjectOperation = null; }
 }
 
 export function getDroppedNativePath(file: File): string | null {

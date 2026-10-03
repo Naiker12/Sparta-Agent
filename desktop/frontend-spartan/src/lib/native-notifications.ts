@@ -1,4 +1,4 @@
-import { isTauri } from "@/lib/api-base";
+import { isTauri, isElectron } from "@/lib/api-base";
 
 const MAX_BODY_LENGTH = 200;
 const MAX_SENT_KEYS = 200;
@@ -99,7 +99,7 @@ async function checkNativePermission(allowRequest: boolean): Promise<boolean> {
 }
 
 async function ensurePermission(allowRequest: boolean): Promise<boolean> {
-  if (!isTauri) {
+  if (!isTauri && !isElectron) {
     return false;
   }
   if (permissionState !== "unknown") {
@@ -117,7 +117,7 @@ async function ensurePermission(allowRequest: boolean): Promise<boolean> {
 }
 
 export async function primeNativeNotificationPermission(): Promise<void> {
-  if (!isTauri || permissionState !== "unknown") {
+  if ((!isTauri && !isElectron) || permissionState !== "unknown") {
     return;
   }
 
@@ -135,7 +135,7 @@ export async function primeNativeNotificationPermission(): Promise<void> {
 export async function notifyNative(
   options: NativeNotificationOptions,
 ): Promise<void> {
-  if (!isTauri) {
+  if (!isTauri && !isElectron) {
     return;
   }
   if (sentKeys.has(options.key) || inFlightKeys.has(options.key)) {
@@ -152,6 +152,14 @@ export async function notifyNative(
     const body = options.body
       ? sanitizeNotificationBody(options.body, "")
       : undefined;
+    if (isElectron) {
+      const notification = getBrowserNotificationApi();
+      if (notification) {
+        new notification(options.title, {body});
+        rememberSentKey(options.key);
+      }
+      return;
+    }
     const { sendNotification } = await import(
       "@tauri-apps/plugin-notification"
     );

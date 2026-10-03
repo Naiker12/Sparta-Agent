@@ -1,6 +1,5 @@
 
-"""Cloudflare tunnel start gate, incl. --secure on loopback. Imports run.py
-directly, so run under the Unsloth venv."""
+'Cloudflare tunnel start gate, incl. --secure on loopback. Imports run.py'
 
 from __future__ import annotations
 
@@ -147,7 +146,7 @@ def test_run_server_accepts_enable_tools_kwarg():
 
 def test_tool_policy_not_auto_disabled_by_bind():
     # No flag installs neither an override nor a tools-on default on any bind: the
-    # default belongs to `unsloth studio run`, which installs it itself. The
+
     # backend never changes the policy from host/secure.
     import run
     from state.tool_policy import (
@@ -203,7 +202,7 @@ def test_tool_policy_notice_wording():
 
 
 def test_startup_output_emits_tool_notice_on_network_bind(capsys, monkeypatch):
-    # Plain `unsloth studio -H 0.0.0.0` must not be silent about tools now.
+
     import run
 
     monkeypatch.setattr(run, "_verify_global_reachability", lambda *a, **k: None)
@@ -294,7 +293,7 @@ def test_api_only_cors_tracks_published_public_url():
 
 
 def test_run_server_exports_secure_env_for_cors():
-    # run_server must export UNSLOTH_SECURE before importing main so the CORS
+
     # profile can tell remote secure serving from local Tauri use.
     src = (_BACKEND / "run.py").read_text(encoding = "utf-8")
     assert 'os.environ["UNSLOTH_SECURE"] = "1"' in src

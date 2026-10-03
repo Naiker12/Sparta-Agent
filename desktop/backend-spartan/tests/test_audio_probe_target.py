@@ -36,11 +36,8 @@ def test_an_unresolvable_name_falls_through_rather_than_failing():
 
 
 def test_the_merged_export_load_path_resolves_the_alias_the_same_way():
-    """One resolver, not two. The BiCodec export path used to carry its own copy of the
-    "Spark-TTS-0.5B/LLM" -> "unsloth/Spark-TTS-0.5B" mapping; it now shares load_scan_target
-    with the capability probe here and with the trainer preflight in routes/training.py, so
-    the three cannot drift."""
-    # Read rather than import: core.inference.inference pulls the whole Unsloth stack,
+    'One resolver, not two. The BiCodec export path used to carry its own copy of the\n    with the capability probe here and with the trainer preflight in routes/training.py, so\n    the three cannot drift.'
+
     # which is what made a second, dependency-light copy of this mapping tempting.
     from pathlib import Path
 

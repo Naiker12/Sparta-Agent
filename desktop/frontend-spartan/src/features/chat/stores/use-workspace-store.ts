@@ -27,6 +27,8 @@ export interface WorkspaceCapabilities {
 }
 
 interface WorkspaceState {
+  panelWidth: number;
+  setPanelWidth: (width: number) => void;
   isOpen: boolean;
   activeTab: WorkspaceTab;
   searchQuery: string;
@@ -66,6 +68,8 @@ interface WorkspaceState {
 }
 
 export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
+  panelWidth: 352,
+  setPanelWidth: (panelWidth) => set({panelWidth: Math.max(280, Math.min(900, panelWidth))}),
   // Keep the conversation as the primary canvas. The workspace opens only when
   // the user chooses a rail item, rather than permanently consuming the right side.
   isOpen: false,

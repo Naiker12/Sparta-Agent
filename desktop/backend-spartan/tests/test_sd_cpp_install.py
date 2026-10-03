@@ -170,7 +170,7 @@ def test_pinned_tag_default_and_override(monkeypatch):
 
 def test_repo_default_and_override(monkeypatch):
     monkeypatch.delenv("UNSLOTH_SD_CPP_REPO", raising = False)
-    # Default is the Unsloth mirror; the env override can point back to leejet upstream.
+
     assert _repo() == DEFAULT_REPO == "unslothai/stable-diffusion.cpp"
     monkeypatch.setenv("UNSLOTH_SD_CPP_REPO", "leejet/stable-diffusion.cpp")
     assert _repo() == "leejet/stable-diffusion.cpp"
@@ -386,7 +386,7 @@ def test_safe_extractall_extracts_normal_members(tmp_path):
 
 
 def test_find_sd_cpp_binary_honors_studio_home(tmp_path, monkeypatch):
-    # A binary installed under a custom Studio root must be discovered without also setting UNSLOTH_SD_CPP_PATH.
+
     from core.inference import sd_cpp_engine as eng
 
     monkeypatch.delenv("SD_CLI_PATH", raising = False)
@@ -418,12 +418,7 @@ def test_managed_root_is_under_the_studio_home_like_every_other_component(tmp_pa
 def test_a_relative_studio_home_does_not_put_the_install_in_the_working_directory(
     tmp_path, monkeypatch
 ):
-    """A relative ``UNSLOTH_STUDIO_HOME`` used to collapse to the working directory.
-
-    ``Path("home").parent`` is ``Path(".")``, so the managed root became ``./stable-diffusion.cpp``
-    -- exactly the name ``git clone`` of the upstream project produces. A checkout sitting in the
-    working directory then shadowed the managed install and the installer refused to run, because
-    the target was a pre-existing non-empty directory without the ownership marker."""
+    '\n    ``Path("home").parent`` is ``Path(".")``, so the managed root became ``./stable-diffusion.cpp``\n    -- exactly the name ``git clone`` of the upstream project produces. A checkout sitting in the\n    working directory then shadowed the managed install and the installer refused to run, because\n    the target was a pre-existing non-empty directory without the ownership marker.'
     from core.inference import sd_cpp_engine as eng
 
     monkeypatch.chdir(tmp_path)
@@ -467,9 +462,7 @@ def test_the_legacy_sibling_tree_is_adopted_only_when_it_carries_the_marker(tmp_
 
 
 def test_the_legacy_default_studio_home_keeps_its_install_dir(tmp_path, monkeypatch):
-    """``UNSLOTH_STUDIO_HOME=~/.unsloth/studio`` is the documented default, not a custom home:
-    it must keep resolving to ``~/.unsloth/stable-diffusion.cpp`` rather than moving the tree to
-    ``~/.unsloth/studio/stable-diffusion.cpp`` and orphaning every existing install."""
+    ''
     from core.inference import sd_cpp_engine as eng
 
     fake_home = tmp_path / "home"
@@ -482,12 +475,12 @@ def test_the_legacy_default_studio_home_keeps_its_install_dir(tmp_path, monkeypa
     assert eng.managed_install_root() == expected
 
 
-# ── Unsloth mirror: default source + the CPU/Apple asset set it publishes ─────
+
 
 # The shipped pin, not a copy of it: a hardcoded tag here silently stops describing what users
 # actually install the moment DEFAULT_TAG moves.
 _TAG = DEFAULT_TAG
-# Exactly what unslothai/stable-diffusion.cpp's CI publishes. It was CPU and Apple only, on the
+
 # premise that a GPU host runs diffusers instead. MiniMax-H3 falsified that: its diffusers path
 # wants more VRAM than a consumer card has, so those hosts fall back to the native engine, and on
 # Linux there was no accelerated build to fall back to. The CUDA leg is best effort and outside the
@@ -809,7 +802,7 @@ def test_upstream_full_matrix_still_resolves_gpu_accel():
 
 
 def test_explicit_repo_override_equal_to_default_suppresses_fallback(tmp_path, monkeypatch):
-    # A user who pins UNSLOTH_SD_CPP_REPO (even to the default) must get exactly that repo, so a missing release errors.
+
     _stub_two_repos(
         monkeypatch, mirror_serves = False, upstream_serves = True, zip_bytes = b"", digest = ""
     )
@@ -1985,9 +1978,7 @@ def test_an_install_stands_down_while_a_generation_is_running(tmp_path, monkeypa
 
 
 def test_an_unmanaged_binary_never_waits_for_a_managed_install(tmp_path, monkeypatch):
-    """An sd-cli from SD_CLI_PATH / UNSLOTH_SD_CPP_PATH / an in-tree build / PATH is one the
-    installer cannot replace, so an install in flight is nothing to it. Claiming for it would stall
-    the generation behind an unrelated multi-GB download for the whole timeout."""
+    '    installer cannot replace, so an install in flight is nothing to it. Claiming for it would stall\n    the generation behind an unrelated multi-GB download for the whole timeout.'
     import core.inference.sd_cpp_backend as bk
 
     _managed_tree(tmp_path, monkeypatch)

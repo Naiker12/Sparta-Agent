@@ -76,7 +76,7 @@ def _html(raw: str) -> list[Page]:
 # scripts (RTL Arabic/Hebrew emerge as shaped Presentation Forms, Indic matras drop to
 # U+FFFD) and can silently drop most of a heavy-RTL page. When Markdown trips these
 # signals we fall back to PyMuPDF's logical-order get_text(). Thresholds mirror the chat
-# extractor guard (unslothai/unsloth#5351 review).
+
 _SHAPED_PRESENTATION_FORMS = re.compile("[\ufb1d-\ufdff\ufe70-\ufefc]")
 _PDF_FALLBACK_MIN_BAD_GLYPHS = 5
 _PDF_FALLBACK_BAD_GLYPH_RATIO = 0.0005

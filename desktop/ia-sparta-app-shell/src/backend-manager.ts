@@ -39,7 +39,7 @@ export class BackendManager {
     if (this.port) return this.port;
     if (this.process) throw new Error("El backend ya se está iniciando.");
     // A managed Electron runtime must be isolated from global Python installs
-    // and from other desktop products such as Unsloth/GeoNexus.
+
     const python = runtimeDir ? this.findRuntimePython(runtimeDir) : this.findPython(backendDir);
     if (!python) {
       if (runtimeDir) {
@@ -64,10 +64,13 @@ export class BackendManager {
       for (const key of Object.keys(childEnv)) {
         if (key.startsWith("UNSLOTH_")) delete childEnv[key];
       }
-      // The backend originates from Unsloth Studio, but its mutable state must
-      // belong to Sparta. Never inherit C:\\Users\\...\\.unsloth from another app.
+
+
       childEnv.UNSLOTH_STUDIO_HOME = path.join(runtimeDir ?? backendDir, "studio-data");
       childEnv.UNSLOTH_STUDIO_DESKTOP_OWNER_PID = String(process.pid);
+      // Vite can choose a different port when 5173 is occupied. Carry the
+      // actual renderer origin; the backend only accepts loopback origins.
+      childEnv.SPARTA_DESKTOP_ORIGIN = process.env.VITE_DEV_SERVER_URL ?? "";
       const child = spawn(python.command, [...python.args, "desktop_bootstrap.py", "--api-only", "--port", "0"], {
         cwd: backendDir,
         env: { ...childEnv, PYTHONPATH: backendDir },
@@ -115,7 +118,14 @@ export class BackendManager {
         if (stdoutPending.length > 8192) stdoutPending = "";
       });
       child.stderr?.on("data", (chunk: Buffer) => read(chunk.toString()));
-      child.once("error", reject);
+      child.once("error", (error) => {
+        if (this.process === child) {
+          this.process = undefined;
+          this.port = undefined;
+          this.desktopSecret = undefined;
+        }
+        reject(error);
+      });
       child.once("exit", (code) => {
         if (this.process !== child) return;
         if (!this.port) {
@@ -165,10 +175,13 @@ export class BackendManager {
     onProgress("Instalando dependencias del backend...");
     await this.run(venvPython, ["-m", "pip", "install", "-r", requirements], backendDir, onProgress);
 
-    onProgress("Verificando dependencias críticas del motor...");
+    onProgress("Verificando que el backend pueda iniciar...");
     await this.run(
       venvPython,
-      ["-c", "import structlog, fastapi; print('Dependencias críticas verificadas')"],
+      // Import the same application module that `start()` uses. A superficial
+      // check of FastAPI alone used to report a successful installation even
+      // though an API route still required a missing package at boot.
+      ["-c", "import main; print('Backend verificado')"],
       backendDir,
       onProgress,
     );
@@ -272,8 +285,8 @@ export class BackendManager {
   }
 
   /**
-   * A virtualenv is writable and survives app upgrades.  Its dependencies must
-   * never silently be reused with a different bundled backend tree.
+   * A virtualenv survives app upgrades. A changed backend must prove it can
+   * start with the installed dependencies before its fingerprint is adopted.
    */
   private assertRuntimeMatchesBackend(backendDir: string, runtimeDir: string): boolean {
     const manifestPath = path.join(runtimeDir, RUNTIME_MANIFEST);
@@ -293,10 +306,13 @@ export class BackendManager {
       }
       throw new Error("No se pudo leer la versión del backend. Actualízalo para reconstruir su entorno aislado.");
     }
-    if (!stored || stored.backendFingerprint !== expected) {
+    if (!stored) {
       throw new Error("El backend pertenece a otra versión de Sparta. Actualízalo para reconstruir su entorno aislado.");
     }
-    return false;
+    // Source changes do not necessarily require new dependencies. Try the
+    // existing isolated environment and adopt it only after a ready handshake.
+    // Missing imports still fail startup and surface the repair action.
+    return stored.backendFingerprint !== expected;
   }
 
   private writeRuntimeManifest(backendDir: string, runtimeDir: string): void {

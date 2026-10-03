@@ -132,7 +132,7 @@ def _validate_max_output_tokens_contract(
         )
 
 
-# ── Public key for API key encryption ─────────────────────────────
+
 
 
 @router.get("/public-key")
@@ -148,7 +148,7 @@ async def get_public_key(current_subject: str = Depends(get_current_subject)):
     }
 
 
-# ── Provider registry (static) ───────────────────────────────────
+
 
 
 @router.get("/registry", response_model = list[ProviderRegistryEntry])
@@ -166,7 +166,7 @@ async def list_registry(
     return list_available_providers(include_hidden = include_hidden)
 
 
-# ── Per-MTok pricing snapshot for client-side cost display ──────────
+
 
 
 @router.get("/pricing")
@@ -176,7 +176,7 @@ async def get_pricing_snapshot(current_subject: str = Depends(get_current_subjec
     return pricing_snapshot()
 
 
-# ── Provider config CRUD ──────────────────────────────────────────
+
 
 
 @router.get("/", response_model = list[ProviderResponse])
@@ -467,7 +467,7 @@ def _bind_saved_provider_target(payload):
     )
 
 
-# ── Test connectivity ─────────────────────────────────────────────
+
 
 
 @router.post("/test", response_model = ProviderTestResult)
@@ -479,7 +479,8 @@ async def test_provider(
     """
     Test connectivity to an external provider.
 
-    Makes a lightweight GET /models call to verify the API key works. Generic
+    OpenRouter validates credentials with GET /key. Other hosted providers
+    use a lightweight GET /models call. Generic
     custom endpoints use a chat-completions probe because /models is optional.
     An explicit encrypted key takes precedence over the saved provider key.
     """
@@ -523,6 +524,13 @@ async def test_provider(
     )
 
     try:
+        if payload.provider_type == "openrouter":
+            await client.verify_api_key()
+            return ProviderTestResult(
+                success = True,
+                message = "Clave de OpenRouter válida. La conexión está lista; el uso de cada modelo depende de sus permisos y saldo.",
+                models_count = None,
+            )
         if payload.provider_type == "custom":
             model_id = (payload.model_id or "").strip()
             if not model_id:
@@ -575,7 +583,7 @@ async def test_provider(
         await client.close()
 
 
-# ── List models from provider ─────────────────────────────────────
+
 
 
 @router.post("/models", response_model = list[ProviderModelInfo])
@@ -671,6 +679,7 @@ async def list_provider_models(
                 display_name = m.get("id", ""),
                 context_length = m.get("context_length") or m.get("context_window"),
                 owned_by = m.get("owned_by"),
+                reasoning = m.get("reasoning") if isinstance(m.get("reasoning"), dict) else None,
             )
             for m in models
         ]

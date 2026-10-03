@@ -31,7 +31,7 @@ interface PlatformState {
   chatOnlyReason: string | null;
   // What specifically blocked that reason, when the backend can name it. Today only the
   // MLX gate does: it is all-or-nothing across mlx, mlx-lm and mlx-vlm, so without this
-  // the greyed-out Train row can only repeat "run `unsloth studio update`".
+
   chatOnlyDetail: string | null;
   // From /api/health (authed): live tunnel URL, direct (non-tunnel) base, and
   // whether the server was launched with --secure.

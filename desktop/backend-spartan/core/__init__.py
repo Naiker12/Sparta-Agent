@@ -1,11 +1,5 @@
 
-"""
-Unified core module for Unsloth backend
-
-Imports are LAZY (via __getattr__) so training subprocesses can import
-core.training.worker without pulling in heavy ML deps (unsloth, transformers,
-torch) before the version-activation code runs.
-"""
+'\n\nImports are LAZY (via __getattr__) so training subprocesses can import\ntorch) before the version-activation code runs.'
 
 import sys
 from pathlib import Path

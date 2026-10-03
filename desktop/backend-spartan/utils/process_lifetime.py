@@ -1,25 +1,5 @@
 
-"""Bind Unsloth child processes to the parent's lifetime so none survive an
-abnormal parent exit (terminal-window close, Task Manager "End Task", SIGKILL,
-crash) -- the cooperative shutdown path only runs on graceful exits.
-
-Windows: one parent-owned Job Object with JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE.
-The parent is assigned to it, children inherit it automatically, and the OS
-reaps every process in the job when the parent's last handle closes. Mirrors the
-desktop app's job in studio/src-tauri/src/windows_job.rs.
-
-POSIX: each long-lived child sets prctl(PR_SET_PDEATHSIG) on Linux via a tiny
-preexec hook. Linux's signal is per-direct-child only, so multiprocessing
-workers are also tracked for terminate_all.
-
-macOS has neither mechanism, so tracked children are also recorded on disk and
-the next startup sweeps whatever the previous run left behind
-(reap_recorded_children). That record is the only reaper macOS has after a
-crash, a Force Quit or a closed terminal.
-
-Best-effort throughout: any failure degrades to today's behavior, never raises.
-Stdlib only.
-"""
+'abnormal parent exit (terminal-window close, Task Manager "End Task", SIGKILL,\ncrash) -- the cooperative shutdown path only runs on graceful exits.\n\nWindows: one parent-owned Job Object with JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE.\nThe parent is assigned to it, children inherit it automatically, and the OS\nreaps every process in the job when the parent\'s last handle closes. Mirrors the\ndesktop app\'s job in studio/src-tauri/src/windows_job.rs.\n\nPOSIX: each long-lived child sets prctl(PR_SET_PDEATHSIG) on Linux via a tiny\npreexec hook. Linux\'s signal is per-direct-child only, so multiprocessing\nworkers are also tracked for terminate_all.\n\nmacOS has neither mechanism, so tracked children are also recorded on disk and\nthe next startup sweeps whatever the previous run left behind\n(reap_recorded_children). That record is the only reaper macOS has after a\ncrash, a Force Quit or a closed terminal.\n\nBest-effort throughout: any failure degrades to today\'s behavior, never raises.\nStdlib only.'
 
 from __future__ import annotations
 
@@ -143,7 +123,7 @@ def _is_windows() -> bool:
     return sys.platform == "win32"
 
 
-# ── Parent setup ──
+
 
 
 def initialize_parent_lifetime() -> None:
@@ -267,7 +247,7 @@ def _install_windows_job() -> None:
             kernel32.CloseHandle(job)
             return
         # AssignProcessToJobObject(parent) makes children inherit the job. May
-        # fail if Unsloth already runs inside an incompatible host job (pre-Win8);
+
         # degrade to the cooperative path rather than blocking startup.
         if not kernel32.AssignProcessToJobObject(job, kernel32.GetCurrentProcess()):
             _record_job_status(False, "AssignProcessToJobObject failed", _last_error(ctypes))
@@ -279,7 +259,7 @@ def _install_windows_job() -> None:
         _record_job_status(False, f"{type(error).__name__}: {error}")
 
 
-# ── Child binding ──
+
 
 
 def _pdeathsig_preexec(owner_pid: Optional[int] = None) -> None:
@@ -764,7 +744,7 @@ def _group_member_pids(pgid: int) -> "Optional[list[int]]":
     return None
 
 
-# ── Crash-survivable child record ──
+
 #
 # macOS has neither PR_SET_PDEATHSIG nor job objects, so a crash leaves every
 # sidecar running. Record children as they are adopted; sweep the previous

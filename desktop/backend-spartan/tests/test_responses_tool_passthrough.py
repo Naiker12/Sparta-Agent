@@ -117,9 +117,7 @@ class TestResponsesRequestTools:
         assert req.parallel_tool_calls is True
 
     def test_builtin_tool_type_passes_validation(self):
-        """Non-function built-in tools (web_search, file_search, mcp, ...)
-        must not raise at validation so SDKs that default to them don't
-        fail on Unsloth; they're filtered out during translation."""
+        "Non-function built-in tools (web_search, file_search, mcp, ...)\n        must not raise at validation so SDKs that default to them don't"
         req = ResponsesRequest(
             input = "hi",
             tools = [{"type": "web_search_preview"}],

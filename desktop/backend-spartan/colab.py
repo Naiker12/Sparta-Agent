@@ -1,5 +1,5 @@
 
-"""Colab helpers for Unsloth Studio. Uses Colab's built-in proxy."""
+''
 
 from pathlib import Path
 import sys
@@ -413,10 +413,7 @@ def _stop_cloudflare_tunnel() -> None:
 
 
 def _is_studio_healthy(port: int, timeout: float = 2.0) -> bool:
-    """True only if Unsloth Studio (not some other app) answers /api/health on *port*.
-
-    The service-marker check stops the reuse path reusing or tunneling a foreign process.
-    """
+    '\n    The service-marker check stops the reuse path reusing or tunneling a foreign process.\n    '
     import json, urllib.request
     try:
         with urllib.request.urlopen(f"http://localhost:{port}/api/health", timeout = timeout) as r:
@@ -546,11 +543,7 @@ def _show_and_embed(
     colab_login: "tuple[str, str] | None" = None,
     cloudflare_requested: bool = False,
 ):
-    """Render the Unsloth ready card + iframe for *port*.
-
-    Prefer Colab's ``serve_kernel_port_as_iframe`` on real Colab; raw HTML iframe is the
-    fallback. Cloudflare cards stay clickable.
-    """
+    "\n    Prefer Colab's ``serve_kernel_port_as_iframe`` on real Colab; raw HTML iframe is the\n    fallback. Cloudflare cards stay clickable.\n    "
     url = get_colab_url(port)
     logger.info(f"🌐 Unsloth Studio URL: {url}")
     if cloudflare_url:
@@ -605,19 +598,7 @@ def _show_and_embed(
 
 
 def start(port: int = 8888, *, cloudflare: "bool | None" = None):
-    """Start Unsloth Studio in Colab and display the URL.
-
-    Args:
-        port: Port to bind/serve on.
-        cloudflare: Shareable Cloudflare HTTPS link. ``None`` (default) auto-enables on
-            real Colab because the in-cell proxy embed is often blank; pass ``False`` to
-            skip the tunnel or ``True`` to force it on other runtimes.
-
-    Usage:
-        start()                    # Cloudflare link on Colab (auto); proxy iframe elsewhere
-        start(cloudflare=False)    # Colab proxy iframe only (often blank on current Colab)
-        start(cloudflare=True)     # force Cloudflare link on any runtime
-    """
+    '\n    Args:\n        port: Port to bind/serve on.\n        cloudflare: Shareable Cloudflare HTTPS link. ``None`` (default) auto-enables on\n            real Colab because the in-cell proxy embed is often blank; pass ``False`` to\n            skip the tunnel or ``True`` to force it on other runtimes.\n\n    Usage:\n        start()                    # Cloudflare link on Colab (auto); proxy iframe elsewhere\n        start(cloudflare=False)    # Colab proxy iframe only (often blank on current Colab)\n        start(cloudflare=True)     # force Cloudflare link on any runtime\n    '
     import time
 
     logger.info("🦥 Starting Unsloth Studio...")

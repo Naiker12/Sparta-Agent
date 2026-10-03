@@ -104,9 +104,7 @@ class _FakeTrainer:
 
 
 def _prewarm(trainer, batches):
-    """The barrier from ``UnslothTrainer._preflight_first_batch``, verbatim:
-    memoize, pull ``batches`` microbatches, drop the local names. The memo keeps
-    the filled workers alive past this function."""
+    '    memoize, pull ``batches`` microbatches, drop the local names. The memo keeps\n    the filled workers alive past this function.'
     memoize_train_dataloader(trainer)
     loader = trainer.get_train_dataloader()
     iterator = iter(loader)

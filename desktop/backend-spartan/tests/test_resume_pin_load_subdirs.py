@@ -1,19 +1,5 @@
 
-"""Resuming a pinned snapshot must use the same load roots as everything else.
-
-``ca7c72e75`` taught the cached-snapshot probes about ``security_load_subdirs`` so a repo
-like ``unsloth/Spark-TTS-0.5B`` -- whose snapshot root holds only ``README.md`` and
-``config.yaml``, with everything trainable under ``LLM/`` -- is not reported as absent.
-The resume branch of ``_reject_untrainable_model_request`` kept its own hardcoded
-``("config.json", "adapter_config.json")`` tuple, so the one path that *already has* a
-server-verified pin was the one that could not see it: ``latest_snapshot_from_cache_path``
-returned None, ``path`` stayed None, and the very next block turned that into
-409 ``hf_model_not_cached_offline`` for a cache sitting right there on disk. Online it is
-no better -- it falls through to a remote metadata round trip that offline users cannot
-make and that the pin exists precisely to avoid.
-
-Resuming is when the pin matters most, so it has to agree with the resolver.
-"""
+'Resuming a pinned snapshot must use the same load roots as everything else.\n\n``ca7c72e75`` taught the cached-snapshot probes about ``security_load_subdirs`` so a repo\n``config.yaml``, with everything trainable under ``LLM/`` -- is not reported as absent.\nThe resume branch of ``_reject_untrainable_model_request`` kept its own hardcoded\n``("config.json", "adapter_config.json")`` tuple, so the one path that *already has* a\nserver-verified pin was the one that could not see it: ``latest_snapshot_from_cache_path``\nreturned None, ``path`` stayed None, and the very next block turned that into\n409 ``hf_model_not_cached_offline`` for a cache sitting right there on disk. Online it is\nno better -- it falls through to a remote metadata round trip that offline users cannot\nmake and that the pin exists precisely to avoid.\n\nResuming is when the pin matters most, so it has to agree with the resolver.'
 
 import json
 

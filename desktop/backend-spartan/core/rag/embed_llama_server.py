@@ -1,16 +1,5 @@
 
-"""GGUF embedder over the bundled llama.cpp, served via HTTP (no torch).
-
-Opt-in (``RAG_EMBED_BACKEND=llama-server``). Runs a dedicated
-``llama-server --embedding`` subprocess on its own port and calls its OpenAI-style
-``/v1/embeddings`` + ``/tokenize``, fully isolated from the chat backend.
-
-Device is ``auto`` (GPU when present, else CPU, falling back to CPU if a GPU start
-fails); ``RAG_EMBED_DEVICE`` forces it. We call only llama_cpp's *static* helpers
-(no torch), copying the instance-coupled bits locally, since constructing a
-``LlamaCppBackend`` runs an ``__init__`` reaper that kills any Unsloth llama-server
--- so each request re-spawns ours if it died (self-heal).
-"""
+"GGUF embedder over the bundled llama.cpp, served via HTTP (no torch).\n\nOpt-in (``RAG_EMBED_BACKEND=llama-server``). Runs a dedicated\n``llama-server --embedding`` subprocess on its own port and calls its OpenAI-style\n``/v1/embeddings`` + ``/tokenize``, fully isolated from the chat backend.\n\nDevice is ``auto`` (GPU when present, else CPU, falling back to CPU if a GPU start\nfails); ``RAG_EMBED_DEVICE`` forces it. We call only llama_cpp's *static* helpers\n(no torch), copying the instance-coupled bits locally, since constructing a\n-- so each request re-spawns ours if it died (self-heal)."
 
 from __future__ import annotations
 

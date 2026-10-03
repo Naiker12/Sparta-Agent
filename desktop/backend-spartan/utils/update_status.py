@@ -1,9 +1,5 @@
 
-"""Web update status helpers for browser-served Unsloth Studio.
-
-Side-effect light: no network work at import time or from /api/health.
-The PyPI check is lazy, cached, and only for PyPI-managed installs.
-"""
+'\nSide-effect light: no network work at import time or from /api/health.\nThe PyPI check is lazy, cached, and only for PyPI-managed installs.'
 
 from __future__ import annotations
 

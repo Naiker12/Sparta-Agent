@@ -1,14 +1,5 @@
 
-"""What the child process actually receives when the editor sends extra args.
-
-The unit tests either side of this one pin the validator and the row's copy. This
-one pins the thing both exist to produce: the argv llama-server is launched with.
-It reuses the placement suite's harness, which runs the real ``load_model`` and
-captures the command at the Popen boundary instead of spawning anything.
-
-The bar the whole feature is measured against is the first test here: with nothing
-in the box, the command must be byte-identical to the one Unsloth emitted before.
-"""
+"What the child process actually receives when the editor sends extra args.\n\nThe unit tests either side of this one pin the validator and the row's copy. This\none pins the thing both exist to produce: the argv llama-server is launched with.\nIt reuses the placement suite's harness, which runs the real ``load_model`` and\ncaptures the command at the Popen boundary instead of spawning anything.\n\nThe bar the whole feature is measured against is the first test here: with nothing"
 
 from __future__ import annotations
 

@@ -1505,7 +1505,7 @@ def test_wants_stream_usage_reads_the_callers_opt_in(include_usage, expected):
 
 
 def test_direct_llama_work_is_busy_without_the_admission_snapshot(monkeypatch):
-    # With UNSLOTH_LLAMA_ADMISSION_CONTROL=off the queue readout is None, so a caption or
+
     # OCR call (which opens no row) would leave the row saying Ready while the server works.
     import routes.inference as inf
 

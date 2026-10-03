@@ -1,0 +1,44 @@
+---
+title: "Visión general del sistema"
+description: "Las capas de Sparta, sus responsabilidades y las fronteras entre el escritorio y los servicios externos."
+---
+
+Sparta reúne una interfaz React, un shell Electron y un motor Python. La edición documentada conecta modelos mediante API; el backend local coordina las peticiones y las herramientas.
+
+## Mapa de responsabilidades
+
+<DocsDiagram type="architecture" />
+
+| Capa | Responsabilidad | Fuente del proyecto |
+| --- | --- | --- |
+| Frontend | Conversación, composer, configuraciones y presentación de resultados | `desktop/frontend-spartan` |
+| Shell | Ventana, arranque del motor y operaciones de escritorio | `desktop/ia-sparta-app-shell` |
+| Puente | API expuesta por preload y contratos IPC | `desktop/ia-sparta-ipc-bridge` |
+| Backend | Rutas, autenticación, proveedores y herramientas | `desktop/backend-spartan` |
+| Landing | Presentación pública y estas guías | `landing` |
+
+## Dos canales distintos
+
+La comunicación HTTP con el backend transporta las peticiones de las funcionalidades. El IPC comunica el renderer con el proceso principal para acciones del escritorio. No son dos nombres del mismo canal.
+
+La ventana configura `contextIsolation: true` y `nodeIntegration: false`. El preload expone una API acotada; la interfaz no obtiene acceso general a Node por ese hecho. Consulta [Puente de escritorio](/docs/architecture/ipc-bridge).
+
+## Recorrido de un mensaje
+
+<DocsDiagram type="message" />
+
+El streaming puede incluir texto, razonamiento y llamadas de herramientas. El frontend representa esas partes y sus estados; ejecutar una herramienta sigue un flujo adicional de política y resultados.
+
+## Datos y servicios externos
+
+La carpeta de trabajo, la interfaz y el motor viven en el equipo. El contenido incorporado a una petición puede salir hacia el proveedor o conector seleccionado. Una ruta local no garantiza que su contenido nunca se envíe a una API.
+
+Consulta [Seguridad y permisos](/docs/core-concepts/security-and-sandbox) y [Modelos y proveedores](/docs/core-concepts/models-and-providers).
+
+## Continúa por capa
+
+- [Frontend y estado de conversación](/docs/architecture/frontend-ui).
+- [Backend, arranque y herramientas](/docs/architecture/backend-architecture).
+- [Estructura del repositorio](/docs/development/project-structure).
+
+La descripción se basa en el checkout del proyecto. Para cambios de comportamiento consulta también el código y las notas de la versión instalada.

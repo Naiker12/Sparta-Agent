@@ -8,20 +8,20 @@ export type TrainingMethod =
   | "cpt"
   | "reward";
 
-/**
- * VRAM estimation for model loading (4-bit quantization via bitsandbytes).
- *
- * Estimates the total driver-level VRAM (what nvidia-smi reports) to load a model in 4-bit with
- * Unsloth / bitsandbytes, to check it fits the GPU before training.
- *
- * Formula: totalParams * 0.90 + 1.4 GB
- *
- * Calibrated against isolated Unsloth loads on RTX 5070 Ti (2026.2):
- *   Qwen2.5-0.5B  (0.49B) : est 1.8 vs actual 1.86 GB  (-3%)
- *   Llama-3.2-1B  (1.24B) : est 2.5 vs actual 2.54 GB   (-1%)
- *   Llama-3.2-3B  (3.21B) : est 4.3 vs actual 4.40 GB   (-2%)
- *   Llama-3.1-8B  (8.03B) : est 8.6 vs actual 8.14 GB   (+6%)
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /**
  * Effective bytes per parameter for 4-bit weights at driver level. Raw bnb 4-bit is ~0.5, but
@@ -48,9 +48,9 @@ function usesQuantizedLoading(
   return method === "cpt" && (modelId ?? "").toLowerCase().includes("4bit");
 }
 
-/**
- * Estimate VRAM (GB) to load a model with Unsloth. Bytes/param: QLoRA 4-bit bnb -> 0.90
- * (calibrated); LoRA/Full/CPT fp16 -> 2.0. Formula: totalParams * bytesPerParam + 1.4 GB. */
+
+
+
 export function estimateLoadingVram(
   totalParams: number,
   method: TrainingMethod = "qlora",

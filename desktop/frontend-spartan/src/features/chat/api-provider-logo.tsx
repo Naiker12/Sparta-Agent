@@ -39,7 +39,7 @@ export function apiProviderLogoSrc(
     return undefined;
   }
   const logoProviderType =
-    providerType === "openai_codex" ? "openai" : providerType;
+    providerType === "openai_codex" ? "openai" : providerType === "local_llamacpp" ? "llama_cpp" : providerType.replace(/^local_/, "");
   const ext = PROVIDER_LOGO_EXT[logoProviderType];
   if (!ext) {
     return undefined;

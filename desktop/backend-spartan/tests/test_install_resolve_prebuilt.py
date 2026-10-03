@@ -29,7 +29,7 @@ ilp = importlib.import_module("install_llama_prebuilt")
 if not hasattr(ilp, "resolve_simple_install_release_plans"):
     pytest.skip("PR symbols not present - check branch", allow_module_level = True)
 
-FORK = ilp.DEFAULT_PUBLISHED_REPO  # unslothai/llama.cpp
+FORK = ilp.DEFAULT_PUBLISHED_REPO
 UPSTREAM = ilp.UPSTREAM_REPO  # ggml-org/llama.cpp
 
 
@@ -571,7 +571,7 @@ def test_linux_vulkan_health_glob_matches_bare_cpu_lib():
 def test_force_vulkan_requested_accepts_public_selector_and_legacy_alias(
     monkeypatch, backend, legacy, expected_backend, expected
 ):
-    # UNSLOTH_LLAMA_CPP_BACKEND is the public selector; a recognized non-vulkan
+
     # value is authoritative, so it opts out even against a stale legacy alias.
     # "auto" clears a choice and outranks the legacy Vulkan alias.
     # hip and rocm share one canonical marker value.
@@ -1759,7 +1759,7 @@ def test_llama_cpp_backend_cpu_opts_out_of_auto_vulkan(monkeypatch):
 
 
 def test_explicit_backend_beats_legacy_force_vulkan(monkeypatch):
-    # A stale UNSLOTH_FORCE_VULKAN must not overrule the canonical CPU choice.
+
     monkeypatch.setenv("UNSLOTH_FORCE_VULKAN", "1")
     monkeypatch.setenv("UNSLOTH_LLAMA_CPP_BACKEND", "cpu")
     assert ilp.resolved_llama_backend() == "cpu"
@@ -2085,7 +2085,7 @@ def test_non_amd_installs_record_no_routing_gfx(tmp_path):
     assert "rocm_gfx" not in marker
 
 
-# setup translates UNSLOTH_LLAMA_CPP_BACKEND=cpu into --force-cpu to pin the
+
 # CPU-only bundle on a GPU host, which is what keeps Intel iGPU Vulkan crashes
 # away (#7213). Vulkan is opt-in, so no trigger may outrank that flag on any host.
 _SIM_PLATFORMS = {

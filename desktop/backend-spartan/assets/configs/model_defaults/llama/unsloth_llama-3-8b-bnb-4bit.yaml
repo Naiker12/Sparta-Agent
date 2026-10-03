@@ -1,6 +1,4 @@
-# Model defaults for unsloth/llama-3-8b-bnb-4bit
 # Based on Llama3_(8B)-Alpaca.ipynb
-# Also applies to: unsloth/llama-3-8b, meta-llama/Meta-Llama-3-8B
 
 training:
   max_seq_length: 2048

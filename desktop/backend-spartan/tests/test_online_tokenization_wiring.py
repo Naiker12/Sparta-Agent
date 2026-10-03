@@ -1,13 +1,5 @@
 
-"""`UnslothTrainer._configure_online_tokenization`: what it changes, and when.
-
-The gate itself is covered by ``test_online_tokenization.py``; this is the
-wiring. The method must apply all four parts of the mechanism or leave
-``config_args`` and the dataset wrapper exactly as it found them: half-applied is
-the dangerous state, since ``skip_prepare_dataset`` without the lazy transform
-trains on raw strings. Every degradation path gets a case, driven through the
-real method, because "silently takes the old path" is a claim about side effects.
-"""
+'\nThe gate itself is covered by ``test_online_tokenization.py``; this is the\nwiring. The method must apply all four parts of the mechanism or leave\n``config_args`` and the dataset wrapper exactly as it found them: half-applied is\nthe dangerous state, since ``skip_prepare_dataset`` without the lazy transform\ntrains on raw strings. Every degradation path gets a case, driven through the\nreal method, because "silently takes the old path" is a claim about side effects.'
 
 import contextlib
 import json

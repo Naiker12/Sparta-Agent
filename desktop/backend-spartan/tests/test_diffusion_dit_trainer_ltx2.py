@@ -626,9 +626,9 @@ def test_ltx2_preflight_refuses_a_diffusers_without_the_pipeline(monkeypatch):
 
 
 def test_a_component_repo_is_refused_as_a_training_base():
-    # unsloth/LTX-2-FP8 holds pre-cast component archives: no model_index.json, no VAE, no
+
     # pipeline. It still carries the "ltx-2" token, so the family detector claimed it and the
-    # unsloth/* trust gate passed it, and the gated-access probe ignores the model_index.json 404
+
     # because a 404 is not an access problem -- so the run evicted the resident models and only
     # then failed inside LTX2Pipeline.from_pretrained.
     catalogued = _component_only_repos()

@@ -460,7 +460,7 @@ PROVIDER_REGISTRY: dict[str, dict[str, Any]] = {
     "openrouter": {
         "display_name": "OpenRouter",
         "base_url": "https://openrouter.ai/api/v1",
-        # Curated picker list (locked, not live /models).
+        # Fallback suggestions while the remote model catalog is loading.
         "default_models": [
             "openrouter/free",
             "openai/gpt-4o",

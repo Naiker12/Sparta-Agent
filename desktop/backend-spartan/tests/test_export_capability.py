@@ -90,8 +90,7 @@ def test_apple_without_mlx_reports_mlx_unavailable(monkeypatch):
 
 
 def test_export_backend_imports_without_torch(monkeypatch):
-    """core/export/export.py must import on a --no-torch host (unsloth/torch blocked) and return a
-    clean 'PyTorch is not installed' message from an export attempt, not crash at import."""
+    "    clean 'PyTorch is not installed' message from an export attempt, not crash at import."
     import importlib
     import sys
 

@@ -1,9 +1,9 @@
-/**
- * Copy for a scan folder the backend could not read.
- *
- * A folder Unsloth is denied looks exactly like an empty one in the model list,
- * so the row has to say which it is and where to fix it.
- */
+
+
+
+
+
+
 
 export type ScanFolderStatus =
   | "ok"

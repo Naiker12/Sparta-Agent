@@ -2088,9 +2088,7 @@ class TestVenvDirFileIntegrity:
         assert _venv_dir_is_valid_and_undamaged(str(venv_dir), ("transformers==5.3.0",))
 
     def test_shared_non_runtime_rows_are_ignored_for_our_own_wheels_too(self, tmp_path: Path):
-        """Unreliable ownership is a property of the path, not of the claimant.
-        unsloth_zoo <= 2026.8.5 shipped a top-level tests/ into the same squatted
-        namespace, so exempting only third parties left it reported forever."""
+        'Unreliable ownership is a property of the path, not of the claimant.\n        namespace, so exempting only third parties left it reported forever.'
         venv_dir = self._make_venv(
             tmp_path / "venv",
             pkg = "unsloth_zoo",
@@ -2244,10 +2242,7 @@ class TestVenvDirFileIntegrity:
         assert not (venv_dir / "transformers").exists(), "damaged tree was not wiped first"
 
     def test_ensure_venv_dir_restores_the_studio_owned_marker(self, tmp_path: Path, monkeypatch):
-        """The wipe takes setup.sh's ownership marker with the old directory. Without a
-        new one, the next `unsloth studio update` under a custom UNSLOTH_STUDIO_HOME
-        aborts on a sidecar we just repaired, and adoption cannot rescue it because that
-        needs a prebuilt-info file a venv never has."""
+        "The wipe takes setup.sh's ownership marker with the old directory. Without a\n        aborts on a sidecar we just repaired, and adoption cannot rescue it because that\n        needs a prebuilt-info file a venv never has."
         venv_dir = self._make_venv(tmp_path / "venv")
         (venv_dir / ".unsloth-studio-owned").touch()
         (venv_dir / "transformers" / "__init__.py").write_text("x")
@@ -2842,8 +2837,7 @@ class TestAdapterModelOnlyLoRA:
         assert _is_lora_adapter_dir(tmp_path / "missing") is False
 
     def test_resolve_adapter_only_lora_via_unsloth_dir_name(self, tmp_path: Path):
-        """adapter_model-only LoRA with the unsloth_<model>_<ts> naming resolves to
-        unsloth/<model> through the import-light directory-name parse."""
+        ''
         d = tmp_path / "unsloth_Qwen3.5-7B_20260620"
         d.mkdir()
         (d / "adapter_model.safetensors").write_text("")
@@ -3630,7 +3624,7 @@ class TestOverlayRepairsIncompleteSidecar:
         # _install_to_dir below is patched but the DESTINATIONS were not, and _probe_tier
         # walks 530, 550 and 510 provisioning each one it finds missing. So this class
         # wrote a fake transformers 5.99.0 sidecar, whose CONFIG_MAPPING_NAMES is
-        # {"brandnew": "C"}, into the developer's real ~/.unsloth/studio.
+
         #
         # It then poisons the NEXT run rather than this one, which is why it stayed
         # hidden: tier resolution finds "brandnew" in 530, and the three tests here that
@@ -3893,7 +3887,7 @@ class TestDamagedLatestSidecarRepairHandoff:
         # _fake_install below writes a sidecar at whatever target it is handed, and
         # _probe_tier walks _PROBE_TIER_ORDER provisioning each tier it tries. With only
         # the latest dir redirected, the 530, 550 and 510 targets were the REAL ones under
-        # ~/.unsloth/studio, so running this file wrote a fake transformers 5.99.0 whose
+
         # CONFIG_MAPPING_NAMES is {"brandnew": "C"} into the developer's own Studio.
         #
         # It then failed the next run of this same class: _lowest_tier_for("brandnew")
@@ -3933,18 +3927,7 @@ class TestDamagedLatestSidecarRepairHandoff:
     def test_every_sidecar_dir_is_redirected_away_from_the_real_studio_home(
         self, monkeypatch, tmp_path
     ):
-        """Adding a fifth tier must not silently start writing to the developer's home.
-
-        _fake_install writes a sidecar at whatever target it is handed, and _probe_tier
-        walks the tiers provisioning each one it tries. Redirecting only the latest dir
-        meant the other three targets were the real ones, and this file wrote a fake
-        transformers 5.99.0 into ~/.unsloth/studio, then failed its own next run.
-
-        So the assertion is over whatever tier constants the module defines, not over the
-        four that exist today: a new _VENV_T5_..._DIR that _patch does not redirect fails
-        here rather than in whichever unrelated test happens to read the tier mapping
-        next.
-        """
+        "Adding a fifth tier must not silently start writing to the developer's home.\n\n        _fake_install writes a sidecar at whatever target it is handed, and _probe_tier\n        walks the tiers provisioning each one it tries. Redirecting only the latest dir\n        meant the other three targets were the real ones, and this file wrote a fake\n\n        So the assertion is over whatever tier constants the module defines, not over the\n        four that exist today: a new _VENV_T5_..._DIR that _patch does not redirect fails\n        here rather than in whichever unrelated test happens to read the tier mapping\n        next.\n        "
         import utils.transformers_version as tv
 
         tiers = [name for name in dir(tv) if name.startswith("_VENV_T5_") and name.endswith("_DIR")]
@@ -4152,8 +4135,7 @@ class TestDamagedLatestSidecarRepairHandoff:
         )
 
     def test_file_check_kill_switch_suppresses_the_whole_handoff(self, monkeypatch, tmp_path):
-        """UNSLOTH_SKIP_SIDECAR_FILE_CHECK is the escape hatch for a false positive; it
-        must leave no path that still wipes the sidecar."""
+        '        must leave no path that still wipes the sidecar.'
         live = self._sidecar(tmp_path / "venv_t5_latest")
         tv, installs = self._patch(monkeypatch, live)
         monkeypatch.setenv("UNSLOTH_SKIP_SIDECAR_FILE_CHECK", "1")

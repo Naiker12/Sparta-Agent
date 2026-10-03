@@ -7,7 +7,7 @@
 // `code_execution` -- the model's code ran in the PROVIDER's sandbox. Now that
 // those providers take the Studio branch, the same stored pill would send
 // ["python", "terminal"] and run the model's code on the USER's machine. The
-// toggle is persisted (unsloth_chat_code_tools_enabled), so nobody re-consents:
+
 // the trust boundary moves during an update, with nothing in the composer or
 // the stream saying so.
 //
@@ -25,7 +25,7 @@ import {
 } from "../src/features/chat/api/code-tool-placement.ts";
 
 const SOURCE = readFileSync(
-  fileURLToPath(new URL("../src/features/chat/api/chat-adapter.ts", import.meta.url)),
+  fileURLToPath(new URL("../src/features/chat/api/chat-adapter/stream-orchestrator.ts", import.meta.url)),
   "utf8",
 );
 
@@ -104,7 +104,7 @@ test("the pill being off asks for nothing on either side", () => {
 // built inside a run closure that needs a live runtime, provider store and
 // encryption key, so the structural property is read out of the source.
 function studioToolsBranch(): string {
-  const start = SOURCE.indexOf("...(ragEnabled || projectRagEnabled\n");
+  const start = SOURCE.indexOf("enabled_tools:", SOURCE.indexOf("...(supportsStudioToolsForThisTurn &&"));
   assert.ok(start > 0, "the Studio-tools enabled_tools list moved");
   const end = SOURCE.indexOf("mcp_enabled:", start);
   assert.ok(end > start, "the Studio-tools branch moved");

@@ -196,7 +196,7 @@ function makeMapModel(
     ) {
       return null;
     }
-    // A repo cross-tagged "gguf" that is actually a diffusers pipeline (e.g. an unsloth *-bnb-4bit image model) ships no .gguf files, so the variant
+
     // expander would dead-end at "No GGUF variants found." Trust the bare tag only when the repo is not a pipeline; "-GGUF" and real metadata still win.
     const isDiffusersPipeline =
       m.library_name?.toLowerCase() === "diffusers" ||
@@ -261,11 +261,11 @@ function makeMapModel(
   };
 }
 
-/** Unsloth results pulled up-front before yielding general results. */
+
 const UNSLOTH_PREFETCH = 20;
-/** With a typed query, float only a few unsloth results before the general listing. */
+
 const UNSLOTH_QUERY_PREFETCH = 3;
-/** With a publisher query, fewer unsloth results before the pinned publisher model. */
+
 const UNSLOTH_PINNED_PREFETCH = 4;
 /** Matches a valid "owner/repo" identifier (exactly two non-empty segments). */
 const PUBLISHER_RE = /^([^/\s]+)\/([^/\s]+)$/;
@@ -286,7 +286,7 @@ function primeFromListing(
   }
 }
 
-/** Merged generator yielding unsloth-owned models first, then deduped general results. */
+
 async function* mergedModelIterator(
   query: string,
   task?: HfTaskFilter,
@@ -339,7 +339,7 @@ async function* mergedModelIterator(
       ? UNSLOTH_QUERY_PREFETCH
       : UNSLOTH_PREFETCH;
 
-  // Phase 1: unsloth models first
+
   const seen = new Set<string>();
   let count = 0;
   for await (const model of unslothIter) {
@@ -382,7 +382,7 @@ async function* mergedModelIterator(
   }
 }
 
-/** Yields priority models (fetched individually for full metadata), then the unsloth listing. */
+
 async function* priorityThenListingIterator(
   priorityIds: readonly string[],
   task?: HfTaskFilter,
@@ -481,11 +481,11 @@ function createChannelIterator(
   }) as AsyncGenerator<unknown>;
 }
 
-// Bound the unsloth pass so a huge unsloth slice can't starve the general listing under scroll.
+
 const UNSLOTH_CHANNEL_PREFETCH = 60;
 
-// For tag/format channels without a fixed owner (e.g. GGUF filter), yield unsloth models first
-// (in sort order), then the rest deduped, floating unsloth to the top under any sort.
+
+
 async function* channelUnslothFirstIterator(
   channel: { tags?: string[]; query?: string },
   opts: {
@@ -616,9 +616,9 @@ export function useHubModelSearch(
     sortBy?: HfSortKey;
     sortDirection?: HfSortDirection;
     pinUnslothFirst?: boolean;
-    /**
-     * "unsloth" restricts listings to the unsloth org; "all" surfaces the whole Hub with unsloth
-     * floated to the top. Owner-fixed channel presets ignore this. */
+
+
+
     ownerScope?: "unsloth" | "all";
     enabled?: boolean;
     keepUnsupportedTags?: boolean;
@@ -665,12 +665,12 @@ export function useHubModelSearch(
 
   const createIter = useCallback(
     (signal: AbortSignal) => {
-      // Channel scoping bypasses the unsloth-merge iterator: a hard owner/tag filter shows that slice.
+
       if (channelOwner || channelTagsKey || channelQuery) {
         const channelTags = channelTagsKey
           ? channelTagsKey.split("|")
           : undefined;
-        // Unsloth-only scope on an ownerless tag/format channel: hard-restrict to unsloth-owned repos.
+
         if (unslothOnly && !channelOwner) {
           return createChannelIterator(
             {
@@ -687,7 +687,7 @@ export function useHubModelSearch(
             },
           );
         }
-        // Ownerless tag/format channels (e.g. GGUF filter): float unsloth-owned models first.
+
         if (pinUnslothFirst && channelTagsKey && !channelOwner) {
           return channelUnslothFirstIterator(
             { tags: channelTags, query: channelQuery || undefined },
@@ -717,7 +717,7 @@ export function useHubModelSearch(
         );
       }
       if (!trimmed) {
-        // No query: show priority models first (with full metadata), then general unsloth listing
+
         if (stablePriorityIds && stablePriorityIds.length > 0) {
           return priorityThenListingIterator(
             stablePriorityIds,
@@ -732,7 +732,7 @@ export function useHubModelSearch(
           normalizeTaskFilter(task),
           (task, taskSignal) =>
             listModels({
-              // Unsloth-only scope restricts the plain sort browse to the org.
+
               search: {
                 ...(unslothOnly ? { owner: "unsloth" } : {}),
                 ...(task ? { task } : {}),
@@ -745,7 +745,7 @@ export function useHubModelSearch(
           signal,
         );
       }
-      // Unsloth-only typed query: search within the org rather than floating a few hits globally.
+
       if (unslothOnly) {
         return listModels({
           search: { query: searchQuery, owner: "unsloth" },
@@ -756,8 +756,8 @@ export function useHubModelSearch(
         }) as AsyncGenerator<unknown>;
       }
       // Typed query: drop the task filter so searched models appear despite wrong/missing HF task
-      // metadata. For an "owner/repo" query, strip the org prefix so unsloth variants surface, then
-      // pin the original publisher model. Unsloth-owned queries are left as-is.
+
+
       return mergedModelIterator(
         searchQuery,
         undefined,
@@ -806,11 +806,11 @@ export function useHubModelSearch(
   );
   const search = useHubPaginatedSearch(createIter, mapModel, { enabled });
 
-  // Secondary sort only with no user query (the merged iterator already floats unsloth results)
+
   // and outside channel scoping.
   //
   // STABLE-APPEND CONTRACT: when a later page lands, keep the sorted prefix verbatim and append
-  // only the new tail, else a late unsloth/* repo jumps earlier and bumps the viewport. Sort only
+
   // when the listing resets (length shrinks or zeros), where re-ordering is safe.
   const [stableCache, setStableCache] = useState<{
     source: HfModelResult[] | null;
@@ -820,7 +820,7 @@ export function useHubModelSearch(
   }>({ source: null, length: 0, results: [], sorted: false });
 
   const incoming = search.results;
-  // Owner-scoped channels return one owner, so re-sorting is a no-op; tag/format channels float unsloth.
+
   const sortingDisabled =
     !pinUnslothFirst || isPublisherQuery || trimmed || Boolean(channelOwner);
   const { results, nextCache } = useMemo(() => {

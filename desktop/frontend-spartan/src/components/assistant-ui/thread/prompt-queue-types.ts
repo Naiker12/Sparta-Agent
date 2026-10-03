@@ -2,6 +2,9 @@
  * Sparta Agent - Tipos y Constantes de la Cola de Prompts
  * Define contratos para targets de ejecución, ítems encolados y parámetros de sondeo.
  */
+import type { QueuedChatRunSettings } from "@/features/chat/utils/queued-chat-run-settings";
+import type { QueuePersistence } from "./prompt-queue-persistence";
+import type { QueueExecutionResult } from "@/features/chat/utils/queue-execution-result";
 
 export type PromptQueueTarget = {
   getDocumentThreadId: () => string | null;
@@ -18,6 +21,9 @@ export type PromptQueueTarget = {
   usesDeepResearch: boolean;
   temporary: boolean;
   consumeDeepResearch: () => void;
+  getDurableSettings?: () => QueuedChatRunSettings;
+  prepareDurableThread?: () => Promise<string>;
+  getExecutionResult?: () => QueueExecutionResult;
 };
 
 export type PromptQueueItem = {
@@ -26,6 +32,7 @@ export type PromptQueueItem = {
   target: PromptQueueTarget;
   dispatched: boolean;
   dispatchRetries: number;
+  result?: QueueExecutionResult;
 };
 
 export type PromptQueueRun = {
@@ -37,6 +44,8 @@ export type PromptQueueRun = {
   waitingForTargetIdle: boolean;
   retryTimer: ReturnType<typeof setTimeout> | null;
   deepResearchConsumed: boolean;
+  persistence?: QueuePersistence;
+  persistenceSetup?: Promise<void>;
 };
 
 export interface PromptQueueCallbacks {

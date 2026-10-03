@@ -329,7 +329,7 @@ export async function refreshContextUsage(
       return;
     }
 
-    // Always ask the server: the template itself has tokens, and `unsloth run --enable-tools`
+
     // injects schemas the client cannot see.
     const { input_tokens: inputTokens, model: countedModel } =
       await countChatInputTokens({

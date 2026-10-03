@@ -1,16 +1,5 @@
 
-"""Shared Windows-ROCm import stubs.
-
-torchao (pulled in by transformers.quantizers) imports distributed_c10d.py
-unconditionally, which crashes on Windows ROCm because the RCCL backend
-(torch._C._distributed_c10d) is absent. Stubbing torchao short-circuits its
-import chain; _StubSubpackageFinder handles any depth of torchao.xxx.yyy.
-Worker subprocesses call install_torchao_windows_rocm_stub() before importing
-transformers / unsloth_zoo.
-
-xformers hits the same absent backend and takes diffusers with it, so the diffusion paths
-install both stubs before importing diffusers.
-"""
+'Shared Windows-ROCm import stubs.\n\ntorchao (pulled in by transformers.quantizers) imports distributed_c10d.py\nunconditionally, which crashes on Windows ROCm because the RCCL backend\n(torch._C._distributed_c10d) is absent. Stubbing torchao short-circuits its\nimport chain; _StubSubpackageFinder handles any depth of torchao.xxx.yyy.\nWorker subprocesses call install_torchao_windows_rocm_stub() before importing\n\nxformers hits the same absent backend and takes diffusers with it, so the diffusion paths\ninstall both stubs before importing diffusers.'
 
 from __future__ import annotations
 
@@ -200,11 +189,7 @@ def is_stubbed(package: str) -> bool:
 
 
 def install_torchao_windows_rocm_stub() -> None:
-    """Pre-stub torchao on Windows ROCm so transformers/peft imports don't crash.
-
-    No-op elsewhere (incl. Windows CUDA, where torchao is real). Must run before
-    importing transformers / unsloth_zoo. Safe to call once per worker.
-    """
+    "Pre-stub torchao on Windows ROCm so transformers/peft imports don't crash.\n\n    No-op elsewhere (incl. Windows CUDA, where torchao is real). Must run before\n    "
     if _is_windows_rocm():
         _ensure_finder()
         # Seed torchao top-level + key submodules; the finder handles the rest.

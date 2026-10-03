@@ -522,7 +522,7 @@ function VramBudgetRow() {
   }
 
   const defaultPercent = vramFractionToPercent(settings.defaultFraction);
-  // Stored beats UNSLOTH_VRAM_FRACTION, so once the slider has been touched there
+
   // is otherwise no way back to inheriting it: dragging to the same number stores
   // that number, and a later change to the variable stays masked. Clearing is what
   // the null the API already accepts is for.
@@ -1281,15 +1281,15 @@ function GgufAdvancedSettings({
   );
 }
 
-/**
- * Pass-through llama-server arguments for this model.
- *
- * llama-server documents 283 flags and Unsloth already emits or manages about 115
- * of them, so the long tail is a text box rather than 168 more controls. The
- * boundary is `validate_extra_args` on the backend, which refuses the flags Unsloth
- * owns; this row is the same judgement shown early, plus a check against the flags
- * THIS build documents, which a list shipped with Unsloth could not do.
- */
+
+
+
+
+
+
+
+
+
 function ExtraArgsRow({
   config,
   update,
@@ -1830,7 +1830,7 @@ export function ModelConfigPage({
     // of showing the error, and a long paste could be trimmed behind the cursor.
     const localAtStart = configRef.current.llamaExtraArgs;
     // The denylist, not the catalogue: sanitizing a stored list needs only the flags
-    // Unsloth refuses, and that route answers without running `llama-server --help`.
+
     // Waiting on the probe instead would hold Load shut for as long as a cold --help
     // takes, and releasing on a deadline would leave a legacy flag in an explicit
     // request that /load then refuses.

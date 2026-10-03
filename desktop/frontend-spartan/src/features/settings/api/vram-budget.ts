@@ -9,7 +9,7 @@ const VRAM_BUDGET_LOCK_EVENT = "unsloth-vram-budget-lock";
 export type VramBudgetSettings = {
   /** Fraction of each GPU a load may claim, e.g. 0.97. */
   fraction: number;
-  /** False when inherited from UNSLOTH_VRAM_FRACTION or the built-in default. */
+
   isStored: boolean;
   defaultFraction: number;
   minFraction: number;

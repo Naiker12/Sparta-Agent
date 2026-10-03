@@ -7,7 +7,7 @@ from utils.coding_agents import CODING_AGENTS, detect_installed_coding_agents
 
 
 def test_matches_unsloth_start_subcommands():
-    # Each entry must be an actual `unsloth start <agent>` subcommand name
+
     # (spartan_agent_cli/commands/start.py). Spelled out here rather than imported
     # from that module, which pulls in the CLI's heavier dependencies.
     assert CODING_AGENTS == ("claude", "codex", "openclaw", "opencode", "hermes", "pi")

@@ -162,6 +162,7 @@ class ChatThreadWorkspacePatch(BaseModel):
 
 
 class ChatThreadWorkspaceBinding(BaseModel):
+    projectId: Optional[str] = None
     bindingId: str
     threadId: str
     id: str

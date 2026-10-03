@@ -960,12 +960,7 @@ class LoadProgressResponse(BaseModel):
 
 
 class LlamaFlagCatalogResponse(BaseModel):
-    """Every llama-server flag THIS build documents, for validating pass-through args.
-
-    Read from the installed binary's ``--help`` rather than a list bundled with
-    Unsloth: a custom or newer llama.cpp is exactly the case where a bundled list
-    would reject a flag that works, or accept one that does not exist.
-    """
+    "Every llama-server flag THIS build documents, for validating pass-through args.\n\n    Read from the installed binary's ``--help`` rather than a list bundled with\n    would reject a flag that works, or accept one that does not exist.\n    "
 
     flags: dict[str, str] = Field(
         default_factory = dict,
@@ -1185,12 +1180,12 @@ class InferenceStatusResponse(_InferenceRuntimeFields):
     )
 
 
-# =====================================================================
+
 # OpenAI-Compatible Chat Completions Models
-# =====================================================================
 
 
-# ── Multimodal content parts (OpenAI vision format) ──────────────
+
+
 
 
 class TextContentPart(BaseModel):
@@ -1215,12 +1210,7 @@ class ImageContentPart(BaseModel):
 
 
 class InputDocumentContentPart(BaseModel):
-    """Document (PDF / file) content part in a multimodal message.
-
-    Unsloth-normalised shape (file_data or file_url, plus optional filename/media_type).
-    Mapped onto Anthropic ``document`` / OpenAI ``input_file`` for vision providers;
-    dropped for non-vision providers.
-    """
+    'Document (PDF / file) content part in a multimodal message.\n\n    Mapped onto Anthropic ``document`` / OpenAI ``input_file`` for vision providers;\n    dropped for non-vision providers.\n    '
 
     type: Literal["input_document"]
     file_data: Optional[str] = Field(
@@ -1306,7 +1296,7 @@ ContentPart = Annotated[
 """Union type for multimodal content parts, discriminated by the 'type' field."""
 
 
-# ── Messages ─────────────────────────────────────────────────────
+
 
 
 class ChatMessage(BaseModel):
@@ -1385,11 +1375,7 @@ class ChatMessage(BaseModel):
 
 
 class ThinkingConfig(BaseModel):
-    """Anthropic-compatible thinking/reasoning configuration.
-    Use type='disabled' to turn off thinking, or type='enabled' to turn it on.
-    Only type is read; extra fields (e.g. budget_tokens) are ignored, since
-    Unsloth sets provider thinking budgets itself.
-    """
+    "Anthropic-compatible thinking/reasoning configuration.\n    Use type='disabled' to turn off thinking, or type='enabled' to turn it on.\n    Only type is read; extra fields (e.g. budget_tokens) are ignored, since\n    "
 
     type: Literal["disabled", "enabled"] = "disabled"
 
@@ -1412,10 +1398,7 @@ def _normalize_permission_mode(value: Any) -> Any:
 
 
 class ChatCompletionRequest(BaseModel):
-    """OpenAI-compatible chat completion request.
-
-    Non-OpenAI extension fields are marked with 'x-unsloth'.
-    """
+    'OpenAI-compatible chat completion request.\n\n    '
 
     # Accept unknown fields so future OpenAI fields aren't dropped before route
     # code runs. Mirrors AnthropicMessagesRequest and ResponsesRequest.
@@ -1487,7 +1470,7 @@ class ChatCompletionRequest(BaseModel):
         description = 'Streaming options, e.g. {"include_usage": true} to emit a final usage chunk.',
     )
 
-    # ── Unsloth extensions (ignored by standard OpenAI clients) ──
+
     top_k: int = Field(20, ge = -1, le = 100, description = "[x-unsloth] Top-k sampling")
     min_p: float = Field(0.01, ge = 0.0, le = 1.0, description = "[x-unsloth] Min-p sampling threshold")
     repetition_penalty: float = Field(
@@ -1655,7 +1638,7 @@ class ChatCompletionRequest(BaseModel):
         description = "[x-unsloth] Per-request cancellation token. Frontend sends a fresh UUID per run so /inference/cancel matches one specific generation.",
     )
 
-    # ── External provider routing (x-unsloth extensions) ──────────
+
     provider_id: Optional[str] = Field(
         None,
         description = "[x-unsloth] Saved provider config ID. Its stored key is used when encrypted_api_key is omitted.",
@@ -1934,7 +1917,7 @@ class ChatCompletionRequest(BaseModel):
             # "ask" rather than let the loop apply the "auto" default, which would
             # silently weaken that opt-in to high-risk calls only. Unlike the "ask"
             # branch below this only sets permission_mode, which is inert unless
-            # Unsloth's own tool loop runs, so it needs no enable_tools/mcp gate --
+
             # deliberate, since a process-wide --enable-tools policy can force the
             # loop when the request sets neither flag. A bare unset request
             # (confirm_tool_calls is None) still defaults to auto.
@@ -1946,7 +1929,7 @@ class ChatCompletionRequest(BaseModel):
             and (self.enable_tools is True or bool(self.mcp_enabled))
         ):
             # "Ask" gates every call, so a direct API caller that omits the legacy
-            # confirm flag must still hit the confirmation gate for Unsloth's own
+
             # tool loop. An explicit confirm_tool_calls=False wins over the mode
             # (mirrors _permission_mode_confirm and the Anthropic pre-switch guard),
             # so only self-enable when the flag is unset. Only self-enable when that
@@ -1954,7 +1937,7 @@ class ChatCompletionRequest(BaseModel):
             # (enable_tools / mcp_enabled) -- the router enters the loop on those
             # signals, not on enabled_tools alone (which merely filters which tools
             # run). A plain client-tool passthrough (client-supplied `tools` that
-            # Unsloth does not execute) must route verbatim, and external-provider
+
             # routing rejects confirm_tool_calls with tools, so skip the fold there.
             #
             # "auto" is deliberately NOT folded: it only prompts for a call the
@@ -2050,7 +2033,7 @@ class ToolConfirmRequest(BaseModel):
     decision: Literal["allow", "deny"] = "deny"
 
 
-# ── OpenAI shell-tool container management ─────────────────────
+
 
 
 class OpenAIContainerRequest(BaseModel):
@@ -2115,7 +2098,7 @@ class ListOpenAIContainersResponse(BaseModel):
     containers: list[OpenAIContainerSummary]
 
 
-# ── Streaming response chunks ────────────────────────────────────
+
 
 
 class ChoiceDelta(BaseModel):
@@ -2151,7 +2134,7 @@ class ChatCompletionChunk(BaseModel):
     timings: Optional[dict] = None
 
 
-# ── Non-streaming response ───────────────────────────────────────
+
 
 
 class CompletionMessage(BaseModel):
@@ -2205,12 +2188,12 @@ class ChatCompletion(BaseModel):
     system_fingerprint: Optional[str] = None
 
 
-# =====================================================================
+
 # OpenAI Responses API Models  (/v1/responses)
-# =====================================================================
 
 
-# ── Request models ──────────────────────────────────────────────
+
+
 
 
 class ResponsesInputTextPart(BaseModel):
@@ -2416,7 +2399,7 @@ class ResponsesRequest(BaseModel):
     model_config = {"extra": "allow"}
 
 
-# ── Response models ─────────────────────────────────────────────
+
 
 
 class ResponsesOutputTextContent(BaseModel):
@@ -2507,12 +2490,12 @@ class ResponsesResponse(BaseModel):
     truncation: Optional[Any] = None
 
 
-# =====================================================================
+
 # Anthropic Messages API Models  (/v1/messages)
-# =====================================================================
 
 
-# ── Request models ─────────────────────────────────────────────
+
+
 
 
 class AnthropicTextBlock(BaseModel):
@@ -2681,7 +2664,7 @@ class AnthropicMessagesRequest(BaseModel):
     top_k: Optional[int] = None
     stop_sequences: Optional[list[str]] = None
     metadata: Optional[dict] = None
-    # [x-unsloth] extensions mirroring the OpenAI endpoint convenience fields
+
     min_p: Optional[float] = Field(
         None, ge = 0.0, le = 1.0, description = "[x-unsloth] Min-p sampling threshold"
     )
@@ -2770,7 +2753,7 @@ class AnthropicMessagesRequest(BaseModel):
         return self
 
 
-# ── Response models ────────────────────────────────────────────
+
 
 
 class AnthropicUsage(BaseModel):
@@ -2806,7 +2789,7 @@ class AnthropicMessagesResponse(BaseModel):
     usage: AnthropicUsage = Field(default_factory = AnthropicUsage)
 
 
-# ── Diffusion (local text-to-image) ──
+
 
 
 class DiffusionLoadRequest(BaseModel):
@@ -3621,7 +3604,7 @@ class AudioGalleryListResponse(BaseModel):
     next_before_id: Optional[str] = None
 
 
-# ── Video (local text-to-video) ──
+
 
 
 class VideoLoadRequest(BaseModel):

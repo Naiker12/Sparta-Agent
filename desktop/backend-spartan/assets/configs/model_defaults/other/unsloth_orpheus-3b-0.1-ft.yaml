@@ -1,7 +1,4 @@
-# Model defaults for unsloth/orpheus-3b-0.1-ft
 # Based on Orpheus_(3B)-TTS.ipynb
-# Also applies to: unsloth/orpheus-3b-0.1-ft-unsloth-bnb-4bit, canopylabs/orpheus-3b-0.1-ft, unsloth/orpheus-3b-0.1-ft-bnb-4bit
-# added inference parameters from unsloth notebook
 
 audio_type: snac
 

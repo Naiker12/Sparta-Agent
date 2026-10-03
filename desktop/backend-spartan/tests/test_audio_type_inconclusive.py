@@ -23,16 +23,7 @@ _STUBBED: list[str] = []
 
 
 def _stub_if_missing(name, attrs):
-    """Register a stub module for a dep the backend pytest job does not install.
-
-    Same helper and reason as test_trainer_stdout_quiet.py: core.training.trainer imports
-    unsloth (and through it unsloth_zoo) and trl at module scope, while the pytest matrix in
-    studio-backend-ci.yml installs studio.txt plus torch and transformers and deliberately
-    stops there, because the repo-cpu-tests job beside it is the one that installs
-    unsloth_zoo, for the REPO-ROOT tests/ tree. Unstubbed, this module fails COLLECTION and
-    takes the whole job down. A real install is left alone. __spec__ = None keeps the
-    trainer's own _ensure_real_packages namespace-shadow guard a no-op on the stub.
-    """
+    "Register a stub module for a dep the backend pytest job does not install.\n\n    Same helper and reason as test_trainer_stdout_quiet.py: core.training.trainer imports\n    studio-backend-ci.yml installs studio.txt plus torch and transformers and deliberately\n    stops there, because the repo-cpu-tests job beside it is the one that installs\n    takes the whole job down. A real install is left alone. __spec__ = None keeps the\n    trainer's own _ensure_real_packages namespace-shadow guard a no-op on the stub.\n    "
     if name in sys.modules:
         return
     try:
@@ -60,11 +51,11 @@ from core.training.trainer import UnslothTrainer  # noqa: E402
 
 # Drop the stubs now that the trainer holds its own references, because they outlive this module
 # otherwise and the whole suite then runs against them. utils.hardware.hardware._shared_policy
-# branches on `"unsloth" in sys.modules` and reaches for unsloth.dataset_num_proc, which a
+
 # spec-less non-package stub cannot provide, so it returns None and every shared-policy case in
 # test_dataset_map_num_proc.py skips instead of running. core.training.trainer itself stays in
 # sys.modules: the tests below monkeypatch it by dotted name, which would re-import it, and this
-# is the job where the real unsloth is not installed. A real install stubs nothing, so this is a
+
 # no-op there.
 for _name in reversed(_STUBBED):
     sys.modules.pop(_name, None)
@@ -75,7 +66,7 @@ import transformers  # noqa: E402
 # attribute resolves through a submodule import, so an object bound by an earlier `import
 # transformers` is not the one `from transformers import AutoProcessor` reads, and a stub on the
 # stale one is invisible to the trainer, which then makes a real network call. Resolving both
-# names once here settles that before any test patches them. Only visible with unsloth stubbed:
+
 # a real `import spartan_agent` resolves them long before collection reaches this module.
 transformers.AutoProcessor  # noqa: B018
 transformers.AutoTokenizer  # noqa: B018
@@ -145,12 +136,7 @@ def _run(
 
 
 def test_the_stubs_do_not_outlive_this_module():
-    """A leaked stub silently disables coverage in modules collected after this one.
-
-    utils.hardware.hardware._shared_policy takes `"unsloth" in sys.modules` as proof the real
-    package is usable; against a stub it returns None and test_dataset_map_num_proc.py skips its
-    shared-policy cases rather than failing, so nothing else would report this.
-    """
+    'A leaked stub silently disables coverage in modules collected after this one.\n\n    package is usable; against a stub it returns None and test_dataset_map_num_proc.py skips its\n    shared-policy cases rather than failing, so nothing else would report this.\n    '
     from utils.hardware import hardware as hw
 
     for name in _STUBBED:

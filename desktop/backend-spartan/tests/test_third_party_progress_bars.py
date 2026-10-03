@@ -210,7 +210,7 @@ def test_our_own_conversion_bars_are_redirected(monkeypatch):
 
 
 def test_the_embedding_trainer_is_quiet_too():
-    # _run_embedding_training bypasses UnslothTrainer entirely.
+
     text = (_BACKEND / "core/training/worker.py").read_text(encoding = "utf-8")
     assert '"disable_tqdm": _hf_stdout_progress_disabled(),' in text
     assert "_drop_hf_stdout_callbacks(trainer)" in text
@@ -238,11 +238,7 @@ def test_evaluation_progress_survives_the_dropped_bar():
 
 
 def test_evaluation_progress_is_throttled_and_counts():
-    """The throttle from _ProgressCallback.on_prediction_step, in isolation.
-
-    Importing the trainer module pulls in unsloth and torch, so the rule is checked
-    the same way the throughput one is.
-    """
+    'The throttle from _ProgressCallback.on_prediction_step, in isolation.\n\n    the same way the throughput one is.\n    '
 
     def report(
         seen,

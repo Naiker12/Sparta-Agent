@@ -165,23 +165,19 @@ test("the shared image picker owns native drops and ignores stale reads", async 
   assert.match(source, /readNativeAttachmentFile\(intent\.path\.token\)/);
   // A read outliving the picker would land on whoever holds `onChange` now, and
   // the native policy takes fewer formats than the picker's own image/*.
-  assert.match(source, /if \(!mounted\.current \|\| claimed !== selection\.current\) return;/);
+  assert.match(source, /if \(!mounted\.current \|\| claimed !== selection\.current\)\s*\{\s*return;\s*\}/);
   assert.match(source, /NATIVE_IMAGE_EXTS\.includes\(/);
   // Index-keyed reference slots keep the picker mounted when one is removed.
-  assert.match(source, /if \(seen\.current === value\) return;\s*seen\.current = value;\s*selection\.current \+= 1;/);
+  assert.match(source, /if \(seen\.current === value\)\s*\{\s*return;\s*\}\s*seen\.current = value;\s*selection\.current \+= 1;/);
 });
 
-// The picker rejects a format the native side would refuse anyway, so the two
-// lists have to stay in step or a droppable image starts being turned away.
-test("the picker's droppable formats match the native path policy", async () => {
+// This checks the frontend contract; native-side enforcement is a separate integration test.
+test("the picker's droppable formats match the current chat drop contract", async () => {
   const picker = await readFile(
     new URL("../src/components/image-dropzone.tsx", import.meta.url),
     "utf8",
   );
-  const rust = await readFile(
-    new URL("../../src-tauri/src/native_path_policy.rs", import.meta.url),
-    "utf8",
-  );
+  const { CHAT_IMAGE_DROP_ACCEPT, classifyDropPaths } = await import("../src/features/native-intents/drop-paths.ts");
   const listed = (source: string, pattern: RegExp) =>
     [...(source.match(pattern)?.[1].matchAll(/"([a-z0-9]+)"/g) ?? [])]
       .map((match) => match[1])
@@ -189,8 +185,12 @@ test("the picker's droppable formats match the native path policy", async () => 
 
   assert.deepEqual(
     listed(picker, /NATIVE_IMAGE_EXTS\s*=\s*\[([^\]]+)\]/),
-    listed(rust, /IMAGE_ATTACHMENT_EXTS:\s*&\[&str\]\s*=\s*&\[([^\]]+)\]/),
+    CHAT_IMAGE_DROP_ACCEPT.split(",").map((extension) => extension.slice(1)).sort(),
   );
+  for (const extension of CHAT_IMAGE_DROP_ACCEPT.split(",")) {
+    assert.equal(classifyDropPaths([`C:/images/photo${extension}`]).kind, "images");
+  }
+  assert.equal(classifyDropPaths(["C:/images/photo.exe"]).kind, "unsupported");
 });
 
 // Tauri repeats "over" for every cursor move, and useNativeModelDrop sits in

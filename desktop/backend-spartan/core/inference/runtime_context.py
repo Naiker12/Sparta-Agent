@@ -7,7 +7,7 @@ from typing import Any, Optional
 
 
 def runtime_context_length(model: Any, fallback: Optional[int] = None) -> Optional[int]:
-    """Return the effective context length Unsloth attached to a loaded model."""
+    ''
     for value in (getattr(model, "max_seq_length", None), fallback):
         if isinstance(value, bool):
             continue

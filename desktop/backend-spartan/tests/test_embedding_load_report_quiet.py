@@ -213,7 +213,7 @@ def _progress_bar_state():
 
 def test_a_hub_only_progress_disable_survives(_progress_bar_state):
     # transformers' enable_progress_bar() also enables the Hub's bars, which would
-    # undo unsloth's patch_ipykernel_hf_xet disable.
+
     from huggingface_hub.utils import are_progress_bars_disabled, disable_progress_bars
     from transformers.utils import logging as hf_logging
 

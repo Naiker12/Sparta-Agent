@@ -1,11 +1,4 @@
-"""Verification tests for PR #5863 (stdio MCP server support).
-
-Covers the pure helpers, the route-level _validate_url gate, and that the
-UNSLOTH_STUDIO_ALLOW_STDIO_MCP gate blocks the stdio transport at every
-enforcement point (create/update/test/refresh/discovery/execute) when disabled
-and reaches it when enabled. The transport is stubbed so no subprocess spawns;
-a recorder asserts whether it was reached.
-"""
+'Verification tests for PR #5863 (stdio MCP server support).\n\nCovers the pure helpers, the route-level _validate_url gate, and that the\nenforcement point (create/update/test/refresh/discovery/execute) when disabled\nand reaches it when enabled. The transport is stubbed so no subprocess spawns;\na recorder asserts whether it was reached.'
 
 import os
 import sys
@@ -360,7 +353,7 @@ def test_disable_tools_overrides_loopback_default(monkeypatch):
 
 
 def test_explicit_env_opt_in_survives_external_default_policy(monkeypatch):
-    # `UNSLOTH_STUDIO_ALLOW_STDIO_MCP=1 unsloth studio run -H 0.0.0.0` with no
+
     # --enable-tools: tool policy is False by the external-host default, not by
     # --disable-tools, so the explicit env opt-in must still win.
     from state import tool_policy

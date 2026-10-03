@@ -67,9 +67,9 @@ def _positive_int_or_none(value: Any) -> Optional[int]:
     except (TypeError, ValueError):
         return None
 
-# =====================================================================
+
 # OpenAI-Compatible Models Listing  (/models → /v1/models)
-# =====================================================================
+
 
 # `owned_by` marker on every /v1/models entry (loaded and available alike).
 _OWNED_BY = "unsloth-studio"
@@ -112,7 +112,7 @@ def _openai_model_objects() -> list[dict]:
             entry["native_context_length"] = _native_ctx
         models.append(entry)
 
-    # Check Unsloth backend
+
     backend = get_inference_backend()
     if backend.active_model_name:
         model_info = backend.models.get(backend.active_model_name, {})

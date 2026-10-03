@@ -11,7 +11,7 @@ export interface ProjectSourceThread {
   readonly modelType?: string;
 }
 
-/** "unsloth/Qwen3-8B-GGUF:Q4_K_M" reads as "Qwen3-8B-GGUF" in a filename. */
+
 function modelLabel(thread: ProjectSourceThread): string | undefined {
   const label = thread.modelId?.split("/").pop()?.split(":")[0]?.trim();
   return label || undefined;

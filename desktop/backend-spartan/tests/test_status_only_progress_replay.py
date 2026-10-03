@@ -1,13 +1,5 @@
 
-"""A status-only update must not replay the previous step's metrics.
-
-UnslothTrainer keeps metrics and status on one TrainingProgress and notifies its
-callbacks on every change, so publishing an evaluation status carries the last
-logged step's loss, learning rate, grad norm and eval loss along with it. The
-parent appends every progress event to loss_history / grad_norm_history /
-eval_loss_history and to the metric buffer it persists, without deduplicating the
-step, so a long evaluation would plot the same point once per status line.
-"""
+"A status-only update must not replay the previous step's metrics.\n\ncallbacks on every change, so publishing an evaluation status carries the last\nlogged step's loss, learning rate, grad norm and eval loss along with it. The\nparent appends every progress event to loss_history / grad_norm_history /\neval_loss_history and to the metric buffer it persists, without deduplicating the\nstep, so a long evaluation would plot the same point once per status line."
 
 from __future__ import annotations
 

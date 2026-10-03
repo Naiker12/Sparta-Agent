@@ -378,11 +378,11 @@ function RootLayout() {
         >
           <AppSidebar />
           <SidebarInset
-            className={isChatLike ? "overflow-hidden" : "overflow-y-auto"}
+            className={isChatLike ? "overflow-hidden" : "overflow-hidden pt-14 md:pt-[var(--studio-non-chat-content-top-inset,var(--studio-content-top-inset,0px))]"}
           >
             <Navbar />
             <div
-              className={`relative flex min-h-0 min-w-0 flex-1 basis-0 flex-col ${isChatLike ? "overflow-hidden" : "overflow-visible"} ${isChatLike ? "" : "pt-14 md:pt-[var(--studio-non-chat-content-top-inset,var(--studio-content-top-inset,0px))] md:[--studio-titlebar-height:var(--studio-non-chat-content-top-inset,var(--studio-content-top-inset,0px))]"}`}
+              className={`relative flex min-h-0 min-w-0 flex-1 basis-0 flex-col ${isChatLike || pathname === "/memory" ? "overflow-hidden" : "overflow-y-auto"}`}
             >
               {/* Stays mounted across navigation so an in-flight generation is
                   not cancelled when leaving /chat; hidden (not unmounted) off-route.
@@ -413,7 +413,7 @@ function RootLayout() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.06 }}
-                    className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col overflow-visible"
+                    className={`flex min-h-0 min-w-0 flex-1 basis-0 flex-col ${pathname === "/memory" ? "overflow-hidden" : "overflow-visible"}`}
                   >
                     <Suspense fallback={<RouteFallback />}>
                       <Outlet />

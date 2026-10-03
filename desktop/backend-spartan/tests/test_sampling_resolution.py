@@ -1,9 +1,5 @@
 
-"""Effective sampling resolution: per-model recommendation + operator pins.
-
-Precedence per field: operator UNSLOTH_SAMPLING_* pin -> client explicit value ->
-per-model recommendation (load_inference_config) -> static schema default.
-"""
+'Effective sampling resolution: per-model recommendation + operator pins.\n\nper-model recommendation (load_inference_config) -> static schema default.'
 
 import pytest
 

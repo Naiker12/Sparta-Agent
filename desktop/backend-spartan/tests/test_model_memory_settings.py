@@ -363,8 +363,7 @@ class TestEffectiveMemoryState:
 
 
 class TestReloadRequired:
-    """The reload hint must reflect the launched state, not only what Unsloth
-    emitted, so a user-supplied --mlock / --no-mmap counts too."""
+    '    emitted, so a user-supplied --mlock / --no-mmap counts too.'
 
     @staticmethod
     def _required(
@@ -1450,8 +1449,7 @@ class TestMlockActiveReporting:
         assert body.memlock_limit_bytes == mm_settings.memlock_limit_bytes()
 
     def test_a_users_own_mlock_counts_as_a_real_lock(self, monkeypatch):
-        """Keep resident on, full discrete offload so Unsloth emits nothing, but
-        the user typed --mlock: the child IS locked, so say so."""
+        '        the user typed --mlock: the child IS locked, so say so.'
         import routes.settings as rs
 
         backend = _fake_backend(
@@ -1984,7 +1982,7 @@ class TestResidencyDoesNotBlockReload:
 
     @pytest.fixture
     def idle_env(self, monkeypatch):
-        """Standalone UNSLOTH_MODEL_IDLE_TTL with auto-switch off."""
+        ''
         import utils.openai_auto_switch_settings as aus
 
         monkeypatch.setattr(aus, "_stored_idle_seconds", lambda: None)

@@ -85,12 +85,7 @@ def test_a_user_site_install_is_not_told_to_isolate_itself(auth, monkeypatch, wi
 
 
 def test_the_bootstrap_matches_the_one_the_cli_uses(auth):
-    """Three copies of this string, and a drift changes argv[0] handling.
-
-    Read from the CLI's own source rather than imported, since the backend may
-    be running from a venv that has a different unsloth on it, and via AST
-    because the constant there is written as adjacent literals.
-    """
+    "Three copies of this string, and a drift changes argv[0] handling.\n\n    Read from the CLI's own source rather than imported, since the backend may\n    because the constant there is written as adjacent literals.\n    "
     repo_root = _BACKEND.parents[1]
     studio_py = (repo_root / "spartan_agent_cli" / "commands" / "studio.py").read_text(encoding = "utf-8")
     canonical = None

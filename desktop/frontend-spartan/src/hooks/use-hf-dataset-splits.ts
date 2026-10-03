@@ -10,9 +10,9 @@ import {
 
 export type { HfSplitEntry } from "./hf-dataset-split-sources";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+
+
+
 
 export interface HfSplitsResponse {
   splits: HfSplitEntry[];
@@ -118,9 +118,9 @@ const DEFAULT_FETCHERS: DatasetSplitFetchers = {
   remote: fetchRemoteSplits,
 };
 
-// ---------------------------------------------------------------------------
-// Hook
-// ---------------------------------------------------------------------------
+
+
+
 
 export function useHfDatasetSplits(
   datasetName: string | null,

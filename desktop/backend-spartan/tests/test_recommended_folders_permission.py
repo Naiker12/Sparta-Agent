@@ -109,8 +109,7 @@ def test_path_under_unreadable_parent_returns_false_not_raises(tmp_path):
     reason = "is_dir() only propagates PermissionError on Python >= 3.12",
 )
 def test_demonstrates_the_underlying_stdlib_regression(tmp_path):
-    """Documents *why* _safe_is_dir exists: the old bare pattern raises on
-    the interpreters Unsloth ships on (3.12+)."""
+    'Documents *why* _safe_is_dir exists: the old bare pattern raises on'
     parent = tmp_path / "ollama"
     parent.mkdir()
     os.chmod(parent, 0o000)

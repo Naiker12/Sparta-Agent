@@ -404,15 +404,15 @@ def _strip_tool_xml_for_display(text: str) -> str:
     return fn(text) if fn else text
 
 
-# Constants
+
 _DEFAULT_FIRST_TOKEN_TIMEOUT_S = 60.0
 _DEFAULT_MAX_TOKENS_FLOOR = 1
 _LOCAL_TOOL_STREAM_STALL_KEEPALIVE_S = 15.0
 _OPENAI_PASSTHROUGH_SSE_KEEPALIVE = b": keepalive\n\n"
 
-# =====================================================================
+
 # Anthropic-Compatible Messages API  (/messages → /v1/messages)
-# =====================================================================
+
 
 
 _STUDIO_ANTHROPIC_TOOL_ALIASES = {
@@ -436,15 +436,7 @@ _ANTHROPIC_UNPROMPTED_SAFE_TOOLS = frozenset({"web_search", "search_knowledge_ba
 def _anthropic_selects_server_tools(
     payload, requested_studio_tools: set[str], has_client_tool: bool
 ) -> bool:
-    """Whether THIS request asked Unsloth to run its own tools on the Messages channel.
-
-    A process-wide ``--enable-tools`` is a default for ordinary chat, not a selection: reading
-    it as one made the permission gate reject every plain request on a default server, and
-    routing on it entered the local tool loop with terminal/python and nothing to confirm
-    them. So only an explicit ask counts -- ``enable_tools``/``mcp_enabled``, or an Anthropic
-    server-tool type in ``tools`` -- while ``--disable-tools`` and an explicit
-    ``enable_tools: false`` still veto both, and a client-tool catalog is never stolen.
-    """
+    '\n    A process-wide ``--enable-tools`` is a default for ordinary chat, not a selection: reading\n    it as one made the permission gate reject every plain request on a default server, and\n    routing on it entered the local tool loop with terminal/python and nothing to confirm\n    them. So only an explicit ask counts -- ``enable_tools``/``mcp_enabled``, or an Anthropic\n    server-tool type in ``tools`` -- while ``--disable-tools`` and an explicit\n    ``enable_tools: false`` still veto both, and a client-tool catalog is never stolen.\n    '
     if has_client_tool or _effective_enable_tools(payload) is False:
         return False
     # enable_tools only, not the OpenAI path's mcp_enabled: this model is extra="allow", so
@@ -471,7 +463,7 @@ def _anthropic_requested_studio_tools(tools: Optional[list]) -> set[str]:
 def _select_anthropic_server_tools(
     all_tools: list[dict], requested_studio_tools: set[str], enabled_tools: Optional[list[str]]
 ) -> list[dict]:
-    """Select Unsloth tools requested through Anthropic tools and extensions."""
+    ''
     if not requested_studio_tools and enabled_tools is None:
         return all_tools
 
@@ -963,7 +955,7 @@ async def anthropic_messages(
             ),
         )
 
-    # Reject an unsupported confirm-gated permission mode for Unsloth's own
+
     # ("server") Anthropic tools before the switch, mirroring the malformed- and
     # mixed-tool checks above. ask always wants a per-call pause this passthrough
     # cannot offer, so it 400s whenever server tools are selected. auto only needs
@@ -978,7 +970,7 @@ async def anthropic_messages(
     # confirm_tool_calls=False opt-out always pass.
     # A process-wide ``--enable-tools`` policy is only a default for ordinary
     # chat. It must not steal an explicit Anthropic client-tool catalog (Claude
-    # Code's Write/Edit/Bash tools) and turn it into Unsloth's local tool loop.
+
     # An explicit per-request server-tool ask was rejected as mixed mode above.
     _selects_server_tools = _anthropic_selects_server_tools(
         payload, requested_studio_tools, _has_client_tool
@@ -1039,7 +1031,7 @@ async def anthropic_messages(
     model_name = _llama_public_model_id(llama_backend, payload.model)
     message_id = f"msg_{uuid.uuid4().hex[:24]}"
 
-    # ── Translate Anthropic → OpenAI ──────────────────────────
+
     openai_messages = anthropic_messages_to_openai(
         [m.model_dump() for m in payload.messages],
         payload.system,
@@ -1073,7 +1065,7 @@ async def anthropic_messages(
         )
 
     # Fill omitted sampling fields with the per-model recommendation (or an operator
-    # UNSLOTH_SAMPLING_* pin); an explicit client value wins unless the operator pinned it.
+
     # Anthropic sampling fields are Optional, so None already marks "client omitted".
     from utils.inference.inference_config import resolve_effective_sampling
 
@@ -1104,9 +1096,9 @@ async def anthropic_messages(
 
     cancel_event = threading.Event()
 
-    # ── Tool routing ──────────────────────────────────────────
+
     # Three paths:
-    # 1. enable_tools=true → server-side execution of built-in tools (Unsloth shorthand)
+
     # 2. tools=[...] only  → client-side pass-through (standard Anthropic behavior)
     # 3. neither           → plain chat
     # The server-side agentic loop doesn't support multimodal input -- matches
@@ -1188,7 +1180,7 @@ async def anthropic_messages(
             # _monitored_anthropic's bookkeeping can throw; a leaked entry 409s later swaps.
             _tracker.__exit__(None, None, None)
 
-    # ── Admission control ─────────────────────────────────────
+
     # Bound concurrent llama-server generations to the backend's serving slots via a
     # FIFO queue keyed by base_url (shared with /v1/chat/completions, same slots).
     # Excess requests queue; a streaming waiter gets SSE keep-alives, the queue 429s
@@ -1384,7 +1376,7 @@ async def anthropic_messages(
             else:
                 reservation.cancel()
 
-    # ── Client-side pass-through path ─────────────────────────
+
     if client_tools:
         openai_tools = openai_client_tools
 
@@ -1553,7 +1545,7 @@ async def anthropic_messages(
             )
         )
 
-    # ── No-tool path ──────────────────────────────────────────
+
     def _run_plain_gen():
         return llama_backend.generate_chat_completion(
             messages = openai_messages,
@@ -1716,7 +1708,7 @@ async def _anthropic_tool_stream(
                         ends_on_tool_use = True
                     elif etype == "tool_end":
                         tool_blocks_emitted += 1
-                        # Unsloth ran the tool server-side, so the response no longer ends on a pending
+
                         # client action; otherwise stop_reason "tool_use" tells the client to run it again.
                         ends_on_tool_use = False
                     elif etype == "content" and event.get("text"):
@@ -2033,9 +2025,9 @@ async def _anthropic_plain_non_streaming(run_gen, message_id, model_name):
     )
 
 
-# =====================================================================
+
 # Client-side tool pass-through (Anthropic-native tools field)
-# =====================================================================
+
 
 
 _JSON_SCHEMA_MAP_KEYWORDS = frozenset(

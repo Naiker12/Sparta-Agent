@@ -1,6 +1,4 @@
-# Model defaults for unsloth/Mistral-Small-Instruct-2409
-# Based on Mistral_Small_(22B)-Alpaca.ipynb 
-# Also applies to: unsloth/Mistral-Small-Instruct-2409-bnb-4bit, mistralai/Mistral-Small-Instruct-2409
+# Based on Mistral_Small_(22B)-Alpaca.ipynb
 
 training:
   max_seq_length: 2048

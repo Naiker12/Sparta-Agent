@@ -1,26 +1,5 @@
 
-"""Tool-call healing for the client-tool passthrough.
-
-With server-side tools disabled (``unsloth run --disable-tools``, every
-``unsloth start`` coding agent), requests carrying the client's own ``tools``
-bypass Unsloth's tool loop and are relayed to/from llama-server verbatim. Small
-GGUF models often emit their tool calls as TEXT (``<tool_call>{...}</tool_call>``,
-Gemma ``<|tool_call>...``, ``<function=...>`` XML) instead of structured
-``tool_calls`` -- on the passthrough that text reaches the agent as prose and
-the turn dies. This module promotes such text back into structured calls on the
-RESPONSE side only: the upstream request body is never touched, no extra
-generation is issued, so llama-server slot/KV-cache reuse is byte-identical.
-
-Healing only ever fires when the request declared client tools, and only
-promotes calls whose function name exactly matches a declared tool. Promotion
-removes EXACTLY the promoted calls' markup spans (the parser reports them):
-undeclared calls, unparseable blocks, and suppressed alternate formats keep
-every byte and relay as text, so healing can never silently delete model
-output. Responses without a tool signal, requests without tools, and Unsloth's
-own enable-tools loop are untouched. Per-request opt-out:
-``auto_heal_tool_calls: false``. Process kill-switch:
-``UNSLOTH_DISABLE_TOOL_CALL_HEALING=1``.
-"""
+"Tool-call healing for the client-tool passthrough.\n\nGGUF models often emit their tool calls as TEXT (``<tool_call>{...}</tool_call>``,\nGemma ``<|tool_call>...``, ``<function=...>`` XML) instead of structured\n``tool_calls`` -- on the passthrough that text reaches the agent as prose and\nthe turn dies. This module promotes such text back into structured calls on the\nRESPONSE side only: the upstream request body is never touched, no extra\ngeneration is issued, so llama-server slot/KV-cache reuse is byte-identical.\n\nHealing only ever fires when the request declared client tools, and only\npromotes calls whose function name exactly matches a declared tool. Promotion\nremoves EXACTLY the promoted calls' markup spans (the parser reports them):\nundeclared calls, unparseable blocks, and suppressed alternate formats keep\nevery byte and relay as text, so healing can never silently delete model\nown enable-tools loop are untouched. Per-request opt-out:\n``auto_heal_tool_calls: false``. Process kill-switch:"
 
 import json
 import os
@@ -49,10 +28,10 @@ def _has_heal_signal(text: str) -> bool:
     return any(s in text for s in _HEAL_SIGNALS)
 
 
-# Read once at import (same convention as the other UNSLOTH_* switches).
+
 _HEALING_DISABLED = os.environ.get("UNSLOTH_DISABLE_TOOL_CALL_HEALING", "0") == "1"
 # Nudging is OPT-IN: per-request nudge_tool_calls=true, or flip the process
-# default with UNSLOTH_TOOL_CALL_NUDGE=1 (e.g. an `unsloth run` operator).
+
 _NUDGE_DEFAULT = os.environ.get("UNSLOTH_TOOL_CALL_NUDGE", "0") == "1"
 
 

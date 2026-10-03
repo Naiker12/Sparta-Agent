@@ -1,6 +1,4 @@
-# Model defaults for unsloth/Phi-3-medium-4k-instruct
 # Based on Phi_3_Medium-Conversational.ipynb
-# Also applies to: "unsloth/Phi-3-medium-4k-instruct-bnb-4bit", "microsoft/Phi-3-medium-4k-instruct",
 
 training:
   max_seq_length: 2048

@@ -448,6 +448,14 @@ export const chat = {
     chunks: "Chunks",
   },
   workspace: {
+    contextLabel: "Chat workspace folder",
+    searchFolders: "Search projects or folders…",
+    recentFolders: "Projects with folders",
+    noFolders: "No folders found",
+    loading: "Preparing folder…",
+    selected: "Selected",
+    retryFolders: "Reload projects",
+    withoutFolder: "Work without a folder",
     chipLabel: "Work in a folder",
     connectTitle: "Connect workspace folder",
     connectDescription:

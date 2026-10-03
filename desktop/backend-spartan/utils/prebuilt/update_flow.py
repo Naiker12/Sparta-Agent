@@ -116,9 +116,7 @@ def install_dir_for(binary_path: Optional[str], *, marker_name: str) -> Optional
 
 
 def find_installer_script(*, env_var: str, script_name: str) -> Optional[Path]:
-    """Locate the installer script. Honours the env override, then searches up
-    from this file for both ``<root>/<script>`` and ``<root>/studio/<script>`` so
-    it works in the dev tree and in an installed Unsloth layout."""
+    'Locate the installer script. Honours the env override, then searches up\n    from this file for both ``<root>/<script>`` and ``<root>/studio/<script>`` so'
     env = os.environ.get(env_var)
     if env and Path(env).is_file():
         return Path(env)
@@ -182,9 +180,7 @@ def resolve_prebuilt_for_host(
 
 
 def is_external_link(path: Optional[Path]) -> bool:
-    """True when ``path`` is a locally-linked component dir: a POSIX symlink or a
-    Windows junction / reparse point. Such a link resolves into the user's own
-    checkout, so Unsloth must never auto-update it."""
+    "True when ``path`` is a locally-linked component dir: a POSIX symlink or a\n    Windows junction / reparse point. Such a link resolves into the user's own"
     if path is None:
         return False
     try:
@@ -226,11 +222,7 @@ def managed_install_root(
     cpp_path_var: str,
     dir_name: str,
 ) -> Optional[Path]:
-    """The Unsloth-managed component root the active binary lives under, or None
-    when unmanaged. Installing where the active binary is not would not replace
-    what discovery runs (a pinned server path, then the custom dir, then a
-    component tree), so we refuse rather than install into an inactive or foreign
-    tree."""
+    '    when unmanaged. Installing where the active binary is not would not replace\n    what discovery runs (a pinned server path, then the custom dir, then a\n    component tree), so we refuse rather than install into an inactive or foreign\n    tree.'
     if marker_root is not None:
         return marker_root
     if not binary:

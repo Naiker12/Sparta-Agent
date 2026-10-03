@@ -1,9 +1,10 @@
 
-"""Network-free Unsloth release version resolution for display-only UI."""
+''
 
 from __future__ import annotations
 
 import re
+import json
 import subprocess
 from pathlib import Path
 
@@ -18,7 +19,7 @@ _MAX_VERSION_LENGTH = 64
 
 
 def is_valid_studio_release_version(value: object) -> bool:
-    """Return True for Unsloth release tags such as ``v0.1.39-beta``."""
+    ''
     if not isinstance(value, str):
         return False
     version = value.strip()
@@ -105,4 +106,13 @@ def _git_branch(repo_root: Path) -> str | None:
 
 def get_studio_version(repo_root: Path | None = None) -> str:
     """Return the installed Spartan Agent release tag for display."""
-    return "v1.0.0"
+    candidates = [(repo_root or _repo_root()) / "package.json", Path(__file__).resolve().parents[1] / "package.json"]
+    for manifest in candidates:
+        try:
+            version = json.loads(manifest.read_text(encoding="utf-8"))["version"]
+            tag = "v" + version
+            if is_valid_studio_release_version(tag):
+                return tag
+        except (OSError, ValueError, KeyError, TypeError):
+            continue
+    return _DEV_VERSION

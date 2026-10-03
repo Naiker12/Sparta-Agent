@@ -1,16 +1,5 @@
 
-"""whisper.cpp prebuilt freshness check.
-
-Reads UNSLOTH_WHISPER_PREBUILT_INFO.json (written by install_whisper_prebuilt.py)
-and compares the installed release tag against the latest on GitHub. Surfaced via
-utils.whisper_cpp_update (GET /api/whisper/update-status and the combined
-llama+whisper update status). Fails open on any missing data so we never show a
-misleading banner.
-
-The mechanics (marker walk-up, GitHub fetch, memo + disk cache, report skeleton)
-live in utils.prebuilt.freshness_flow; this module keeps the whisper version
-policy and the per-module caches its tests patch.
-"""
+'whisper.cpp prebuilt freshness check.\n\nand compares the installed release tag against the latest on GitHub. Surfaced via\nutils.whisper_cpp_update (GET /api/whisper/update-status and the combined\nllama+whisper update status). Fails open on any missing data so we never show a\nmisleading banner.\n\nThe mechanics (marker walk-up, GitHub fetch, memo + disk cache, report skeleton)\nlive in utils.prebuilt.freshness_flow; this module keeps the whisper version\npolicy and the per-module caches its tests patch.'
 
 from __future__ import annotations
 
@@ -26,7 +15,7 @@ from utils.prebuilt.whisper_layout import lookup_marker
 
 logger = structlog.get_logger(__name__)
 
-# 3 days matches Unsloth's typical whisper.cpp release cadence.
+
 STALENESS_THRESHOLD_DAYS = 3
 
 _INSTALL_MARKER_NAME = "UNSLOTH_WHISPER_PREBUILT_INFO.json"
@@ -47,8 +36,7 @@ def _cache_dir() -> Path:
 
 
 def read_install_marker(binary_path: Optional[str]) -> Optional[dict]:
-    """Walk up from binary_path to find UNSLOTH_WHISPER_PREBUILT_INFO.json.
-    None = no marker (source build / custom path) or invalid JSON."""
+    '    None = no marker (source build / custom path) or invalid JSON.'
     if not binary_path:
         return None
     cached = _marker_cache.get(binary_path)
@@ -160,12 +148,7 @@ def update_download_size_bytes(
 
 
 def parse_release_version(tag: object) -> Optional[tuple]:
-    """Comparable key ``(upstream_major, upstream_minor, upstream_patch,
-    unsloth_serial)`` for a tag like ``v1.9.1-unsloth.2``.
-
-    Tolerant of a leading ``v`` and a missing ``-unsloth.N`` suffix (serial then
-    0); the upstream version is padded to major/minor/patch. None when the version
-    component is not purely numeric."""
+    'Comparable key ``(upstream_major, upstream_minor, upstream_patch,\n\n    0); the upstream version is padded to major/minor/patch. None when the version\n    component is not purely numeric.'
     if not isinstance(tag, str):
         return None
     s = tag.strip()
@@ -222,7 +205,7 @@ def check_prebuilt_freshness(
     behind = installed genuinely older than latest (see is_behind).
     stale = behind AND age >= threshold.
     Fails open on missing data (behind/stale stay False)."""
-    # The whisper marker records a single ``release_tag`` (e.g. v1.9.1-unsloth.2);
+
     # both display and comparison use it directly.
     return _flow.check_freshness(
         binary_path,

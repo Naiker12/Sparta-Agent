@@ -390,12 +390,7 @@ def _scan_lmstudio_dir(lm_dir: Path) -> List[LocalModelInfo]:
 
 
 def _ollama_links_dir(ollama_dir: Path) -> Optional[Path]:
-    """Return a writable directory for Ollama ``.gguf`` symlinks.
-
-    Prefers ``<ollama_dir>/.studio_links/`` so links sit next to their
-    blobs; falls back to a per-ollama-dir namespace under Unsloth's cache
-    when the models dir is read-only (common for system installs).
-    """
+    'Return a writable directory for Ollama ``.gguf`` symlinks.\n\n    Prefers ``<ollama_dir>/.studio_links/`` so links sit next to their\n    when the models dir is read-only (common for system installs).\n    '
     from utils.paths.storage_roots import cache_root
 
     primary = ollama_dir / ".studio_links"
@@ -428,22 +423,7 @@ def _ollama_links_dir(ollama_dir: Path) -> Optional[Path]:
 
 
 def _scan_ollama_dir(ollama_dir: Path, limit: Optional[int] = None) -> List[LocalModelInfo]:
-    """Scan an Ollama models directory for downloaded models.
-
-    Ollama uses a content-addressable layout
-    (``manifests/<host>/<namespace>/<model>/<tag>`` + ``blobs/sha256-...``);
-    we ``rglob`` all manifests so every layout depth is found. Each
-    manifest is JSON with a ``layers`` array: the
-    ``application/vnd.ollama.image.model`` layer holds the GGUF weights
-    and ``...image.projector`` is the vision adapter.
-
-    Ollama blobs lack the ``.gguf`` extension the loading pipeline
-    requires, so we create ``.gguf``-named links to them (one subdir per
-    model, keyed by a short hash of the manifest path, so
-    ``detect_mmproj_file`` only sees that model's projector). Links are
-    symlinks when possible, else hardlinks; the link dir is
-    ``.studio_links/`` when writable, else Unsloth's cache.
-    """
+    "Scan an Ollama models directory for downloaded models.\n\n    Ollama uses a content-addressable layout\n    (``manifests/<host>/<namespace>/<model>/<tag>`` + ``blobs/sha256-...``);\n    we ``rglob`` all manifests so every layout depth is found. Each\n    manifest is JSON with a ``layers`` array: the\n    ``application/vnd.ollama.image.model`` layer holds the GGUF weights\n    and ``...image.projector`` is the vision adapter.\n\n    Ollama blobs lack the ``.gguf`` extension the loading pipeline\n    requires, so we create ``.gguf``-named links to them (one subdir per\n    model, keyed by a short hash of the manifest path, so\n    ``detect_mmproj_file`` only sees that model's projector). Links are\n    symlinks when possible, else hardlinks; the link dir is\n    "
     manifests_root = ollama_dir / "manifests"
     if not manifests_root.is_dir():
         return []

@@ -15,7 +15,7 @@ from utils.models.model_config import load_model_defaults
 
 logger = get_logger(__name__)
 
-# ── Family-based inference defaults (loaded once, cached) ──────────────
+
 
 _FAMILY_DEFAULTS: Optional[Dict[str, Any]] = None
 _FAMILY_PATTERNS: Optional[list] = None
@@ -42,11 +42,7 @@ def _load_family_defaults():
 
 
 def get_family_inference_params(model_id: str) -> Dict[str, Any]:
-    """Look up recommended inference params by model family.
-
-    Extracts the family from the identifier (e.g. "unsloth/Qwen3.5-9B-GGUF" ->
-    "qwen3.5") and returns matching params from inference_defaults.json, or {}.
-    """
+    'Look up recommended inference params by model family.\n\n    "qwen3.5") and returns matching params from inference_defaults.json, or {}.\n    '
     _load_family_defaults()
 
     if not _FAMILY_PATTERNS or not _FAMILY_DEFAULTS:
@@ -150,10 +146,10 @@ def load_inference_config(model_identifier: str) -> Dict[str, Any]:
     return inference_config
 
 
-# ── Effective sampling resolution for `unsloth run` / `unsloth start` ──────────
+
 #
 # Per-model recommended sampling is applied to a request only for the fields the
-# client omitted; an operator can pin a field from the CLI via UNSLOTH_SAMPLING_*
+
 # (a hard override that wins even over an explicit client value). Precedence per
 # field: operator pin -> client explicit -> per-model recommendation -> the static
 # schema default (mirroring ChatCompletionRequest, so behavior is unchanged when
@@ -176,22 +172,13 @@ SAMPLING_FIELD_NAMES = tuple(_SAMPLING_FIELDS)
 # `.inference` block. Its frontend `mergeBackendRecommendedInference`
 # (presets/preset-policy.ts) seeds exactly these five and never reads repetition_penalty,
 # so the server auto-recommends the same five for request parity. repetition_penalty stays a
-# manual-only knob (client-sent or an UNSLOTH_SAMPLING_REPETITION_PENALTY operator pin),
+
 # matching the UI where it is never auto-filled per model.
 _UI_RECOMMENDED_FIELDS = ("temperature", "top_p", "top_k", "min_p", "presence_penalty")
 
 
 def _clean_sampling_value(field: str, val: Any):
-    """Coerce ``val`` to the field's numeric type when it is a finite, in-range number, else None.
-
-    Rejects bool, non-numeric, NaN/inf, and out-of-range values so neither a bad operator env
-    var nor a malformed model recommendation can reach llama-server. NaN matters because
-    ``nan < lo`` and ``nan > hi`` are both False, so a plain range check would let it through.
-    Coerce before the finiteness check: ``math.isfinite`` and ``float()`` raise ``OverflowError``
-    on an int too big for a C double (an oversized UNSLOTH_SAMPLING_TOP_K would otherwise 500 the
-    request), while an in-range int is range-checked exactly and ``int()`` rejects a NaN/inf that
-    reached an int field.
-    """
+    "Coerce ``val`` to the field's numeric type when it is a finite, in-range number, else None.\n\n    Rejects bool, non-numeric, NaN/inf, and out-of-range values so neither a bad operator env\n    var nor a malformed model recommendation can reach llama-server. NaN matters because\n    ``nan < lo`` and ``nan > hi`` are both False, so a plain range check would let it through.\n    Coerce before the finiteness check: ``math.isfinite`` and ``float()`` raise ``OverflowError``\n    request), while an in-range int is range-checked exactly and ``int()`` rejects a NaN/inf that\n    reached an int field.\n    "
     if isinstance(val, bool) or not isinstance(val, (int, float)):
         return None
     _env, _default, lo, hi, is_int = _SAMPLING_FIELDS[field]
@@ -209,11 +196,7 @@ def _clean_sampling_value(field: str, val: Any):
 
 
 def _operator_sampling_override(field: str):
-    """Operator-pinned value for a sampling field from UNSLOTH_SAMPLING_*, or None.
-
-    An unparseable, non-finite, or out-of-range value is ignored so a bad env var can never
-    reach llama-server; the field then falls back to the client / recommended value.
-    """
+    '\n    An unparseable, non-finite, or out-of-range value is ignored so a bad env var can never\n    reach llama-server; the field then falls back to the client / recommended value.\n    '
     _env, _default, _lo, _hi, is_int = _SAMPLING_FIELDS[field]
     raw = os.environ.get(_env)
     if raw is None or raw.strip() == "":
@@ -257,18 +240,7 @@ def resolve_effective_sampling(
     *,
     fill_defaults: bool = True,
 ) -> Dict[str, Any]:
-    """Resolve the effective sampling params for a request.
-
-    ``explicit`` maps each field in :data:`SAMPLING_FIELD_NAMES` to the client-sent
-    value, or ``None`` when the client omitted it. Precedence (highest first): an
-    operator ``UNSLOTH_SAMPLING_*`` pin, then the client's explicit value, then the
-    per-model recommendation, then the static schema default.
-
-    When ``fill_defaults`` is False a field with no operator pin, client value, or
-    per-model recommendation is omitted from the result instead of set to the static
-    schema default, so a raw proxy body (``/v1/completions``) keeps llama-server's own
-    default for that field rather than being forced onto this schema's value.
-    """
+    "Resolve the effective sampling params for a request.\n\n    ``explicit`` maps each field in :data:`SAMPLING_FIELD_NAMES` to the client-sent\n    value, or ``None`` when the client omitted it. Precedence (highest first): an\n    per-model recommendation, then the static schema default.\n\n    When ``fill_defaults`` is False a field with no operator pin, client value, or\n    per-model recommendation is omitted from the result instead of set to the static\n    schema default, so a raw proxy body (``/v1/completions``) keeps llama-server's own\n    default for that field rather than being forced onto this schema's value.\n    "
     recommended = _recommended_sampling(model_id or "")
     effective: Dict[str, Any] = {}
     for field, (_env, default, _lo, _hi, _int) in _SAMPLING_FIELDS.items():

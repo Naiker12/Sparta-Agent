@@ -52,7 +52,7 @@ _name: str | None = None
 _served_by = threading.local()
 
 
-# Unsloth device -> torch device string. Apple has no torch device -> CPU.
+
 _TORCH_DEVICE = {DeviceType.CUDA: "cuda", DeviceType.XPU: "xpu"}
 
 
@@ -329,7 +329,7 @@ def _quiet_transformers_load():
     # than re-enabling a bar the caller had deliberately turned off.
     # transformers' enable_progress_bar() also calls the Hub's enable_progress_bars(),
     # so restoring the transformers flag would clobber a Hub-only disable that someone
-    # else installed (unsloth does exactly that in patch_ipykernel_hf_xet for the
+
     # broken hf-xet/ipykernel pair). Snapshot the Hub state separately and put it back.
     hub_bars_off = None
     try:

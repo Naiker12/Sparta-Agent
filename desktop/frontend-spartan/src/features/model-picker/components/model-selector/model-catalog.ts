@@ -28,11 +28,11 @@ export interface ModelArtifact {
   offloadFitTiers?: readonly { gpuGb: number; systemRamGb: number }[];
   /** Extra search tokens beyond the id/label ("4bit", "nf4", ...). */
   keywords?: readonly string[];
-  /** Parameter count of THIS artifact's checkpoint, for the row's size chip.
-   * Only a fallback: the Hub listing's own `expand=gguf` total wins wherever it
-   * reports one. Rows the listing never returns (a repo it does not index, a
-   * non-unsloth owner, one this account cannot see) have no other source, and
-   * ids like "MiniMax-H3-GGUF" carry no "<n>B" token to guess from. */
+
+
+
+
+
   totalParams?: number;
   /** Gated on the Hub (license + token). A bare group click skips it when not downloaded and falls through to an open artifact (e.g. the GGUF); an already-downloaded gated artifact is still returned. */
   gated?: boolean;
@@ -41,7 +41,7 @@ export interface ModelArtifact {
 }
 
 export interface CatalogGroup {
-  /** Canonical display id, owner spelled once ("unsloth/Qwen-Image-2512"). */
+
   canonicalId: string;
   displayName: string;
   /** Row meta line ("Text-to-image", "Image editing", "Text-to-video with audio"). */
@@ -168,7 +168,7 @@ export const IMAGE_CATALOG: CatalogGroup[] = [
     aliases: ["unsloth/Qwen-Image-2512-FP8"],
     artifacts: [
       bf16Pipeline("Qwen/Qwen-Image-2512", 54, { totalParams: 20430401088 }),
-      // No FP8 row: unsloth/Qwen-Image-2512-FP8 holds torch prequant .pt checkpoints, not a
+
       // single-file .safetensors, and fp8 is denied for this family anyway
       // (_FAMILY_SCHEME_DENY: qwen-image renders every frame black under fp8). The repo's int8
       // half is reached through the backend prequant path, not from here.
@@ -311,7 +311,7 @@ export const IMAGE_CATALOG: CatalogGroup[] = [
     ],
   },
   {
-    // 17B MoE DiT + four text encoders. The MIT repos ship no Llama text_encoder_4, so the backend assembles it from the open unsloth mirror
+
     // at load time (+16 GB): ~63 GB bf16-resident, a datacenter pick. Full is the undistilled base, Dev and Fast its guidance-free distillations.
     canonicalId: "HiDream-ai/HiDream-I1-Full",
     displayName: "HiDream I1",
@@ -423,11 +423,11 @@ export const VIDEO_CATALOG: CatalogGroup[] = [
   {
     // The distilled 2.3 release: Lightricks' own bf16/fp8 single-file DiT checkpoints (loaded against the already-trusted LTX-2
     // base for the VAE / Gemma3 encoder) plus the GGUF quants. The single-file ones keep the ~50 GB encoder in bf16, so consumer GPUs route to GGUF.
-    // Keyed on the artifact that exists: unsloth/LTX-2.3 was never published (404), and an
-    // `unsloth/*` id that is not an artifact clears both the picker's owner guard and the
+
+
     // backend's, so a pick that reached the fall-through was loaded as a pipeline and only died
     // at the Hub. Lightricks/LTX-2.3 IS an artifact below, so that fall-through cannot fire.
-    // unsloth/LTX-2.3 still resolves to this group: the GGUF artifact claims the same
+
     // suffix-stripped key.
     canonicalId: "Lightricks/LTX-2.3",
     displayName: "LTX 2.3 distilled",
@@ -550,7 +550,7 @@ export const AUDIO_CATALOG: CatalogGroup[] = [
   // Llasa is deliberately absent. It speaks XCodec2 (65,536 <|s_N|> tokens), which is
   // neither in _AUDIO_TOKEN_PATTERNS nor in AudioCodecManager, so a curated row here
   // loaded and then failed at generation with "not a supported TTS model". Studio can
-  // still TRAIN Llasa (unsloth_Llasa-3B.yaml); this catalog only feeds the Generate
+
   // picker. Re-add both rows together with an xcodec2 decoder.
   {
     canonicalId: "unslothai/Qwen3-ASR-0.6B-GGUF",
@@ -644,7 +644,7 @@ const ARTIFACT_SUFFIXES = [
   "-bf16",
 ] as const;
 
-/** Owner-preserving generic key: lowercase, artifact suffixes stripped off the name. "unsloth/Qwen-Image-2512-GGUF" -> "unsloth/qwen-image-2512". */
+
 export function canonicalKeyFor(repoId: string): string {
   const lowered = repoId.trim().toLowerCase();
   const slash = lowered.indexOf("/");

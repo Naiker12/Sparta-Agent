@@ -168,7 +168,7 @@ def test_the_offload_stays_at_the_call_site():
 
 # The read-only surface: these answer "what is loaded" and must never be the reason a
 # host imports torch. Each is polled from first paint or fired by a metadata-only
-# action, so building the singleton here defeats UNSLOTH_STUDIO_DISABLE_TORCH_WARM=1
+
 # until a genuinely hardware-dependent operation runs.
 _READ_ONLY_SITES = (
     ("routes/inference.py", "_monitor_active_model"),

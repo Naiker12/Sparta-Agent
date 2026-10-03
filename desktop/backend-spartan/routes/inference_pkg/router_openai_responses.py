@@ -288,9 +288,9 @@ from core.inference.llama_admission import (
 
 _DEFAULT_FIRST_TOKEN_TIMEOUT_S = 60.0
 
-# =====================================================================
+
 # OpenAI Responses API  (/responses → /v1/responses)
-# =====================================================================
+
 
 
 def _translate_responses_tools_to_chat(tools: Optional[list[dict]]) -> Optional[list[dict]]:
@@ -1484,7 +1484,7 @@ async def _responses_stream(
                 },
             }
 
-        # ── Preamble events ──
+
         yield _sse(
             "response.created",
             {
@@ -1501,7 +1501,7 @@ async def _responses_stream(
             },
         )
 
-        # ── Direct httpx lifecycle to llama-server ──
+
         # Full same-task open + close, same pattern as
         # _openai_passthrough_stream and _anthropic_passthrough_stream: no
         # `async with`, explicit aclose of lines_iter BEFORE resp / client so

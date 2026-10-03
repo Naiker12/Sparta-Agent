@@ -282,7 +282,7 @@ def _extract_content_parts(messages: list) -> tuple[str, list[dict], "Optional[s
     first_image_b64: Optional[str] = None
 
     for msg in messages:
-        # ── System / developer messages → extract as system_prompt ────────
+
         if msg.role in ("system", "developer"):
             if isinstance(msg.content, str):
                 system_parts.append(msg.content)
@@ -291,7 +291,7 @@ def _extract_content_parts(messages: list) -> tuple[str, list[dict], "Optional[s
                 system_parts.append("\n".join(p.text for p in msg.content if p.type == "text"))
             continue
 
-        # ── User / assistant messages ─────────────────────────
+
         combined_text: Optional[str] = None
         if isinstance(msg.content, str):
             # Plain string content — pass through
@@ -325,7 +325,7 @@ def _extract_content_parts(messages: list) -> tuple[str, list[dict], "Optional[s
     return "\n\n".join(p for p in system_parts if p), chat_messages, first_image_b64
 
 
-# ── External provider proxy ──────────────────────────────────────
+
 
 
 # Providers whose stream helper translates `input_document` parts into a

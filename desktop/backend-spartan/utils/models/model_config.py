@@ -86,7 +86,7 @@ def _offline_while_reading(target: Optional[str]):
         yield
 
 
-# ── Model size extraction ────────────────────────────────────
+
 import re as _re
 
 _MODEL_SIZE_RE = _re.compile(r"(?:^|[-_/])(\d+\.?\d*)\s*([bm])(?:$|[-_/])", _re.IGNORECASE)
@@ -118,7 +118,7 @@ def extract_model_size_b(model_id: str) -> float | None:
 # Maps equivalent model names to their canonical YAML config file:
 # "canonical.yaml": [equivalent names]; the filename derives from the first name.
 MODEL_NAME_MAPPING = {
-    # ── Embedding models ──
+
     "unsloth_all-MiniLM-L6-v2.yaml": [
         "unsloth/all-MiniLM-L6-v2",
         "sentence-transformers/all-MiniLM-L6-v2",
@@ -141,7 +141,7 @@ MODEL_NAME_MAPPING = {
         "unsloth/Qwen3-Embedding-4B",
         "Qwen/Qwen3-Embedding-4B",
     ],
-    # ── Other models ──
+
     "unsloth_answerdotai_ModernBERT-large.yaml": [
         "answerdotai/ModernBERT-large",
     ],
@@ -1850,28 +1850,7 @@ def detect_mtp_file(
     skip_root: bool = False,
     accept: Optional[Callable[[str], bool]] = None,
 ) -> Optional[str]:
-    """Find the separate MTP drafter (``mtp-*.gguf``) for a local GGUF model.
-
-    The drafter that pairs with the main weights sits at the repo/snapshot
-    root (Gemma 4); the weight itself may be at the root or in a quant subdir,
-    so scan the weight's directory and ``search_root``. Matches by the
-    ``mtp-`` filename prefix unsloth uses for ``-hf`` auto-discovery -- the
-    same signal as the HF download path. Repos that bake the head into the
-    main GGUF (Qwen) have no such sibling, so this returns None.
-
-    Pairs by name so a multi-model folder can't attach a foreign drafter:
-    unsloth names the drafter ``mtp-<model>.gguf`` where ``<model>`` prefixes
-    the weight filename across all Gemma 4 repos (e.g.
-    ``mtp-gemma-4-12B-it.gguf`` next to ``gemma-4-12B-it-qat-Q4_0.gguf``).
-    If the root drafter is absent, also accept its precision copy under the
-    repository's ``MTP/`` directory. An unmatched drafter is skipped.
-
-    ``skip_root`` scans only ``MTP/``, for callers that must discard an
-    out-of-bounds root drafter and still want the subdir copy (native loads).
-    ``accept`` filters candidates in preference order, so a caller with extra
-    rules (a native lease) keeps scanning instead of treating the first
-    rejection as no drafter at all.
-    """
+    "Find the separate MTP drafter (``mtp-*.gguf``) for a local GGUF model.\n\n    The drafter that pairs with the main weights sits at the repo/snapshot\n    root (Gemma 4); the weight itself may be at the root or in a quant subdir,\n    so scan the weight's directory and ``search_root``. Matches by the\n    same signal as the HF download path. Repos that bake the head into the\n    main GGUF (Qwen) have no such sibling, so this returns None.\n\n    Pairs by name so a multi-model folder can't attach a foreign drafter:\n    the weight filename across all Gemma 4 repos (e.g.\n    ``mtp-gemma-4-12B-it.gguf`` next to ``gemma-4-12B-it-qat-Q4_0.gguf``).\n    If the root drafter is absent, also accept its precision copy under the\n    repository's ``MTP/`` directory. An unmatched drafter is skipped.\n\n    ``skip_root`` scans only ``MTP/``, for callers that must discard an\n    out-of-bounds root drafter and still want the subdir copy (native loads).\n    ``accept`` filters candidates in preference order, so a caller with extra\n    rules (a native lease) keeps scanning instead of treating the first\n    rejection as no drafter at all.\n    "
 
     def _matches_weight(candidate: Path) -> bool:
         return _drafter_matches_weight(candidate.name, weight_name, kind = "mtp")
@@ -2020,24 +1999,7 @@ def detect_dspark_file(
     search_root: Optional[str] = None,
     accept: Optional[Callable[[str], bool]] = None,
 ) -> Optional[str]:
-    """Find a DSpark sidecar for a local GGUF model.
-
-    Unsloth publishes these as ``dspark-*.gguf`` in the repository root or
-    under ``dspark/``. Prefer Q8_0, the precision recommended by the model
-    card, while requiring the sidecar family name to match the target model
-    (see _drafter_matches_weight: a folder holding a model and its "-Lite"
-    sibling must not cross-attach their sidecars).
-
-    Requires a published drafter name (``dspark-<model>`` / ``<model>-dspark``)
-    even inside ``dspark/``, mirroring detect_mtp_file: llama_cpp's
-    _drafter_path_kind accepts anything in that directory because it exists to
-    EXCLUDE companions from variant menus, and reusing it here would launch a
-    weight copy someone parked there as --model-draft.
-
-    ``accept`` filters candidates in preference order, so a caller with extra
-    rules (a native lease) keeps scanning instead of treating the first
-    rejection as no sidecar at all.
-    """
+    'Find a DSpark sidecar for a local GGUF model.\n\n    under ``dspark/``. Prefer Q8_0, the precision recommended by the model\n    card, while requiring the sidecar family name to match the target model\n    (see _drafter_matches_weight: a folder holding a model and its "-Lite"\n    sibling must not cross-attach their sidecars).\n\n    Requires a published drafter name (``dspark-<model>`` / ``<model>-dspark``)\n    even inside ``dspark/``, mirroring detect_mtp_file: llama_cpp\'s\n    _drafter_path_kind accepts anything in that directory because it exists to\n    EXCLUDE companions from variant menus, and reusing it here would launch a\n    weight copy someone parked there as --model-draft.\n\n    ``accept`` filters candidates in preference order, so a caller with extra\n    rules (a native lease) keeps scanning instead of treating the first\n    rejection as no sidecar at all.\n    '
 
     def _rank(candidate: Path) -> tuple[int, int, int, str]:
         # Most specific family first, so a base-family sidecar cannot win over
@@ -2248,7 +2210,7 @@ def detect_gguf_model(path: str, model_root: Optional[str] = None) -> Optional[s
     return None
 
 
-# Preferred GGUF quant levels, descending. UD (Unsloth Dynamic) variants beat standard
+
 # quants on quality per bit; ordered by size/quality tradeoff, not raw quality.
 _GGUF_QUANT_PREFERENCE = [
     # UD variants (best quality per bit) -- Q4 is the sweet spot
@@ -2268,7 +2230,7 @@ _GGUF_QUANT_PREFERENCE = [
     "UD-IQ2_XXS",
     "UD-IQ1_M",
     "UD-IQ1_S",
-    # Standard quants (fallback for non-Unsloth repos)
+
     "Q4_K_M",
     "Q4_K_S",
     "Q5_K_M",
@@ -3136,7 +3098,7 @@ def _has_model_weight_files(model_dir: Path) -> bool:
 
 
 def _detect_training_output_type(model_dir: Path) -> Optional[str]:
-    """Classify an Unsloth training output as LoRA or full finetune."""
+    ''
     adapter_config = model_dir / "adapter_config.json"
     adapter_model = model_dir / "adapter_model.safetensors"
     if adapter_config.exists() or adapter_model.exists():
@@ -3158,12 +3120,7 @@ def _looks_like_lora_adapter(model_dir: Path) -> bool:
 
 
 def scan_trained_models(outputs_dir: str = str(outputs_root())) -> List[Tuple[str, str, str]]:
-    """Scan outputs folder for trained Unsloth models.
-
-    Returns:
-        List of (display_name, model_path, model_type), where model_type is
-        "lora" for adapter runs or "merged" for full finetunes.
-    """
+    '\n    Returns:\n        List of (display_name, model_path, model_type), where model_type is\n        "lora" for adapter runs or "merged" for full finetunes.\n    '
     trained_models = []
     outputs_path = resolve_output_dir(outputs_dir)
 
@@ -3385,12 +3342,12 @@ def get_base_model_from_lora(lora_path: str) -> Optional[str]:
         # TODO: reading base_model from training_args.bin is disabled -- torch.load defaults to
         # weights_only=True and is a remote-code sink for third-party LoRAs; needs a trust check.
 
-        # Last resort: parse from dir name (unsloth_<model>_<timestamp>)
+
         dir_name = lora_path_obj.name
         if dir_name.startswith("unsloth_"):
             parts = dir_name.split("_")
             if len(parts) >= 2:
-                model_parts = parts[1:-1]  # Skip "unsloth" and timestamp
+                model_parts = parts[1:-1]
                 base_model = "unsloth/" + "_".join(model_parts)
                 logger.info(f"Detected base model from directory name: {base_model}")
                 return base_model
@@ -3482,7 +3439,7 @@ UI_STATUS_INDICATORS = [" (Ready)", " (Loading...)", " (Active)", "↓ "]
 # polled every 5s for as long as a tab is open and resolves the defaults on every
 # poll, so without this the same "Loaded ... defaults from <path>" line repeats
 # forever. The first resolution of each (model, path) still logs at info; repeats
-# drop to debug, so --verbose and UNSLOTH_STUDIO_LOG_LEVEL=debug still show every
+
 # one. Bounded so a long-lived server with many models cannot grow it without end.
 _ANNOUNCED_MODEL_DEFAULTS: set = set()
 _ANNOUNCED_MODEL_DEFAULTS_MAX = 4096
@@ -3615,7 +3572,7 @@ class ModelConfig:
     gguf_dspark_file: Optional[str] = None  # Full path to a DSpark sidecar (local mode)
     gguf_dflash_file: Optional[str] = None  # Full path to a DFlash sidecar (local mode)
     gguf_hf_repo: Optional[str] = (
-        None  # HF repo ID for -hf mode (e.g. "unsloth/gemma-3-4b-it-GGUF")
+        None
     )
     gguf_variant: Optional[str] = None  # Quantization variant (e.g. "Q4_K_M")
     base_model: Optional[str] = None  # Base model (for LoRAs)
@@ -3708,7 +3665,7 @@ class ModelConfig:
         is_local = is_local_path(identifier)
         path = normalize_path(identifier) if is_local else identifier
 
-        # Add unsloth/ prefix for shorthand HF models
+
         if not is_local and "/" not in identifier:
             identifier = f"unsloth/{identifier}"
             path = identifier
@@ -4057,7 +4014,7 @@ class ModelConfig:
         is_local = is_local_path(identifier)
         path = normalize_path(identifier) if is_local else identifier
 
-        # Add unsloth/ prefix for shorthand HF models
+
         if not is_local and "/" not in identifier:
             identifier = f"unsloth/{identifier}"
             path = identifier
@@ -4076,7 +4033,7 @@ class ModelConfig:
                 gguf_config.display_name = display_name
                 return gguf_config
 
-        # --- Base Model and Vision Detection ---
+
         base_model = None
         is_vision = False
 

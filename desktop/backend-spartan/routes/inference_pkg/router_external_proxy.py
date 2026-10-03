@@ -350,22 +350,7 @@ def _build_external_messages(
     dropped_server_builtin_tool_call_ids: set[str] = set()
 
     def _filter_tool_calls(tool_calls: Any) -> Optional[list]:
-        """Sanitize assistant `tool_calls` for non-native-Gemini providers.
-
-        Two concerns:
-          1. `tool_calls[i].extra_content` carries Gemini-only thoughtSignature
-             metadata; strip it for providers that can't parse the unknown key.
-          2. Marked server-side builtin cards (`_server_tool: true` on a
-             canonical builtin name, or a Gemini `native_part` payload) are
-             Unsloth-internal tool cards from a prior native Gemini turn;
-             forwarding them to OpenAI / Anthropic / custom OAI-compat gateways
-             sends an orphan `tool_calls` entry (no matching tool declaration,
-             often no matching `role="tool"` reply) that can be rejected. We
-             record the dropped call_ids so the matching role=tool message is
-             skipped below.
-        Native Gemini keeps both untouched so the translator can replay them
-        via `native_part`.
-        """
+        'Sanitize assistant `tool_calls` for non-native-Gemini providers.\n\n        Two concerns:\n          1. `tool_calls[i].extra_content` carries Gemini-only thoughtSignature\n             metadata; strip it for providers that can\'t parse the unknown key.\n          2. Marked server-side builtin cards (`_server_tool: true` on a\n             canonical builtin name, or a Gemini `native_part` payload) are\n             forwarding them to OpenAI / Anthropic / custom OAI-compat gateways\n             sends an orphan `tool_calls` entry (no matching tool declaration,\n             often no matching `role="tool"` reply) that can be rejected. We\n             record the dropped call_ids so the matching role=tool message is\n             skipped below.\n        Native Gemini keeps both untouched so the translator can replay them\n        via `native_part`.\n        '
         if not tool_calls:
             return None
         if not isinstance(tool_calls, list):

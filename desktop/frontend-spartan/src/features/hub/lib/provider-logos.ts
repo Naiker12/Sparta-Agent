@@ -1,18 +1,18 @@
-/**
- * Provider-logo registry for Unsloth re-uploads. Unsloth re-uploads upstream
- * models (e.g. unsloth/Qwen2.5-7B is Alibaba's Qwen); we show the upstream
- * provider's logo in place of the Unsloth picture (username stays "unsloth").
- *
- * Matching: providers are evaluated in declaration order; a provider matches if
- * any of its `prefixes` is a prefix of the repo name (the part after "owner/").
- * Most-specific providers MUST be declared first (first match wins): e.g.
- * NVIDIA's Nemotron/Minitron/Mistral-NeMo before meta-llama/mistralai, and
- * DeepSeek-R1-Distill- before Qwen/meta-llama. Repo names are case-sensitive -
- * match the publisher's exact casing (e.g. `phi-` for v1/v2 vs `Phi-` for v3+).
- *
- * A provider's own Hub orgs are listed in `owners` and take its mark directly,
- * whatever the repo is named (meta-models/Muse-Glimmer-30B -> Meta).
- */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /**
  * Logo coloring. "original" = file as-is; "mono-theme" = CSS mask in current
@@ -298,7 +298,7 @@ export function matchProviderLogo(repoName: string): ProviderLogo | null {
   }
   // Hub rows normally carry a full Hugging Face id (`owner/repo`), while the
   // registry intentionally stores prefixes for the repository segment only.
-  // Without this normalization every Unsloth re-upload misses and falls back
+
   // to its generated initial tile.
   const normalizedRepoName = repoName.trim().split("/").at(-1) ?? "";
   if (!normalizedRepoName) {

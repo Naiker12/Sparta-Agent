@@ -23,8 +23,7 @@ from core.training.worker import _rocm_classify_unified_memory  # noqa: F401
 
 
 def _binary_with_marker(tmp_path, payload):
-    """Lay out <root>/UNSLOTH_PREBUILT_INFO.json with a binary path below it,
-    matching the managed install layout the marker walk-up covers."""
+    '    matching the managed install layout the marker walk-up covers.'
     (tmp_path / "UNSLOTH_PREBUILT_INFO.json").write_text(json.dumps(payload), encoding = "utf-8")
     return str(tmp_path / "build" / "bin" / "llama-server")
 

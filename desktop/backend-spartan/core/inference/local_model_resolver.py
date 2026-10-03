@@ -172,14 +172,7 @@ def info_has_local_gguf(info) -> bool:
 
 
 def _build_index() -> dict[str, _LocalGgufEntry]:
-    """Map normalized id/model_id/display_name -> local GGUF entry.
-
-    Scans the same roots Unsloth's model picker lists (./models, the active plus
-    legacy/default HF caches, LM Studio dirs, and user scan folders) so a named
-    local model is never missed and silently served as the loaded one. Ollama's
-    scanner is skipped: it creates symlinks as a side effect and this runs on the
-    request path.
-    """
+    "Map normalized id/model_id/display_name -> local GGUF entry.\n\n    legacy/default HF caches, LM Studio dirs, and user scan folders) so a named\n    local model is never missed and silently served as the loaded one. Ollama's\n    scanner is skipped: it creates symlinks as a side effect and this runs on the\n    request path.\n    "
     # Lazy import: routes.models imports core.inference, so import at call time.
     from pathlib import Path
     from routes.models import (
@@ -261,7 +254,7 @@ def _build_index() -> dict[str, _LocalGgufEntry]:
         raw_id = getattr(info, "id", None)
         if not raw_id:
             continue
-        # Skip what Unsloth hides from its pickers (validation probe, RAG embed
+
         # weights): not chat models, so never an auto-switch target.
         if _is_hidden_model(
             raw_id,

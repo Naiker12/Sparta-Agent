@@ -1,12 +1,5 @@
 
-"""Resolve a usable Node.js executable at runtime.
-
-The installer provisions an isolated Node under ``<UNSLOTH_HOME>/node`` but only
-puts it on PATH for the *setup* process, never the user's shell. So backend code
-that shells out to ``node`` at runtime (the OXC validator) cannot rely on PATH.
-``resolve_node_executable`` prefers a version-adequate system Node, else the
-managed isolated Node (same floor the installer applies: ^20.19 || >=22.12 || >=23).
-"""
+"Resolve a usable Node.js executable at runtime.\n\nputs it on PATH for the *setup* process, never the user's shell. So backend code\nthat shells out to ``node`` at runtime (the OXC validator) cannot rely on PATH.\n``resolve_node_executable`` prefers a version-adequate system Node, else the\nmanaged isolated Node (same floor the installer applies: ^20.19 || >=22.12 || >=23)."
 
 from __future__ import annotations
 
@@ -33,8 +26,7 @@ def _version_meets_floor(version: str) -> bool:
 
 
 def managed_node_dir() -> Path:
-    """Isolated Node install dir. Mirrors ``_find_llama_server_binary``: shares a
-    parent with llama.cpp -- ``<STUDIO_HOME>`` in custom mode, else legacy ``~/.unsloth``."""
+    'Isolated Node install dir. Mirrors ``_find_llama_server_binary``: shares a'
     legacy_node = Path.home() / ".unsloth" / "node"
     try:
         # Lazy import (mirrors _find_llama_server_binary) so this module stays

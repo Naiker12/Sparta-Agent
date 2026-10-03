@@ -1,37 +1,5 @@
 
-"""Persisted opt-in controls for OpenAI-compatible model auto-switching.
-
-All off by default so existing API behavior is unchanged:
-- ``openai_api_auto_switch_model``: when on, a ``/v1`` request whose ``model``
-  names a downloaded local GGUF different from the loaded one transparently
-  loads it before serving (llama-swap-style). Unknown names pass through.
-- ``openai_api_auto_download_model``: when on, a ``/v1`` request naming an
-  undownloaded GGUF repo starts a background download instead of failing.
-  Gated on auto-switch, which is what serves the model once it lands.
-- ``openai_api_auto_unload_idle_seconds``: when > 0, the loaded GGUF is
-  unloaded after this many idle seconds to free VRAM. Enabled values have a
-  60s floor (0 stays "off"): a tiny TTL tears the model down between turns of
-  an active chat, forcing a full weight reload + prompt re-prefill per turn.
-- ``media_api_auto_switch_model``: the image/video twin of the first setting.
-  A media request naming a downloaded image or video model loads it before
-  generating, unloading the resident one once the work in flight has drained.
-  Its own setting for the same reason the media TTL is: the chat toggle says
-  nothing about pipelines the user loaded on the Image or Video page.
-- ``media_auto_unload_idle_seconds``: the same for the image and video
-  pipelines. Its own setting, not a share of the chat one: this section is
-  about the OpenAI API and nothing here says it frees a model the user loaded
-  on the Image or Video page, so turning that one on must not start evicting
-  these.
-
-Either idle TTL can also be set at startup via ``UNSLOTH_MODEL_IDLE_TTL`` /
-``UNSLOTH_MEDIA_IDLE_TTL``. Unlike the stored setting (which stays gated on
-auto-switch), the env value is a standalone default that enables idle-unload
-even with auto-switch off, for headless/container deploys; an explicit UI/API
-value still overrides it.
-
-Reads are cached for a short window because these are consulted on the
-per-request hot path; writes invalidate the cache.
-"""
+'Persisted opt-in controls for OpenAI-compatible model auto-switching.\n\nAll off by default so existing API behavior is unchanged:\n- ``openai_api_auto_switch_model``: when on, a ``/v1`` request whose ``model``\n  names a downloaded local GGUF different from the loaded one transparently\n  loads it before serving (llama-swap-style). Unknown names pass through.\n- ``openai_api_auto_download_model``: when on, a ``/v1`` request naming an\n  undownloaded GGUF repo starts a background download instead of failing.\n  Gated on auto-switch, which is what serves the model once it lands.\n- ``openai_api_auto_unload_idle_seconds``: when > 0, the loaded GGUF is\n  unloaded after this many idle seconds to free VRAM. Enabled values have a\n  60s floor (0 stays "off"): a tiny TTL tears the model down between turns of\n  an active chat, forcing a full weight reload + prompt re-prefill per turn.\n- ``media_api_auto_switch_model``: the image/video twin of the first setting.\n  A media request naming a downloaded image or video model loads it before\n  generating, unloading the resident one once the work in flight has drained.\n  Its own setting for the same reason the media TTL is: the chat toggle says\n  nothing about pipelines the user loaded on the Image or Video page.\n- ``media_auto_unload_idle_seconds``: the same for the image and video\n  pipelines. Its own setting, not a share of the chat one: this section is\n  about the OpenAI API and nothing here says it frees a model the user loaded\n  on the Image or Video page, so turning that one on must not start evicting\n  these.\n\nauto-switch), the env value is a standalone default that enables idle-unload\neven with auto-switch off, for headless/container deploys; an explicit UI/API\nvalue still overrides it.\n\nReads are cached for a short window because these are consulted on the\nper-request hot path; writes invalidate the cache.'
 
 from __future__ import annotations
 
@@ -236,28 +204,14 @@ def get_auto_unload_idle_seconds() -> int:
         # off state is identical to pre-feature. Floored to cover values persisted
         # before the minimum existed.
         return _apply_idle_floor(stored) if get_openai_auto_switch_enabled() else 0
-    # No stored value: UNSLOTH_MODEL_IDLE_TTL is a standalone startup default that
+
     # enables idle-unload even with auto-switch off (headless/container deploys).
     env = _env_idle_seconds()
     return env if env is not None else 0
 
 
 def get_media_auto_unload_idle_seconds() -> int:
-    """Effective idle TTL for the image and video backends (0 = never unload).
-
-    Its own setting, off by default: the chat TTL lives under "Model auto-switch
-    (OpenAI API)" and says nothing about image or video, so inheriting it would
-    start evicting pipelines on upgrade for everyone who had turned that on.
-    UNSLOTH_MEDIA_IDLE_TTL is the startup default when nothing is stored, exactly
-    as UNSLOTH_MODEL_IDLE_TTL is for chat.
-
-    Residency vetoes it like the chat reader. "Only unload models loaded by the
-    API" does not veto it here: media auto-switch gives a request its own way to
-    load a pipeline, so the two origins now have to be told apart per model, which
-    media_keepwarm does with the provenance the load routes record. With
-    auto-switch off nothing but the user ever loads one, so that per-model rule
-    spares every resident model and the outcome is unchanged.
-    """
+    'Effective idle TTL for the image and video backends (0 = never unload).\n\n    Its own setting, off by default: the chat TTL lives under "Model auto-switch\n    (OpenAI API)" and says nothing about image or video, so inheriting it would\n    start evicting pipelines on upgrade for everyone who had turned that on.\n\n    Residency vetoes it like the chat reader. "Only unload models loaded by the\n    API" does not veto it here: media auto-switch gives a request its own way to\n    load a pipeline, so the two origins now have to be told apart per model, which\n    media_keepwarm does with the provenance the load routes record. With\n    auto-switch off nothing but the user ever loads one, so that per-model rule\n    spares every resident model and the outcome is unchanged.\n    '
     if _residency_vetoes_unload():
         return 0
     return get_stored_media_auto_unload_idle_seconds()
@@ -393,7 +347,7 @@ def set_openai_auto_switch(
     )
 
 
-# --- Per-model launch config -------------------------------------------------
+
 #
 # An override is the server-side twin of the UI's per-model config, mirrored on every save
 # so an API load applies the same launch settings the picker would. Legacy entries hold just
@@ -667,7 +621,7 @@ def model_override_load_kwargs(override: dict[str, Any], *, is_gguf: bool) -> di
         # settings page has no control for flags, so a save carries the stored ones over
         # (routes/settings.py) while writing the field just edited, and a legacy or
         # API-authored entry can start out that way. Sending both explicitly puts the flag
-        # after Unsloth's own on the command line, where llama.cpp's last-wins parse hands it
+
         # the load, so a stale "--ctx-size 8192" would quietly outrank a freshly saved 32768.
         # The /load route strips exactly these groups off inherited extras
         # (_resolve_inherited_extra_args); the stripper is imported rather than mirrored so

@@ -1,22 +1,5 @@
 
-"""Runtime LAN listener for Unsloth Studio.
-
-Studio binds 127.0.0.1 by default, so a phone or laptop on the same network
-cannot reach it without relaunching with ``-H 0.0.0.0``. This module adds a
-second uvicorn listener over the already-running app, on the machine's own
-network addresses and the same port, and takes it away again -- no restart, and
-the loopback socket keeps serving the desktop app throughout.
-
-The listener binds each detected address explicitly rather than the wildcard:
-``0.0.0.0`` collides with the loopback socket that already holds the port. It
-runs on the primary server's event loop with ``lifespan="off"``, so the app's
-startup and shutdown handlers stay owned by the primary server and never fire
-twice.
-
-IPv4 only. Every consumer of this (URLs in the UI, the QR code, the frontend
-gate) works off the addresses reported here, and a link-local IPv6 URL is not
-something a phone can be handed.
-"""
+'\nStudio binds 127.0.0.1 by default, so a phone or laptop on the same network\ncannot reach it without relaunching with ``-H 0.0.0.0``. This module adds a\nsecond uvicorn listener over the already-running app, on the machine\'s own\nnetwork addresses and the same port, and takes it away again -- no restart, and\nthe loopback socket keeps serving the desktop app throughout.\n\nThe listener binds each detected address explicitly rather than the wildcard:\n``0.0.0.0`` collides with the loopback socket that already holds the port. It\nruns on the primary server\'s event loop with ``lifespan="off"``, so the app\'s\nstartup and shutdown handlers stay owned by the primary server and never fire\ntwice.\n\nIPv4 only. Every consumer of this (URLs in the UI, the QR code, the frontend\ngate) works off the addresses reported here, and a link-local IPv6 URL is not\nsomething a phone can be handed.'
 
 from __future__ import annotations
 

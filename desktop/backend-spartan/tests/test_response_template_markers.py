@@ -1,34 +1,5 @@
 
-"""TEMPLATE_TO_RESPONSES_MAPPER markers must match what the templates render.
-
-The manual instruction/response markers are the fallback for
-train_on_completions when auto-detection is unavailable, so a marker that
-never matches the rendered chat template masks every assistant token and the
-run dies on the all-labels-masked safety net. Six template families shipped
-such markers:
-
-  mistral           - "[INST] " / " [/INST]": the surrounding spaces fold into
-                      the neighbouring tokens ("[INST]" is a single special
-                      token in Mistral v0.3), so the padded strings never match.
-  llama             - same space folding, plus llama-2 tokenizes [INST] after
-                      <s> as bare "[" on transformers 5.x while the standalone
-                      encoding gives "▁[", so the marker must anchor on <s>.
-  starling          - trailing space after "GPT4 Correct Assistant:" folds
-                      into the next content token ("▁Hello").
-  glm               - "[gMASK]<sop>" renders once at text start, never before
-                      later user turns; "<think>" is generation scaffolding
-                      that non-final turns render as a lone "</think>".
-  qwen3-thinking    - "<think>" is stripped from non-final assistant turns
-                      (Qwen3-Thinking-2507) or never rendered (QwQ).
-  zephyr            - role tags are plain text, and SentencePiece tokenizes
-                      "<|assistant|>" differently at text start than after
-                      "</s>\\n" mid-conversation; the markers need the leading
-                      newline anchor to tokenize like a real turn boundary.
-
-Literal assertions run everywhere; the token-level masking checks need the
-representative tokenizers plus unsloth_zoo and skip when either is
-unavailable (offline CI).
-"""
+'TEMPLATE_TO_RESPONSES_MAPPER markers must match what the templates render.\n\nThe manual instruction/response markers are the fallback for\ntrain_on_completions when auto-detection is unavailable, so a marker that\nnever matches the rendered chat template masks every assistant token and the\nrun dies on the all-labels-masked safety net. Six template families shipped\nsuch markers:\n\n  mistral           - "[INST] " / " [/INST]": the surrounding spaces fold into\n                      the neighbouring tokens ("[INST]" is a single special\n                      token in Mistral v0.3), so the padded strings never match.\n  llama             - same space folding, plus llama-2 tokenizes [INST] after\n                      <s> as bare "[" on transformers 5.x while the standalone\n                      encoding gives "▁[", so the marker must anchor on <s>.\n  starling          - trailing space after "GPT4 Correct Assistant:" folds\n                      into the next content token ("▁Hello").\n  glm               - "[gMASK]<sop>" renders once at text start, never before\n                      later user turns; "<think>" is generation scaffolding\n                      that non-final turns render as a lone "</think>".\n  qwen3-thinking    - "<think>" is stripped from non-final assistant turns\n                      (Qwen3-Thinking-2507) or never rendered (QwQ).\n  zephyr            - role tags are plain text, and SentencePiece tokenizes\n                      "<|assistant|>" differently at text start than after\n                      "</s>\\n" mid-conversation; the markers need the leading\n                      newline anchor to tokenize like a real turn boundary.\n\nLiteral assertions run everywhere; the token-level masking checks need the\nunavailable (offline CI).'
 
 from __future__ import annotations
 

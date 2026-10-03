@@ -1,8 +1,5 @@
 
-"""Run script for Unsloth UI Backend.
-
-Self-contained; can be moved to any directory.
-"""
+'\nSelf-contained; can be moved to any directory.'
 
 import os
 import sys
@@ -157,24 +154,12 @@ DISABLE_PUBLIC_CHECK_ENV = "UNSLOTH_STUDIO_DISABLE_PUBLIC_CHECK"
 
 
 def public_check_disabled() -> bool:
-    """True when the operator has turned off the third-party startup lookups.
-
-    On a wildcard bind Unsloth asks ifconfig.me for the public IP and check-host.net
-    whether the port is reachable. Both are useful for sharing a Studio but both tell
-    an outside service this machine is running one, which lab and privacy-sensitive
-    deployments do not want (#7307 Problem 8). Set the var to opt out.
-    """
+    'True when the operator has turned off the third-party startup lookups.\n\n    whether the port is reachable. Both are useful for sharing a Studio but both tell\n    an outside service this machine is running one, which lab and privacy-sensitive\n    deployments do not want (#7307 Problem 8). Set the var to opt out.\n    '
     return os.environ.get(DISABLE_PUBLIC_CHECK_ENV, "").strip().lower() in {"1", "true", "yes"}
 
 
 def _resolve_external_ip() -> str:
-    """Resolve the machine's external IP address.
-
-    Tries, in order:
-    1. GCE metadata server (instant on Google Cloud VMs)
-    2. ifconfig.me (anywhere with internet, skipped by UNSLOTH_STUDIO_DISABLE_PUBLIC_CHECK)
-    3. LAN IP via UDP socket trick (fallback)
-    """
+    "Resolve the machine's external IP address.\n\n    Tries, in order:\n    1. GCE metadata server (instant on Google Cloud VMs)\n    3. LAN IP via UDP socket trick (fallback)\n    "
     import urllib.request
     import socket
 
@@ -213,9 +198,7 @@ def _resolve_external_ip() -> str:
 
 
 def _install_uvicorn_startup_log_rewrite(bind_host: str, display_host: str) -> None:
-    """Rewrite Uvicorn's startup log line: swap wildcard bind for the
-    externally-reachable address, use our Mac-aware stop hint, and rename the
-    prefix to "Unsloth Studio running on"."""
+    "Rewrite Uvicorn's startup log line: swap wildcard bind for the\n    externally-reachable address, use our Mac-aware stop hint, and rename the"
     import logging
     import re
 
@@ -286,12 +269,7 @@ def _working_local_url(port: int) -> "str | None":
 
 
 def _localhost_ipv6_mismatch_url(bind_host: str, port: int) -> "str | None":
-    """Return the IPv4 loopback URL when localhost won't reach 127.0.0.1.
-
-    Local Unsloth binds to 127.0.0.1. Where localhost resolves to IPv6 only (::1),
-    http://localhost:<port> fails (or hits a different process on ::1) even though
-    http://127.0.0.1:<port> works. Return the IPv4 URL for the caller to surface.
-    """
+    "Return the IPv4 loopback URL when localhost won't reach 127.0.0.1.\n\n    http://localhost:<port> fails (or hits a different process on ::1) even though\n    http://127.0.0.1:<port> works. Return the IPv4 URL for the caller to surface.\n    "
     import socket
 
     if bind_host != "127.0.0.1" or not port or port <= 0:
@@ -299,7 +277,7 @@ def _localhost_ipv6_mismatch_url(bind_host: str, port: int) -> "str | None":
 
     ipv4_url = f"http://127.0.0.1:{port}"
 
-    # Only warn once Unsloth is confirmed answering on IPv4 loopback.
+
     if _working_local_url(port) != ipv4_url:
         return None
 
@@ -321,7 +299,7 @@ def _localhost_ipv6_mismatch_url(bind_host: str, port: int) -> "str | None":
             if host == "::1":
                 has_ipv6_loopback = True
 
-    # A connection to ::1 is NOT evidence Unsloth is reachable there: Unsloth binds
+
     # 127.0.0.1 only, so anything on ::1 is a different process. Dual-stack
     # localhost is fine (browsers fall back to 127.0.0.1), so only the IPv6-only
     # case strands the user.
@@ -343,7 +321,7 @@ def _stdout_color_ok() -> bool:
 
 
 def _print_localhost_ipv6_mismatch_warning(local_url: str, port: int) -> None:
-    """Warn that localhost points at ::1 while Unsloth is bound to 127.0.0.1."""
+    ''
     use_color = _stdout_color_ok()
     warn_c = "\033[38;5;215;1m" if use_color else ""
     reset = "\033[0m" if use_color else ""
@@ -357,11 +335,7 @@ def _print_localhost_ipv6_mismatch_warning(local_url: str, port: int) -> None:
 
 
 def _verify_global_reachability(display_host: str, port: int) -> None:
-    """Probe check-host.net to confirm display_host:port is reachable from the
-    public internet. Synchronous so output lands between the banner URLs and the
-    stop hint. Bounded at ~15s; failures swallowed (verifier failing != Unsloth
-    failing). Only meaningful for a wildcard bind, and skipped entirely by
-    UNSLOTH_STUDIO_DISABLE_PUBLIC_CHECK."""
+    'Probe check-host.net to confirm display_host:port is reachable from the\n    public internet. Synchronous so output lands between the banner URLs and the\n    failing). Only meaningful for a wildcard bind, and skipped entirely by'
     global _public_reachable
     # Reset to "unknown" each run; set True/False only when the probe decides.
     _public_reachable = None
@@ -536,7 +510,7 @@ def _tool_policy_notice(host: str, secure: bool, enable_tools: "Optional[bool]")
     if enable_tools is False:
         return "Server-side tools are DISABLED (--disable-tools)."
     if enable_tools is None:
-        # This launcher installs no tools-on default (that is `unsloth studio
+
         # run`), so the request decides and the Studio UI sends its pills.
         return (
             "Server-side tools follow each request's enable_tools; the Studio UI's "
@@ -769,12 +743,7 @@ def _addresses_collide(recorded: "str | None", host: str, port: int) -> bool:
 
 
 def _is_port_free(host: str, port: int) -> bool:
-    """Check if a port is available for binding.
-
-    For a ``0.0.0.0`` wildcard host, also check whether anything is listening on
-    ``127.0.0.1`` (and ``::1`` when IPv6 exists): an SSH tunnel may hold loopback
-    while the wildcard bind succeeds, making Unsloth unreachable via ``localhost``.
-    """
+    'Check if a port is available for binding.\n\n    For a ``0.0.0.0`` wildcard host, also check whether anything is listening on\n    ``127.0.0.1`` (and ``::1`` when IPv6 exists): an SSH tunnel may hold loopback\n    '
     import socket
 
     # 1. Can we bind to the requested address? getaddrinfo resolves both
@@ -1276,7 +1245,7 @@ def _abort_already_running(pid: int, port: int) -> "NoReturn":
 
 
 # Direct backend launches bypass the CLI's env re-export; do it here for
-# real custom roots so unsloth-zoo's import-time LLAMA_CPP_DEFAULT_DIR
+
 # picks up the custom build. Skip legacy-default to avoid flipping
 # default-mode installs into env-override.
 try:
@@ -1291,7 +1260,7 @@ if _STUDIO_ROOT_RESOLVED != _LEGACY_STUDIO_ROOT:
     if not os.environ.get("UNSLOTH_STUDIO_HOME"):
         os.environ["UNSLOTH_STUDIO_HOME"] = str(_STUDIO_ROOT_RESOLVED)
 
-# The studio bundles unsloth_zoo; declare unsloth present (as `import spartan_agent`
+
 # does) so its lazy submodule imports (export, hardware, mlx) and the
 # DiffusionGemma runner never trip the install guard on a clean install.
 os.environ.setdefault("UNSLOTH_IS_PRESENT", "1")
@@ -1609,11 +1578,7 @@ _DEFAULT_FRONTEND_PATH = Path(__file__).resolve().parent.parent / "frontend" / "
 
 
 def _iter_frontend_fallback_candidates() -> "list[Path]":
-    """Yield `studio/spartan-frontend/dist` paths to try when the default is missing.
-
-    Covers PATH-shadowed binaries whose __file__ resolves into a site-packages
-    tree with no vite build (e.g. plain `pip install unsloth`).
-    """
+    'Yield `studio/spartan-frontend/dist` paths to try when the default is missing.\n\n    Covers PATH-shadowed binaries whose __file__ resolves into a site-packages\n    '
     import ast
     import re
 
@@ -1772,30 +1737,7 @@ def _is_missing_watch_fd_thread(exc):
 
 
 def _harden_console_close(stream):
-    """Stop a displaced console stream's close() from aborting Studio startup.
-
-    ``_setup_server_disk_logging`` replaces ``sys.stdout``/``sys.stderr`` with a
-    tee. That changes the object identity of the console stream, so a third-party
-    logging handler that captured the ORIGINAL stream (notably Colab's ``absl``
-    logging handler, whose ``close()`` skips ``sys.stdout``/``sys.stderr`` but not
-    a stream that is no longer either) treats it as an ordinary stream and calls
-    ``close()`` on it during logging teardown -- ``uvicorn.Config()`` ->
-    ``logging.config.dictConfig()`` -> ``logging.shutdown()``.
-
-    A Jupyter/Colab ``ipykernel`` ``OutStream`` created with ``watchfd=False``
-    (the Colab default, and every in-process kernel) never gains a
-    ``watch_fd_thread``, yet the ``OutStream.close()`` shipped in the affected
-    ipykernel versions joins that thread unconditionally and raises
-    ``AttributeError: 'OutStream' object has no attribute 'watch_fd_thread'``
-    (ipython/ipykernel#867). That AttributeError propagates out of
-    ``uvicorn.Config(...)`` and aborts startup ("Unsloth Studio failed to start").
-
-    Wrap the stream's ``close()`` in a transparent pass-through that swallows
-    ONLY that specific teardown AttributeError. A healthy close() (a real console
-    stream, or an OutStream with fd-watching on) runs to completion exactly as
-    before and any other error still propagates, so nothing changes off Colab. A
-    stream whose ``close`` cannot be reassigned keeps its original close().
-    """
+    "Stop a displaced console stream's close() from aborting Studio startup.\n\n    ``_setup_server_disk_logging`` replaces ``sys.stdout``/``sys.stderr`` with a\n    tee. That changes the object identity of the console stream, so a third-party\n    logging handler that captured the ORIGINAL stream (notably Colab's ``absl``\n    logging handler, whose ``close()`` skips ``sys.stdout``/``sys.stderr`` but not\n    a stream that is no longer either) treats it as an ordinary stream and calls\n    ``close()`` on it during logging teardown -- ``uvicorn.Config()`` ->\n    ``logging.config.dictConfig()`` -> ``logging.shutdown()``.\n\n    A Jupyter/Colab ``ipykernel`` ``OutStream`` created with ``watchfd=False``\n    (the Colab default, and every in-process kernel) never gains a\n    ``watch_fd_thread``, yet the ``OutStream.close()`` shipped in the affected\n    ipykernel versions joins that thread unconditionally and raises\n    ``AttributeError: 'OutStream' object has no attribute 'watch_fd_thread'``\n    (ipython/ipykernel#867). That AttributeError propagates out of\n\n    Wrap the stream's ``close()`` in a transparent pass-through that swallows\n    ONLY that specific teardown AttributeError. A healthy close() (a real console\n    stream, or an OutStream with fd-watching on) runs to completion exactly as\n    before and any other error still propagates, so nothing changes off Colab. A\n    stream whose ``close`` cannot be reassigned keeps its original close().\n    "
     if stream is None:
         return
     try:
@@ -1822,15 +1764,7 @@ def _harden_console_close(stream):
 
 
 def _setup_server_disk_logging():
-    """Tee stdout/stderr to ~/.unsloth/studio/logs/server/ and aim
-    faulthandler at the same file so hard crashes (access violations /
-    SIGSEGV in the GPU runtime) leave a stack trace on disk.
-
-    Also exports PYTHONFAULTHANDLER=1 so child Python processes (training
-    workers) dump native-crash stacks to their captured stderr. Keeps the
-    newest 20 session logs. Opt out with UNSLOTH_STUDIO_NO_FILE_LOG=1.
-    Returns the log path, or None when disabled/unavailable.
-    """
+    '    faulthandler at the same file so hard crashes (access violations /\n    SIGSEGV in the GPU runtime) leave a stack trace on disk.\n\n    Also exports PYTHONFAULTHANDLER=1 so child Python processes (training\n    workers) dump native-crash stacks to their captured stderr. Keeps the\n    Returns the log path, or None when disabled/unavailable.\n    '
     if os.environ.get("UNSLOTH_STUDIO_NO_FILE_LOG") == "1":
         return None
     try:
@@ -1951,28 +1885,7 @@ def _terminal_password_gate(
     frontend_served: bool,
     is_colab: bool = False,
 ) -> Tuple[bool, bool]:
-    """Force a terminal password change before the public tunnel goes up.
-
-    When the tunnel is about to publish Unsloth and the seeded admin password was
-    never changed, ask for a new one (masked, confirmed) before any public URL
-    exists. The CLI normally does this before re-exec'ing the backend; this is
-    the backstop for direct `python run.py` launches and older-CLI installs.
-    Must run BEFORE the uvicorn socket binds: on a wildcard bind the served HTML
-    injects the bootstrap credential, so a pre-gate listener would hand the
-    default password to anyone reaching the raw port while the operator types.
-
-    Returns (proceed, drop_bootstrap_injection):
-      proceed False -> abort the launch (interactive refusal, or a headless
-        public launch nothing would protect); fail closed.
-      drop_bootstrap_injection True -> caller must null
-        app.state.bootstrap_password: the password just changed (stale), or a
-        public URL is about to serve the default credential and must not leak it.
-
-    Without a usable terminal the prompt is skipped: proceed if the bootstrap
-    deadline (armed later) will protect the launch; if even that is disabled
-    (api-only, timeout 0) nothing protects it, so refuse. NOT wrapped in a broad
-    try/except: an auth storage failure must abort rather than expose the default.
-    """
+    "Force a terminal password change before the public tunnel goes up.\n\n    never changed, ask for a new one (masked, confirmed) before any public URL\n    exists. The CLI normally does this before re-exec'ing the backend; this is\n    the backstop for direct `python run.py` launches and older-CLI installs.\n    Must run BEFORE the uvicorn socket binds: on a wildcard bind the served HTML\n    injects the bootstrap credential, so a pre-gate listener would hand the\n    default password to anyone reaching the raw port while the operator types.\n\n    Returns (proceed, drop_bootstrap_injection):\n      proceed False -> abort the launch (interactive refusal, or a headless\n        public launch nothing would protect); fail closed.\n      drop_bootstrap_injection True -> caller must null\n        app.state.bootstrap_password: the password just changed (stale), or a\n        public URL is about to serve the default credential and must not leak it.\n\n    Without a usable terminal the prompt is skipped: proceed if the bootstrap\n    deadline (armed later) will protect the launch; if even that is disabled\n    (api-only, timeout 0) nothing protects it, so refuse. NOT wrapped in a broad\n    try/except: an auth storage failure must abort rather than expose the default.\n    "
     if not tunnel_will_start:
         return True, False
 
@@ -2064,14 +1977,7 @@ def _terminal_password_gate(
 
 
 def _apply_supplied_password(password_value: "Optional[str]") -> None:
-    """Non-interactively set the INITIAL admin password before the socket binds,
-    for a direct ``python run.py`` launch (the CLI does this in its own parent).
-    Value comes from --password / UNSLOTH_STUDIO_PASSWORD / stdin.
-
-    Only ever sets the FIRST password: an already-set one is a hard error, an
-    invalid value fails closed. NOT wrapped in a broad try/except: an auth
-    storage failure must abort rather than expose the default credential.
-    """
+    'Non-interactively set the INITIAL admin password before the socket binds,\n    for a direct ``python run.py`` launch (the CLI does this in its own parent).\n\n    Only ever sets the FIRST password: an already-set one is a hard error, an\n    invalid value fails closed. NOT wrapped in a broad try/except: an auth\n    storage failure must abort rather than expose the default credential.\n    '
     from auth import hashing as _auth_hashing
     from auth import storage as _auth_storage
     from auth.terminal_prompt import SUPPLIED_PASSWORD_ENV, resolve_supplied_password
@@ -2131,16 +2037,7 @@ def _apply_supplied_password(password_value: "Optional[str]") -> None:
 
 
 def _apply_cli_tool_policy(enable_tools: "Optional[bool]") -> None:
-    """Honor an explicit --enable-tools/--disable-tools; None leaves the policy
-    unset, so each request's own enable_tools decides. Host is never inspected
-    here.
-
-    The tools-on default for an omitted `enable_tools` belongs to `unsloth studio
-    run`, which installs it itself (that is the launcher that has always forced
-    tools on). Installing it here too would extend it to `unsloth studio`, the
-    desktop app and Colab, where paths built around "omitted means off" -- n > 1,
-    max_tool_calls_per_message: 0, the pre-switch passthrough guard -- would
-    start seeing it."""
+    'Honor an explicit --enable-tools/--disable-tools; None leaves the policy\n    unset, so each request\'s own enable_tools decides. Host is never inspected\n    here.\n\n    run`, which installs it itself (that is the launcher that has always forced\n    desktop app and Colab, where paths built around "omitted means off" -- n > 1,\n    max_tool_calls_per_message: 0, the pre-switch passthrough guard -- would\n    start seeing it.'
     if enable_tools is None:
         return
     from state.tool_policy import set_tool_policy
@@ -2263,7 +2160,7 @@ def run_server(
         cloudflare = True
         host = "127.0.0.1"
 
-    # `unsloth studio run` installs its own resolved policy and passes None here.
+
     _apply_cli_tool_policy(enable_tools)
 
     # Windows cp1252 can't encode emoji; reconfigure stdout to UTF-8.
@@ -2274,7 +2171,7 @@ def run_server(
             pass
 
     # Persist a session log + native-crash stacks BEFORE importing main, so
-    # even import-time failures leave evidence on disk. Field report: Unsloth
+
     # "terminates without a warning" -- a native crash in the GPU runtime
     # kills the process with no Python traceback, and a desktop-shortcut
     # console closes before anything can be read. Console-only logging made
@@ -2311,14 +2208,19 @@ def run_server(
     from threading import Thread, Event
     import uvicorn
 
-    # `from main import app` below loads torch/unsloth/transformers (~2 min cold,
-    # silent), so print a flushed heads-up (piped stdout is block-buffered).
+    # `from main import app` can take a while on a full Studio install, so print
+    # a flushed heads-up (piped stdout is block-buffered). The desktop build is
+    # API-only: do not falsely tell its users that it is loading local ML models.
     if not silent:
-        print(
-            "Loading Unsloth Studio, please wait... (this can take a few minutes)",
-            flush = True,
-        )
-        print("  - loading PyTorch, Unsloth and Transformers...", flush = True)
+        if api_only:
+            print("Loading Sparta Agent backend, please wait...", flush = True)
+            print("  - loading API, project and integration services...", flush = True)
+        else:
+            print(
+                "Loading Unsloth Studio, please wait... (this can take a few minutes)",
+                flush = True,
+            )
+            print("  - loading PyTorch, Unsloth and Transformers...", flush = True)
 
     import_started = time.perf_counter()
 
@@ -2326,7 +2228,7 @@ def run_server(
     # to a sibling's own probe, and the earlier it lands the smaller the window
     # in which two launches can each believe they are alone.
     #
-    # The cache env has to be seeded first. main.py pins UNSLOTH_COMPILE_LOCATION
+
     # at import time, which is after this point, and that variable is part of the
     # coordination key: publishing before it is set would key the marker and the
     # lock differently from the clear that follows, and serialize nothing.
@@ -2424,8 +2326,8 @@ def run_server(
                 or os.environ.get("STUDIO_HOME")
                 or str(Path.home() / ".unsloth" / "studio")
             )
-            # Windows shim: $STUDIO_HOME/bin/unsloth.exe; Linux/macOS venv binary:
-            # $STUDIO_HOME/unsloth_studio/bin/unsloth.
+
+
             home = Path(home_str).expanduser()
             if sys.platform == "win32":
                 installer_bin = home / "bin" / "unsloth.exe"
@@ -2444,7 +2346,7 @@ def run_server(
                 f"  - run the installer's binary directly: {installer_bin} studio\n"
                 + (
                     # An Application Control policy can block the generated
-                    # unsloth.exe while the signed interpreter beside it still
+
                     # runs, so name a route that does not go through it.
                     f"  - or through the interpreter: {sys.executable} -I -m spartan_agent_cli studio\n"
                     if sys.platform == "win32"
@@ -2562,7 +2464,7 @@ def run_server(
 
     app.state.trigger_shutdown = _trigger_shutdown
 
-    # A supplied --password / UNSLOTH_STUDIO_PASSWORD / stdin sets the initial
+
     # admin password before the gate and socket bind (direct `python run.py`;
     # the CLI applies it in its own parent).
     _apply_supplied_password(password)
@@ -2673,7 +2575,7 @@ def run_server(
     if api_only and emit_tauri_port:
         print(f"TAURI_PORT={port}", flush = True)
         # Desktop-owned backends only (the owner env handshake): a headless
-        # `unsloth studio --api-only` has no app to bind its lifetime to and
+
         # must survive its terminal (e.g. nohup). If the app dies without
         # running its cleanup, exit instead of orphaning on the port.
         from main import _desktop_owner
@@ -2728,7 +2630,7 @@ def run_server(
     # Time-box a freshly-exposed web UI: if nobody changes the seeded admin
     # password within the deadline (default 1h), shut down rather than leave an
     # unsecured public instance running. No-op for loopback, --api-only, Colab,
-    # an already-changed password, or UNSLOTH_STUDIO_BOOTSTRAP_TIMEOUT=0.
+
     try:
         from auth import storage as _auth_storage
         from auth.bootstrap_timeout import (

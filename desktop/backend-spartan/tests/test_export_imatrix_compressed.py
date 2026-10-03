@@ -159,7 +159,7 @@ def test_export_merged_relaxes_is_peft_guard():
 
 
 def test_unsloth_save_has_torchao_registry_and_path():
-    # Read unsloth/save.py as text (not import) so this runs in the CPU suite without unsloth.
+
     save_py = (_BACKEND.parent.parent / "unsloth" / "save.py").read_text(encoding = "utf-8")
     assert "def _normalize_torchao_method" in save_py
     assert "def _unsloth_save_torchao" in save_py
@@ -171,7 +171,7 @@ def test_unsloth_save_has_torchao_registry_and_path():
 
 @pytest.mark.parametrize("wrapper_name", ["_save_pretrained_gguf", "_push_to_hub_gguf"])
 def test_sentence_transformer_gguf_wrappers_forward_imatrix(wrapper_name):
-    # Both take **kwargs, so the probe reads them as supported once unsloth_zoo can resolve an
+
     # imatrix; they must therefore forward the argument rather than swallow it.
     st = (_BACKEND.parent.parent / "unsloth" / "models" / "sentence_transformer.py").read_text(
         encoding = "utf-8"

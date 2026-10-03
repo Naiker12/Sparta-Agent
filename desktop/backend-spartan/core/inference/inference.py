@@ -340,7 +340,7 @@ class InferenceBackend:
         # Keep the token so the native-template fallback can fetch a
         # gated model's repo template later during generation.
         self._hf_token = hf_token
-        # GGUF uses max_seq_length=0 as "model default"; Unsloth crashes on it.
+
         if max_seq_length <= 0:
             max_seq_length = 2048
 
@@ -386,7 +386,7 @@ class InferenceBackend:
                 "active_adapter": None,
             }
 
-            # ── Audio model loading path ──────────────────────────
+
             if config.is_audio:
                 audio_type = config.audio_type
                 adapter_info = " (LoRA adapter)" if config.is_lora else ""
@@ -2040,7 +2040,7 @@ class InferenceBackend:
             logger.error(f"Error during generation: {e}")
             raise
 
-    # ── Audio (TTS) Generation ────────────────────────────────────
+
 
     def generate_audio_response(
         self,
@@ -2355,11 +2355,7 @@ class InferenceBackend:
         preserve_thinking: Optional[bool] = None,
         continue_final_message: bool = False,
     ) -> str:
-        """Render the chat prompt, peeling kwargs the template doesn't
-        understand. Delegates to the dependency-light helper module so the
-        fallback chain is unit-testable without pulling unsloth / torch into
-        the test sandbox.
-        """
+        "Render the chat prompt, peeling kwargs the template doesn't\n        understand. Delegates to the dependency-light helper module so the\n        the test sandbox.\n        "
         from core.inference.chat_template_helpers import (
             apply_chat_template_for_generation,
         )
@@ -2622,7 +2618,7 @@ class InferenceBackend:
             return
 
         try:
-            # Common pattern for Unsloth/Hugging Face models
+
             if hasattr(model, "past_key_values"):
                 model.past_key_values = None
             if hasattr(model, "generation_config"):
@@ -2921,18 +2917,7 @@ class InferenceBackend:
         max_seq_length: int = 2048,
         load_in_4bit: bool = True,
     ) -> bool:
-        """Simple model-loading wrapper for the chat interface. Takes a string
-        path and builds the ModelConfig internally.
-
-        Args:
-            model_path: Model name or path (e.g., "unsloth/llama-3-8b")
-            hf_token: HuggingFace token for gated models
-            max_seq_length: Maximum sequence length
-            load_in_4bit: Whether to use 4-bit quantization
-
-        Returns:
-            bool: True if successful, False otherwise
-        """
+        'Simple model-loading wrapper for the chat interface. Takes a string\n        path and builds the ModelConfig internally.\n\n        Args:\n            hf_token: HuggingFace token for gated models\n            max_seq_length: Maximum sequence length\n            load_in_4bit: Whether to use 4-bit quantization\n\n        Returns:\n            bool: True if successful, False otherwise\n        '
         try:
             config = ModelConfig.from_ui_selection(
                 model_path,

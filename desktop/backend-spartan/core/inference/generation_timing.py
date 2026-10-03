@@ -1,19 +1,5 @@
 
-"""Prefill/decode timing for the safetensors generate paths.
-
-Transformers reports no timings of its own, so the prompt and generation speeds the
-chat UI reads off llama-server's ``timings`` object have to be measured here. The
-split point is the first logits-processor call, which transformers makes once the
-prefill forward pass has produced its logits, before the first token is sampled.
-
-Reaching that callback only means the kernels were queued, so each stamp waits for the
-device first. Without the wait a 2048-token prefill on an RTX 3080 reads as 28 ms
-instead of 77 ms, inflating prompt throughput 2.7x and charging the rest to decode.
-
-Kept in a dependency-light leaf module (torch + transformers only, no unsloth / peft)
-so the arithmetic can be unit-tested without loading a model, matching
-``core.inference.presence_penalty``.
-"""
+"Prefill/decode timing for the safetensors generate paths.\n\nTransformers reports no timings of its own, so the prompt and generation speeds the\nchat UI reads off llama-server's ``timings`` object have to be measured here. The\nsplit point is the first logits-processor call, which transformers makes once the\nprefill forward pass has produced its logits, before the first token is sampled.\n\nReaching that callback only means the kernels were queued, so each stamp waits for the\ndevice first. Without the wait a 2048-token prefill on an RTX 3080 reads as 28 ms\ninstead of 77 ms, inflating prompt throughput 2.7x and charging the rest to decode.\n\nso the arithmetic can be unit-tested without loading a model, matching\n``core.inference.presence_penalty``."
 
 import time
 

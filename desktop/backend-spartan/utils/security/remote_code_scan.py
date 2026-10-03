@@ -555,7 +555,7 @@ def repo_remote_code_files(
         # Broad scan never under-scans; the cost is a benign script can over-block, the
         # safe direction for an RCE gate (HIGH approvable; only CRITICAL hard-blocks). An
         # auto_map target absent from the listing is a STALE ref (an older config naming a
-        # since-removed file, e.g. unsloth/PaddleOCR-VL names processing_ppocrvl.py but
+
         # ships processing_paddleocr_vl.py). transformers cannot execute an absent file,
         # so drop the stale ref rather than fail closed; present .py are still fully
         # scanned. This also absorbs a mis-derived dotted name (sub.mod.py vs sub/mod.py):

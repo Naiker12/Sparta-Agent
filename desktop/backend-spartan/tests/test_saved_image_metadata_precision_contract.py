@@ -147,18 +147,7 @@ def _stub_package(name: str) -> types.ModuleType:
 
 @pytest.fixture
 def stub_runtime(monkeypatch):
-    """Enough torch / diffusers for a z-image GGUF load + one txt2img generate.
-
-    ``load_pipeline`` lazily imports ``diffusion_eager_patches``, whose module body runs
-    ``import torch.nn.functional as F``, and the GGUF prefix-strip shim imports
-    ``diffusers.loaders.single_file_model``. Neither resolves through a bare ``ModuleType``.
-    A dev box hides that -- something (``tests/conftest.py`` -> ``unsloth_zoo`` -> ``import
-    torch``) has usually already seeded ``sys.modules["torch.nn.functional"]``, so the import
-    short-circuits on the cached entry and never looks at the stub's missing ``__path__``. On a
-    clean CPU-only CI interpreter nothing seeds it and the load dies with "'torch' is not a
-    package". So register the submodules explicitly and make the stubs real packages: same
-    hermetic runtime in both environments, whatever ran before.
-    """
+    'Enough torch / diffusers for a z-image GGUF load + one txt2img generate.\n\n    ``load_pipeline`` lazily imports ``diffusion_eager_patches``, whose module body runs\n    ``import torch.nn.functional as F``, and the GGUF prefix-strip shim imports\n    ``diffusers.loaders.single_file_model``. Neither resolves through a bare ``ModuleType``.\n    torch``) has usually already seeded ``sys.modules["torch.nn.functional"]``, so the import\n    short-circuits on the cached entry and never looks at the stub\'s missing ``__path__``. On a\n    clean CPU-only CI interpreter nothing seeds it and the load dies with "\'torch\' is not a\n    package". So register the submodules explicitly and make the stubs real packages: same\n    hermetic runtime in both environments, whatever ran before.\n    '
     torch = _stub_package("torch")
     torch.bfloat16 = _FakeDtype("bfloat16")
     torch.float16 = _FakeDtype("float16")

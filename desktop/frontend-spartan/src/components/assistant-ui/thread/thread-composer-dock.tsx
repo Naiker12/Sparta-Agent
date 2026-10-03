@@ -112,7 +112,7 @@ export const ThreadComposerDock: FC<ThreadComposerDockProps> = ({
         )}
       />
       <div className="relative px-5 pb-2">
-        <div className="pointer-events-auto mx-auto w-full max-w-(--thread-max-width)">
+        <div className="pointer-events-auto mx-auto w-full max-w-[48rem]">
           {children}
         </div>
         {showModelDisclaimer && (

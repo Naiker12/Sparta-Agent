@@ -1,23 +1,5 @@
 
-"""``UNSLOTH_SETTLE_DELAY_S`` shortens the settle wait for tests, and only for tests.
-
-``settled_snapshot_device_memory`` spaces its retried ``mem_get_info`` reads a second apart
-so a transient tenant on a live card has time to clear before the next read. Under test the
-snapshots are stubs whose answers do not change with time, so the wait buys nothing --
-``test_diffusion_backend.py`` spent 142s of a 328s suite sitting in it, most of that in
-tests parked at exactly 4.00s. The tests that call the function directly already pass
-``delay_s = 0``; the expensive ones reach it through ``_plan_memory``, which has no way to
-forward the argument. Hence an env override, defaulted to 0 in the backend conftest.
-
-Two things have to stay true and neither is loud when it stops being true:
-
-  * The PRODUCTION default is still a full second. A change that quietly made the fast path
-    the default would turn a transient undercount into a silent fallback to offloaded GGUF
-    on a card that could have gone resident, and nothing would fail.
-  * The override changes only the WAIT, never the retry count or the ``max`` over the reads.
-    That is what makes zeroing it safe: a test asserting "retries once on a transient
-    undercount" still exercises the retry.
-"""
+'\n``settled_snapshot_device_memory`` spaces its retried ``mem_get_info`` reads a second apart\nso a transient tenant on a live card has time to clear before the next read. Under test the\nsnapshots are stubs whose answers do not change with time, so the wait buys nothing --\n``test_diffusion_backend.py`` spent 142s of a 328s suite sitting in it, most of that in\ntests parked at exactly 4.00s. The tests that call the function directly already pass\n``delay_s = 0``; the expensive ones reach it through ``_plan_memory``, which has no way to\nforward the argument. Hence an env override, defaulted to 0 in the backend conftest.\n\nTwo things have to stay true and neither is loud when it stops being true:\n\n  * The PRODUCTION default is still a full second. A change that quietly made the fast path\n    the default would turn a transient undercount into a silent fallback to offloaded GGUF\n    on a card that could have gone resident, and nothing would fail.\n  * The override changes only the WAIT, never the retry count or the ``max`` over the reads.\n    That is what makes zeroing it safe: a test asserting "retries once on a transient\n    undercount" still exercises the retry.'
 
 import time
 

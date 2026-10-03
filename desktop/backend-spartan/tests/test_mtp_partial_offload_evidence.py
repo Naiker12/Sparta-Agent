@@ -500,15 +500,7 @@ def test_zero_full_attention_interval_does_not_divide_by_zero():
 
 
 def test_the_reported_regression_is_still_fixed(tmp_path):
-    """The whole point of the PR, guarded against every fix above.
-
-    Qwen3.8-27B UD-IQ2_M, about 12 GiB free, Auto, four slots: nvidia-smi answers,
-    the planner runs over a real device list and cannot fit the model, so --fit on
-    IS a verdict here and the stand-down must fire. If a tightening of the fit arm
-    ever breaks this, Studio is back to 3.11 token/s.
-
-    See https://huggingface.co/unsloth/Qwen3.8-27B-GGUF/discussions/18.
-    """
+    'The whole point of the PR, guarded against every fix above.\n\n    Qwen3.8-27B UD-IQ2_M, about 12 GiB free, Auto, four slots: nvidia-smi answers,\n    the planner runs over a real device list and cannot fit the model, so --fit on\n    IS a verdict here and the stand-down must fire. If a tightening of the fit arm\n    ever breaks this, Studio is back to 3.11 token/s.\n\n    '
     backend, gguf = _hybrid_mtp_backend(tmp_path, partial_offload = True)
 
     result = _launch(

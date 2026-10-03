@@ -1,7 +1,7 @@
 
 // The Recommended list paints curated catalog seeds as well as live Hub listing rows.
 // Everything a row shows beyond its id used to come from the listing alone, so a curated
-// model the listing does not return (a repo it has not indexed, a non-unsloth owner, one
+
 // this account cannot see) rendered bare and, once downloaded, stopped matching search
 // entirely. These pin the catalog fallbacks that close both gaps.
 

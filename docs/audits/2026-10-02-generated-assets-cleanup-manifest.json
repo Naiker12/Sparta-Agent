@@ -1,0 +1,266 @@
+[
+  {
+    "path": "artifacts/cleanup-frontend-tests.log",
+    "bytes": 32254
+  },
+  {
+    "path": "artifacts/composer-effort.png",
+    "bytes": 20134
+  },
+  {
+    "path": "artifacts/composer-models.png",
+    "bytes": 31175
+  },
+  {
+    "path": "artifacts/composer-narrow.png",
+    "bytes": 14974
+  },
+  {
+    "path": "artifacts/composer-unified-long-model.png",
+    "bytes": 17394
+  },
+  {
+    "path": "artifacts/composer-workspace-dark.png",
+    "bytes": 29358
+  },
+  {
+    "path": "artifacts/composer-workspace-menu.png",
+    "bytes": 31258
+  },
+  {
+    "path": "artifacts/composer-workspace-mobile.png",
+    "bytes": 14298
+  },
+  {
+    "path": "artifacts/durable-queue-build.log",
+    "bytes": 55155
+  },
+  {
+    "path": "artifacts/durable-queue-frontend-tests.log",
+    "bytes": 6733
+  },
+  {
+    "path": "artifacts/landing-desktop-news-mobile.png",
+    "bytes": 100604
+  },
+  {
+    "path": "artifacts/landing-desktop-news.png",
+    "bytes": 47940
+  },
+  {
+    "path": "artifacts/python-comment-cleanup.json",
+    "bytes": 7601
+  },
+  {
+    "path": "artifacts/source-cleanup-audit.json",
+    "bytes": 13093
+  },
+  {
+    "path": "artifacts/landing-redesign/brief-demo.txt",
+    "bytes": 97
+  },
+  {
+    "path": "artifacts/landing-redesign/composer-local-attachments.png",
+    "bytes": 44314
+  },
+  {
+    "path": "artifacts/landing-redesign/composer-mobile-reviewed.png",
+    "bytes": 29404
+  },
+  {
+    "path": "artifacts/landing-redesign/composer-original-menu.png",
+    "bytes": 56802
+  },
+  {
+    "path": "artifacts/landing-redesign/desktop-demo-conversation-refined.png",
+    "bytes": 77522
+  },
+  {
+    "path": "artifacts/landing-redesign/desktop-demo-thinking-refined.png",
+    "bytes": 63161
+  },
+  {
+    "path": "artifacts/landing-redesign/desktop-frontend-inventory.json",
+    "bytes": 753627
+  },
+  {
+    "path": "artifacts/landing-redesign/desktop-message-actions-demo.jpg",
+    "bytes": 61205
+  },
+  {
+    "path": "artifacts/landing-redesign/desktop-profile-complete.png",
+    "bytes": 57506
+  },
+  {
+    "path": "artifacts/landing-redesign/desktop-settings-appearance-final.png",
+    "bytes": 62901
+  },
+  {
+    "path": "artifacts/landing-redesign/desktop-settings-chat-final.png",
+    "bytes": 65609
+  },
+  {
+    "path": "artifacts/landing-redesign/desktop-settings-profile.png",
+    "bytes": 51849
+  },
+  {
+    "path": "artifacts/landing-redesign/desktop-sidebar-more-menu.png",
+    "bytes": 64476
+  },
+  {
+    "path": "artifacts/landing-redesign/desktop-streaming-demo.jpg",
+    "bytes": 5133
+  },
+  {
+    "path": "artifacts/landing-redesign/desktop-thinking-demo.jpg",
+    "bytes": 27635
+  },
+  {
+    "path": "artifacts/landing-redesign/desktop-thinking-mobile.jpg",
+    "bytes": 25519
+  },
+  {
+    "path": "artifacts/landing-redesign/desktop-welcome-fidelity.png",
+    "bytes": 44971
+  },
+  {
+    "path": "artifacts/landing-redesign/desktop.jpg",
+    "bytes": 252602
+  },
+  {
+    "path": "artifacts/landing-redesign/diff-wrap-mobile.png",
+    "bytes": 33958
+  },
+  {
+    "path": "artifacts/landing-redesign/documentation-desktop.jpg",
+    "bytes": 72865
+  },
+  {
+    "path": "artifacts/landing-redesign/documentation-mobile.jpg",
+    "bytes": 33910
+  },
+  {
+    "path": "artifacts/landing-redesign/empty-chat-dark-mobile.png",
+    "bytes": 23750
+  },
+  {
+    "path": "artifacts/landing-redesign/empty-chat-sidebar-reviewed.png",
+    "bytes": 33473
+  },
+  {
+    "path": "artifacts/landing-redesign/hero-demo.jpg",
+    "bytes": 114218
+  },
+  {
+    "path": "artifacts/landing-redesign/mobile-composer-final.png",
+    "bytes": 33917
+  },
+  {
+    "path": "artifacts/landing-redesign/mobile-local-attachments.png",
+    "bytes": 24572
+  },
+  {
+    "path": "artifacts/landing-redesign/mobile-profile-complete.png",
+    "bytes": 34550
+  },
+  {
+    "path": "artifacts/landing-redesign/mobile-settings-chat-final.png",
+    "bytes": 38006
+  },
+  {
+    "path": "artifacts/landing-redesign/panel-changes-final.png",
+    "bytes": 71986
+  },
+  {
+    "path": "artifacts/landing-redesign/panel-mobile-final.png",
+    "bytes": 26650
+  },
+  {
+    "path": "artifacts/landing-redesign/preview-server.mjs",
+    "bytes": 1157
+  },
+  {
+    "path": "artifacts/landing-redesign/response-edit-mobile.png",
+    "bytes": 27081
+  },
+  {
+    "path": "artifacts/landing-redesign/settings-dark-reviewed.png",
+    "bytes": 52116
+  },
+  {
+    "path": "artifacts/landing-redesign/sidebar-navigation-reviewed.png",
+    "bytes": 41547
+  },
+  {
+    "path": "artifacts/landing-redesign/sparta-native-demo-thinking.jpg",
+    "bytes": 44546
+  },
+  {
+    "path": "artifacts/landing-redesign/sparta-native-desktop.jpg",
+    "bytes": 110843
+  },
+  {
+    "path": "artifacts/landing-redesign/sparta-native-full.jpg",
+    "bytes": 284760
+  },
+  {
+    "path": "artifacts/landing-redesign/sparta-native-mobile.jpg",
+    "bytes": 193416
+  },
+  {
+    "path": "artifacts/landing-redesign/sparta-without-external-controls-preview.jpg",
+    "bytes": 101745
+  },
+  {
+    "path": "artifacts/landing-redesign/sparta-without-external-controls.jpg",
+    "bytes": 254878
+  },
+  {
+    "path": "artifacts/landing-redesign/thinking-composer-reviewed.png",
+    "bytes": 39941
+  },
+  {
+    "path": "scripts/audit-source-cleanup.mjs",
+    "bytes": 5346
+  },
+  {
+    "path": "scripts/clean-legacy-comments.py",
+    "bytes": 3761
+  },
+  {
+    "path": "scripts/classify-audit-suites.mjs",
+    "bytes": 6046
+  },
+  {
+    "path": "scripts/seed-dev-data.ts",
+    "bytes": 1677
+  },
+  {
+    "path": "tests/landing-news.browser.mjs",
+    "bytes": 2175
+  },
+  {
+    "path": "public/rounded-512.png",
+    "bytes": 586764
+  },
+  {
+    "path": "public/sparta-icon.png",
+    "bytes": 995615
+  },
+  {
+    "path": "landing/public/escritorio.png",
+    "bytes": 803686
+  },
+  {
+    "path": "landing/public/sparta-escritorio.png",
+    "bytes": 635345
+  },
+  {
+    "path": "landing/public/proyecto/CONTEXTO.png",
+    "bytes": 26980
+  },
+  {
+    "path": "landing/public/proyecto/Permisos antes de las acciones sensibles.png",
+    "bytes": 75935
+  }
+]

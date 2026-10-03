@@ -1,7 +1,7 @@
 {
   "name": "sparta-agent",
   "private": true,
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Local-first agentic IDE for high-performance engineering teams",
   "author": "Naiker12",
   "license": "MIT",
@@ -15,17 +15,18 @@
     "sparta": "./bin/sparta.mjs"
   },
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/patch-assistant-tap.mjs && vite",
     "landing:dev": "npm --prefix ./landing run dev",
     "landing:build": "npm --prefix ./landing run build",
     "typecheck": "npm --prefix ./desktop/frontend-spartan run typecheck && tsc --noEmit",
     "i18n:check": "npm --prefix ./desktop/frontend-spartan run i18n:check",
     "i18n:check:strict": "npm --prefix ./desktop/frontend-spartan run i18n:check:strict",
-    "build": "npm run typecheck && node --max-old-space-size=8192 ./node_modules/vite/bin/vite.js build && node scripts/check-main-bundle.js && electron-builder --config electron-builder.config.cjs && node scripts/check-packaged-app.js",
+    "build": "node scripts/patch-assistant-tap.mjs && npm run typecheck && node --max-old-space-size=8192 ./node_modules/vite/bin/vite.js build && node scripts/check-main-bundle.js && electron-builder --config electron-builder.config.cjs --publish never && node scripts/check-packaged-app.js",
     "lint": "eslint . --ext ts,tsx",
     "preview": "vite preview",
     "sparta": "node ./bin/sparta.mjs",
     "test": "vitest run",
+    "test:electron:smoke": "npm --prefix ./desktop/frontend-spartan run build && node tests/electron-startup.smoke.mjs",
     "test:watch": "vitest",
     "postinstall": "node -e \"try { require('fs').rmSync('node_modules/.vite', { recursive: true, force: true }); console.log('✓ Vite cache cleaned'); } catch(e) { /* ignore */ }\""
   },
@@ -93,6 +94,7 @@
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
+    "js-yaml": "^4.3.2",
     "playwright": "1.61.1",
     "typescript": "^5.2.2",
     "vite": "^7.3.6",

@@ -1,27 +1,5 @@
 
-"""Import the ML stack on a background thread while the backend finishes booting.
-
-torch (plus the sympy/scipy/pandas it drags in) used to be imported by `import
-main`, so the port could not bind until it finished. Deferring it alone would just
-move that cost to the first request; this module pays it concurrently instead.
-
-Started from the last line of main.py's lifespan: everything above is on the
-critical path to binding the socket and would contend for the GIL. Uvicorn binds as
-soon as the lifespan returns, so the warm overlaps serving, not boot.
-
-Contract:
-  * idempotent -- one thread per process, repeat calls are no-ops
-  * never fatal -- a failed stage is logged and left cold, retried by whoever needs it
-  * no half-initialised state -- stages delegate to the module owning the cache
-    (utils.hardware, model_config), which caches under a lock and only on success,
-    so a racing request waits rather than sees a partial
-  * optional GPU consumers stay cold -- Hub downloads load the Xet/Unsloth Zoo
-    integration on demand, and RAG operations load their embedding backend on demand
-
-This does NOT make torch-dependent endpoints cheap while it runs: anything reaching
-get_device() blocks until the hardware stage finishes, so `async def` handlers on
-that path must use asyncio.to_thread (see main.py's /api/health).
-"""
+"Import the ML stack on a background thread while the backend finishes booting.\n\ntorch (plus the sympy/scipy/pandas it drags in) used to be imported by `import\nmain`, so the port could not bind until it finished. Deferring it alone would just\nmove that cost to the first request; this module pays it concurrently instead.\n\nStarted from the last line of main.py's lifespan: everything above is on the\ncritical path to binding the socket and would contend for the GIL. Uvicorn binds as\nsoon as the lifespan returns, so the warm overlaps serving, not boot.\n\nContract:\n  * idempotent -- one thread per process, repeat calls are no-ops\n  * never fatal -- a failed stage is logged and left cold, retried by whoever needs it\n  * no half-initialised state -- stages delegate to the module owning the cache\n    (utils.hardware, model_config), which caches under a lock and only on success,\n    so a racing request waits rather than sees a partial\n    integration on demand, and RAG operations load their embedding backend on demand\n\nThis does NOT make torch-dependent endpoints cheap while it runs: anything reaching\nget_device() blocks until the hardware stage finishes, so `async def` handlers on\nthat path must use asyncio.to_thread (see main.py's /api/health)."
 
 from __future__ import annotations
 
@@ -169,7 +147,7 @@ def _warm_datasets() -> None:
 
 
 # Keep metadata and framework registries ready without importing optional GPU consumers.
-# Unsloth Zoo is loaded by utils.hf_xet_fallback only when a Hub operation needs it.
+
 def _warm_inference_backend() -> None:
     # Its constructor reaches hw.get_device(), so whoever builds it first pays for detection
     # -- lazily that is some request, and sync helpers call the getter inline from async

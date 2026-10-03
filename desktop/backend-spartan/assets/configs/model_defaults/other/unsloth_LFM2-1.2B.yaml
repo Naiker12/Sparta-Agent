@@ -1,7 +1,4 @@
-# Model defaults for unsloth/LFM2-1.2B
 # Based on Liquid_LFM2_(1.2B)-Conversational.ipynb
-# Also applies to: unsloth/LFM2-1.2B
-# added inference parameters from unsloth notebook
 
 training:
   max_seq_length: 2048

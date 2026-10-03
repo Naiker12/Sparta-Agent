@@ -205,7 +205,7 @@ class VramBudgetPayload(BaseModel):
 
 class VramBudgetResponse(BaseModel):
     fraction: float
-    # False when inherited from UNSLOTH_VRAM_FRACTION or the default, so the UI
+
     # knows whether clearing it would change anything.
     is_stored: bool
     default_fraction: float = VRAM_FRACTION_DEFAULT
@@ -264,7 +264,7 @@ class OpenAIAutoSwitchResponse(BaseModel):
     auto_unload_idle_seconds: int
     default_enabled: bool = DEFAULT_OPENAI_AUTO_SWITCH_ENABLED
     # True when the idle-unload loop will actually unload (effective TTL > 0). With
-    # UNSLOTH_MODEL_IDLE_TTL set and nothing stored, this is true even while enabled
+
     # is false, so the UI can show idle-unload as active instead of "needs enable".
     idle_unload_active: bool = False
     auto_unload_keep_kv: bool = DEFAULT_AUTO_UNLOAD_KEEP_KV
@@ -406,7 +406,7 @@ class LastLocalModelResponse(BaseModel):
     server_now: Optional[int] = None
 
 class CodingAgentsResponse(BaseModel):
-    # All agents `unsloth start` supports, in the CLI's declared order.
+
     agents: tuple[str, ...] = CODING_AGENTS
     # Subset of `agents` whose CLI binary was found on PATH; the frontend uses
     # this to default the API-keys panel to a command the user can run as-is.

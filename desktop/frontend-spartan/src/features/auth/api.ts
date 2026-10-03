@@ -1,4 +1,4 @@
-import { apiUrl, getBackendError, isElectron, isTauri } from "@/lib/api-base";
+import { apiUrl, getApiBase, getBackendError, isElectron, isTauri } from "@/lib/api-base";
 import {
   clearAuthTokens,
   getAuthToken,
@@ -39,6 +39,9 @@ function wait(ms: number): Promise<void> {
 function clearAuthTokensIfCurrent(refreshToken: string | null): void {
   if (!refreshToken || getRefreshToken() === refreshToken) {
     clearAuthTokens();
+    localStorage.removeItem("sparta.pending-workspace");
+    sessionStorage.removeItem("sparta.pending-workspace");
+    window.dispatchEvent(new Event("sparta:workspace-changed"));
   }
 }
 
@@ -131,7 +134,9 @@ function asTransportFailure(err: unknown): unknown {
   }
   return Object.assign(
     new Error(
-      "El motor local de Sparta Agent se está iniciando. Por favor, espera un momento o reintenta.",
+      (isElectron || isTauri) && !getApiBase()
+        ? "El motor local de Sparta Agent se está iniciando. Por favor, espera un momento o reintenta."
+        : "Se perdió la conexión con el servicio de Sparta. Reintenta; si continúa, reinicia la aplicación.",
     ),
     { unslothTransportFailure: true },
   );

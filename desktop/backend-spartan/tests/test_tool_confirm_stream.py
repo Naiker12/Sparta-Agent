@@ -1,22 +1,5 @@
 
-"""End-to-end handshake test for the tool-confirmation gate, no model.
-
-The real Unsloth stream wrappers in ``routes/inference.py`` drive the
-synchronous agentic generator with ``await asyncio.to_thread(next, gen,
-...)`` so the blocking ``threading.Event`` wait runs off the event loop.
-This test rebuilds that exact pattern around the real
-``state.tool_approvals`` functions, served by a real uvicorn process on
-loopback (the same server Unsloth uses), and proves the load-bearing
-property:
-
-* ``tool_start`` reaches the client before the gate blocks, and
-* the separate ``/tool-confirm`` POST is served *while* the stream
-  connection is blocked, after which the stream resumes with the executed
-  (allow) or rejected (deny) result -- i.e. no deadlock.
-
-Each scenario runs under a socket-level timeout, so a regression that
-reintroduces a deadlock fails fast instead of hanging the suite.
-"""
+'End-to-end handshake test for the tool-confirmation gate, no model.\n\nsynchronous agentic generator with ``await asyncio.to_thread(next, gen,\n...)`` so the blocking ``threading.Event`` wait runs off the event loop.\nThis test rebuilds that exact pattern around the real\n``state.tool_approvals`` functions, served by a real uvicorn process on\nproperty:\n\n* ``tool_start`` reaches the client before the gate blocks, and\n* the separate ``/tool-confirm`` POST is served *while* the stream\n  connection is blocked, after which the stream resumes with the executed\n  (allow) or rejected (deny) result -- i.e. no deadlock.\n\nEach scenario runs under a socket-level timeout, so a regression that\nreintroduces a deadlock fails fast instead of hanging the suite.'
 
 import asyncio
 import json

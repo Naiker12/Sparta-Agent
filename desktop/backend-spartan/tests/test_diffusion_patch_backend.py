@@ -1,11 +1,5 @@
 
-"""Unit tests for the vetted patch entry point (``diffusion_patch_backend.py``).
-
-Focused on the gate around the ``unsloth`` retry: it exists so a process that never imported
-unsloth (the test suite, a worker) still installs patches instead of silently running unpatched,
-but it must never fire where the import cannot succeed, because it is expensive enough there to
-take a small CI runner down.
-"""
+'Unit tests for the vetted patch entry point (``diffusion_patch_backend.py``).\n\nbut it must never fire where the import cannot succeed, because it is expensive enough there to\ntake a small CI runner down.'
 
 from __future__ import annotations
 
@@ -40,7 +34,7 @@ def _modules(
     torch = None,
     unsloth = False,
 ):
-    """Stub sys.modules so the gate sees a chosen torch / unsloth state."""
+    ''
     mods = dict(sys.modules)
     mods.pop("unsloth", None)
     mods.pop("torch", None)
@@ -65,7 +59,7 @@ def test_retry_skipped_when_torch_is_not_loaded(monkeypatch):
 
 @pytest.mark.parametrize("device", ["cuda", "xpu"])
 def test_retry_runs_on_an_accelerator_unsloth_supports(monkeypatch, device):
-    # The case the retry exists for: a GPU host whose process has simply not imported unsloth yet.
+
     _modules(monkeypatch, torch = _torch(**{device: True}))
     assert pb._retry_could_help(_SENTINEL_ERROR) is True
 
@@ -83,13 +77,13 @@ def test_retry_skipped_when_unsloth_is_already_imported(monkeypatch):
 
 
 def test_retry_skipped_for_a_non_import_failure(monkeypatch):
-    # A broken patch_function is not fixed by importing unsloth.
+
     _modules(monkeypatch, torch = _torch(cuda = True))
     assert pb._retry_could_help(RuntimeError("boom")) is False
 
 
 def test_retry_skipped_when_the_device_probe_raises(monkeypatch):
-    # An unprobeable device is not one unsloth can use, so fail closed rather than pay the import.
+
     broken = types.SimpleNamespace(
         cuda = types.SimpleNamespace(is_available = lambda: (_ for _ in ()).throw(RuntimeError())),
         xpu = None,

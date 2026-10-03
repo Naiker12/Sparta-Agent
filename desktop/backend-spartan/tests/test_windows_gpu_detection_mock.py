@@ -298,8 +298,7 @@ class TestWindowsGpuDetectionAfter5106Fix:
             )
 
     def test_no_pip_nvidia_wheels_still_works_via_install_dir(self, tmp_path):
-        """No pip nvidia wheels (CPU-only torch / standalone unsloth):
-        cudart still resolves via #5322's binary_dir drop."""
+        "        cudart still resolves via #5322's binary_dir drop."
         prefix = tmp_path / "bare_venv"
         prefix.mkdir()
         install = tmp_path / "studio_install"

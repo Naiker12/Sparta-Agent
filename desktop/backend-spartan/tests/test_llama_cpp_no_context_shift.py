@@ -1,16 +1,5 @@
 
-"""``--no-context-shift`` launch-flag contract.
-
-With llama-server's default context-shift behavior, the UI cannot tell the user
-the KV cache was rotated -- earlier turns silently vanish from the conversation.
-The Unsloth backend always passes ``--no-context-shift`` so the server returns a
-clean error instead, and the chat adapter can point the user at the
-``Context Length`` input in the settings panel.
-
-This file statically reads the launch command: we ask ``LlamaCppBackend`` to
-assemble its ``cmd`` list and assert the flag is present. Testing via the real
-subprocess would need an actual GGUF on disk, out of scope for the fast suite.
-"""
+"``--no-context-shift`` launch-flag contract.\n\nWith llama-server's default context-shift behavior, the UI cannot tell the user\nthe KV cache was rotated -- earlier turns silently vanish from the conversation.\nclean error instead, and the chat adapter can point the user at the\n``Context Length`` input in the settings panel.\n\nThis file statically reads the launch command: we ask ``LlamaCppBackend`` to\nassemble its ``cmd`` list and assert the flag is present. Testing via the real\nsubprocess would need an actual GGUF on disk, out of scope for the fast suite."
 
 from __future__ import annotations
 

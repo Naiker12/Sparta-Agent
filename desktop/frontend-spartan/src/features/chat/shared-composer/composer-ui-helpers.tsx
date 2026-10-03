@@ -22,9 +22,9 @@ import {
   useState,
 } from "react";
 
-// ---------------------------------------------------------------------------
+
 // Constantes de adjuntos
-// ---------------------------------------------------------------------------
+
 
 /** Tipos MIME aceptados para imágenes en el compositor compartido. */
 export const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,image/gif";
@@ -32,9 +32,9 @@ export const IMAGE_ACCEPT = "image/jpeg,image/png,image/webp,image/gif";
 /** Tamaño máximo permitido para adjuntos de imagen (20 MB). */
 export const MAX_IMAGE_SIZE = 20 * 1024 * 1024;
 
-// ---------------------------------------------------------------------------
+
 // IME helpers
-// ---------------------------------------------------------------------------
+
 
 /**
  * Detecta si un evento DOM proviene de una composición IME activa.
@@ -51,9 +51,9 @@ export function isNativeComposing(event: Event): boolean {
  */
 export const IME_STUCK_TIMEOUT_MS = 2500;
 
-// ---------------------------------------------------------------------------
+
 // Icono inline (sin dependencia de icon-pack)
-// ---------------------------------------------------------------------------
+
 
 /**
  * Flecha hacia abajo SVG interna, sincronizada visualmente con el compositor
@@ -77,9 +77,9 @@ export const ArrowDownStandardIcon: FC<{ className?: string }> = ({
   </svg>
 );
 
-// ---------------------------------------------------------------------------
+
 // fileToBase64DataURL
-// ---------------------------------------------------------------------------
+
 
 /**
  * Convierte un archivo de imagen a una data-URL base64.
@@ -94,9 +94,9 @@ export function fileToBase64DataURL(file: File): Promise<string> {
   });
 }
 
-// ---------------------------------------------------------------------------
+
 // PendingImage type + thumbnail
-// ---------------------------------------------------------------------------
+
 
 /** Imagen adjunta pendiente de envío en el compositor compartido. */
 export type PendingImage = { id: string; file: File };
@@ -136,9 +136,9 @@ export function PendingImageThumb({
   );
 }
 
-// ---------------------------------------------------------------------------
+
 // PillGlyph
-// ---------------------------------------------------------------------------
+
 
 /**
  * Wrapper de icono para píldoras de herramientas activas.

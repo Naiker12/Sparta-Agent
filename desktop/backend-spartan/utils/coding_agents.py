@@ -1,18 +1,11 @@
 
-"""Detect which `unsloth start <agent>` coding-agent CLIs are on PATH.
-
-The web UI only ever shows the user the "claude" flavor of the `unsloth start`
-command (see agent-command.ts), leaving anyone using Codex, OpenCode, and the
-other supported agents to manually edit the copied command. This module gives
-the frontend a way to ask which of those CLIs are actually installed so it can
-default to one the user can run immediately.
-"""
+'\ncommand (see agent-command.ts), leaving anyone using Codex, OpenCode, and the\nother supported agents to manually edit the copied command. This module gives\nthe frontend a way to ask which of those CLIs are actually installed so it can\ndefault to one the user can run immediately.'
 
 import shutil
 
-# Keep in sync with the `unsloth start <agent>` subcommands defined in
+
 # spartan_agent_cli/commands/start.py. Each entry is the exact executable name that
-# subcommand launches, so a hit here means `unsloth start <agent>` can find the
+
 # binary on PATH without the user installing anything first.
 CODING_AGENTS: tuple[str, ...] = ("claude", "codex", "openclaw", "opencode", "hermes", "pi")
 

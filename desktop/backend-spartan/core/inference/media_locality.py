@@ -152,12 +152,7 @@ def encoder_repo_complete(repo_id: str) -> bool:
 
 
 def _missing_external_encoder(pick: MediaModelPick) -> Optional[int]:
-    """0 when this local pipeline needs nothing more, else what its outside dependency costs.
-
-    HiDream-I1 loads unsloth/Meta-Llama-3.1-8B-Instruct unconditionally, around 16 GB, which no
-    amount of the pipeline being on disk accounts for. Checked against the cache directly rather
-    than through the planner, which cannot be handed an absolute pipeline path.
-    """
+    '0 when this local pipeline needs nothing more, else what its outside dependency costs.\n\n    amount of the pipeline being on disk accounts for. Checked against the cache directly rather\n    than through the planner, which cannot be handed an absolute pipeline path.\n    '
     if not _needs_external_encoder(pick):
         return 0
     from core.inference.diffusion_hidream import HIDREAM_LLAMA_REPO

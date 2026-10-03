@@ -72,14 +72,7 @@ def _require_fork(multiprocess):
 
 
 def _policy_or_skip():
-    """The policy module the production code will actually consult.
-
-    Not `importorskip("unsloth_zoo.dataset_num_proc")`: that module only exists
-    in the companion zoo PR, so on CI -- which clones unsloth_zoo main -- every
-    case that reached the policy skipped, and the ones that stayed exercised the
-    pre-PR path. `_shared_policy` finds this repo's own fallback copy, and
-    returning the same object it uses is also what makes monkeypatching it bite.
-    """
+    "The policy module the production code will actually consult.\n\n    case that reached the policy skipped, and the ones that stayed exercised the\n    pre-PR path. `_shared_policy` finds this repo's own fallback copy, and\n    returning the same object it uses is also what makes monkeypatching it bite.\n    "
     policy = hw._shared_policy()
     if policy is None:
         pytest.skip("no dataset_num_proc policy on this installation")
@@ -353,7 +346,7 @@ def test_a_serial_request_survives_the_config_round_trip(monkeypatch):
     """The audio paths ask for 1; the config layer must still see a request for 1."""
     # The map-site half of this needs the policy: without it
     # _bounded_by_the_shared_policy returns the count unchanged by design, so a
-    # runner with no unsloth_zoo reads 1 rather than None.
+
     _policy_or_skip()
     _patch_device(monkeypatch, hw.DeviceType.CPU)
     assert hw.dataset_map_num_proc(1, serial_as_none = False) == 1
@@ -513,11 +506,7 @@ def test_the_override_is_not_capped_by_the_studio_heuristics(monkeypatch):
 
 
 def test_an_older_zoo_falls_back_to_the_unsloth_copy(monkeypatch):
-    """unsloth.dataset_num_proc is the same policy; Studio should use it too.
-
-    Only when unsloth is already imported: importing it from here would make
-    hardware detection patch torch and pull in the model stack.
-    """
+    '\n    hardware detection patch torch and pull in the model stack.\n    '
     import builtins
 
     calls = []

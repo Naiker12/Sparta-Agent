@@ -115,12 +115,7 @@ def split_model_ref(requested: str) -> tuple[str, Optional[str]]:
 
 
 def is_downloadable_ref(requested: str) -> bool:
-    """Whether *requested* is shaped like a Hub repo we may fetch.
-
-    Requires an explicit namespace: keeps ``gpt-4`` and other foreign ids falling
-    through, and stops ModelConfig.from_identifier's bare-name ``unsloth/``
-    prefixing from turning an unrelated label into a real repo.
-    """
+    'Whether *requested* is shaped like a Hub repo we may fetch.\n\n    Requires an explicit namespace: keeps ``gpt-4`` and other foreign ids falling\n    prefixing from turning an unrelated label into a real repo.\n    '
     from hub.utils.paths import is_valid_repo_id
 
     repo_id, variant = split_model_ref(requested)
@@ -133,13 +128,7 @@ def is_downloadable_ref(requested: str) -> bool:
 
 
 def looks_like_gguf_hub_repo_id(repo_id: str) -> bool:
-    """Whether *repo_id* names a Studio catalog entry, not a LiteLLM/OpenRouter label.
-
-    Namespaced ids without a GGUF suffix are foreign routing labels (``openai/gpt-4o``).
-    ``-GGUF`` and the ``unsloth/`` namespace mark ids clients pick from this server's
-    model list (GGUF and Transformers-backed entries alike); a mistyped one must 404
-    instead of being answered by another loaded model.
-    """
+    'Whether *repo_id* names a Studio catalog entry, not a LiteLLM/OpenRouter label.\n\n    Namespaced ids without a GGUF suffix are foreign routing labels (``openai/gpt-4o``).\n    model list (GGUF and Transformers-backed entries alike); a mistyped one must 404\n    instead of being answered by another loaded model.\n    '
     text = (repo_id or "").strip()
     if "/" not in text:
         return False

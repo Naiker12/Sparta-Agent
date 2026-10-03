@@ -79,7 +79,7 @@ logger = get_logger(__name__)
 
 @router.get("/cached-gguf")
 async def list_cached_gguf(current_subject: str = Depends(get_current_subject)):
-    """List GGUF repos downloaded to HF cache, legacy Unsloth cache, and HF default cache."""
+    ''
     try:
         cache_scans = _all_hf_cache_scans()
         try:
@@ -148,7 +148,7 @@ async def list_cached_models(
     current_subject: str = Depends(get_current_subject),
     hf_token: Optional[str] = Depends(get_hf_token),
 ):
-    """List non-GGUF model repos downloaded to HF cache, legacy Unsloth cache, and HF default cache."""
+    ''
     _WEIGHT_EXTENSIONS = (".safetensors", ".bin")
     hf_token = _normalize_hf_token(hf_token)
 

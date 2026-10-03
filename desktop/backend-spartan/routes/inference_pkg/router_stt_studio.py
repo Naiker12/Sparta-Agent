@@ -48,9 +48,9 @@ studio_router = router  # alias for backward-compatibility with decorators
 _MAX_AUDIO_RAW_BYTES = STT_AUDIO_RAW_MAX_BYTES
 _MAX_AUDIO_B64_CHARS = STT_AUDIO_B64_MAX_CHARS
 
-# =====================================================================
+
 # Speech-to-text (STT) sidecar  (/audio/transcribe, /audio/stt/*)
-# =====================================================================
+
 
 
 def _stt_engine_for_model(model: Optional[str]) -> Optional[str]:
@@ -84,14 +84,7 @@ def _resolve_stt_engine(engine: Optional[str]) -> str:
 
 
 def _resolve_serving_stt_engine(engine: Optional[str]) -> str:
-    """Resolve the engine that will actually serve a model.
-
-    whisper.cpp (gguf) only accepts curated ids, which Transformers serves too,
-    so when whisper-server is not installed (the common case: `unsloth studio
-    update` does not yet build it) fall back to Transformers instead of 501-ing
-    on every recording. Used for download/load/transcribe; unload targets a
-    specific engine via _resolve_stt_engine.
-    """
+    'Resolve the engine that will actually serve a model.\n\n    whisper.cpp (gguf) only accepts curated ids, which Transformers serves too,\n    update` does not yet build it) fall back to Transformers instead of 501-ing\n    on every recording. Used for download/load/transcribe; unload targets a\n    specific engine via _resolve_stt_engine.\n    '
     resolved = _resolve_stt_engine(engine)
     if resolved == "gguf":
         from core.inference import stt_ggml_sidecar

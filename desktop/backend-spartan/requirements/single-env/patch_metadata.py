@@ -1,14 +1,6 @@
 #!/usr/bin/env python3
 
-"""Relax strict metadata pins so pip check passes on the single-env stack.
-
-Why:
-- data-designer pins huggingface-hub>=1.0.1 and pyarrow<20.
-- unsloth/transformers pins huggingface-hub<1.
-- studio datasets pins pyarrow>=21.
-
-Runtime works with hub 0.36.x + pyarrow 23.x; only the metadata conflicts.
-"""
+'Relax strict metadata pins so pip check passes on the single-env stack.\n\nWhy:\n- data-designer pins huggingface-hub>=1.0.1 and pyarrow<20.\n- studio datasets pins pyarrow>=21.\n\nRuntime works with hub 0.36.x + pyarrow 23.x; only the metadata conflicts.'
 
 from __future__ import annotations
 

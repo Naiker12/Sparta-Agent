@@ -154,7 +154,7 @@ def direct_wheel_url(
     return f"{release_base_url}/{release_tag}/{filename}"
 
 
-# ── xFormers ──────────────────────────────────────────────────────────────────
+
 # xformers/_C.pyd (_C.so on Linux) is linked against ONE exact (torch, CUDA) pair.
 # Loaded beside any other pair torch.ops.load_library raises, and xformers/_cpp_lib.py
 # turns that into a log warning rather than an error -- so the import "succeeds" and
@@ -210,15 +210,7 @@ PYTORCH_WHEEL_INDEX_BASE_URL = "https://download.pytorch.org/whl"
 
 
 def pytorch_wheel_index_base_url() -> str:
-    """Where torch-family wheels are fetched from: ``UNSLOTH_PYTORCH_MIRROR`` when set.
-
-    Read per call rather than frozen at import: this module is imported early, and the
-    mirror is the one setting an air-gapped deployment has. The whole installer stack
-    already honours it (``install_python_stack._PYTORCH_WHL_BASE``, install.sh, setup.ps1),
-    so a direct-URL install that hard-coded download.pytorch.org was the one path that
-    could not reach a mirror-only host -- it failed the explicit xFormers request and
-    dropped the user back to native attention.
-    """
+    '\n    Read per call rather than frozen at import: this module is imported early, and the\n    mirror is the one setting an air-gapped deployment has. The whole installer stack\n    already honours it (``install_python_stack._PYTORCH_WHL_BASE``, install.sh, setup.ps1),\n    so a direct-URL install that hard-coded download.pytorch.org was the one path that\n    could not reach a mirror-only host -- it failed the explicit xFormers request and\n    dropped the user back to native attention.\n    '
     return (os.environ.get("UNSLOTH_PYTORCH_MIRROR") or PYTORCH_WHEEL_INDEX_BASE_URL).rstrip("/")
 
 
@@ -373,14 +365,7 @@ def xformers_wheel_url(env: dict[str, str] | None) -> str | None:
 
 
 def join_wheel_url(base: str, path: str) -> str:
-    """``base`` + ``path``, with any ?query / #fragment kept at the end.
-
-    UNSLOTH_PYTORCH_MIRROR is allowed to authenticate by query string
-    (``https://mirror/whl?token=abc``), and appending after the query put the wheel path
-    INSIDE the token value -- leaving the request path at /whl and the token unusable. The
-    tokenized private mirror this setting exists for was the one shape that could not
-    resolve a wheel.
-    """
+    '``base`` + ``path``, with any ?query / #fragment kept at the end.\n\n    (``https://mirror/whl?token=abc``), and appending after the query put the wheel path\n    INSIDE the token value -- leaving the request path at /whl and the token unusable. The\n    tokenized private mirror this setting exists for was the one shape that could not\n    resolve a wheel.\n    '
     cut = min([i for i in (base.find("?"), base.find("#")) if i >= 0], default = -1)
     if cut < 0:
         return f"{base.rstrip('/')}/{path}"
@@ -388,14 +373,7 @@ def join_wheel_url(base: str, path: str) -> str:
 
 
 def redact_url_credentials(url: str) -> str:
-    """A URL safe to log: no userinfo, no query, no fragment.
-
-    UNSLOTH_PYTORCH_MIRROR is allowed to be a private index, and people put credentials in
-    it -- ``https://user:token@mirror/whl`` or ``...?token=``. The wheel URL built from it
-    is handed to pip AND printed, so without this the secret lands in the backend log the
-    first time Studio installs (or fails to install) xFormers. Same rule as the installer's
-    Remove-IndexUrlCredentials, so both sides redact identically.
-    """
+    "A URL safe to log: no userinfo, no query, no fragment.\n\n    it -- ``https://user:token@mirror/whl`` or ``...?token=``. The wheel URL built from it\n    is handed to pip AND printed, so without this the secret lands in the backend log the\n    first time Studio installs (or fails to install) xFormers. Same rule as the installer's\n    Remove-IndexUrlCredentials, so both sides redact identically.\n    "
     separator = url.find("://")
     if separator < 0:
         return url

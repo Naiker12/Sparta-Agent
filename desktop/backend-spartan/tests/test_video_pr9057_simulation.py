@@ -245,9 +245,7 @@ def test_a_dead_server_is_swallowed(monkeypatch):
 
 
 def test_the_props_request_carries_the_child_api_key_when_direct_stream_set_one(monkeypatch):
-    """llama-server's api-key middleware protects /props (it is not in the
-    public_endpoints set), so an unauthenticated read 401s and the capability
-    silently reads False under UNSLOTH_DIRECT_STREAM=1."""
+    "llama-server's api-key middleware protects /props (it is not in the\n    public_endpoints set), so an unauthenticated read 401s and the capability"
     record: dict = {}
     b = _live_backend(api_key = "secret-token")
     _stub_props_http(monkeypatch, _Resp(200, {"modalities": {"video": True}}), record = record)

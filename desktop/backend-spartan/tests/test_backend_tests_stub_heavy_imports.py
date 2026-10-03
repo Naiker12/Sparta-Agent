@@ -1,21 +1,5 @@
 
-"""No test module in this tree may import a backend module that needs unsloth without stubbing first.
-
-``core/training/trainer.py`` and ``core/inference/inference.py`` import ``unsloth`` (and through
-it ``unsloth_zoo``) and ``trl`` at module scope. The ``pytest`` matrix in
-``.github/workflows/studio-backend-ci.yml`` installs studio.txt plus torch and transformers and
-deliberately stops there: the ``repo-cpu-tests`` job beside it is the one that installs
-``unsloth_zoo``, and it runs the REPO-ROOT ``tests/`` tree, not this one.
-
-An unstubbed module fails COLLECTION, which takes the entire job down on all four Python
-versions, as ``test_trainer_stdout_quiet.py`` and then ``test_audio_type_inconclusive.py`` did.
-
-The earlier version of this guard hardcoded ``core.training.trainer``, so a test reaching the
-same ``import spartan_agent`` through any other backend module was invisible to it. The set is now
-derived from the backend sources: every module importing a heavy package at module scope, closed
-transitively over the backend's own module-scope imports. Source check rather than runtime,
-because where the real packages ARE installed the import succeeds and proves nothing.
-"""
+"\n``.github/workflows/studio-backend-ci.yml`` installs studio.txt plus torch and transformers and\ndeliberately stops there: the ``repo-cpu-tests`` job beside it is the one that installs\n\nAn unstubbed module fails COLLECTION, which takes the entire job down on all four Python\nversions, as ``test_trainer_stdout_quiet.py`` and then ``test_audio_type_inconclusive.py`` did.\n\nThe earlier version of this guard hardcoded ``core.training.trainer``, so a test reaching the\nsame ``import spartan_agent`` through any other backend module was invisible to it. The set is now\nderived from the backend sources: every module importing a heavy package at module scope, closed\ntransitively over the backend's own module-scope imports. Source check rather than runtime,\nbecause where the real packages ARE installed the import succeeds and proves nothing."
 
 from __future__ import annotations
 
@@ -27,14 +11,14 @@ from pathlib import Path
 _TESTS_DIR = Path(__file__).resolve().parent
 _BACKEND = _TESTS_DIR.parent
 
-# Top-level packages the backend pytest job does not install. `unsloth` is the one that raises
-# (its _gpu_init insists on unsloth_zoo); the other two are unimportable there for the same reason.
+
+
 _HEAVY_PACKAGES = ("unsloth", "unsloth_zoo", "trl")
 
-# Outside the backend's own import graph (unsloth_compiled_cache is a gitignored artifact dir).
+
 _SKIP_TOP_LEVEL = frozenset({"tests", "vendor", "unsloth_compiled_cache"})
 
-# Naming `unsloth` is enough to prove intent: a module that stubs it and forgets `trl` fails
+
 # loudly at collection, whereas one that stubs nothing is the silent case this guard catches.
 _REQUIRED_STUB = "unsloth"
 
@@ -90,11 +74,7 @@ def _needs_heavy(names: set[str]) -> bool:
 
 @lru_cache(maxsize = 1)
 def _heavy_backend_modules() -> frozenset[str]:
-    """Backend modules unimportable unless unsloth/unsloth_zoo/trl are installed.
-
-    Seeded with the direct module-scope importers, then closed over the backend's own
-    module-scope imports so a module that merely re-exports one is caught too.
-    """
+    "\n    Seeded with the direct module-scope importers, then closed over the backend's own\n    module-scope imports so a module that merely re-exports one is caught too.\n    "
     imports: dict[str, set[str]] = {}
     for path in sorted(_BACKEND.rglob("*.py")):
         rel = path.relative_to(_BACKEND)
@@ -260,7 +240,7 @@ def _runtime_nodes(node: ast.AST):
 
 
 def _names_required_stub(nodes: list[ast.AST]) -> bool:
-    """Whether any node is the string ``unsloth`` (or a submodule of it)."""
+    ''
     return any(
         isinstance(node, ast.Constant)
         and isinstance(node.value, str)
@@ -305,11 +285,7 @@ def _is_sys_modules(node: ast.AST) -> bool:
 
 
 def _writes_sys_modules(nodes: list[ast.AST]) -> bool:
-    """``sys.modules[...] = ...`` or a call that adds to it, rather than a read of it.
-
-    ``sys.modules.get(...)`` and ``"unsloth" in sys.modules`` are how a file CHECKS for the
-    real package, which is the opposite of installing a stub.
-    """
+    '``sys.modules[...] = ...`` or a call that adds to it, rather than a read of it.\n\n    real package, which is the opposite of installing a stub.\n    '
     for node in nodes:
         targets: list[ast.AST] = []
         if isinstance(node, ast.Assign):
@@ -336,17 +312,7 @@ def _installs_stub(
     helpers: dict[str, ast.AST] | None = None,
     seen: frozenset[str] = frozenset(),
 ) -> bool:
-    """Whether the nodes write ``sys.modules`` or call something that does.
-
-    Decided by what a helper DOES wherever the module defines it. Accepting any callee
-    whose name contains "stub" counted ``_remove_stub("unsloth")`` and
-    ``_validate_stub("unsloth")`` as installations, and the import after them still
-    found nothing.
-
-    The name stays as the fallback for a call this module cannot resolve, which is the
-    helper imported from a shared module. A name defined nowhere would raise NameError
-    at import, so it cannot be a file that reaches collection at all.
-    """
+    'Whether the nodes write ``sys.modules`` or call something that does.\n\n    Decided by what a helper DOES wherever the module defines it. Accepting any callee\n    found nothing.\n\n    The name stays as the fallback for a call this module cannot resolve, which is the\n    helper imported from a shared module. A name defined nowhere would raise NameError\n    at import, so it cannot be a file that reaches collection at all.\n    '
     if _writes_sys_modules(nodes):
         return True
     helpers = helpers or {}
@@ -457,25 +423,7 @@ def _helper_installs_stub(
     named: frozenset[str],
     seen: frozenset[str] = frozenset(),
 ) -> bool:
-    """Whether calling ``name`` installs a stub for the required module.
-
-    ``_runtime_nodes`` deliberately stops at every ``def``, which is right for "does this
-    statement install a stub" and wrong for "does calling this helper install one". Two
-    files hold their stubs with ``with _stubbed():`` and import the heavy module inside
-    that block, so the installing code is one call away from module scope and the
-    statement itself spells neither ``unsloth`` nor ``sys.modules``. Read through the
-    call, the same way the stub-record check already reads through the helper that
-    appends to the record.
-
-    Recursive with a ``seen`` set, since the helper that names the module and the helper
-    that writes ``sys.modules`` are usually not the same one, and a cycle would otherwise
-    not terminate.
-
-    Only the part of the helper that has run by then counts, which is what
-    ``_helper_nodes_entered`` decides. Reading the whole body accepted a stub installed
-    after the ``yield`` of a context manager, and that code runs on the way OUT of the
-    block, after the import inside it has already been attempted.
-    """
+    'Whether calling ``name`` installs a stub for the required module.\n\n    ``_runtime_nodes`` deliberately stops at every ``def``, which is right for "does this\n    statement install a stub" and wrong for "does calling this helper install one". Two\n    files hold their stubs with ``with _stubbed():`` and import the heavy module inside\n    that block, so the installing code is one call away from module scope and the\n    call, the same way the stub-record check already reads through the helper that\n    appends to the record.\n\n    Recursive with a ``seen`` set, since the helper that names the module and the helper\n    that writes ``sys.modules`` are usually not the same one, and a cycle would otherwise\n    not terminate.\n\n    Only the part of the helper that has run by then counts, which is what\n    ``_helper_nodes_entered`` decides. Reading the whole body accepted a stub installed\n    after the ``yield`` of a context manager, and that code runs on the way OUT of the\n    block, after the import inside it has already been attempted.\n    '
     helper = helpers.get(name)
     if helper is None or name in seen:
         return False
@@ -532,17 +480,7 @@ def _true_when_imported(
 
 
 def _key_decides_the_import(node: ast.AST, allow_variable: bool) -> bool:
-    """Whether this ``sys.modules`` key is the module whose absence breaks the import.
-
-    ``if "pytest" not in sys.modules:`` says nothing about ``unsloth``, and treating it
-    as the availability guard made an unrelated cached package decide whether the stubs
-    below it counted. What counts is the required stub itself, or a
-    heavy backend module, since caching either is what makes the import safe.
-
-    A non-constant key is the ``name`` parameter of a stub helper deciding about its own
-    argument, which is the idiom ``_stub_if_missing`` opens with. That is only accepted
-    where the question is about a helper's early exit, never at module scope.
-    """
+    "Whether this ``sys.modules`` key is the module whose absence breaks the import.\n\n    as the availability guard made an unrelated cached package decide whether the stubs\n    below it counted. What counts is the required stub itself, or a\n    heavy backend module, since caching either is what makes the import safe.\n\n    A non-constant key is the ``name`` parameter of a stub helper deciding about its own\n    argument, which is the idiom ``_stub_if_missing`` opens with. That is only accepted\n    where the question is about a helper's early exit, never at module scope.\n    "
     if isinstance(node, ast.Constant) and isinstance(node.value, str):
         return (
             node.value == _REQUIRED_STUB
@@ -566,15 +504,7 @@ def _sys_modules_flags(tree: ast.Module) -> dict[str, bool]:
 
 
 def _certain_nodes(node: ast.AST, flags: dict[str, bool] | None = None):
-    """``_runtime_nodes``, minus what only MIGHT run.
-
-    A stub inside ``if something():`` above the import is not a stub the import can
-    rely on, and reading it as one meant an optional stub counted as a guaranteed
-    one. ``while`` and ``except`` bodies go the same way. ``for`` bodies stay: the
-    loop over a table is the idiom these files use, and an empty table would not
-    name ``unsloth`` in the first place, so it cannot pass this check anyway. The
-    "already imported" guard stays too, for the reason in ``_true_when_imported``.
-    """
+    '``_runtime_nodes``, minus what only MIGHT run.\n\n    A stub inside ``if something():`` above the import is not a stub the import can\n    rely on, and reading it as one meant an optional stub counted as a guaranteed\n    one. ``while`` and ``except`` bodies go the same way. ``for`` bodies stay: the\n    loop over a table is the idiom these files use, and an empty table would not\n    "already imported" guard stays too, for the reason in ``_true_when_imported``.\n    '
     flags = flags or {}
     if isinstance(node, ast.If) and _constant_test(node) is None:
         imported = _true_when_imported(node.test, flags)
@@ -606,21 +536,7 @@ def _running_before(
     line: int,
     flags: dict[str, bool] | None = None,
 ):
-    """``(statement, nodes)`` for everything that has run once ``line`` is reached.
-
-    Line order alone merges branches that exclude each other:
-
-        if enabled:
-            _stub_if_missing("unsloth", ())
-        else:
-            import core.inference.inference
-
-    puts the stub above the import while the two can never both run, and the guard
-    called that file stubbed. What is walked instead is the
-    import's own chain: at each level, only the block that CONTAINS the line is
-    descended into, and only the statements above the line inside it. Everything
-    there did run, because the import running means its branch was taken.
-    """
+    "``(statement, nodes)`` for everything that has run once ``line`` is reached.\n\n    Line order alone merges branches that exclude each other:\n\n        if enabled:\n        else:\n            import core.inference.inference\n\n    puts the stub above the import while the two can never both run, and the guard\n    called that file stubbed. What is walked instead is the\n    import's own chain: at each level, only the block that CONTAINS the line is\n    descended into, and only the statements above the line inside it. Everything\n    there did run, because the import running means its branch was taken.\n    "
     for statement in body:
         if statement.lineno >= line:
             return
@@ -646,27 +562,7 @@ def _running_before(
 
 
 def _stubs_before(tree: ast.Module, line: int | None) -> bool:
-    """Whether a stub naming ``unsloth`` is INSTALLED at module scope before ``line``.
-
-    Structural, not textual. The text form of this check ("the word stub or sys.modules
-    appears above the import, and so does the word unsloth") is satisfied by a docstring that
-    merely discusses stubbing, and by a helper that is defined but never called, so a module
-    could lose its stubs and stay green. What is read here is the code that actually RUNS
-    before the import: the module-scope statements above it, minus the ``def``/``class`` bodies
-    that only run when something calls them. It counts when those name ``unsloth`` as a string
-    and either call a stub helper or write ``sys.modules``.
-
-    The name and the operation have to meet in ONE statement, or the guard goes green on a
-    file that stubs something else while ``unsloth`` merely appears above
-    (``sys.modules["fake"] = ...`` next to an unrelated ``"unsloth"`` string). The name is
-    allowed to arrive through a module-level table the statement reads, because that is how
-    the real files are written (``test_training_progress_callback.py`` keeps ``_STUBS`` above
-    the loop that feeds it to the helper), so a table naming ``unsloth`` marks the names it
-    binds and a later statement reading one of them counts as naming it.
-
-    Order is the whole point: a stub registered afterwards lands after the real import has
-    already been attempted and raised.
-    """
+    '\n    Structural, not textual. The text form of this check ("the word stub or sys.modules\n    merely discusses stubbing, and by a helper that is defined but never called, so a module\n    could lose its stubs and stay green. What is read here is the code that actually RUNS\n    before the import: the module-scope statements above it, minus the ``def``/``class`` bodies\n    and either call a stub helper or write ``sys.modules``.\n\n    The name and the operation have to meet in ONE statement, or the guard goes green on a\n    allowed to arrive through a module-level table the statement reads, because that is how\n    the real files are written (``test_training_progress_callback.py`` keeps ``_STUBS`` above\n    binds and a later statement reading one of them counts as naming it.\n\n    Order is the whole point: a stub registered afterwards lands after the real import has\n    already been attempted and raised.\n    '
     if line is None:
         return True
     named: frozenset[str] = frozenset()
@@ -1196,23 +1092,7 @@ def _importorskip_offenders() -> list[str]:
 
 
 def test_no_test_module_reaches_a_heavy_module_through_importorskip_unstubbed():
-    """The lazy-import exemption above has a hole, and this closes it.
-
-    The guard beside this one only looks at module-scope imports, because those fail
-    COLLECTION and take the whole job down. An import inside a test body is deliberately
-    exempt: it is lazy, and a lazy import of an uninstallable module is normally written to
-    degrade into a skip.
-
-    ``pytest.importorskip`` is that idiom, and since pytest 8.2 it no longer covers this
-    case: it skips on ``ModuleNotFoundError`` only, and ``unsloth/_gpu_init.py`` raises a
-    plain ``ImportError`` when unsloth_zoo is absent, which is exactly the backend matrix's
-    situation. So the call raises instead of skipping and the test fails.
-
-    test_safetensors_reasoning_stream.py sat in that hole. It never stubbed anything, and
-    passed only when an earlier file in the session had installed the stub and left the
-    imported module in ``sys.modules`` for it, which makes it a pass that depends on
-    collection order.
-    """
+    'The lazy-import exemption above has a hole, and this closes it.\n\n    The guard beside this one only looks at module-scope imports, because those fail\n    COLLECTION and take the whole job down. An import inside a test body is deliberately\n    exempt: it is lazy, and a lazy import of an uninstallable module is normally written to\n    degrade into a skip.\n\n    ``pytest.importorskip`` is that idiom, and since pytest 8.2 it no longer covers this\n    situation. So the call raises instead of skipping and the test fails.\n\n    test_safetensors_reasoning_stream.py sat in that hole. It never stubbed anything, and\n    passed only when an earlier file in the session had installed the stub and left the\n    imported module in ``sys.modules`` for it, which makes it a pass that depends on\n    collection order.\n    '
     offenders = _importorskip_offenders()
     assert not offenders, (
         f"{len(offenders)} test module(s) reach a backend module that needs unsloth through "
@@ -2068,7 +1948,7 @@ def test_the_guard_would_catch_an_unstubbed_module():
     )
     assert not _is_offender(available_return, heavy), available_return
 
-    # A call named "stub" is not an installation. Both of these leave unsloth absent.
+
     for not_installing in (
         "import sys\n"
         "def _remove_stub(name):\n    sys.modules.pop(name, None)\n"
@@ -2092,7 +1972,7 @@ def test_the_guard_would_catch_an_unstubbed_module():
     assert _is_offender(while_else, heavy), while_else
 
     # The membership test has to name the module that decides the import. An unrelated
-    # cached package says nothing about unsloth, and the branch is skipped when it is
+
     # present.
     unrelated_key = (
         "import sys\n"
@@ -2160,16 +2040,11 @@ def test_the_guard_would_catch_an_unstubbed_module():
 
 
 def test_only_an_installed_stub_counts_as_stubbing():
-    """What the textual form of this check accepted and the structural one does not.
-
-    Each source below reads as stubbed to a substring match over the lines above the import
-    (the words ``unsloth`` and ``stub``/``sys.modules`` are all present) while installing
-    nothing, so a module could lose its stubs and the guard would stay green.
-    """
+    'What the textual form of this check accepted and the structural one does not.\n\n    Each source below reads as stubbed to a substring match over the lines above the import\n    nothing, so a module could lose its stubs and the guard would stay green.\n    '
     heavy = _heavy_backend_modules()
 
     for source in (
-        # Prose about stubbing unsloth, in the module docstring.
+
         '"""Stubs unsloth before importing, or it would need sys.modules surgery."""\n'
         "from core.training import trainer as t\n",
         # The names in a module-level table and a stub helper that is never called, which is
@@ -2199,7 +2074,7 @@ def test_only_an_installed_stub_counts_as_stubbing():
         "from core.training import trainer as t\n",
         # A stub of something ELSE, with the required name loose in the file rather than in
         # the operation. Both halves are present, so a prefix-wide pairing reads this as
-        # stubbed while unsloth is not stubbed at all.
+
         'import sys\n_HEAVY = "unsloth"\nsys.modules["fake_backend"] = object()\n'
         "from core.training import trainer as t\n",
         '_stub_if_missing("trl", ())\n_HEAVY = ("unsloth",)\n'

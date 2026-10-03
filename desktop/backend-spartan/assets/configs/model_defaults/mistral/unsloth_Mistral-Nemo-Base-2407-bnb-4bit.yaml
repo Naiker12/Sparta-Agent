@@ -1,6 +1,4 @@
-# Model defaults for unsloth/Mistral-Nemo-Base-2407-bnb-4bit
 # Based on Mistral_Nemo_(12B)-Alpaca.ipynb
-# Also applies to:  "unsloth/Mistral-Nemo-Base-2407",  "mistralai/Mistral-Nemo-Base-2407", "unsloth/Mistral-Nemo-Instruct-2407-bnb-4bit", "unsloth/Mistral-Nemo-Instruct-2407", "mistralai/Mistral-Nemo-Instruct-2407",
 
 training:
   max_seq_length: 2048

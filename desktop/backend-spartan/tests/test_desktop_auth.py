@@ -598,7 +598,7 @@ def test_change_password_revokes_the_desktop_secret_only_for_browsers(desktop):
 
 
 def test_local_recipe_token_authenticates_as_admin_for_desktop_user(loaded_local_model):
-    # _inject_local_providers mints an internal sk-unsloth-* API key (not a
+
     # forwarded JWT) that validates as admin whether the session was desktop or web.
     from auth.authentication import create_access_token, get_current_subject
 

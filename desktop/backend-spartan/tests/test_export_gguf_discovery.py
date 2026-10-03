@@ -67,7 +67,7 @@ def _gguf(path: Path, payload: bytes = b"GGUF") -> Path:
 @pytest.mark.parametrize(
     "result",
     [
-        None,  # pre-2025.10 unsloth / non-main process
+        None,
         "some/path",  # save_method="lora" returns a str
         ("path", True, False),  # hypothetical legacy tuple
         {},  # dict without the key
@@ -140,7 +140,7 @@ def test_gguf_beside_base_model_is_relocated(monkeypatch, tmp_path):
 
 
 def test_zero_files_is_a_failure_not_a_silent_success(monkeypatch, tmp_path):
-    """Old unsloth (no manifest) plus a lost output must not report success."""
+    ''
 
     class _Model:
         def save_pretrained_gguf(self, model_save_path, tokenizer, quantization_method):
@@ -322,7 +322,7 @@ def test_cleanup_failure_does_not_lose_reported_files(monkeypatch, tmp_path):
 
 
 def test_materialized_imatrix_is_not_exported_as_a_model(monkeypatch, tmp_path):
-    """unsloth copies a *.gguf_file imatrix next to the model as *.gguf; it is not an output."""
+    ''
 
     class _Model:
         def save_pretrained_gguf(

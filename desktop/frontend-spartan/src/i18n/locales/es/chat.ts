@@ -453,6 +453,14 @@ export const chat = {
     chunks: "Fragmentos",
   },
   workspace: {
+    contextLabel: "Carpeta de trabajo del chat",
+    searchFolders: "Buscar proyectos o carpetas…",
+    recentFolders: "Proyectos con carpeta",
+    noFolders: "No se encontraron carpetas",
+    loading: "Preparando carpeta…",
+    selected: "Seleccionado",
+    retryFolders: "Volver a cargar proyectos",
+    withoutFolder: "Trabajar sin carpeta",
     chipLabel: "Trabajar en una carpeta",
     connectTitle: "Conectar carpeta de trabajo",
     connectDescription:

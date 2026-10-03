@@ -1159,7 +1159,7 @@ class TestPerLayerInputAccounting(unittest.TestCase):
         self.assertGreaterEqual(delta, expected_quantizable_extra)
 
     def test_all_linear_lora_excludes_per_layer_input_modules(self):
-        # why: Unsloth's get_peft_regex requires a component tag (mlp/attn/...)
+
         # in module names; PLE names (per_layer_input_gate, per_layer_projection,
         # per_layer_model_projection) lack one, so all-linear does NOT attach
         # LoRA to them.

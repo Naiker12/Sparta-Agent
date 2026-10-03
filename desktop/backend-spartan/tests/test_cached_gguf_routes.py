@@ -3324,11 +3324,7 @@ def test_cached_repo_task_gates_an_image_pipeline_on_the_load_path_trust_rule(tm
 
 
 def test_cached_repo_task_never_offers_an_sd_cpp_companion_repo_as_a_model(tmp_path):
-    """The single-file VAE / text-encoder repos hold no denoiser, so none of them is a pick.
-
-    Their unsloth mirrors clear the trust gate the old third-party ids never did, and the ids
-    resolve to a family, so without the companion check each would list an unloadable Images row.
-    """
+    'The single-file VAE / text-encoder repos hold no denoiser, so none of them is a pick.\n\n    resolve to a family, so without the companion check each would list an unloadable Images row.\n    '
     from core.inference.diffusion_families import sd_cpp_companion_only_repo_ids
 
     for repo_id in (
@@ -3385,10 +3381,7 @@ def test_a_companion_mirror_is_listed_but_flagged_so_no_picker_offers_it(monkeyp
 
 
 def test_the_companion_set_never_hides_a_repo_that_is_a_real_chat_model(tmp_path):
-    """sd.cpp borrows unsloth/Qwen2.5-VL-7B-Instruct-GGUF as a text encoder, but it is a genuine
-    chat model. It is in the companion set, so the only thing keeping it safe is that the listing
-    this set feeds never sees a GGUF-only repo. Pin that, or a future caller takes a downloaded
-    model away from the user."""
+    '    chat model. It is in the companion set, so the only thing keeping it safe is that the listing\n    this set feeds never sees a GGUF-only repo. Pin that, or a future caller takes a downloaded\n    model away from the user.'
     from core.inference.diffusion_families import sd_cpp_companion_only_repo_ids
 
     assert "unsloth/qwen2.5-vl-7b-instruct-gguf" in sd_cpp_companion_only_repo_ids()
@@ -3572,7 +3565,7 @@ def test_pipeline_class_guard_is_silent_when_a_lazy_submodule_cannot_import(monk
 
 
 def test_cached_pipeline_needs_a_detectable_image_family(monkeypatch):
-    # A top-level model_index.json only proves the repo is a diffusers pipeline: an unsloth-hosted pipeline of a class this backend
+
     # cannot assemble cleared the trust gate, was advertised, then failed validate_load_request. Both gates now, like the video branch.
     monkeypatch.setattr(models_route, "_repo_has_pipeline_index", lambda info: True)
 

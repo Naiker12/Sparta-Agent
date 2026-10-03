@@ -1,11 +1,5 @@
 
-"""Empty ``role="tool"`` content must be accepted on the OpenAI-compat surface.
-
-Agentic clients send ``content: ""`` when a command produced no output;
-OpenAI and llama-server both accept it. Unsloth used to 400, which standard
-clients treat as non-retryable and kill the session. The validator must
-normalize empty/missing tool content to ``""`` instead of raising.
-"""
+'Empty ``role="tool"`` content must be accepted on the OpenAI-compat surface.\n\nAgentic clients send ``content: ""`` when a command produced no output;\nclients treat as non-retryable and kill the session. The validator must\nnormalize empty/missing tool content to ``""`` instead of raising.'
 
 from __future__ import annotations
 

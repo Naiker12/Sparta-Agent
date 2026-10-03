@@ -1,4 +1,3 @@
-# Model defaults for unsloth/embeddinggemma-300m
 # Based on EmbeddingGemma_(300M).py embedding notebook
 
 training:

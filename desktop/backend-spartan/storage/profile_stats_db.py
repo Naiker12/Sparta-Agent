@@ -142,7 +142,7 @@ def _streaks(days: set[date], today: date) -> dict[str, Any]:
 
 
 def _model_label(model_id: str) -> str:
-    """Last path segment of a repo id, e.g. ``unsloth/gpt-oss-20b`` -> ``gpt-oss-20b``."""
+    ''
     cleaned = model_id.strip().replace("\\", "/")
     tail = cleaned.rstrip("/").split("/")[-1]
     return tail or cleaned

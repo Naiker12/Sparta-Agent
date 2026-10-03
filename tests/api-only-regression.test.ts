@@ -35,6 +35,12 @@ describe("API-only product contract", () => {
     }
     expect(requirements).toContain("fastapi");
     expect(requirements).toContain("httpx");
+    // These are imported by API routes during `from main import app`; keeping
+    // them explicit prevents the packaged first-run installer from reporting
+    // success while the backend still cannot boot.
+    expect(requirements).toContain("numpy");
+    expect(requirements).toContain("pillow");
+    expect(requirements).toContain("filelock");
   });
 
   test("rejects local inference before any legacy execution path", () => {
@@ -73,6 +79,13 @@ describe("API-only product contract", () => {
 
     expect(response).toBeGreaterThan(-1);
     expect(guardedImport).toBeGreaterThan(response);
+  });
+
+  test("installer verifies the actual backend import, not only two packages", () => {
+    const manager = source("desktop/ia-sparta-app-shell/src/backend-manager.ts");
+
+    expect(manager).toContain('"-c", "import main; print(\'Backend verificado\')"');
+    expect(manager).not.toContain("import structlog, fastapi; print('Dependencias críticas verificadas')");
   });
 
   test("packaged-app validation derives the release version from package metadata", () => {
@@ -122,7 +135,7 @@ describe("API-only product contract", () => {
     const apiSelector = source(
       "desktop/frontend-spartan/src/features/chat/components/api-provider-model-selector.tsx",
     );
-    expect(apiSelector).toContain("Configurar proveedor API");
+    expect(apiSelector).toContain("Elegir proveedor");
     expect(apiSelector).not.toContain("En el dispositivo");
     expect(apiSelector).not.toContain("Recomendados");
   });

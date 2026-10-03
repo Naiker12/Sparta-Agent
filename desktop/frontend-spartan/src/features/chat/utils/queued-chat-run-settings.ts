@@ -63,7 +63,7 @@ export function snapshotQueuedChatRunSettings(
   for (const key of QUEUED_SETTING_KEYS) {
     Object.assign(snapshot, { [key]: state[key] });
   }
-  return snapshot;
+  return structuredClone(snapshot);
 }
 
 export function registerQueuedChatRunSettings(

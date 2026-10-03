@@ -333,7 +333,7 @@ def test_a_storage_failure_withholds_the_saved_connection(monkeypatch):
 
 
 def test_a_third_party_key_never_unlocks_a_saved_connection(monkeypatch):
-    """The pre-existing rule: someone using Unsloth as an API server brings a key."""
+    ''
     from auth.authentication import API_KEY_PREFIX
     from routes import inference as inf
 

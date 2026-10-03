@@ -28,7 +28,7 @@ const modelsForTask = (task: AudioTask) => {
 test("Transcribe offers only STT, with Qwen3-ASR above the fold", () => {
   const rows = modelsForTask("stt");
   assert.ok(rows.every((id) => taskFor(id) === "stt"));
-  // The regression: both unslothai models sat at 8 and 9 behind every TTS row.
+
   const qwen = rows.filter((id) => id.startsWith("unslothai/Qwen3-ASR"));
   assert.equal(qwen.length, 2);
   for (const id of qwen) assert.ok(rows.indexOf(id) < 3, `${id} buried`);

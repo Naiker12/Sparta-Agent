@@ -12,13 +12,13 @@ import { getInventoryVersion } from "../stores/inventory-events";
 // substring needles. Per-repo views are not filtered, so reinstall flows still
 // show downloaded files.
 const HIDDEN_NEEDLES = [
-  "bge-small-en-v1.5", // RAG embedder: unsloth/bge-small-en-v1.5[-GGUF]
+  "bge-small-en-v1.5",
   "ggml-org/models", // llama.cpp validation probe repo
   "stories260k.gguf", // probe filename (carries .gguf so it stays specific)
 ];
 const HIDDEN_STT_REPOS = new Set([
   // Transformers safetensors repos and their whisper.cpp GGUF companions
-  // (unslothai/whisper-*-GGUF): STT-only, never chat models. The Qwen3-ASR
+
   // GGUFs are here for the same reason: llama.cpp will load one as a chat
   // model, where it only answers with transcripts.
   "unsloth/whisper-tiny",

@@ -10,7 +10,7 @@ import {
 const META = "/hub/profile/logo/meta.svg";
 
 test("the Unsloth re-upload of Muse Glimmer shows the Meta mark", () => {
-  // The row the Model hub actually lists. Owner is unsloth, so the org rule
+
   // never fires and the repo name has to carry it.
   assert.equal(
     resolveOwnerProviderLogo("unsloth", "Muse-Glimmer-30B-GGUF")?.logoPath,

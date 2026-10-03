@@ -1,17 +1,5 @@
 
-"""Tests for PDF / document attachment translation on external providers.
-
-Unsloth adds a normalised `input_document` content part on
-ChatCompletionRequest so the frontend needn't know the per-provider
-attachment shape:
-
-- Anthropic: `{type:"document", source:{type:"base64"|"url", ...}}`
-- OpenAI Responses: `{type:"input_file", file_data|file_url, filename?}`
-
-Pins the translation shape on both paths for base64 data URIs and remote
-URLs (with optional filename), and confirms unknown / empty document
-parts are dropped without breaking the request.
-"""
+'Tests for PDF / document attachment translation on external providers.\n\nChatCompletionRequest so the frontend needn\'t know the per-provider\nattachment shape:\n\n- Anthropic: `{type:"document", source:{type:"base64"|"url", ...}}`\n- OpenAI Responses: `{type:"input_file", file_data|file_url, filename?}`\n\nPins the translation shape on both paths for base64 data URIs and remote\nURLs (with optional filename), and confirms unknown / empty document\nparts are dropped without breaking the request.'
 
 import asyncio
 import json

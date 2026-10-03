@@ -38,7 +38,7 @@ import re
 from pathlib import Path
 from typing import Any, Iterable, Optional
 
-# ── LoRA EMA ──────────────────────────────────────────────────────────────────
+
 
 # Warmup horizon for the EMA decay ramp: effective decay is min(decay, (1 + updates) / (WARMUP_OFFSET + updates)).
 # With the offset at 10, step 1 averages aggressively (~0.18) and the ramp reaches 0.99 after ~1000 updates.
@@ -199,7 +199,7 @@ def save_ema_adapter(ema: "LoRAEMA", transformer: Any, spec_save: Any, out_dir: 
     return str(ema_dir)
 
 
-# ── persistent conditioning cache ─────────────────────────────────────────────
+
 
 _CACHE_VERSION = "1"
 
@@ -330,7 +330,7 @@ class PersistentConditioningCache:
         self.resolution = int(resolution)
         self.root.mkdir(parents = True, exist_ok = True)
 
-    # -- keys --
+
     def latent_key(
         self,
         image_path: str,
@@ -353,7 +353,7 @@ class PersistentConditioningCache:
     def has(self, key: str) -> bool:
         return self.path_for(key).is_file()
 
-    # -- IO --
+
     def put(self, key: str, tensors: Iterable[Any]) -> None:
         """Store an ordered tuple of tensors (None entries allowed: their slot
         indices are recorded in the metadata so ``get`` restores them)."""
@@ -395,7 +395,7 @@ class PersistentConditioningCache:
             return None
 
 
-# ── aspect-ratio bucketing ────────────────────────────────────────────────────
+
 
 # Pixel-dimension divisor for bucket shapes: the DiT families divide by 8 in the VAE and 2 again in latent patching, and regional torch.compile prefers few distinct shapes, so buckets snap to 64 pixels.
 BUCKET_DIVISOR = 64

@@ -43,16 +43,7 @@ def _chat_template_kwargs() -> dict:
 
 
 def get_tokenizer_chat_template(tokenizer, model_name):
-    """Apply a chat template to the tokenizer, using Unsloth's
-    get_chat_template when the model class name is in the mapper.
-
-    Args:
-        tokenizer: HuggingFace tokenizer
-        model_name: Model class name (e.g., "Gemma3ForCausalLM")
-
-    Returns:
-        tokenizer with the chat template applied
-    """
+    '    get_chat_template when the model class name is in the mapper.\n\n    Args:\n        tokenizer: HuggingFace tokenizer\n        model_name: Model class name (e.g., "Gemma3ForCausalLM")\n\n    Returns:\n        tokenizer with the chat template applied\n    '
     try:
         from spartan_agent.chat_templates import get_chat_template
     except ImportError:
@@ -334,7 +325,7 @@ def apply_chat_template_to_dataset(
         if not is_standardized:
             warnings.append("Dataset may not be fully standardized")
 
-        # Apply Unsloth chat template if the model matches.
+
         if model_name:
             tokenizer = get_tokenizer_chat_template(tokenizer, model_name)
 

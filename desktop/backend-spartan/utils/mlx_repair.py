@@ -1,24 +1,5 @@
 
-"""Best-effort MLX self-heal for Apple Silicon.
-
-On macOS, Unsloth enables Train/Export only when the MLX training/export stack is
-usable (see utils.hardware.hardware.detect_hardware -> CHAT_ONLY). MLX is pulled
-only transitively via unsloth-zoo, and a resolver backtrack (mlx-vlm ->
-transformers>=5 vs the single-env transformers pin) can silently drop it, leaving
-Train/Export greyed out after a reinstall/update. This reinstalls mlx by name on
-a background thread, then re-detects so the gate re-opens without a manual
-`unsloth studio update`.
-
-The install mirrors the main Apple Silicon installer (install_python_stack.py):
-it points UV_OVERRIDE at overrides-darwin-arm64.txt so the resolver keeps the
-Unsloth transformers pin AND installs a current mlx-vlm, and it requires the same
-minimum versions unsloth-zoo declares so a backtracked old mlx-vlm (which still
-imports but breaks VLM Train/Export) is never accepted as healthy.
-
-Mirrors the runtime backend self-heal already used for tilelang
-(core.training.worker._ensure_tilelang_backend_unconditional): default-on,
-best-effort, opt out with UNSLOTH_DISABLE_MLX_AUTOREPAIR=1.
-"""
+'Best-effort MLX self-heal for Apple Silicon.\n\nusable (see utils.hardware.hardware.detect_hardware -> CHAT_ONLY). MLX is pulled\ntransformers>=5 vs the single-env transformers pin) can silently drop it, leaving\nTrain/Export greyed out after a reinstall/update. This reinstalls mlx by name on\na background thread, then re-detects so the gate re-opens without a manual\n\nThe install mirrors the main Apple Silicon installer (install_python_stack.py):\nit points UV_OVERRIDE at overrides-darwin-arm64.txt so the resolver keeps the\nimports but breaks VLM Train/Export) is never accepted as healthy.\n\nMirrors the runtime backend self-heal already used for tilelang\n(core.training.worker._ensure_tilelang_backend_unconditional): default-on,'
 
 from __future__ import annotations
 
@@ -45,7 +26,7 @@ DISABLE_ENV_VAR = "UNSLOTH_DISABLE_MLX_AUTOREPAIR"
 # stable leading clause only: uv appends the offending path and a "run `uv venv`"
 # hint, and has reworded the tail across releases.
 _UNRESOLVED_PYTHON_MARKER = "No virtual environment or system Python installation found"
-# Minimum versions unsloth-zoo requires on Apple Silicon (its pyproject darwin
+
 # deps). mlx-vlm especially must be >=0.4.4: an older one still imports but
 # breaks VLM Train/Export, so installing it would wrongly clear chat-only.
 _MLX_MIN_VERSIONS = {"mlx": "0.22.0", "mlx-lm": "0.22.0", "mlx-vlm": "0.4.4"}
@@ -61,11 +42,11 @@ _MLX_REINSTALL_ARGS = tuple(
 # reject anything. mlx/mlx-metal ship wheels only (no sdist on PyPI) and
 # mlx-lm/mlx-vlm publish py3-none-any wheels, so requiring wheels does not break a
 # healthy self-heal; if a wheel is genuinely unavailable the install fails and
-# Unsloth stays chat-only (the existing safe fallback) until `unsloth studio update`.
+
 _ONLY_BINARY_ARG = "--only-binary=:all:"
 # Allowlist of environment variables forwarded to the install subprocess. The
 # self-heal runs without confirmation on the default startup path, so it must not
-# hand resolver/build code the full Unsloth environment. Everything outside this
+
 # set is dropped, which excludes three dangerous classes by construction:
 #   * secrets (HF_TOKEN, AWS_*, WANDB_API_KEY, ...) that a malicious wheel/sdist
 #     build hook would otherwise read straight out of os.environ;
@@ -222,14 +203,7 @@ def _mlx_versions_satisfy_minimums() -> bool:
 
 
 def mlx_stack_blockers() -> list[str]:
-    """Why this host cannot train with MLX, in the order the gate checks it.
-
-    The gate itself is all-or-nothing, and "run `unsloth studio update`" is no help
-    to someone who has just run it: a resolver backtrack leaves a stack that is
-    present but unusable, and nothing said which package or which import was the
-    problem. Same order as ``mlx_stack_available`` so the two cannot disagree.
-    Empty means the stack is usable.
-    """
+    'Why this host cannot train with MLX, in the order the gate checks it.\n\n    to someone who has just run it: a resolver backtrack leaves a stack that is\n    present but unusable, and nothing said which package or which import was the\n    problem. Same order as ``mlx_stack_available`` so the two cannot disagree.\n    Empty means the stack is usable.\n    '
     versions = _mlx_version_blockers()
     if versions:
         return [_bounded(line, _BLOCKER_LINE_CAP) for line in versions]
@@ -238,10 +212,7 @@ def mlx_stack_blockers() -> list[str]:
 
 
 def mlx_stack_available() -> bool:
-    """`import mlx.core` works AND mlx/mlx-lm/mlx-vlm meet unsloth-zoo's minimums.
-
-    Check distribution versions before imports so a too-old but importable MLX
-    module is not loaded into this process before repair can replace it."""
+    '\n    Check distribution versions before imports so a too-old but importable MLX\n    module is not loaded into this process before repair can replace it.'
     if not _mlx_versions_satisfy_minimums():
         return False
     return _mlx_runtime_imports_available()
@@ -340,35 +311,7 @@ def _uv_install_cmd(*args: str) -> list[str] | None:
 
 
 def _mlx_install_env() -> dict[str, str]:
-    """Minimal, allowlisted environment for the unattended mlx install.
-
-    The self-heal runs without confirmation on the default startup path, so it
-    forwards only the variables uv genuinely needs (see _MLX_ENV_ALLOWLIST) instead
-    of the full Unsloth environment: secrets and package-source redirects in
-    os.environ are dropped so a malicious resolver-selected artifact cannot read
-    Unsloth secrets or be steered to a hostile index.
-
-    Mirror the main installer (install_python_stack.py) by pointing UV_OVERRIDE at
-    overrides-darwin-arm64.txt, which keeps mlx-vlm/mlx-lm on the Studio
-    Transformers floor. Without it, uv keeps the Unsloth transformers pin only
-    by silently backtracking mlx-vlm to an old, unsupported version (uv honours
-    UV_OVERRIDE; plain pip ignores it, so the transformers constraint below is the
-    pip-path safety net). We set UV_OVERRIDE ourselves, so a poisoned one in the
-    process env is ignored.
-
-    VIRTUAL_ENV is set from sys.prefix rather than forwarded from os.environ, for
-    the same reason: it names the environment uv must install into, and taking it
-    from the process env would let a caller redirect the install elsewhere.
-
-    It does NOT rescue a venv whose bin/python has stopped resolving. An explicit
-    --python outranks VIRTUAL_ENV, so uv reports the same unresolved-interpreter
-    error either way; this once claimed otherwise, and named an interpreter-probe
-    helper that was deleted with it. Nothing passable to `uv pip install` recovers
-    that state -- --target and --prefix do exit 0, but resolve against whatever
-    ambient interpreter uv finds and write a wrong-ABI or off-sys.path install,
-    which is worse than staying chat-only because it defeats the
-    mlx_stack_available() gate. That case is detected and reported instead: see
-    the _UNRESOLVED_PYTHON_MARKER branch in attempt_mlx_repair."""
+    'Minimal, allowlisted environment for the unattended mlx install.\n\n    The self-heal runs without confirmation on the default startup path, so it\n    forwards only the variables uv genuinely needs (see _MLX_ENV_ALLOWLIST) instead\n    os.environ are dropped so a malicious resolver-selected artifact cannot read\n\n    Mirror the main installer (install_python_stack.py) by pointing UV_OVERRIDE at\n    overrides-darwin-arm64.txt, which keeps mlx-vlm/mlx-lm on the Studio\n    by silently backtracking mlx-vlm to an old, unsupported version (uv honours\n    UV_OVERRIDE; plain pip ignores it, so the transformers constraint below is the\n    pip-path safety net). We set UV_OVERRIDE ourselves, so a poisoned one in the\n    process env is ignored.\n\n    VIRTUAL_ENV is set from sys.prefix rather than forwarded from os.environ, for\n    the same reason: it names the environment uv must install into, and taking it\n    from the process env would let a caller redirect the install elsewhere.\n\n    It does NOT rescue a venv whose bin/python has stopped resolving. An explicit\n    --python outranks VIRTUAL_ENV, so uv reports the same unresolved-interpreter\n    error either way; this once claimed otherwise, and named an interpreter-probe\n    helper that was deleted with it. Nothing passable to `uv pip install` recovers\n    that state -- --target and --prefix do exit 0, but resolve against whatever\n    ambient interpreter uv finds and write a wrong-ABI or off-sys.path install,\n    which is worse than staying chat-only because it defeats the\n    mlx_stack_available() gate. That case is detected and reported instead: see\n    the _UNRESOLVED_PYTHON_MARKER branch in attempt_mlx_repair.'
     env = {key: os.environ[key] for key in _MLX_ENV_ALLOWLIST if key in os.environ}
     if (venv_root := _venv_root()) is not None:
         env["VIRTUAL_ENV"] = venv_root
@@ -385,19 +328,7 @@ def _mlx_install_env() -> dict[str, str]:
 
 
 def _transformers_constraint_args() -> tuple[list[str], str | None]:
-    """Pin transformers to the running version for the mlx install.
-
-    The install must never upgrade transformers underneath a running Unsloth
-    (the single-env install pins a compatible default). With UV_OVERRIDE set this
-    is belt-and-suspenders; on the plain-pip path (no UV_OVERRIDE support) it is
-    the actual guard -- the resolver either finds an mlx build compatible with the
-    pin or fails, leaving us chat-only rather than breaking Unsloth. Returns
-    (pip args, temp file path to clean up).
-
-    Read the version from installed metadata rather than `import transformers`:
-    transformers can have valid metadata yet fail to import (e.g. an incompatible
-    huggingface_hub), and in that case we still want to pin it so the mlx install
-    cannot quietly upgrade it out from under Unsloth."""
+    'Pin transformers to the running version for the mlx install.\n\n    (the single-env install pins a compatible default). With UV_OVERRIDE set this\n    is belt-and-suspenders; on the plain-pip path (no UV_OVERRIDE support) it is\n    the actual guard -- the resolver either finds an mlx build compatible with the\n    (pip args, temp file path to clean up).\n\n    Read the version from installed metadata rather than `import transformers`:\n    transformers can have valid metadata yet fail to import (e.g. an incompatible\n    huggingface_hub), and in that case we still want to pin it so the mlx install'
     from importlib.metadata import PackageNotFoundError, version as _dist_version
 
     try:
@@ -413,14 +344,11 @@ def _transformers_constraint_args() -> tuple[list[str], str | None]:
 
 
 def attempt_mlx_repair(*, timeout: int = _REPAIR_TIMEOUT_S) -> bool:
-    """Install a usable mlx/mlx-lm/mlx-vlm stack by name into the running venv.
-    Best-effort; returns True iff the resulting stack meets unsloth-zoo's minimums
-    (so a backtracked old mlx-vlm is rejected, not accepted). transformers is held
-    at its pinned version so the install can never upgrade it underneath Unsloth."""
+    'Install a usable mlx/mlx-lm/mlx-vlm stack by name into the running venv.\n    (so a backtracked old mlx-vlm is rejected, not accepted). transformers is held'
     global _environment_mutated
     # Prepare the constraint inside the try: this runs on a daemon thread, so an
     # exception here (e.g. tempfile.mkstemp failing on a full disk or bad TMPDIR)
-    # must leave Unsloth chat-only, not crash the background self-heal thread.
+
     constraint_path = None
     try:
         constraint_args, constraint_path = _transformers_constraint_args()
@@ -474,7 +402,7 @@ def attempt_mlx_repair(*, timeout: int = _REPAIR_TIMEOUT_S) -> bool:
             # VIRTUAL_ENV all report the same error against an interpreter uv cannot
             # resolve. Only rebuilding the environment fixes it, so name the command
             # that does. uv's own text says to run `uv venv`, which would build an
-            # environment Unsloth does not manage.
+
             #
             # uv gave up before resolving an interpreter, so it installed nothing and the
             # stack is exactly as detection last measured it. Take the mark back: a
@@ -543,11 +471,7 @@ def _run_repair_and_redetect(epoch: Optional[int] = None) -> None:
 
 
 def start_mlx_autorepair_if_needed() -> bool:
-    """If this is an Apple Silicon host whose MLX stack is missing or too old,
-    reinstall it on a daemon thread (off the startup critical path) and re-detect
-    on success. Returns True iff a repair thread was started. No-op (returns False)
-    off Apple Silicon, when the stack is already adequate, when already attempted
-    this process, or when disabled via UNSLOTH_DISABLE_MLX_AUTOREPAIR=1."""
+    'If this is an Apple Silicon host whose MLX stack is missing or too old,\n    reinstall it on a daemon thread (off the startup critical path) and re-detect\n    on success. Returns True iff a repair thread was started. No-op (returns False)\n    off Apple Silicon, when the stack is already adequate, when already attempted'
     global _attempted, _repair_thread, _repair_started_at
     if os.environ.get(DISABLE_ENV_VAR) == "1":
         return False

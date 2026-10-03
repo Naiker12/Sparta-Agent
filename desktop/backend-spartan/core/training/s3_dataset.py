@@ -23,7 +23,7 @@ from typing import Callable, Optional
 
 logger = logging.getLogger(__name__)
 
-# Extensions the local-file loader (UnslothTrainer._loader_for_files) understands.
+
 SUPPORTED_EXTENSIONS = (".parquet", ".json", ".jsonl", ".csv")
 _JSON_EXTENSIONS = (".json", ".jsonl")
 _IGNORED_METADATA_FILENAMES = {

@@ -7,9 +7,9 @@ export interface PillTab {
   icon?: ReactNode;
 }
 
-/** Segmented pill toggle reusing the Hub's .hub-tab-toggle styling (extended in
- * hub.css to also match .unsloth-model-selector-menu). Keeps tab roles for
- * keyboard nav. */
+
+
+
 export function PillTabs({
   tabs,
   value,

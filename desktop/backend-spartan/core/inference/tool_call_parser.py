@@ -163,7 +163,7 @@ RAG_SEARCH_CAP_NUDGE = (
 )
 
 
-# ── Plan-without-action re-prompt (shared by the GGUF and safetensors loops) ──
+
 # Verbs naming work this turn. Narrow on purpose: "install"/"add"/"open" belong to
 # advice for the user, which must not be re-prompted.
 _ACTION_VERB = (
@@ -2872,7 +2872,7 @@ def _gemma_parse_mapping(text: str, start: int):
     return out, i, False
 
 
-# ── DeepSeek R1 / V3 / V3.1 ─────────────────────────────────────────
+
 
 
 def _find_outside_json_strings(text: str, needle: str, start: int) -> int:
@@ -3043,7 +3043,7 @@ def _parse_deepseek_tool_calls(
     return out
 
 
-# ── GLM 4.5 / 4.6 / 4.7 ─────────────────────────────────────────────
+
 
 
 def _parse_glm_tool_calls(
@@ -3154,7 +3154,7 @@ def _parse_glm_tool_calls(
     return out
 
 
-# ── Kimi K2 / Moonshot ──────────────────────────────────────────────
+
 
 
 def _parse_kimi_tool_calls(

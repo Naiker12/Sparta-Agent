@@ -1,0 +1,1052 @@
+{
+  "baselineCommit": "0aee1e27",
+  "baselineFailed": 278,
+  "currentFailed": 261,
+  "newFailures": [],
+  "failures": [
+    {
+      "file": "tests\\action-menu-modal-layer.test.ts",
+      "name": "every message action menu is non-modal"
+    },
+    {
+      "file": "tests\\appearance-accent-vars.test.ts",
+      "name": "loaded-model stripes stay on the semantic success color"
+    },
+    {
+      "file": "tests\\artifact-frame-network-access.test.ts",
+      "name": "the grant is not offered for a scheme it cannot widen"
+    },
+    {
+      "file": "tests\\audio-generation-stop.test.ts",
+      "name": "leaving the audio page aborts an in-flight transcription"
+    },
+    {
+      "file": "tests\\audio-generation-stop.test.ts",
+      "name": "a saved clip the refresh missed keeps its response audio mounted"
+    },
+    {
+      "file": "tests\\audio-mode-task-filter.test.ts",
+      "name": "Hub discovery follows the active audio mode"
+    },
+    {
+      "file": "tests\\audio-model-eject.test.ts",
+      "name": "Audio exposes the shared picker eject action only while idle"
+    },
+    {
+      "file": "tests\\audio-model-eject.test.ts",
+      "name": "a dictation model this page did not load survives a mode switch"
+    },
+    {
+      "file": "tests\\audio-model-eject.test.ts",
+      "name": "the unload request carries the claimed model to the backend"
+    },
+    {
+      "file": "tests\\audio-page-policy.test.ts",
+      "name": "routed picks wait in the URL until Audio is idle"
+    },
+    {
+      "file": "tests\\audio-page-policy.test.ts",
+      "name": "gallery refresh preserves fallback selection and pagination identity"
+    },
+    {
+      "file": "tests\\audio-page-policy.test.ts",
+      "name": "older STT status requests cannot overwrite newer residency"
+    },
+    {
+      "file": "tests\\audio-page-policy.test.ts",
+      "name": "older TTS status requests cannot overwrite newer residency"
+    },
+    {
+      "file": "tests\\audio-page-policy.test.ts",
+      "name": "leaving Audio cancels an owned TTS load without touching a pre-request prompt"
+    },
+    {
+      "file": "tests\\audio-page-policy.test.ts",
+      "name": "a superseded refresh still reports the clips its own fetch saw"
+    },
+    {
+      "file": "tests\\audio-page-policy.test.ts",
+      "name": "a failed transcribe release puts the page back in Transcribe"
+    },
+    {
+      "file": "tests\\audio-page-policy.test.ts",
+      "name": "generation is claimed before the transcribe release is awaited"
+    },
+    {
+      "file": "tests\\audio-picker-policy.test.ts",
+      "name": "a local Whisper checkpoint is not advertised as a routable ASR row"
+    },
+    {
+      "file": "tests\\audio-stt-download-fallback.test.ts",
+      "name": "cancelling the shared STT download never loads a partial checkpoint"
+    },
+    {
+      "file": "tests\\audio-tts-download-manager.test.ts",
+      "name": "cached and local TTS picks keep the direct load path and supersede stale staging"
+    },
+    {
+      "file": "tests\\audio-tts-download-manager.test.ts",
+      "name": "switching to Transcribe invalidates a pending staged TTS auto-load"
+    },
+    {
+      "file": "tests\\auto-load-cpu-fallback-toast.test.ts",
+      "name": "the auto-load toast is driven by that verdict, not by its own copy of it"
+    },
+    {
+      "file": "tests\\auto-load-cpu-fallback-toast.test.ts",
+      "name": "every auto-load path forwards the load response's fallback reason"
+    },
+    {
+      "file": "tests\\chat-adapter-scan-cost.test.ts",
+      "name": "the adapter strips the trailing fragment through the bounded scan"
+    },
+    {
+      "file": "tests\\chat-adapter-scan-cost.test.ts",
+      "name": "the reply only grows through the one call that keeps the trackers in step"
+    },
+    {
+      "file": "tests\\chat-adapter-scan-cost.test.ts",
+      "name": "the arrival loop touches the reply only in ways that cannot flatten it"
+    },
+    {
+      "file": "tests\\chat-adapter-scan-cost.test.ts",
+      "name": "nothing on the arrival path is handed the accumulated reply"
+    },
+    {
+      "file": "tests\\chat-adapter-scan-cost.test.ts",
+      "name": "the trailing strip runs on the finished reply, not on every arrival"
+    },
+    {
+      "file": "tests\\chat-local-model-options.test.ts",
+      "name": "tests\\chat-local-model-options.test.ts"
+    },
+    {
+      "file": "tests\\chat-model-residency.test.ts",
+      "name": "the selector's tick asks the caller, and defaults to the old rule"
+    },
+    {
+      "file": "tests\\chat-model-residency.test.ts",
+      "name": "the hub cards ask residency before saying Loaded"
+    },
+    {
+      "file": "tests\\chat-model-residency.test.ts",
+      "name": "another runtime loading re-reads the chat status"
+    },
+    {
+      "file": "tests\\chat-model-residency.test.ts",
+      "name": "an eviction drops the pick, not just the loaded marks"
+    },
+    {
+      "file": "tests\\chat-only-route-guard.test.ts",
+      "name": "a measured chat-only host reaches /video and its own explanation"
+    },
+    {
+      "file": "tests\\chat-only-route-guard.test.ts",
+      "name": "an unmeasured verdict still lets both pages wait it out"
+    },
+    {
+      "file": "tests\\chat-only-route-guard.test.ts",
+      "name": "the pages that self-gate are unaffected, and everything else still redirects"
+    },
+    {
+      "file": "tests\\chat-remembers-its-model.test.ts",
+      "name": "tests\\chat-remembers-its-model.test.ts"
+    },
+    {
+      "file": "tests\\chat-status-refresh-sequencing.test.ts",
+      "name": "a superseded refresh writes nothing back to the store"
+    },
+    {
+      "file": "tests\\chat-status-refresh-sequencing.test.ts",
+      "name": "a superseded refresh does not report its failure either"
+    },
+    {
+      "file": "tests\\chat-stream-publish-gate.test.ts",
+      "name": "the gate paces the publish, not the bookkeeping before it"
+    },
+    {
+      "file": "tests\\chat-stream-publish-gate.test.ts",
+      "name": "no gate timestamp is threaded through the reasoning tracker"
+    },
+    {
+      "file": "tests\\chat-stream-publish-gate.test.ts",
+      "name": "the run creates one gate, not one per chunk"
+    },
+    {
+      "file": "tests\\chat-stream-publish-gate.test.ts",
+      "name": "the live tool-argument preview shares the gate"
+    },
+    {
+      "file": "tests\\chat-stream-publish-gate.test.ts",
+      "name": "the gate is fed a counter that only grows"
+    },
+    {
+      "file": "tests\\chat-stream-publish-gate.test.ts",
+      "name": "streaming tool-call argument deltas are paced like the text path"
+    },
+    {
+      "file": "tests\\chat-stream-publish-gate.test.ts",
+      "name": "the gate is fed every arrival, not only the tool-call ones"
+    },
+    {
+      "file": "tests\\chat-stream-publish-gate.test.ts",
+      "name": "the backend tool events publish ungated"
+    },
+    {
+      "file": "tests\\chat-stream-publish-gate.test.ts",
+      "name": "a state-bearing provider delta is never held by the gate"
+    },
+    {
+      "file": "tests\\chat-stream-publish-gate.test.ts",
+      "name": "a content-free replay delta still reaches the message"
+    },
+    {
+      "file": "tests\\chat-stream-publish-gate.test.ts",
+      "name": "a per-call thought signature forces a publish"
+    },
+    {
+      "file": "tests\\chat-stream-publish-gate.test.ts",
+      "name": "a chunk with nothing new to show does not spend a gate cycle"
+    },
+    {
+      "file": "tests\\code-plugin-incremental.test.ts",
+      "name": "a failed grammar load releases pending callbacks before retry"
+    },
+    {
+      "file": "tests\\code-plugin-incremental.test.ts",
+      "name": "a transiently failed grammar load is retried under the same cache key"
+    },
+    {
+      "file": "tests\\code-plugin-remount.test.ts",
+      "name": "the chat renderer builds its code plugin once, outside the component"
+    },
+    {
+      "file": "tests\\composer-keystroke-subscription-budget.test.ts",
+      "name": "the continue bar subscribes once on a message that is not the newest"
+    },
+    {
+      "file": "tests\\composer-keystroke-subscription-budget.test.ts",
+      "name": "the newest message still gets the whole continue bar"
+    },
+    {
+      "file": "tests\\connections-empty-opens-form.test.ts",
+      "name": "an empty connection list opens the add-connection form"
+    },
+    {
+      "file": "tests\\connections-empty-opens-form.test.ts",
+      "name": "the form's back arrow still returns to the list"
+    },
+    {
+      "file": "tests\\context-window-visible.test.ts",
+      "name": "the header renders the bar on the window alone, with usage optional"
+    },
+    {
+      "file": "tests\\dataset-data-recipes-navigation.test.ts",
+      "name": "tests\\dataset-data-recipes-navigation.test.ts"
+    },
+    {
+      "file": "tests\\delete-chat-files-preference.test.ts",
+      "name": "every chat delete path honours the preference"
+    },
+    {
+      "file": "tests\\delete-chat-files-preference.test.ts",
+      "name": "every confirmation discloses the file deletion and can undo it"
+    },
+    {
+      "file": "tests\\delete-chat-files-preference.test.ts",
+      "name": "the confirmed delete follows the switch, not the preference"
+    },
+    {
+      "file": "tests\\delete-chat-files-preference.test.ts",
+      "name": "the clear-all chain carries deleteFiles to the request"
+    },
+    {
+      "file": "tests\\desktop-closing-overlay.test.ts",
+      "name": "the backend hook routes both quit events into the store"
+    },
+    {
+      "file": "tests\\desktop-closing-overlay.test.ts",
+      "name": "a quit with no window on screen raises no overlay"
+    },
+    {
+      "file": "tests\\desktop-closing-overlay.test.ts",
+      "name": "the overlay names the wait it is covering"
+    },
+    {
+      "file": "tests\\desktop-closing-overlay.test.ts",
+      "name": "both sides agree on the event names"
+    },
+    {
+      "file": "tests\\desktop-stop-intent.test.ts",
+      "name": "a second stop cannot run while the first is in flight"
+    },
+    {
+      "file": "tests\\electron-titlebar-divider.test.ts",
+      "name": "Electron titlebar overlay has a visible content divider"
+    },
+    {
+      "file": "tests\\export-gguf-token-fallback.test.ts",
+      "name": "tests\\export-gguf-token-fallback.test.ts"
+    },
+    {
+      "file": "tests\\export-progress-percent.test.ts",
+      "name": "tests\\export-progress-percent.test.ts"
+    },
+    {
+      "file": "tests\\external-model-selection-label.test.ts",
+      "name": "a manual model ID the user deleted is not blamed on the provider"
+    },
+    {
+      "file": "tests\\external-model-selection-label.test.ts",
+      "name": "no connection that takes manual model IDs reports a withdrawal"
+    },
+    {
+      "file": "tests\\external-model-selection-label.test.ts",
+      "name": "the chat page feeds the picker the connections behind the options"
+    },
+    {
+      "file": "tests\\external-model-selection-label.test.ts",
+      "name": "the dropped-model strings are translated everywhere"
+    },
+    {
+      "file": "tests\\fork-count-batching.test.ts",
+      "name": "the badge no longer owns a listener or a per-message request"
+    },
+    {
+      "file": "tests\\gguf-variant-timeout-regression.test.ts",
+      "name": "a variants API timeout becomes an error instead of leaving the spinner active"
+    },
+    {
+      "file": "tests\\hardware-verdict-recovery.test.ts",
+      "name": "the recovery poll runs while the verdict is unknown, on every platform"
+    },
+    {
+      "file": "tests\\hosted-image-tool-with-studio-tools.test.ts",
+      "name": "the Studio-tools branch still asks for the hosted tools Studio cannot run"
+    },
+    {
+      "file": "tests\\hosted-image-tool-with-studio-tools.test.ts",
+      "name": "it does not ask the provider for the tools Studio is running locally"
+    },
+    {
+      "file": "tests\\hub-recovery-paths.test.ts",
+      "name": "clients with their own request keep their own reachability"
+    },
+    {
+      "file": "tests\\hub-recovery-paths.test.ts",
+      "name": "the panel still reads the classified cause, not that boolean"
+    },
+    {
+      "file": "tests\\hub-recovery-paths.test.ts",
+      "name": "pausing dataset fetches leaves the rendered rows alone"
+    },
+    {
+      "file": "tests\\image-generation-defaults.test.ts",
+      "name": "tests\\image-generation-defaults.test.ts"
+    },
+    {
+      "file": "tests\\image-generation-stop.test.ts",
+      "name": "tests\\image-generation-stop.test.ts"
+    },
+    {
+      "file": "tests\\keyboard-shortcuts.test.ts",
+      "name": "every locale overlay carries the shortcut strings"
+    },
+    {
+      "file": "tests\\keyboard-shortcuts.test.ts",
+      "name": "the sidebar hints render the bound chord, not the shipped default"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "initialization waits for the saved locale catalog before committing it"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "concurrent requests share one catalog load"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "concurrent language loads keep the latest selection"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "a selection is shown as pending and persisted only after loading"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "a failed selection keeps the active and persisted language"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "cancelling a pending selection prevents a late commit"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "a browser language change cannot supersede a pending explicit choice"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "a catalog timeout preserves the preference and finishes later"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "a late initial catalog cannot replace a newer language selection"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "a failed initial catalog falls back to English"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "a synchronous initial catalog failure preserves the preference"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "hydration adopts a preference whose catalog failed, rendering English"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "a synchronous loader throw leaves an in-flight request pending"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "a cross-tab language change is adopted even when its catalog fails"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "the language menu shows the language in effect after a catalog failure"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "accepting the fallback after a catalog failure is a real choice"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "the language menu shows the preference once it is the one in effect"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "the language menu shows a pending choice while its catalog loads"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "auto detection stays retryable when its detected catalog fails"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "a refreshed auto whose new catalog fails is still retryable"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "a catalog that never settles does not hold the caller forever"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "a catalog that arrives after the timeout still commits"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "a pick that names no bound of its own is still bounded"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "a timed out catalog is evicted so the next pick asks for it again"
+    },
+    {
+      "file": "tests\\lazy-locale-loading.test.ts",
+      "name": "a timed out startup catalog is evicted so the first pick asks for it again"
+    },
+    {
+      "file": "tests\\linked-folders-lease-gate.test.ts",
+      "name": "tests\\linked-folders-lease-gate.test.ts"
+    },
+    {
+      "file": "tests\\llama-extra-args-diagnostics.test.ts",
+      "name": "a rollback restores the previous model with its arguments"
+    },
+    {
+      "file": "tests\\llama-extra-args-diagnostics.test.ts",
+      "name": "a hydrated list is judged even when the row cannot be"
+    },
+    {
+      "file": "tests\\llama-extra-args-panel-hydration.test.ts",
+      "name": "tests\\llama-extra-args-panel-hydration.test.ts"
+    },
+    {
+      "file": "tests\\llama-extra-args-status-hydration.test.ts",
+      "name": "the rollback still resends that baseline explicitly"
+    },
+    {
+      "file": "tests\\loaded-build-panel-rows.test.ts",
+      "name": "tests\\loaded-build-panel-rows.test.ts"
+    },
+    {
+      "file": "tests\\loaded-models-backcompat.test.ts",
+      "name": "tests\\loaded-models-backcompat.test.ts"
+    },
+    {
+      "file": "tests\\loaded-models-barrel-order.test.ts",
+      "name": "the cycle this order defends against is still present"
+    },
+    {
+      "file": "tests\\loaded-models-barrel-order.test.ts",
+      "name": "general-tab reads the keys at module scope, not inside a component"
+    },
+    {
+      "file": "tests\\loaded-models-dismiss.test.ts",
+      "name": "the dismissal key is cleared by Reset all local preferences"
+    },
+    {
+      "file": "tests\\loaded-models-drag-restore.test.ts",
+      "name": "the reclamp effect re-runs when the panel node appears"
+    },
+    {
+      "file": "tests\\loaded-models-drag-restore.test.ts",
+      "name": "only the pill consumes the sentinel, since only it has a click"
+    },
+    {
+      "file": "tests\\loaded-models-eject-unverified.test.ts",
+      "name": "an unreadable verification is its own outcome, not `ejected`"
+    },
+    {
+      "file": "tests\\loaded-models-eject-unverified.test.ts",
+      "name": "the STT re-read returns the sentinel rather than null on a failed read"
+    },
+    {
+      "file": "tests\\loaded-models-pending-reset.test.ts",
+      "name": "the hook drops pending loads once recording is turned off"
+    },
+    {
+      "file": "tests\\loaded-models-pending-reset.test.ts",
+      "name": "recording is gated on the preference, not on whether the card shows"
+    },
+    {
+      "file": "tests\\loaded-models-platform-matrix.test.ts",
+      "name": "tests\\loaded-models-platform-matrix.test.ts"
+    },
+    {
+      "file": "tests\\loaded-models-q8-precision-repro.test.ts",
+      "name": "tests\\loaded-models-q8-precision-repro.test.ts"
+    },
+    {
+      "file": "tests\\loaded-models-settled-retire.test.ts",
+      "name": "a read that failed outright is evidence about nothing"
+    },
+    {
+      "file": "tests\\loaded-models-settled-retire.test.ts",
+      "name": "a readable source is still retired, or the row would never go"
+    },
+    {
+      "file": "tests\\loaded-models-sources.test.ts",
+      "name": "tests\\loaded-models-sources.test.ts"
+    },
+    {
+      "file": "tests\\mac-titlebar-optical-alignment.test.ts",
+      "name": "mac chat and media headers share the lowered control row"
+    },
+    {
+      "file": "tests\\markdown-streaming-scheduling.test.ts",
+      "name": "token updates keep Streamdown's expensive configuration props stable"
+    },
+    {
+      "file": "tests\\media-eject-busy-state.test.ts",
+      "name": "tests\\media-eject-busy-state.test.ts"
+    },
+    {
+      "file": "tests\\media-generation-preset-claims.test.ts",
+      "name": "tests\\media-generation-preset-claims.test.ts"
+    },
+    {
+      "file": "tests\\media-idle-unload-api-only.test.ts",
+      "name": "tests\\media-idle-unload-api-only.test.ts"
+    },
+    {
+      "file": "tests\\media-load-cancel.test.ts",
+      "name": "tests\\media-load-cancel.test.ts"
+    },
+    {
+      "file": "tests\\media-status-sequencing.test.ts",
+      "name": "the images page lets only the newest status read write"
+    },
+    {
+      "file": "tests\\media-status-sequencing.test.ts",
+      "name": "the images page claims its ticket before awaiting, not after"
+    },
+    {
+      "file": "tests\\media-status-sequencing.test.ts",
+      "name": "the video page lets only the newest status read write"
+    },
+    {
+      "file": "tests\\media-status-sequencing.test.ts",
+      "name": "the video page claims its ticket before awaiting, not after"
+    },
+    {
+      "file": "tests\\mirrored-settings-write-authority.test.ts",
+      "name": "selecting a Codex checkpoint keeps deep research"
+    },
+    {
+      "file": "tests\\mirrored-settings-write-authority.test.ts",
+      "name": "the clamp exempts Codex and an unresolved provider"
+    },
+    {
+      "file": "tests\\mirrored-settings-write-authority.test.ts",
+      "name": "hydration backfills only from an authoritative read"
+    },
+    {
+      "file": "tests\\mirrored-settings-write-authority.test.ts",
+      "name": "a missing Deep Research timeout keeps the finite default"
+    },
+    {
+      "file": "tests\\mmproj-fallback.test.ts",
+      "name": "attachment and send gates forward projector fallback state"
+    },
+    {
+      "file": "tests\\monitor-stack-inset.test.ts",
+      "name": "a width-only animation does not remeasure the stack"
+    },
+    {
+      "file": "tests\\padded-response.test.ts",
+      "name": "only the two padded routes require a payload"
+    },
+    {
+      "file": "tests\\per-model-params-hydration.test.ts",
+      "name": "every site that re-applies model defaults asks for the replay"
+    },
+    {
+      "file": "tests\\per-model-params-hydration.test.ts",
+      "name": "a remembered budget is capped by a non-GGUF load"
+    },
+    {
+      "file": "tests\\pr9057-video-simulation.test.ts",
+      "name": "tests\\pr9057-video-simulation.test.ts"
+    },
+    {
+      "file": "tests\\preserve-thinking-user-preference.test.ts",
+      "name": "every load and status writer resolves rather than taking the raw default"
+    },
+    {
+      "file": "tests\\project-attachment-target-adoption.test.ts",
+      "name": "the run keeps the project it started in"
+    },
+    {
+      "file": "tests\\project-attachment-target-adoption.test.ts",
+      "name": "the project composer's choice survives the swap to a thread"
+    },
+    {
+      "file": "tests\\project-source-reply-destination.test.ts",
+      "name": "the reply is saved to its own thread's project, not the selected one"
+    },
+    {
+      "file": "tests\\project-source-reply-destination.test.ts",
+      "name": "a thread with no project is refused rather than sent somewhere"
+    },
+    {
+      "file": "tests\\project-source-reply-destination.test.ts",
+      "name": "the thread id is resolved before the menu can close"
+    },
+    {
+      "file": "tests\\project-source-reply-destination.test.ts",
+      "name": "the item is only rendered while a project is selected"
+    },
+    {
+      "file": "tests\\project-source-reply-markdown.test.ts",
+      "name": "the reply action saves through this conversion"
+    },
+    {
+      "file": "tests\\provider-max-output-tokens-guards.test.ts",
+      "name": "every clamp site waits for a resolved provider"
+    },
+    {
+      "file": "tests\\provider-max-output-tokens.test.ts",
+      "name": "all max-output cap callers pass the selected connection override"
+    },
+    {
+      "file": "tests\\provider-max-output-tokens.test.ts",
+      "name": "the connection editor exposes a bounded optional cap and warning"
+    },
+    {
+      "file": "tests\\provider-max-output-tokens.test.ts",
+      "name": "preset application clamps live Max Tokens to the active external cap"
+    },
+    {
+      "file": "tests\\provider-max-output-tokens.test.ts",
+      "name": "lowering an active external cap immediately clamps live Max Tokens"
+    },
+    {
+      "file": "tests\\provisional-hardware-verdict.test.ts",
+      "name": "the latch is claimed after the wait, not during it"
+    },
+    {
+      "file": "tests\\provisional-hardware-verdict.test.ts",
+      "name": "a rejected token does not consume the once-per-load window"
+    },
+    {
+      "file": "tests\\provisional-hardware-verdict.test.ts",
+      "name": "the store exposes an unknown state, not just chat-only"
+    },
+    {
+      "file": "tests\\provisional-hardware-verdict.test.ts",
+      "name": "the sidebar gates Train and Video on a measured verdict"
+    },
+    {
+      "file": "tests\\provisional-hardware-verdict.test.ts",
+      "name": "the route guard waits out an unknown verdict on Train and Video"
+    },
+    {
+      "file": "tests\\provisional-hardware-verdict.test.ts",
+      "name": "the Video page gates on the backend's own capability answer"
+    },
+    {
+      "file": "tests\\provisional-hardware-verdict.test.ts",
+      "name": "the Video row is disabled exactly when the hint has something to say"
+    },
+    {
+      "file": "tests\\provisional-hardware-verdict.test.ts",
+      "name": "a failed hardware probe is retried, not left unloaded"
+    },
+    {
+      "file": "tests\\provisional-hardware-verdict.test.ts",
+      "name": "a cache filled between render and subscribe still reaches the component"
+    },
+    {
+      "file": "tests\\qwen-thinking-size-gate.test.ts",
+      "name": "all four copies of the gate pattern stay in sync"
+    },
+    {
+      "file": "tests\\rag-availability-marker.test.ts",
+      "name": "a queued prompt is not held forever by a probe that can never succeed"
+    },
+    {
+      "file": "tests\\rag-refresh-sequencing.test.ts",
+      "name": "a failure is only reported for the request still being awaited"
+    },
+    {
+      "file": "tests\\rag-refresh-sequencing.test.ts",
+      "name": "the composer reads indexing from the hooks, not the listed rows"
+    },
+    {
+      "file": "tests\\rag-refresh-sequencing.test.ts",
+      "name": "the poll and the initial list are wired that way"
+    },
+    {
+      "file": "tests\\rag-refresh-sequencing.test.ts",
+      "name": "work reported by another tab lapses"
+    },
+    {
+      "file": "tests\\rag-refresh-sequencing.test.ts",
+      "name": "a folder job watcher rides out a failed read"
+    },
+    {
+      "file": "tests\\rag-refresh-sequencing.test.ts",
+      "name": "work is counted per reporting tab, not per project"
+    },
+    {
+      "file": "tests\\rag-refresh-sequencing.test.ts",
+      "name": "a failed reconciling refresh is retried before the gate drops"
+    },
+    {
+      "file": "tests\\rag-refresh-sequencing.test.ts",
+      "name": "a project composer picks up a folder sync already running"
+    },
+    {
+      "file": "tests\\rag-refresh-sequencing.test.ts",
+      "name": "a background prompt queue checks the project it will send to"
+    },
+    {
+      "file": "tests\\rag-refresh-sequencing.test.ts",
+      "name": "a queue in a chat with no row still waits on its project"
+    },
+    {
+      "file": "tests\\rag-refresh-sequencing.test.ts",
+      "name": "unlinking a folder announces for the project it was for"
+    },
+    {
+      "file": "tests\\rag-refresh-sequencing.test.ts",
+      "name": "a failed row read holds a queued prompt instead of releasing it"
+    },
+    {
+      "file": "tests\\rag-refresh-sequencing.test.ts",
+      "name": "a knowledge-base queue does not wait on project sources"
+    },
+    {
+      "file": "tests\\rag-refresh-sequencing.test.ts",
+      "name": "a retry stops when the scope it started for is gone"
+    },
+    {
+      "file": "tests\\rag-refresh-sequencing.test.ts",
+      "name": "a queue with no row yet falls back to its own project, not the store"
+    },
+    {
+      "file": "tests\\rag-refresh-sequencing.test.ts",
+      "name": "the work timer is armed for the earliest sender deadline"
+    },
+    {
+      "file": "tests\\read-aloud-tts-model-row.test.ts",
+      "name": "tests\\read-aloud-tts-model-row.test.ts"
+    },
+    {
+      "file": "tests\\recommended-curated-row-metadata.test.ts",
+      "name": "row meta falls back to the curated seeds"
+    },
+    {
+      "file": "tests\\resident-config-match.test.ts",
+      "name": "selectModel weighs the config and the lease before confirming a reload"
+    },
+    {
+      "file": "tests\\resident-config-match.test.ts",
+      "name": "a preserved Vulkan CPU fallback is not a placement disagreement"
+    },
+    {
+      "file": "tests\\resident-config-match.test.ts",
+      "name": "an outstanding audio probe keeps the shortcut from skipping the load"
+    },
+    {
+      "file": "tests\\sandbox-reveal-path.test.ts",
+      "name": "a failed history read is reported, not mistaken for a chat that ran no tools"
+    },
+    {
+      "file": "tests\\sandbox-reveal-path.test.ts",
+      "name": "the legacy probe runs only for a chat now inside a project"
+    },
+    {
+      "file": "tests\\sandbox-reveal-path.test.ts",
+      "name": "a sandbox tool result is wrapped even when it carries no envelope"
+    },
+    {
+      "file": "tests\\settings-deep-open-requests.test.ts",
+      "name": "leaving Data drops a deep-open the panel never reached"
+    },
+    {
+      "file": "tests\\settings-deep-open-requests.test.ts",
+      "name": "an ordinary open does not inherit an abandoned deep-open"
+    },
+    {
+      "file": "tests\\settings-deep-open-requests.test.ts",
+      "name": "reopening on Data does not drop a deep-open still in flight"
+    },
+    {
+      "file": "tests\\settings-finetune-action-loading.test.ts",
+      "name": "both Data tab fine-tuning actions defer their workflow import"
+    },
+    {
+      "file": "tests\\settings-panel-prefs.test.ts",
+      "name": "a non-string model is refused rather than handed to the tab"
+    },
+    {
+      "file": "tests\\settings-panel-prefs.test.ts",
+      "name": "an unreadable record leaves the defaults"
+    },
+    {
+      "file": "tests\\settings-search.test.ts",
+      "name": "tests\\settings-search.test.ts"
+    },
+    {
+      "file": "tests\\settings-tab-panel-loading.test.ts",
+      "name": "the dialog loads every tab panel on demand"
+    },
+    {
+      "file": "tests\\settings-tab-panel-loading.test.ts",
+      "name": "the panels are prefetched once the dialog opens"
+    },
+    {
+      "file": "tests\\sidebar-action-rows-inert.test.ts",
+      "name": "desktop branding clears the titlebar actions"
+    },
+    {
+      "file": "tests\\sidebar-action-rows-inert.test.ts",
+      "name": "footer profile sits 11px above the sidebar edge"
+    },
+    {
+      "file": "tests\\sidebar-action-rows-inert.test.ts",
+      "name": "every sidebar row pill sits in one shared box"
+    },
+    {
+      "file": "tests\\sidebar-action-rows-inert.test.ts",
+      "name": "the sidebar list measures its scroll rail"
+    },
+    {
+      "file": "tests\\sidebar-more-menu-interaction.test.ts",
+      "name": "the sidebar More flyout previews on hover and pins on click"
+    },
+    {
+      "file": "tests\\sidebar-nav-backend-parity.test.ts",
+      "name": "the backend sidebar nav defaults match the frontend"
+    },
+    {
+      "file": "tests\\sidebar-nav-backend-parity.test.ts",
+      "name": "Train and Video are still the capability-gated rows"
+    },
+    {
+      "file": "tests\\sidebar-nav-migration.test.ts",
+      "name": "a customized version-5 sidebar keeps its order and only gains Audio"
+    },
+    {
+      "file": "tests\\sidebar-nav-migration.test.ts",
+      "name": "an install sitting on the version-6 default picks Video up"
+    },
+    {
+      "file": "tests\\sidebar-scroll-fade-deps.test.ts",
+      "name": "the bottom fade re-measures on every row-count input"
+    },
+    {
+      "file": "tests\\sidebar-selection-coverage.test.ts",
+      "name": "folder rows select too, and open their own bulk menu"
+    },
+    {
+      "file": "tests\\sidebar-selection-coverage.test.ts",
+      "name": "picking one kind of row drops the other"
+    },
+    {
+      "file": "tests\\sidebar-selection-coverage.test.ts",
+      "name": "a right-click drops the other kind even on an already-selected row"
+    },
+    {
+      "file": "tests\\sidebar-selection-coverage.test.ts",
+      "name": "dropping a selection clears its anchor too"
+    },
+    {
+      "file": "tests\\sidebar-selection-coverage.test.ts",
+      "name": "one failed archive does not abandon the rest of the batch"
+    },
+    {
+      "file": "tests\\sidebar-spinner-column.test.ts",
+      "name": "nav and Recents spinners land on one trailing column"
+    },
+    {
+      "file": "tests\\sidebar-spinner-column.test.ts",
+      "name": "a working Recents row clears the kebab on hover"
+    },
+    {
+      "file": "tests\\sidebar-spinner-column.test.ts",
+      "name": "the expanded row and the flyout both show a pending tooltip"
+    },
+    {
+      "file": "tests\\sidebar-spinner-column.test.ts",
+      "name": "capability rows carry a pending tooltip"
+    },
+    {
+      "file": "tests\\sidebar-unread-dot.test.ts",
+      "name": "the unread dot is grey"
+    },
+    {
+      "file": "tests\\sidebar-unread-dot.test.ts",
+      "name": "training run status dots are untouched"
+    },
+    {
+      "file": "tests\\spec-fallback-partial-offload-copy.test.ts",
+      "name": "tests\\spec-fallback-partial-offload-copy.test.ts"
+    },
+    {
+      "file": "tests\\startup-messages.test.ts",
+      "name": "startup messages follow backend phases without regressing"
+    },
+    {
+      "file": "tests\\tauri-details-toggle.test.ts",
+      "name": "Tauri detail toggles put a custom down chevron after their labels"
+    },
+    {
+      "file": "tests\\thread-delete-render-budget.test.ts",
+      "name": "the render prop is built once, at module scope"
+    },
+    {
+      "file": "tests\\thread-delete-render-budget.test.ts",
+      "name": "ThreadMessage sends each kind to the component that names it"
+    },
+    {
+      "file": "tests\\thread-delete-render-budget.test.ts",
+      "name": "research-reply ownership is selected as an answer, not as the message list"
+    },
+    {
+      "file": "tests\\thread-part-components-stable.test.ts",
+      "name": "the assistant part components are a single module-scope object"
+    },
+    {
+      "file": "tests\\thread-scoped-pairing-invariants.test.ts",
+      "name": "every run waits for the chat's settings, not just the composer"
+    },
+    {
+      "file": "tests\\thread-scoped-pairing-invariants.test.ts",
+      "name": "a replay entry survives a failed replay"
+    },
+    {
+      "file": "tests\\thread-scoped-pairing-invariants.test.ts",
+      "name": "forking settles a held edit, not just the debounce"
+    },
+    {
+      "file": "tests\\thread-scoped-pairing-invariants.test.ts",
+      "name": "the run's wait is bound to the run's own chat"
+    },
+    {
+      "file": "tests\\thread-scoped-pairing-invariants.test.ts",
+      "name": "a terminal event does not send a stale snapshot after the newest one"
+    },
+    {
+      "file": "tests\\thread-scoped-pairing-invariants.test.ts",
+      "name": "a read nobody is waiting for any more is cancelled"
+    },
+    {
+      "file": "tests\\thread-scoped-pairing-invariants.test.ts",
+      "name": "the ensure step in front of a settings write is bounded too"
+    },
+    {
+      "file": "tests\\thread-scoped-pairing-invariants.test.ts",
+      "name": "a tab-close snapshot is replayed even if global settings fail to hydrate"
+    },
+    {
+      "file": "tests\\thread-scoped-pairing-invariants.test.ts",
+      "name": "a fork stops when the chat's settings could not be saved"
+    },
+    {
+      "file": "tests\\thread-scoped-pairing-invariants.test.ts",
+      "name": "a run whose pairing never settled is refused, not run on another chat's settings"
+    },
+    {
+      "file": "tests\\thread-scoped-pairing-invariants.test.ts",
+      "name": "toggling Think applies its params even in a chat that pins sampling"
+    },
+    {
+      "file": "tests\\thread-scoped-pairing-invariants.test.ts",
+      "name": "the in-memory defaults follow the model defaults that were just written"
+    },
+    {
+      "file": "tests\\thread-scoped-pairing-invariants.test.ts",
+      "name": "the model being left does not remember the open chat's values"
+    },
+    {
+      "file": "tests\\trailing-placeholder-prefix-safety.test.ts",
+      "name": "the corpus is run through the placement the adapter actually ships"
+    },
+    {
+      "file": "tests\\update-banner-flex-priority.test.ts",
+      "name": "the two update cards do not drift apart"
+    },
+    {
+      "file": "tests\\verdict-poll-stall-guard.test.ts",
+      "name": "tests\\verdict-poll-stall-guard.test.ts"
+    },
+    {
+      "file": "tests\\video-capability-plumbing.test.ts",
+      "name": "every mapper that writes hasAudioInput writes hasVideoInput too"
+    },
+    {
+      "file": "tests\\video-download-plan-payload.test.ts",
+      "name": "tests\\video-download-plan-payload.test.ts"
+    },
+    {
+      "file": "tests\\video-gallery-clear-confirmation.test.ts",
+      "name": "tests\\video-gallery-clear-confirmation.test.ts"
+    },
+    {
+      "file": "tests\\video-generate-refusal-resync.test.ts",
+      "name": "tests\\video-generate-refusal-resync.test.ts"
+    },
+    {
+      "file": "tests\\video-h3-task-dialog.test.ts",
+      "name": "tests\\video-h3-task-dialog.test.ts"
+    },
+    {
+      "file": "tests\\video-keyframe-canvas.test.ts",
+      "name": "tests\\video-keyframe-canvas.test.ts"
+    }
+  ]
+}

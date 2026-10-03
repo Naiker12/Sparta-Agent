@@ -1,0 +1,56 @@
+---
+title: "Estructura y mantenimiento"
+description: "Dónde pertenece cada cambio y cómo mantener código, documentación y recursos sin duplicar responsabilidades."
+---
+
+## Mapa del repositorio
+
+```text
+Sparta-Agent/
+├── desktop/
+│   ├── frontend-spartan/     Interfaz React y características
+│   ├── ia-sparta-app-shell/  Ciclo de vida y ventana Electron
+│   ├── ia-sparta-ipc-bridge/ Preload y contratos IPC
+│   └── backend-spartan/     API Python y herramientas
+├── landing/                 Sitio público y documentación MDX
+├── docs/                    Documentación técnica y auditorías
+├── scripts/                 Desarrollo, build y validaciones
+└── public/                  Recursos compartidos del proyecto
+```
+
+## Decide dónde hacer el cambio
+
+| Necesidad | Lugar inicial | Mantén sincronizado |
+| --- | --- | --- |
+| Interfaz del chat | `frontend-spartan/src/features/chat` y `components/assistant-ui` | Estados, modelos y traducciones |
+| Navegación y tema | `components/sidebar`, `components/app-sidebar.tsx` y `src/index.css` | Preferencias y variantes de tamaño |
+| Operación nativa | Shell y puente IPC | Handler, preload y consumidor |
+| Ruta o herramienta | Backend Python | Validación, autenticación y respuesta |
+| Página de ayuda | `landing/src/components/docs/content/pages` | Navegación y enlaces |
+| Identidad visual del sitio | Componentes y estilos de landing | Logo, paleta y accesibilidad |
+
+## Contratos antes que copias
+
+Antes de crear un segundo componente, revisa si el existente puede recibir datos y callbacks como props. Una capa de presentación compartida debe evitar stores globales, credenciales o procesos nativos innecesarios.
+
+Los imports, los tipos y los nombres de carpetas no demuestran por sí solos que una función esté disponible en la edición distribuida. Comprueba sus consumidores y su comportamiento.
+
+## Mantén una guía
+
+1. Define una pregunta concreta del lector.
+2. Describe el resultado esperado y los requisitos.
+3. Incluye pasos, ejemplo y forma de comprobar el resultado.
+4. Añade recuperación para los fallos relevantes.
+5. Enlaza conceptos previos y el siguiente paso.
+6. Registra la página en `components/docs/lib/navigation.ts`.
+7. Ejecuta `docs:check` y el build de la landing.
+
+`catalog.generated.ts` se genera desde MDX: edita el contenido original y no el índice de búsqueda. Conserva las rutas existentes o proporciona un alias cuando cambies una guía.
+
+## Cuándo añadir un diagrama
+
+Utiliza diagramas para explicar responsabilidades, canales, estados o fronteras de datos. Si una lista o tabla responde mejor la pregunta, usa esa estructura. Los diagramas deben tener texto alternativo o una estructura legible, una leyenda clara y colores de la documentación.
+
+## Qué debe incluir una entrega
+
+Una descripción del cambio, evidencia de comprobación, límites conocidos y la documentación actualizada. No presentes un control de ejemplo, un contrato heredado o una propuesta como una capacidad verificada.

@@ -46,7 +46,7 @@ import {
 } from "../stores/theme-store";
 import { ColorPickerSwatch } from "./color-picker";
 
-/* ------------------------------- Colors -------------------------------- */
+
 
 // Seed values shown in the pickers while no override is set. Mirrors the
 // palette token values in index.css (foregrounds converted from oklch).
@@ -112,7 +112,7 @@ export function ActiveColorControl({
   );
 }
 
-/* ------------------------------ Typography ------------------------------ */
+
 
 /** Font each slot resolves to when no override is set (see index.css). */
 const DEFAULT_FONT_NAMES = {
@@ -122,7 +122,7 @@ const DEFAULT_FONT_NAMES = {
   code: "JetBrains Mono",
 } as const;
 
-/** Fonts Unsloth already ships (bundled @font-face / fontsource). */
+
 const BUNDLED_FONTS = [
   "Inter Variable",
   "Hellix",
@@ -132,7 +132,7 @@ const BUNDLED_FONTS = [
   "Fira Code",
 ] as const;
 
-/* ----------------------------- Device fonts ------------------------------ */
+
 
 // Fallback candidates probed by canvas measurement when the Local Font
 // Access API (Chromium-only) is unavailable or denied.
@@ -526,7 +526,7 @@ export function CodeFontRow() {
   );
 }
 
-/* ---------------------------- Imported fonts ---------------------------- */
+
 
 const FONT_MIME_BY_EXTENSION: Record<string, string> = {
   woff2: "font/woff2",
@@ -579,7 +579,7 @@ function familyCandidates(base: string): string[] {
   return candidates;
 }
 
-/* ----------------------------- Folder fonts ----------------------------- */
+
 
 // Font files found by a folder scan this session, shared by every dropdown.
 // File handles cannot be persisted from a plain directory input, so the list
@@ -883,7 +883,7 @@ export function FontSmoothingSwitch() {
   );
 }
 
-/* ------------------------------ Interface ------------------------------- */
+
 
 export function ContrastSliderRow() {
   const t = useT();
@@ -974,7 +974,7 @@ export function ReduceMotionSegmented() {
   );
 }
 
-/* ------------------------------- Reset all ------------------------------ */
+
 
 export function ResetCustomizationButton() {
   const t = useT();

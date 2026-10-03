@@ -449,7 +449,7 @@ class TestMissingSharedLibrary:
 
     def test_pinned_custom_binary_is_not_called_unsloths_runtime(self, monkeypatch):
         # LLAMA_SERVER_PATH pins an install update_flow.managed_install_root
-        # refuses to manage, so `unsloth studio update` cannot repair it.
+
         monkeypatch.setenv("LLAMA_SERVER_PATH", "/opt/mybuild/bin/llama-server")
         out = (
             "/opt/mybuild/bin/llama-server: error while loading shared libraries: "
@@ -1651,7 +1651,7 @@ class TestRejectedArguments:
         assert "memory" not in msg.lower()
 
     def test_a_flag_unsloth_set_itself_is_covered_by_the_same_message(self):
-        # Nothing reaching the classifier says whose flag it was, and Unsloth emits
+
         # its own conditionally on the capability probe, so a binary swapped under a
         # cached probe lands here too. The message has to serve that reader as well
         # as the one who mistyped something in the box.

@@ -1,8 +1,5 @@
 
-"""Data-center llama.cpp env tuning: FP32 accum (+ P2P / launch queues for
-multi-GPU) must apply only to datacenter NVIDIA parts, never consumer GeForce,
-AMD/ROCm, CPU or macOS. User values win; UNSLOTH_DISABLE_DC_TUNING=1 disables.
-"""
+'Data-center llama.cpp env tuning: FP32 accum (+ P2P / launch queues for\nmulti-GPU) must apply only to datacenter NVIDIA parts, never consumer GeForce,'
 
 from __future__ import annotations
 

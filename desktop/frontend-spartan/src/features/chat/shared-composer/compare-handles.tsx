@@ -18,9 +18,9 @@ import {
   useEffect,
 } from "react";
 
-// ---------------------------------------------------------------------------
+
 // Tipos públicos
-// ---------------------------------------------------------------------------
+
 
 export type CompareMessagePart =
   | { type: "text"; text: string }
@@ -41,15 +41,15 @@ export interface CompareHandle {
 
 export type CompareHandles = MutableRefObject<Record<string, CompareHandle>>;
 
-// ---------------------------------------------------------------------------
+
 // Contexto interno
-// ---------------------------------------------------------------------------
+
 
 export const CompareHandlesContext = createContext<CompareHandles | null>(null);
 
-// ---------------------------------------------------------------------------
+
 // CompareHandlesProvider
-// ---------------------------------------------------------------------------
+
 
 /**
  * Provee el mapa de handles a todos los componentes hijos en modo compare.
@@ -69,9 +69,9 @@ export function CompareHandlesProvider({
   );
 }
 
-// ---------------------------------------------------------------------------
+
 // RegisterCompareHandle
-// ---------------------------------------------------------------------------
+
 
 /**
  * Registra automáticamente el handle de un pane de comparación al montarse

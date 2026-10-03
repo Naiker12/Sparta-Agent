@@ -1,30 +1,5 @@
 
-"""Automatic transformers version switching.
-
-Some newer model architectures (Ministral-3, GLM-4.7-Flash, Qwen3-30B-A3B MoE,
-tiny_qwen3_moe) require transformers>=5.3.0, while Gemma 4 models require a
-newer 5.x sidecar.  Dense NemotronH models (e.g. NVIDIA-Nemotron-3-Nano-4B) use
-MLP layers that only transformers>=5.10 can parse natively, so they go on the
-5.10 sidecar too.  Everything else needs the default 4.57.x that ships with
-Unsloth.
-
-Two separate target directories are maintained:
-  - .venv_t5_530/  — transformers 5.3.0 (Ministral-3, GLM, Qwen3 MoE, etc.)
-  - .venv_t5_550/  — transformers 5.5.0 (Gemma 4)
-  - .venv_t5_510/  — transformers 5.10.2 (Gemma 4 Unified / 12B)
-
-When loading a LoRA adapter with a custom name, we resolve the base model from
-``adapter_config.json`` and check *that* against the model list.
-
-Strategy:
-  Training and inference run in subprocesses that activate the correct version
-  via sys.path (prepending the appropriate .venv_t5_*/ directory). See:
-    - core/training/worker.py
-    - core/inference/worker.py
-
-  For export (still in-process), ensure_transformers_version() does a lightweight
-  sys.path swap using the same directories pre-installed by setup.sh.
-"""
+'Automatic transformers version switching.\n\nSome newer model architectures (Ministral-3, GLM-4.7-Flash, Qwen3-30B-A3B MoE,\ntiny_qwen3_moe) require transformers>=5.3.0, while Gemma 4 models require a\nnewer 5.x sidecar.  Dense NemotronH models (e.g. NVIDIA-Nemotron-3-Nano-4B) use\nMLP layers that only transformers>=5.10 can parse natively, so they go on the\n5.10 sidecar too.  Everything else needs the default 4.57.x that ships with\n\nTwo separate target directories are maintained:\n  - .venv_t5_530/  — transformers 5.3.0 (Ministral-3, GLM, Qwen3 MoE, etc.)\n  - .venv_t5_550/  — transformers 5.5.0 (Gemma 4)\n  - .venv_t5_510/  — transformers 5.10.2 (Gemma 4 Unified / 12B)\n\nWhen loading a LoRA adapter with a custom name, we resolve the base model from\n``adapter_config.json`` and check *that* against the model list.\n\nStrategy:\n  Training and inference run in subprocesses that activate the correct version\n  via sys.path (prepending the appropriate .venv_t5_*/ directory). See:\n    - core/training/worker.py\n    - core/inference/worker.py\n\n  For export (still in-process), ensure_transformers_version() does a lightweight\n  sys.path swap using the same directories pre-installed by setup.sh.'
 
 import ast
 import importlib
@@ -255,7 +230,7 @@ def _safe_is_dir(p: Path) -> bool:
         return False
 
 
-# --- Detection ---
+
 
 # Lowercase substrings — any match in the lowered model name needs transformers 5.3.0.
 TRANSFORMERS_5_MODEL_SUBSTRINGS: tuple[str, ...] = (
@@ -537,15 +512,7 @@ def _is_same_path(value: str, local_path: Path) -> bool:
 
 
 def recorded_local_base(model_name) -> "tuple[str | None, bool]":
-    """``(base, needs_hub)`` for what a local checkpoint records on disk.
-
-    Mirrors every offline branch below, so a caller can tell whether a load is
-    filesystem-only before paying a network probe: an adapter's
-    ``base_model_name_or_path``, else a full checkpoint's ``model_name``/``_name_or_path``
-    (a self-reference is not a base), else the ``unsloth_<model>_<timestamp>`` dir-name
-    convention for an adapter carrying weights but no JSON. ``needs_hub`` is True when
-    only the ``get_base_model_from_lora`` branch could answer, or the read failed.
-    """
+    "``(base, needs_hub)`` for what a local checkpoint records on disk.\n\n    Mirrors every offline branch below, so a caller can tell whether a load is\n    filesystem-only before paying a network probe: an adapter's\n    ``base_model_name_or_path``, else a full checkpoint's ``model_name``/``_name_or_path``\n    convention for an adapter carrying weights but no JSON. ``needs_hub`` is True when\n    only the ``get_base_model_from_lora`` branch could answer, or the read failed.\n    "
     root = Path(model_name)
     try:
         adapter_cfg = _safe_is_file(root / "adapter_config.json")
@@ -580,7 +547,7 @@ def _resolve_base_model(model_name: str) -> str:
     warnings for plain HF model IDs). Returns *model_name* unchanged if not a
     LoRA adapter.
     """
-    # --- Fast local check ---
+
     local_path = Path(model_name)
     adapter_cfg_path = local_path / "adapter_config.json"
     if _safe_is_file(adapter_cfg_path):
@@ -598,13 +565,13 @@ def _resolve_base_model(model_name: str) -> str:
         except Exception as exc:
             logger.debug("Could not read %s: %s", adapter_cfg_path, exc)
 
-    # --- config.json fallback (LoRA and full fine-tune) ---
+
     config_json_path = local_path / "config.json"
     if _safe_is_file(config_json_path):
         try:
             with open(config_json_path, encoding = "utf-8-sig") as f:
                 cfg = json.load(f)
-            # Unsloth writes model_name, HF writes _name_or_path; skip a self-reference.
+
             for _key in ("model_name", "_name_or_path"):
                 base = cfg.get(_key)
                 if isinstance(base, str) and base and not _is_same_path(base, local_path):
@@ -638,10 +605,10 @@ def _resolve_base_model(model_name: str) -> str:
                 exc,
             )
 
-    # adapter_model-only LoRA: no config, so parse the unsloth_<model>_<timestamp> dir name.
+
     if local_path.name.startswith("unsloth_") and _has_adapter_weights(local_path):
         parts = local_path.name.split("_")
-        if len(parts) >= 2:  # unsloth_<model...>_<timestamp>
+        if len(parts) >= 2:
             base = "unsloth/" + "_".join(parts[1:-1])
             logger.info(
                 "Resolved adapter-only LoRA '%s' → base model '%s' (via directory name)",
@@ -772,7 +739,7 @@ def _check_tokenizer_config_needs_v5(model_name: str, hf_token: str | None = Non
     if cache_key in _tokenizer_class_cache:
         return _tokenizer_class_cache[cache_key]
 
-    # --- Check local tokenizer_config.json first ---
+
     local_path = Path(model_name)
     local_tc = local_path / "tokenizer_config.json"
     if _safe_is_file(local_tc):
@@ -800,7 +767,7 @@ def _check_tokenizer_config_needs_v5(model_name: str, hf_token: str | None = Non
     if _env_offline():
         return False
 
-    # --- Fall back to fetching from HuggingFace ---
+
     import urllib.request
 
     url = _hf_raw_url(model_name, "tokenizer_config.json")
@@ -1089,7 +1056,7 @@ def _cached_config_json(model_name: str, hf_token: str | None) -> dict | None:
     return _config_json_cache.get(_token_cache_key(model_name, hf_token))
 
 
-# --- Static tier from CONFIG_MAPPING_NAMES (AST only: no import/network/exec) ---
+
 # A model_type absent from an overlay's mapping can't load there. Parse each sidecar's
 # config map and pick the lowest tier that ships it. Only upgrades default, never lowers.
 _config_mapping_cache: dict[str, frozenset[str]] = {}
@@ -1410,7 +1377,7 @@ def _raise_tier_for_nested(cfg: dict | None, tier: str) -> str:
     return tier
 
 
-# --- AutoConfig probe: general tier resolution for ambiguous models ----------
+
 # When the cheap signals only say "needs some 5.x", parse config.json with each candidate
 # sidecar's built-in parser (lowest first) instead of guessing, e.g. dense NemotronH.
 _PROBE_TIER_ORDER = ("530", "550", "510")
@@ -1815,7 +1782,7 @@ def get_transformers_tier(
             )
             return "default"
 
-    # --- Fast substring checks (no I/O) ------------------------------------
+
     result = _tier_from_name(model_name)
     if result is not None:
         tier, match = result
@@ -1904,7 +1871,7 @@ def needs_transformers_5(model_name: str) -> bool:
     return get_transformers_tier(model_name, probe = False) != "default"
 
 
-# --- Version switching (in-process, used only by export) ---
+
 
 
 def _get_in_memory_version() -> str | None:
@@ -2347,8 +2314,8 @@ def _install_to_dir(pkg: str, target_dir: str) -> bool:
 
 
 # setup.sh / setup.ps1 write this beside a sidecar venv they created, and refuse to touch
-# an unmarked directory under a custom UNSLOTH_STUDIO_HOME. A runtime rebuild takes the
-# marker with the old directory, so it has to put one back, or the next `unsloth studio
+
+
 # update` aborts on a sidecar we just repaired (adoption needs a prebuilt-info file).
 _STUDIO_OWNED_MARKER = ".unsloth-studio-owned"
 
@@ -2407,7 +2374,7 @@ def _ensure_venv_t5_exists() -> bool:
     return _ensure_venv_t5_550_exists()
 
 
-# --- User-consented "latest transformers" sidecar (.venv_t5_latest) --------------------------
+
 # Provisioned via ensure_latest_transformers_venv() after the user confirms the upgrade popup
 # (utils/transformers_latest.py); pinned in a marker file so restarts revalidate and routing auto-picks it.
 
@@ -2670,8 +2637,7 @@ def end_sidecar_swap() -> None:
 
 
 def sidecar_swap_in_progress() -> bool:
-    """True while a .venv_t5_latest install or repair holds the reservation,
-    in this process or any other Unsloth process (lock file)."""
+    'True while a .venv_t5_latest install or repair holds the reservation,'
     return sidecar_swap_kind() is not None
 
 
@@ -2876,7 +2842,7 @@ def ensure_latest_transformers_venv(
     return _stage_and_swap_latest_venv(version, packages, before_swap = before_swap)
 
 
-# --- llm-compressor-main shadow (FP8/FP4 export of newer-transformers models) ---------------------
+
 # Exact, reproducible pins (bump deliberately in review); validated to FP8-quantize Qwen3.5 / Gemma-4 / Llama.
 _LLMC_MAIN_TRANSFORMERS = "5.10.2"
 _LLMC_MAIN_SHA = "973c9c539a84dd9efaf74e115ede5ca419704c18"
@@ -3015,11 +2981,7 @@ def _ensure_venv_llmcompressor_exists() -> bool:
 
 
 def llmcompressor_shadow_pythonpath() -> str | None:
-    """Provision (lazily) the llm-compressor-main shadow and return its sys.path entry, or None.
-
-    Returns None when the shadow is disabled (UNSLOTH_DISABLE_LLMCOMPRESSOR_MAIN), offline, or
-    provisioning failed - callers then fall back to the fail-fast path.
-    """
+    'Provision (lazily) the llm-compressor-main shadow and return its sys.path entry, or None.\n\n    provisioning failed - callers then fall back to the fail-fast path.\n    '
     if _llmcompressor_main_disabled():
         return None
     if _ensure_venv_llmcompressor_exists():
@@ -3124,7 +3086,7 @@ def ensure_transformers_version(model_name: str) -> None:
         in_memory,
     )
 
-    # --- Already correct? ---
+
     if in_memory is not None:
         if in_memory == target_version:
             logger.info(
@@ -3144,7 +3106,7 @@ def ensure_transformers_version(model_name: str) -> None:
             )
             return
 
-    # --- Switch version ---
+
     if venv_dir is not None:
         # First remove any other 5.x venv from sys.path.
         _deactivate_5x()

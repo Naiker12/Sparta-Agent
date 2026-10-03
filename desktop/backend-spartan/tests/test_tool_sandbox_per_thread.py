@@ -1,13 +1,5 @@
 
-"""Every conversation runs its tools in its own sandbox directory.
-
-Parallel chats lean on this: two conversations can be mid tool call at the same
-time, so a shared working directory would let one overwrite the other's files.
-The session id is the chat's thread id (or project-<id> for project chats), and
-the dir is derived from it here.
-
-UNSLOTH_STUDIO_HOME is redirected per test, so nothing touches the real install.
-"""
+"Every conversation runs its tools in its own sandbox directory.\n\nParallel chats lean on this: two conversations can be mid tool call at the same\ntime, so a shared working directory would let one overwrite the other's files.\nThe session id is the chat's thread id (or project-<id> for project chats), and\nthe dir is derived from it here.\n"
 
 import os
 import sys

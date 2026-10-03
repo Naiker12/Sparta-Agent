@@ -17,7 +17,7 @@ import pytest
 
 @pytest.fixture(autouse = True)
 def _tmp_gallery(monkeypatch, tmp_path):
-    # Point the gallery at a throwaway root instead of ~/.unsloth/studio.
+
     monkeypatch.setattr(gallery, "studio_root", lambda: tmp_path)
 
 

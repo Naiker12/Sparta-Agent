@@ -1,30 +1,10 @@
-"""
-Detect None/empty content turns in conversation datasets. Reports findings
-without modifying data.
-
-Usage:
-    from .dataset_none_detect import scan_dataset, print_report
-    stats = scan_dataset(dataset)               # auto-detect + scan
-    stats = scan_dataset(dataset, fmt="chatml")  # explicit format
-    print_report(stats, stats["format"])
-
-Dependencies: only `datasets` (already in studio/unsloth) + stdlib.
-
-Supported formats (via FORMAT_REGISTRY):
-    alpaca     instruction/output            instruction + output must be set
-    chatml     messages/conversations/texts  role + content per turn
-    sharegpt   conversations                 from/value per turn
-    gptoss     messages (alias: gpt-oss)     role/content; has a developer turn
-
-Any role/content chat template matches chatml, so new templates need no change;
-add a FORMAT_REGISTRY entry only for a genuinely new column/turn shape.
-"""
+'\nDetect None/empty content turns in conversation datasets. Reports findings\nwithout modifying data.\n\nUsage:\n    from .dataset_none_detect import scan_dataset, print_report\n    stats = scan_dataset(dataset)               # auto-detect + scan\n    stats = scan_dataset(dataset, fmt="chatml")  # explicit format\n    print_report(stats, stats["format"])\n\n\nSupported formats (via FORMAT_REGISTRY):\n    alpaca     instruction/output            instruction + output must be set\n    chatml     messages/conversations/texts  role + content per turn\n    sharegpt   conversations                 from/value per turn\n    gptoss     messages (alias: gpt-oss)     role/content; has a developer turn\n\nAny role/content chat template matches chatml, so new templates need no change;\nadd a FORMAT_REGISTRY entry only for a genuinely new column/turn shape.'
 
 from datasets import Dataset
 
-# ---------------------------------------------------------------------------
+
 # Conversation column probing (shared by detection + scanning)
-# ---------------------------------------------------------------------------
+
 
 # Candidate column names for conversational datasets, checked in priority order.
 CONVERSATION_COLUMNS = ("messages", "conversations", "texts")
@@ -131,7 +111,7 @@ def _probe_conversation(dataset: Dataset, candidates = None):
 
 
 # None-detection helpers
-# ---------------------------------------------------------------------------
+
 
 
 def is_none_or_empty(value) -> bool:
@@ -189,9 +169,9 @@ def _classify_empty(value) -> str:
     return "valid"  # unreachable if is_none_or_empty was True
 
 
-# ---------------------------------------------------------------------------
+
 # Alpaca detection
-# ---------------------------------------------------------------------------
+
 
 
 def find_none_alpaca(dataset: Dataset) -> dict:
@@ -228,9 +208,9 @@ def find_none_alpaca(dataset: Dataset) -> dict:
     return stats
 
 
-# ---------------------------------------------------------------------------
+
 # ChatML / conversational detection
-# ---------------------------------------------------------------------------
+
 
 
 def find_none_chatml(dataset: Dataset, col: str = None) -> dict:
@@ -375,9 +355,9 @@ def find_none_chatml(dataset: Dataset, col: str = None) -> dict:
     return stats
 
 
-# ---------------------------------------------------------------------------
+
 # Convenience wrappers per format (all delegate to the same scan logic)
-# ---------------------------------------------------------------------------
+
 
 
 def find_none_sharegpt(dataset: Dataset, col: str = None) -> dict:
@@ -413,14 +393,14 @@ def find_none_gptoss(dataset: Dataset, col: str = None) -> dict:
     return find_none_chatml(dataset, col = col)
 
 
-# ---------------------------------------------------------------------------
+
 # Format registry - first match wins; detect_format() auto-scales.
 # Each entry: name (label/--format value), match(dataset, conv_info) -> bool,
 # scan (find_none_* function). Put specific formats before general ones
 # (gptoss before chatml, since gptoss is chatml with a 'developer' role).
 # To add a format: write find_none_<name>() (or reuse find_none_chatml) and
 # append an entry; detect_format(), --format, and scan_dataset() pick it up.
-# ---------------------------------------------------------------------------
+
 
 FORMAT_REGISTRY = [
     {
@@ -576,9 +556,9 @@ def scan_dataset(dataset: Dataset, fmt: str = "auto") -> dict:
     return stats
 
 
-# ---------------------------------------------------------------------------
+
 # Report printing
-# ---------------------------------------------------------------------------
+
 
 
 def _print_summary_header(stats: dict, fmt: str) -> bool:
@@ -776,9 +756,9 @@ def show_row(
         print(f"{'=' * 64}")
 
 
-# ---------------------------------------------------------------------------
+
 # CLI entry point
-# ---------------------------------------------------------------------------
+
 
 if __name__ == "__main__":
     import argparse

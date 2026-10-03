@@ -23,7 +23,7 @@
  */
 
 export interface CodeToolPlacementInput {
-  /** The composer's Code pill (persisted as unsloth_chat_code_tools_enabled). */
+
   codeToolsEnabled: boolean;
   /** This provider AND this model expose the provider's own code sandbox. */
   hostedCodeExecutionForThisTurn: boolean;

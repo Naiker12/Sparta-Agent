@@ -1,8 +1,5 @@
 
-"""Terminal banner for Unsloth startup.
-
-Stdlib only -- safe to import without the rest of the backend.
-"""
+'\nStdlib only -- safe to import without the rest of the backend.'
 
 from __future__ import annotations
 

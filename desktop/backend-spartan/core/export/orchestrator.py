@@ -78,9 +78,9 @@ class ExportOrchestrator:
         atexit.register(self._cleanup)
         logger.info("ExportOrchestrator initialized (subprocess mode)")
 
-    # ------------------------------------------------------------------
+
     # Live log capture helpers
-    # ------------------------------------------------------------------
+
 
     def _append_log(self, entry: Dict[str, Any]) -> None:
         """Append a worker log line to the buffer, stamped with a monotonic seq."""
@@ -201,9 +201,9 @@ class ExportOrchestrator:
                 pass
         return True
 
-    # ------------------------------------------------------------------
+
     # Subprocess lifecycle
-    # ------------------------------------------------------------------
+
 
     def _spawn_subprocess(self, config: dict) -> None:
         """Spawn a new export subprocess."""
@@ -318,9 +318,9 @@ class ExportOrchestrator:
         """Check if subprocess is alive."""
         return self._proc is not None and self._proc.is_alive()
 
-    # ------------------------------------------------------------------
+
     # Queue helpers
-    # ------------------------------------------------------------------
+
 
     def _send_cmd(self, cmd: dict) -> None:
         """Send a command to the subprocess."""
@@ -414,9 +414,9 @@ class ExportOrchestrator:
             except (EOFError, OSError, ValueError):
                 return events
 
-    # ------------------------------------------------------------------
+
     # Public API — same interface as ExportBackend
-    # ------------------------------------------------------------------
+
 
     def load_checkpoint(
         self,
@@ -704,7 +704,7 @@ class ExportOrchestrator:
         return scan_checkpoints(outputs_dir = outputs_dir)
 
 
-# ========== GLOBAL INSTANCE ==========
+
 _export_backend = None
 
 

@@ -1,4 +1,7 @@
 import { resolveNavRowState } from "@/components/nav-row-state";
+import { useThreadFileScope } from "@/features/chat/hooks/use-thread-file-scope";
+import { useWorkspaceStore } from "@/features/chat/stores/use-workspace-store";
+import { resetNewChatWorkspace } from "@/features/chat/utils/reset-new-chat-workspace";
 import { ShutdownDialog } from "@/components/shutdown-dialog";
 import {
   shouldUseCustomWindowTitlebar,
@@ -24,6 +27,8 @@ import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuLabel,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -55,6 +60,7 @@ import {
   clearNewChatDraft,
   deleteChatItem,
   deleteChatProject,
+  disconnectChatProjectWorkspace,
   moveChatItemToProject,
   notifyChatHistoryUpdated,
   projectOrderScope,
@@ -363,7 +369,7 @@ export function AppSidebar() {
     pathname === "/export" || pathname.startsWith("/export/");
   const { displayTitle, avatarDataUrl } = useEffectiveProfile();
 
-  const { projects } = useChatProjects();
+  const { projects, isLoading: projectsLoading, error: projectsError, retry: retryProjects } = useChatProjects();
   const activeProjectId = isChatRoute
     ? ((search.project as string | undefined) ?? null)
     : null;
@@ -509,6 +515,8 @@ export function AppSidebar() {
       return next;
     });
   const storeThreadId = useChatRuntimeStore((s) => s.activeThreadId);
+  const { scope: connectedScope } = useThreadFileScope(storeThreadId);
+  const incognito = useChatRuntimeStore((s) => s.incognito);
   const setActiveThreadId = useChatRuntimeStore((s) => s.setActiveThreadId);
   // The whole map, so each row can show its own spinner.
   const runningByThreadId = useChatRuntimeStore((s) => s.runningByThreadId);
@@ -1040,8 +1048,7 @@ export function AppSidebar() {
     },
     tasks: {
       icon: Message01Icon,
-      label: t("shell.navigation.tasks"),
-      badge: t("shell.navigation.newBadge"),
+      label: "Trabajo",
       active: pathname === "/tasks" || pathname.startsWith("/tasks/"),
       onClick: () => {
         navigate({ to: "/tasks" });
@@ -1072,11 +1079,12 @@ export function AppSidebar() {
     };
   }
 
-  function openNewChat(projectId = activeProjectId) {
+  function openNewChat(projectId: string | null = null) {
     clearNewChatDraft();
+    resetNewChatWorkspace();
     setActiveThreadId(null);
     useChatRuntimeStore.getState().setActiveProjectId(projectId);
-    // The normal new-chat affordance is always a saved chat; only the toolbar toggle is temporary.
+    // Normal new chats are saved; the adjacent temporary action is explicit.
     useChatRuntimeStore.getState().setIncognito(false);
     navigate({ to: "/chat", search: chatSearchForProject(projectId) });
     closeMobileIfOpen();
@@ -1570,6 +1578,32 @@ export function AppSidebar() {
                   openNewChat(null);
                 }}
               />
+              <NavItem
+                icon={BubbleChatIcon}
+                label="Chat temporal"
+                active={incognito && isChatRoute}
+                onClick={() => {
+                  clearNewChatDraft();
+                  resetNewChatWorkspace();
+                  setActiveThreadId(null);
+                  useChatRuntimeStore.getState().setActiveProjectId(null);
+                  useChatRuntimeStore.getState().setIncognito(true);
+                  navigate({ to: "/chat", search: { new: createNavigationNonce() } });
+                  closeMobileIfOpen();
+                }}
+              />
+              {connectedScope && incognito && (
+                <NavItem
+                  icon={Folder01Icon}
+                  label={connectedScope.connectedFolderPath.split(/[\\/]/).filter(Boolean).pop() ?? "Carpeta conectada"}
+                  active={false}
+                  onClick={() => {
+                    navigate({ to: "/chat" });
+                    useWorkspaceStore.getState().openTab("files");
+                    closeMobileIfOpen();
+                  }}
+                />
+              )}
               {/* Search sits in the header when the brand row is shown (mac/web).
                 Hide this row there, but keep it in the collapsed rail. On custom
                 titlebars (win/linux) there's no header button, so keep the row. */}
@@ -1833,8 +1867,7 @@ export function AppSidebar() {
           {/* Projects: one folder per project, its chats nested underneath */}
           {sidebarState !== "collapsed" &&
             !(isStudioRoute || showTrainingRecents) &&
-            organizeBy === "project" &&
-            sidebarProjectRecords.length > 0 && (
+            (
               <Collapsible
                 open={projectsOpen}
                 onOpenChange={setProjectsOpen}
@@ -1882,6 +1915,9 @@ export function AppSidebar() {
                   <CollapsibleContent>
                     <SidebarGroupContent className={scrollRowPadding}>
                       <SidebarMenu>
+                        {projectsLoading && <SidebarMenuItem><span className="block px-3 py-2 text-sm text-muted-foreground" role="status">Cargando proyectos…</span></SidebarMenuItem>}
+                        {projectsError && <SidebarMenuItem><SidebarMenuButton onClick={retryProjects} title={projectsError}>No se pudieron cargar. Reintentar</SidebarMenuButton></SidebarMenuItem>}
+                        {!projectsLoading && !projectsError && sidebarProjectRecords.length === 0 && <SidebarMenuItem><span className="block px-3 py-2 text-sm text-muted-foreground">Conecta una carpeta para empezar.</span></SidebarMenuItem>}
                         {visibleProjectRecords.map((project, projectIndex) => {
                           const projectChats =
                             sortedChatsByProjectId.get(project.id) ?? [];
@@ -1905,7 +1941,7 @@ export function AppSidebar() {
                                 <ContextMenuTrigger asChild={true}>
                                   <SidebarMenuItem
                                     className={cn(
-                                      "group/recent-item relative",
+                                      "group/recent-item project-folder-row relative",
                                       draggingRow?.id === project.id &&
                                         "opacity-50",
                                       dropCueClass(
@@ -1924,6 +1960,8 @@ export function AppSidebar() {
                                     )}
                                   >
                                     <SidebarMenuButton
+                                      aria-expanded={expanded}
+                                      title={project.connectedFolderPath ?? project.name}
                                       // Highlight the folder only on the project home; with a chat open, only that row is active.
                                       isActive={
                                         activeProjectId === project.id &&
@@ -1946,7 +1984,7 @@ export function AppSidebar() {
                                         clearSelection();
                                         toggleProjectCollapsed(project.id);
                                       }}
-                                      className="sidebar-nav-btn h-[33px] rounded-full gap-[8.5px] pl-3 pr-2.5 font-medium group-hover/recent-item:pr-16 group-has-[.sidebar-row-action[data-state=open]]/recent-item:pr-8 [@media(pointer:coarse)]:pr-16"
+                                      className="sidebar-nav-btn h-[33px] rounded-full gap-[8.5px] pl-3 pr-1 font-medium"
                                     >
                                       <HugeiconsIcon
                                         icon={Folder01Icon}
@@ -1956,6 +1994,7 @@ export function AppSidebar() {
                                       <span className="truncate text-ui-14p5 leading-ui-19 tracking-nav">
                                         {project.name}
                                       </span>
+                                      <ChevronDown className={cn("ml-auto size-3 shrink-0", !expanded && "-rotate-90")} />
                                     </SidebarMenuButton>
                                     {/* New chat in this project */}
                                     <button
@@ -1988,7 +2027,7 @@ export function AppSidebar() {
                                         >
                                           <span className="sidebar-row-action-glyph">
                                             <HugeiconsIcon
-                                              icon={MoreVerticalIcon}
+                                              icon={MoreHorizontalIcon}
                                               strokeWidth={1.75}
                                               className="size-icon"
                                             />
@@ -1996,11 +2035,21 @@ export function AppSidebar() {
                                         </button>
                                       </DropdownMenuTrigger>
                                       <DropdownMenuContent
-                                        side="bottom"
+                                        side="right"
                                         align="start"
-                                        sideOffset={0}
-                                        className="unsloth-plus-menu menu-flat-destructive w-56"
+                                        sideOffset={10}
+                                        className="unsloth-plus-menu menu-flat-destructive w-72"
                                       >
+                                        <DropdownMenuGroup>
+                                        <DropdownMenuLabel>
+                                          <span className="block truncate">{project.name}</span>
+                                          <span className="block text-xs text-muted-foreground">{projectChats.length} chats · {projectChats.filter(chat => getSidebarItemThreadIds(chat).some(id => runningByThreadId[id])).length} activos</span>
+                                        </DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {project.connectedFolderPath && <DropdownMenuItem onSelect={() => {openProject(project.id); useWorkspaceStore.getState().openTab("files");}} title={project.connectedFolderPath}>
+                                          <HugeiconsIcon icon={Folder01Icon} strokeWidth={1.75} className="size-icon" />
+                                          <span className="truncate">{project.connectedFolderPath}</span>
+                                        </DropdownMenuItem>}
                                         <DropdownMenuItem
                                           onSelect={() =>
                                             openProject(project.id)
@@ -2080,6 +2129,9 @@ export function AppSidebar() {
                                           </span>
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
+                                        {project.connectedFolderPath && <DropdownMenuItem onSelect={() => {
+                                          void disconnectChatProjectWorkspace(project.id).catch(error => toast.error("No se pudo desconectar la carpeta", {description: error instanceof Error ? error.message : undefined}));
+                                        }}>Desconectar carpeta del proyecto</DropdownMenuItem>}
                                         <DropdownMenuItem
                                           variant="destructive"
                                           onSelect={() => {
@@ -2101,6 +2153,7 @@ export function AppSidebar() {
                                             )}
                                           </span>
                                         </DropdownMenuItem>
+                                        </DropdownMenuGroup>
                                       </DropdownMenuContent>
                                     </DropdownMenu>
                                   </SidebarMenuItem>

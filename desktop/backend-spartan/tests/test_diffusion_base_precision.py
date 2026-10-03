@@ -488,7 +488,7 @@ def _fake_cuda_with_free_gb(monkeypatch, free_gb: float):
     [
         "black-forest-labs/FLUX.2-klein-9B",
         "black-forest-labs/FLUX.2-klein-base-9B",
-        # The unsloth mirrors resolve to the same upstream ids, and they are what the Train tab sends.
+
         "unsloth/FLUX.2-klein-9B",
         "unsloth/FLUX.2-klein-base-9B",
     ],

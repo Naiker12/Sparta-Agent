@@ -42,7 +42,7 @@ def test_detect_family_ideogram4_override():
 
 
 def test_ideogram4_repos_are_trusted_non_gguf():
-    # The three official vendor pipelines load via from_pretrained, gated to the unsloth org + the explicit allowlist.
+
     for rid in (
         "ideogram-ai/ideogram-4-fp8",
         "ideogram-ai/ideogram-4-nf4",
@@ -90,7 +90,7 @@ def test_flux2_klein_generation_defaults_distinguish_base_from_distilled():
 
 # ── z-image: the undistilled base ────────────────────────────────────────────
 def test_zimage_base_is_trusted_so_the_gguf_keeps_its_companion_base():
-    # unsloth/Z-Image-GGUF carries base_model: Tongyi-MAI/Z-Image, and _resolve_base_repo drops a
+
     # tag that fails this gate. While it did, that pick fell back to the Turbo companions and
     # denoised on their shift 3.0 scheduler instead of the base's 6.0.
     assert _is_trusted_diffusion_repo("Tongyi-MAI/Z-Image")
@@ -292,7 +292,7 @@ def test_detect_family_hidream_repos(repo_id):
 def test_hidream_override_and_trust():
     assert detect_family("x", override = "hidream-i1").name == "hidream-i1"
     assert detect_family("x", override = "hidream").name == "hidream-i1"
-    # The three official repos load via from_pretrained so they are allowlisted; the Llama TE4 rides the trusted unsloth mirror.
+
     for rid in (
         "HiDream-ai/HiDream-I1-Full",
         "HiDream-ai/HiDream-I1-Dev",

@@ -1,14 +1,5 @@
 
-"""install_llama_prebuilt.py: naming a llama.cpp backend, and keeping that choice.
-
-The picker in Settings > System, `UNSLOTH_LLAMA_CPP_BACKEND`, and
-`--llama-backend` are three spellings of one thing: a backend request, resolved
-here and recorded in the install marker so every later entry point -- setup.sh,
-`unsloth studio update`, the desktop updater -- installs the same backend without
-being told again.
-
-Network and host detection are stubbed; no GPU or internet needed.
-"""
+'install_llama_prebuilt.py: naming a llama.cpp backend, and keeping that choice.\n\n`--llama-backend` are three spellings of one thing: a backend request, resolved\nhere and recorded in the install marker so every later entry point -- setup.sh,\nbeing told again.\n\nNetwork and host detection are stubbed; no GPU or internet needed.'
 
 from __future__ import annotations
 

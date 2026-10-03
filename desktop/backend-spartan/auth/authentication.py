@@ -174,21 +174,12 @@ async def get_current_credential(
 async def authenticated_via_api_key(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> bool:
-    """True when the caller used an sk-unsloth API key, not a UI session JWT.
-
-    Lets routes treat programmatic API callers differently from the Unsloth UI
-    (e.g. refuse a teardown the UI would allow).
-    """
+    '\n    (e.g. refuse a teardown the UI would allow).\n    '
     return bool(credentials and credentials.credentials.startswith(API_KEY_PREFIX))
 
 
 def require_ui_session_for_local_commands(via_api_key: bool) -> None:
-    """Refuse an sk-unsloth API key that asks to define a local (stdio) MCP command.
-
-    stdio MCP runs a command on this host as the backend user, outside the
-    python/terminal sandbox, so only a UI session may choose what runs. API keys
-    keep http(s) MCP, and stdio servers the owner already configured.
-    """
+    '\n    stdio MCP runs a command on this host as the backend user, outside the\n    python/terminal sandbox, so only a UI session may choose what runs. API keys\n    keep http(s) MCP, and stdio servers the owner already configured.\n    '
     if via_api_key:
         raise HTTPException(
             status_code = status.HTTP_403_FORBIDDEN,
@@ -198,13 +189,7 @@ def require_ui_session_for_local_commands(via_api_key: bool) -> None:
 
 
 async def allow_ambient_hf_token(via_api_key: bool = Depends(authenticated_via_api_key)) -> bool:
-    """Whether a download this caller starts may fall back to the backend's own HF_TOKEN.
-
-    A UI session already gets the saved token from Settings, so the ambient one grants it
-    nothing new. ``require_ui_session`` refuses an sk-unsloth API key that same token, so it
-    must not reach private repos by naming one in a download instead; it sends its own token
-    in ``X-Unsloth-HF-Token``.
-    """
+    "Whether a download this caller starts may fall back to the backend's own HF_TOKEN.\n\n    A UI session already gets the saved token from Settings, so the ambient one grants it\n    must not reach private repos by naming one in a download instead; it sends its own token\n    "
     return not via_api_key
 
 
@@ -265,7 +250,7 @@ async def _get_current_credential(
 
     token = credentials.credentials
 
-    # --- API key path (sk-unsloth-...) ---
+
     if token.startswith(API_KEY_PREFIX):
         verified = validate_api_key_with_credential(token)
         if verified is not None:
@@ -276,7 +261,7 @@ async def _get_current_credential(
             detail = _invalid_api_key_detail(token),
         )
 
-    # --- JWT path ---
+
     subject = _decode_subject_without_verification(token)
     if subject is None:
         raise HTTPException(

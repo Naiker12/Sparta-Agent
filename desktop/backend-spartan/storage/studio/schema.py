@@ -12,6 +12,8 @@ _CHAT_ATTACHMENT_INVENTORY_VERSION = 1
 def _ensure_schema(conn: sqlite3.Connection) -> None:
     """Create tables and indexes if they don't exist. Called once per process."""
     conn.execute("PRAGMA journal_mode=WAL")
+    from storage.work_runs_schema import ensure_work_runs_schema
+    ensure_work_runs_schema(conn)
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS training_runs (
@@ -649,6 +651,8 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
     task_columns = {row[1] for row in conn.execute("PRAGMA table_info(agent_tasks)").fetchall()}
     if "owner_subject" not in task_columns:
         conn.execute("ALTER TABLE agent_tasks ADD COLUMN owner_subject TEXT")
+    if "schedule_config" not in task_columns:
+        conn.execute("ALTER TABLE agent_tasks ADD COLUMN schedule_config TEXT NOT NULL DEFAULT '{}'")
     conn.execute("""
         CREATE TABLE IF NOT EXISTS agent_task_runs (
             id TEXT PRIMARY KEY, task_id TEXT NOT NULL REFERENCES agent_tasks(id) ON DELETE CASCADE,

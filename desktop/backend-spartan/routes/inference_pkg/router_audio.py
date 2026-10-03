@@ -145,7 +145,7 @@ AUDIO_GENERATION_MAX_TOKENS = 2048
 _MAX_AUDIO_RAW_BYTES = 25 * 1024 * 1024
 
 # Audio (TTS) Generation  (/audio/generate)
-# =====================================================================
+
 
 _TRANSFORMERS_TTS_AUDIO_TYPES = frozenset(("snac", "csm", "bicodec", "dac"))
 _GGUF_TTS_AUDIO_TYPES = frozenset(("snac", "bicodec", "dac"))
@@ -231,8 +231,8 @@ async def _generate_tts_wav(
             detail = f"Active model does not support text-to-speech (audio_type={audio_type or 'unknown'}).",
         )
 
-    # Apply per-model recommended sampling + any operator UNSLOTH_SAMPLING_* pin before
-    # generating, so `unsloth run --temperature` (and the other pins) and per-model
+
+
     # recommendations reach audio (TTS) generation too, not just chat. The gen lambdas read
     # payload.* lazily at call time, so filling here takes effect; this covers both the direct
     # /audio/generate route and the chat-completions audio branches that delegate here.
@@ -315,8 +315,7 @@ async def generate_audio(
     request: Request,
     current_subject: str = Depends(get_current_subject),
 ):
-    """Generate audio (TTS) from the latest user message, as base64 WAV.
-    Works with both GGUF (llama-server) and Unsloth/transformers backends."""
+    'Generate audio (TTS) from the latest user message, as base64 WAV.'
     import base64
 
     # Extract text from the last user message

@@ -11,7 +11,7 @@ import contextlib
 from pathlib import Path
 from typing import Optional, Tuple, List
 
-# unsloth imports torch on non-MLX hosts, so a --no-torch install raises here. Stay importable
+
 # (null the classes) so exports return a clean "PyTorch is not installed" error.
 try:
     from spartan_agent import FastLanguageModel, FastVisionModel, _IS_MLX
@@ -51,7 +51,7 @@ logger = get_logger(__name__)
 
 
 def _export_runtime_available() -> bool:
-    """True if export can run: MLX active, or Unsloth imported (only succeeds on a GPU host)."""
+    ''
     return bool(_IS_MLX) or (FastLanguageModel is not None)
 
 
@@ -79,13 +79,7 @@ _LLAMA_CPP_SCRIPTS_WARNING_EMITTED = False
 
 
 def _multi_gpu_device_map_kwargs() -> dict:
-    """``device_map`` kwargs for sharding a checkpoint across every visible GPU.
-
-    unsloth's ``from_pretrained`` defaults to ``device_map="sequential"``, which stacks
-    the whole model on GPU0 and OOMs multi-GPU hosts whose other GPUs sit empty (#7053).
-    Returns ``{"device_map": "balanced"}`` only on a real multi-GPU CUDA/ROCm host
-    (mirroring the inference loader's ``get_device_map``), else empty so single-GPU, CPU
-    and MLX loads keep the loader default."""
+    '``device_map`` kwargs for sharding a checkpoint across every visible GPU.\n\n    the whole model on GPU0 and OOMs multi-GPU hosts whose other GPUs sit empty (#7053).\n    Returns ``{"device_map": "balanced"}`` only on a real multi-GPU CUDA/ROCm host\n    (mirroring the inference loader\'s ``get_device_map``), else empty so single-GPU, CPU\n    and MLX loads keep the loader default.'
     if _IS_MLX:
         return {}
     try:
@@ -179,8 +173,7 @@ def _supports_kwarg(fn, name):
 
 
 def _imatrix_export_supported(save_fn):
-    """True when this build can apply an imatrix, not merely swallow the keyword: the MLX binding
-    takes `**kwargs` and filters them, so only unsloth_zoo itself settles it."""
+    'True when this build can apply an imatrix, not merely swallow the keyword: the MLX binding'
     import inspect
 
     try:
@@ -200,13 +193,7 @@ def _imatrix_export_supported(save_fn):
 
 
 def _reported_gguf_files(result):
-    """Absolute GGUF paths unsloth reported writing, or None if it reported nothing.
-
-    None means "fall back to the legacy heuristics", which covers every older shape:
-    pre-2025.10 unsloth returned nothing, is_main_process=False returns None, and
-    save_method="lora" returns a str. An empty result is None too, since a stale
-    manifest is indistinguishable from an old build.
-    """
+    '\n    None means "fall back to the legacy heuristics", which covers every older shape:\n    save_method="lora" returns a str. An empty result is None too, since a stale\n    manifest is indistinguishable from an old build.\n    '
     if not isinstance(result, dict):
         return None
     files = result.get("gguf_files")
@@ -225,14 +212,9 @@ def _reported_gguf_files(result):
 
 
 def _materialized_imatrix_path(model_dir, imatrix_file):
-    """Where unsloth copies a `*.gguf_file` imatrix beside the model, else None.
-
-    `_materialize_imatrix` drops that copy in the model directory, so the owned-root scan
-    would otherwise relocate it as if it were a converted model. Callers compare the whole path
-    (see `_is_imatrix`): a basename match would suppress a real output of the same name.
-    """
+    '\n    `_materialize_imatrix` drops that copy in the model directory, so the owned-root scan\n    would otherwise relocate it as if it were a converted model. Callers compare the whole path\n    (see `_is_imatrix`): a basename match would suppress a real output of the same name.\n    '
     if imatrix_file is True:
-        name = "imatrix_unsloth.gguf"  # the upstream imatrix_unsloth.gguf_file, renamed
+        name = "imatrix_unsloth.gguf"
     elif isinstance(imatrix_file, (str, os.PathLike)):
         base = os.path.basename(os.fspath(imatrix_file))
         if not base.endswith(".gguf_file"):
@@ -264,7 +246,7 @@ def _folded(path):
 
 
 def _compressed_export_supported():
-    """True if the installed unsloth build can do FP8/NVFP4 compressed-tensors export."""
+    ''
     try:
         import spartan_agent.save as _us
         return hasattr(_us, "_normalize_compressed_method")
@@ -273,7 +255,7 @@ def _compressed_export_supported():
 
 
 def _torchao_export_supported():
-    """True if the installed unsloth build has the portable torchao FP8/INT8 export path."""
+    ''
     try:
         import spartan_agent.save as _us
         return hasattr(_us, "_normalize_torchao_method")
@@ -295,10 +277,7 @@ def _has_nvidia_gpu():
 
 
 def _hf_offline(timeout = 3):
-    """True if export should avoid the Hub: honors the HF offline env vars, else does one
-    cheap TCP reachability probe so a network-down load uses local files / the HF cache
-    instead of hanging on connection timeouts. Proxy-aware (probes the proxy egress when
-    one is configured); disable the probe with UNSLOTH_OFFLINE_PROBE=0."""
+    'True if export should avoid the Hub: honors the HF offline env vars, else does one\n    cheap TCP reachability probe so a network-down load uses local files / the HF cache\n    instead of hanging on connection timeouts. Proxy-aware (probes the proxy egress when'
     _offline = {"1", "true", "yes", "on"}
     if (
         os.environ.get("HF_HUB_OFFLINE", "").strip().lower() in _offline
@@ -317,7 +296,7 @@ def _hf_offline(timeout = 3):
     return False
 
 
-# Reuse Unsloth's lock-guarded forced-offline context; no-op fallback if it moves.
+
 try:
     from spartan_agent.models.loader_utils import _force_hf_offline
 except Exception:
@@ -689,23 +668,7 @@ class ExportBackend:
         private: bool = False,
         compressed_method: Optional[str] = None,
     ) -> Tuple[bool, str, Optional[str]]:
-        """
-        Export merged model (for PEFT models).
-
-        Args:
-            save_directory: Local directory to save model
-            format_type: "16-bit (FP16)", "4-bit (FP4)", or a compressed-tensors label
-            compressed_method: Optional compressed-tensors scheme alias (e.g. "fp8",
-                "fp8_static", "w8a8", "w4a16", "mxfp4", "mxfp8", "nvfp4"). Overrides
-                format_type and is resolved against unsloth.save COMPRESSED_EXPORT_SCHEMES.
-            push_to_hub: Whether to push to Hugging Face Hub
-            repo_id: Hub repository ID (username/model-name)
-            hf_token: Hugging Face token
-            private: Whether to make the repo private
-
-        Returns:
-            Tuple of (success: bool, message: str, output_path: Optional[str])
-        """
+        '\n        Export merged model (for PEFT models).\n\n        Args:\n            save_directory: Local directory to save model\n            format_type: "16-bit (FP16)", "4-bit (FP4)", or a compressed-tensors label\n            compressed_method: Optional compressed-tensors scheme alias (e.g. "fp8",\n                "fp8_static", "w8a8", "w4a16", "mxfp4", "mxfp8", "nvfp4"). Overrides\n            push_to_hub: Whether to push to Hugging Face Hub\n            repo_id: Hub repository ID (username/model-name)\n            hf_token: Hugging Face token\n            private: Whether to make the repo private\n\n        Returns:\n            Tuple of (success: bool, message: str, output_path: Optional[str])\n        '
         if not _export_runtime_available():
             return False, _export_runtime_message(), None
         if not self.current_model or not self.current_tokenizer:
@@ -1060,27 +1023,13 @@ class ExportBackend:
         hf_token: Optional[str] = None,
         imatrix_file = None,
     ) -> Tuple[bool, str, Optional[str]]:
-        """
-        Export model in GGUF format.
-
-        Args:
-            save_directory: Local directory to save model
-            quantization_method: A single GGUF quant method (e.g., "Q4_K_M") or a list of them
-                (e.g., ["Q4_K_M", "Q8_0"]). A list produces one GGUF per quant from a single
-                model load (unsloth save_to_gguf loops internally).
-            push_to_hub: Whether to push to Hugging Face Hub
-            repo_id: Hub repository ID
-            hf_token: Hugging Face token
-
-        Returns:
-            Tuple of (success: bool, message: str, output_path: Optional[str])
-        """
+        '\n        Export model in GGUF format.\n\n        Args:\n            save_directory: Local directory to save model\n            quantization_method: A single GGUF quant method (e.g., "Q4_K_M") or a list of them\n                (e.g., ["Q4_K_M", "Q8_0"]). A list produces one GGUF per quant from a single\n            push_to_hub: Whether to push to Hugging Face Hub\n            repo_id: Hub repository ID\n            hf_token: Hugging Face token\n\n        Returns:\n            Tuple of (success: bool, message: str, output_path: Optional[str])\n        '
         if not _export_runtime_available():
             return False, _export_runtime_message(), None
         if not self.current_model or not self.current_tokenizer:
             return False, "No model loaded. Please select a checkpoint first.", None
 
-        # Only forward imatrix_file to an unsloth build that accepts it, else older builds raise
+
         # an unexpected-keyword error even for a plain no-imatrix export.
         if imatrix_file and not _imatrix_export_supported(self.current_model.save_pretrained_gguf):
             return (
@@ -1122,7 +1071,7 @@ class ExportBackend:
                 )
                 os.environ.setdefault("UNSLOTH_LLAMA_CPP_SCRIPTS_DIR", LLAMA_CPP_DEFAULT_DIR)
             except Exception:
-                # Not just ImportError: a half-built unsloth_zoo raises RuntimeError or
+
                 # AttributeError, and this pin is an optimisation, not worth failing an export.
                 if not _LLAMA_CPP_SCRIPTS_WARNING_EMITTED:
                     logger.warning(
@@ -1136,7 +1085,7 @@ class ExportBackend:
 
             if save_directory:
                 save_directory = str(resolve_export_write_dir(save_directory))
-                # Keep unsloth relative-path internals anchored to the repo cwd.
+
                 abs_save_dir = os.path.abspath(save_directory)
                 logger.info(f"Saving GGUF model locally to: {abs_save_dir}")
 
@@ -1193,7 +1142,7 @@ class ExportBackend:
                                 "GGUF conversion produced a symlinked Modelfile, "
                                 f"refusing to relocate it: {modelfile}"
                             )
-                        # Optional artifact: unsloth generates it best-effort, so a locked or
+
                         # read-only destination must not fail an export whose GGUFs all landed.
                         try:
                             shutil.move(str(modelfile), os.path.join(abs_save_dir, "Modelfile"))

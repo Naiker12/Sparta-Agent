@@ -154,7 +154,7 @@ def test_the_dataset_format_check_installs_the_decoder():
 
 def test_the_audio_trainer_paths_install_the_decoder():
     # Read the source rather than import it: this asserts a wiring contract, and
-    # importing the trainer drags in the whole torch/unsloth stack for it.
+
     from pathlib import Path
 
     source = (Path(__file__).resolve().parents[1] / "core" / "training" / "trainer.py").read_text(

@@ -1,16 +1,4 @@
-"""Tests for model-update detection and the GGUF force-download helper.
-
-Covers:
-  * GGUF variant listing computes update_available from the already-fetched
-    sibling metadata instead of a second Hub call.
-  * hf_hub_download_with_xet_fallback forwards force_download through the shim to the
-    shared unsloth_zoo helper (which owns the cache-first early-return and its bypass).
-
-The cache "Update" action now runs through the download manager as a normal
-managed download (so it shows in the Downloads panel with progress + cancel),
-so the old POST /api/models/update endpoint and its tests are gone. Update
-*detection* — the "Update available" cue — is still exercised here.
-"""
+'Tests for model-update detection and the GGUF force-download helper.\n\nCovers:\n  * GGUF variant listing computes update_available from the already-fetched\n    sibling metadata instead of a second Hub call.\n  * hf_hub_download_with_xet_fallback forwards force_download through the shim to the\n\nThe cache "Update" action now runs through the download manager as a normal\nmanaged download (so it shows in the Downloads panel with progress + cancel),\nso the old POST /api/models/update endpoint and its tests are gone. Update\n*detection* — the "Update available" cue — is still exercised here.'
 
 import asyncio
 import sys

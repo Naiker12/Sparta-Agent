@@ -1,23 +1,5 @@
 
-"""Wiring guard for the plan-without-action ``nudge_tool_calls`` policy.
-
-Decided policy: the re-prompt is ALWAYS ON for the Unsloth inference paths
-(safetensors, GGUF/llama_cpp, MLX) and OPT-IN for the API (/v1 OpenAI-compat +
-Anthropic-compat, controlled by the request's ``nudge_tool_calls``, default off).
-
-Mechanism (verified here without loading a model):
-
-  * every backend tool-loop entry point accepts and forwards ``nudge_tool_calls``
-    (safetensors -> ``InferenceBackend``; MLX -> ``InferenceOrchestrator``; both
-    call the shared ``run_safetensors_tool_loop``; GGUF -> ``LlamaCppBackend``);
-  * the safetensors/MLX loop gates the retry on a truthy flag (new retry ->
-    opt-in), while the GGUF loop keeps its pre-existing default-on behaviour
-    (``None`` keeps nudging) so an omitted flag never disables GGUF;
-  * the API request models default the flag to ``None`` (opt-in / off);
-  * the Unsloth-facing routes forward the request's flag, and the Unsloth frontend
-    sends ``nudge_tool_calls: true`` -- exercised behaviourally in
-    ``test_safetensors_tool_loop.py`` and ``test_llama_cpp_tool_loop.py``.
-"""
+"Wiring guard for the plan-without-action ``nudge_tool_calls`` policy.\n\n(safetensors, GGUF/llama_cpp, MLX) and OPT-IN for the API (/v1 OpenAI-compat +\nAnthropic-compat, controlled by the request's ``nudge_tool_calls``, default off).\n\nMechanism (verified here without loading a model):\n\n  * every backend tool-loop entry point accepts and forwards ``nudge_tool_calls``\n    (safetensors -> ``InferenceBackend``; MLX -> ``InferenceOrchestrator``; both\n    call the shared ``run_safetensors_tool_loop``; GGUF -> ``LlamaCppBackend``);\n  * the safetensors/MLX loop gates the retry on a truthy flag (new retry ->\n    opt-in), while the GGUF loop keeps its pre-existing default-on behaviour\n    (``None`` keeps nudging) so an omitted flag never disables GGUF;\n  * the API request models default the flag to ``None`` (opt-in / off);\n    sends ``nudge_tool_calls: true`` -- exercised behaviourally in\n    ``test_safetensors_tool_loop.py`` and ``test_llama_cpp_tool_loop.py``."
 
 import inspect
 
@@ -26,10 +8,10 @@ from core.inference.orchestrator import InferenceOrchestrator
 from core.inference.safetensors_agentic import run_safetensors_tool_loop
 
 try:
-    # core.inference.inference imports unsloth at module scope, which requires
-    # unsloth_zoo. The dependency-light backend CI matrix job does not install
+
+
     # it, so the safetensors InferenceBackend is folded into the checks below
-    # only when the unsloth stack is importable (local runs / full CI); the
+
     # other entry points are always checked.
     from core.inference.inference import InferenceBackend
 except ImportError:
@@ -49,7 +31,7 @@ def test_backends_accept_the_flag():
         InferenceOrchestrator.generate_chat_completion_with_tools,
         LlamaCppBackend.generate_chat_completion_with_tools,
     ]
-    if InferenceBackend is not None:  # safetensors path; needs the unsloth stack
+    if InferenceBackend is not None:
         methods.append(InferenceBackend.generate_chat_completion_with_tools)
     for method in methods:
         assert "nudge_tool_calls" in _params(method), method.__qualname__
@@ -60,7 +42,7 @@ def test_delegating_backends_forward_the_flag_to_the_shared_loop():
     # both delegate to run_safetensors_tool_loop; GGUF runs its own in-file loop
     # and consumes the flag directly (asserted separately by the gate test).
     methods = [InferenceOrchestrator.generate_chat_completion_with_tools]
-    if InferenceBackend is not None:  # safetensors path; needs the unsloth stack
+    if InferenceBackend is not None:
         methods.append(InferenceBackend.generate_chat_completion_with_tools)
     for method in methods:
         src = inspect.getsource(method)
@@ -85,7 +67,7 @@ def test_api_request_models_default_the_flag_off():
 
 
 def test_studio_routes_forward_the_request_flag():
-    # The Unsloth chat frontend posts to /v1/chat/completions and /v1/messages
+
     # with nudge_tool_calls=true; the route handlers forward the request value
     # (external API clients that omit it fall back to the opt-in default).
     from routes import inference as routes_inference

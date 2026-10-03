@@ -1,7 +1,5 @@
 
-"""
-Main FastAPI application for Unsloth UI Backend
-"""
+''
 
 import os
 import sys
@@ -16,7 +14,7 @@ from typing import Any, Optional
 os.environ["PYTHONWARNINGS"] = "ignore"
 
 # Pin GPU index ordering to PCI bus id before any torch import creates a CUDA context.
-# Otherwise torch/CUDA default to FASTEST_FIRST while nvidia-smi (and Unsloth's VRAM
+
 # probes) use PCI-bus order, so an index chosen from nvidia-smi can resolve to a different
 # card. setdefault so an override wins; full rationale in utils/hardware/hardware.py.
 os.environ.setdefault("CUDA_DEVICE_ORDER", "PCI_BUS_ID")
@@ -86,7 +84,7 @@ if sys.platform == "win32":
     # ── Windows AMD ROCm: make hipInfo.exe resolvable for subprocess probes ──
     # bitsandbytes' get_rocm_gpu_arch() runs `hipinfo.exe` via PATH at import time; the AMD
     # torch wheel ships it in the venv Scripts dir, which is on PATH only when the venv is
-    # activated -- Unsloth launches python directly. Without this every bitsandbytes import
+
     # logs a scary (harmless) "Could not detect ROCm GPU architecture" error. Gated on the
     # file existing, so non-AMD hosts are untouched; subprocess PATH ignores DLL dirs.
     _scripts_dir = os.path.dirname(sys.executable)
@@ -152,7 +150,7 @@ if sys.platform == "win32":
             lambda _r: "environment variable detected" not in _r.getMessage()
         )
 
-# ── WSL AMD Strix Halo (gfx1151): enable ROCDXG before any torch import ──────
+
 # In WSL the AMD GPU is reached via the ROCDXG bridge (librocdxg.so over /dev/dxg), which
 # HSA loads only when HSA_ENABLE_DXG_DETECTION=1 is set BEFORE torch touches the GPU. A
 # worker launched outside a login shell misses the installer's persisted env and falls
@@ -196,12 +194,12 @@ except ValueError as exc:
 import _platform_compat  # noqa: F401
 
 # Direct `uvicorn main:app` bypasses run.py, so re-export here too. Required BEFORE the
-# unsloth-zoo import below, whose LLAMA_CPP_DEFAULT_DIR binding is import-time.
+
 from utils.paths.storage_roots import studio_root as _studio_root
 
-# Same reason, same deadline: unsloth_zoo.compiler reads UNSLOTH_COMPILE_LOCATION
+
 # at import time, and without this a direct start falls back to a CWD-relative
-# unsloth_compiled_cache (on Windows that is the user profile).
+
 from utils.paths.storage_roots import setup_cache_env as _setup_cache_env
 
 try:
@@ -221,7 +219,7 @@ if _STUDIO_ROOT_RESOLVED != _LEGACY_STUDIO_ROOT:
     if not os.environ.get("UNSLOTH_STUDIO_HOME"):
         os.environ["UNSLOTH_STUDIO_HOME"] = str(_STUDIO_ROOT_RESOLVED)
 
-# The studio bundles unsloth_zoo; declare unsloth present (as `import spartan_agent` does) so its
+
 # lazy submodule imports and the DiffusionGemma runner don't trip the install guard.
 os.environ.setdefault("UNSLOTH_IS_PRESENT", "1")
 
@@ -232,7 +230,6 @@ import re as _re
 import shutil
 import warnings
 from contextlib import asynccontextmanager
-from importlib.metadata import PackageNotFoundError, version as package_version
 from urllib.parse import urlparse
 
 
@@ -240,11 +237,7 @@ _STUDIO_INSTALL_ID_RE = _re.compile(r"^[0-9a-f]{64}$")
 
 
 def _read_studio_install_id() -> str:
-    """Per-install opaque id at $STUDIO_HOME/share/studio_install_id.
-
-    Returns "" when absent or not a 64-char lowercase-hex token; then
-    /api/health emits "" and the launcher accepts any healthy backend.
-    Carries no install-path info (matters when Unsloth runs -H 0.0.0.0)."""
+    'Per-install opaque id at $STUDIO_HOME/share/studio_install_id.\n\n    Returns "" when absent or not a 64-char lowercase-hex token; then\n    /api/health emits "" and the launcher accepts any healthy backend.'
     try:
         token = (
             (_STUDIO_ROOT_RESOLVED / "share" / "studio_install_id")
@@ -305,6 +298,7 @@ from routes.prompts import router as prompts_router
 from routes.profile_stats import router as profile_stats_router
 from routes.memory import router as memory_router
 from routes.tasks import router as tasks_router
+from routes.work_runs import router as work_runs_router
 from auth import storage
 from auth.authentication import get_current_subject
 from utils.hardware import (
@@ -336,28 +330,8 @@ from utils.studio_version import get_studio_version
 from utils.api_errors import install_api_error_handlers
 
 
-def get_unsloth_version() -> str:
-    try:
-        return package_version("unsloth")
-    except PackageNotFoundError:
-        pass
-
-    # Both files: the literal moved to _version.py, and models/_utils.py now holds only a
-    # re-export, which this prefix scan does not match. Trying both keeps a half-updated
-    # tree reporting a real version instead of falling through to "dev".
-    root = _Path(__file__).resolve().parents[2] / "unsloth"
-    for version_file in (root / "_version.py", root / "models" / "_utils.py"):
-        try:
-            for line in version_file.read_text(encoding = "utf-8").splitlines():
-                if line.startswith("__version__ = "):
-                    return line.split("=", 1)[1].strip().strip('"').strip("'")
-        except (OSError, UnicodeDecodeError):
-            continue
-    return "1.0.0"
-
-
-UNSLOTH_VERSION = get_unsloth_version()
 STUDIO_VERSION = get_studio_version()
+UNSLOTH_VERSION = STUDIO_VERSION.removeprefix("v")
 
 
 def _load_desktop_owner() -> dict[str, str] | None:
@@ -508,7 +482,7 @@ def _post_warm_background_work(generation: Optional[int] = None) -> None:
         return
 
     # Apple Silicon with MLX missing => chat-only; reinstall mlx and re-detect so a dropped mlx
-    # self-heals. Opt out with UNSLOTH_DISABLE_MLX_AUTOREPAIR=1; after the warm, the probe imports MLX.
+
     try:
         from utils.mlx_repair import start_mlx_autorepair_if_needed
         if _post_warm_retired(generation):
@@ -632,7 +606,16 @@ async def lifespan(app: FastAPI):
         "lifespan startup completed in %.1fms",
         (_time.perf_counter() - _lifespan_started) * 1000,
     )
-    yield
+    from core.inference.task_scheduler import scheduler_loop
+    _automation_task = asyncio.create_task(scheduler_loop())
+    try:
+        yield
+    finally:
+        _automation_task.cancel()
+        try:
+            await _automation_task
+        except asyncio.CancelledError:
+            pass
 
     # Before any shutdown await: a warm finishing during one would still read the lifespan as current.
     _stop_post_warm_thread()
@@ -1229,14 +1212,39 @@ from utils.remote_access_settings import RemoteAccessStopResponseMiddleware  # n
 app.add_middleware(RemoteAccessStopResponseMiddleware)
 
 
-# ============ Register API Routes ============
+@app.exception_handler(Exception)
+async def unhandled_api_error(request: Request, exc: Exception):
+    """Keep server failures readable by the renderer, including outside CORS."""
+    from fastapi.responses import JSONResponse
+
+    logger.exception("Unhandled API failure", exc_info = exc)
+    headers = {}
+    origin = request.headers.get("origin")
+    if origin and (
+        origin in _cors_origins
+        or "*" in _cors_origins
+        or getattr(app.state, "cloudflare_url", None)
+    ):
+        headers = {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Vary": "Origin",
+        }
+    return JSONResponse(
+        status_code = 500,
+        content = {"detail": "El servicio de Sparta encontró un error interno. Reintenta la operación."},
+        headers = headers,
+    )
+
+
+
 
 app.include_router(auth_router, prefix = "/api/auth", tags = ["auth"])
 app.include_router(chat_history_router, prefix = "/api/chat", tags = ["chat"])
 app.include_router(project_files_router, prefix = "/api/chat", tags = ["project-files"])
 app.include_router(research_runs_router, prefix = "/api/chat/research-runs", tags = ["research-runs"])
 app.include_router(inference_router, prefix = "/api/inference", tags = ["inference"])
-# Unsloth-only inference endpoints (cancel, etc.) are not on the /v1 OpenAI-compat prefix.
+
 app.include_router(inference_studio_router, prefix = "/api/inference", tags = ["inference"])
 
 # OpenAI-compatible: mount the inference router at /v1 for external tools.
@@ -1252,6 +1260,7 @@ app.include_router(skills_router, prefix = "/api/skills", tags = ["skills"])
 app.include_router(prompts_router, prefix = "/api/prompts", tags = ["prompts"])
 app.include_router(memory_router, prefix = "/api/memory", tags = ["memory"])
 app.include_router(tasks_router, prefix = "/api/tasks", tags = ["tasks"])
+app.include_router(work_runs_router, prefix = "/api/work-runs", tags = ["work-runs"])
 app.include_router(profile_stats_router, prefix = "/api/profile", tags = ["profile"])
 app.include_router(picker_templates_router, prefix = "/api/picker", tags = ["picker"])
 app.include_router(youtube_router, prefix = "/api/youtube", tags = ["youtube"])
@@ -1260,7 +1269,7 @@ app.include_router(youtube_router, prefix = "/api/youtube", tags = ["youtube"])
 install_api_error_handlers(app)
 
 
-# ============ Health and System Endpoints ============
+
 
 # /api/health has a hard deadline: preflight/backend.rs probes it with a 2s timeout right
 # after TAURI_PORT is emitted, and a timeout is not retried -- it falls through to
@@ -1426,27 +1435,7 @@ def _superseded_by_mlx_repair(snapshot: Optional[tuple[bool, Optional[str]]]) ->
 
 
 def _torch_warm_in_progress() -> bool:
-    """True while the coordinated warm thread is still working through its stages.
-
-    A separate field from ``hardware_detecting`` on purpose, rather than widening that one.
-    Hardware detection is only ``_STAGES[0]``; inference_backend, transformers, and datasets
-    run after it, and those C-extension imports can hold the GIL
-    for seconds at a time. A launcher ending its startup grace on ``hardware_detecting``
-    alone ends it with the expensive half of the warm still ahead of it, which is the window
-    the grace exists for. But that marker also means "this hardware verdict is provisional,
-    re-read it", and config/hardware-verdict.ts keeps the UI provisional and polling while it
-    is set, so keeping it lit through datasets would hide Train for the whole warm over a
-    verdict that settled seconds in. Two meanings, two fields.
-
-    A snapshot read of module state, no lock and no wait, so /api/liveness stays cheap.
-
-    False whenever no warm thread is running, which is what keeps the deferred case working:
-    with UNSLOTH_STUDIO_DISABLE_TORCH_WARM=1 the warm never starts, and one retired mid-stage
-    by a shutdown never finishes. Neither will ever set ``finished``, so deriving this from
-    "not finished" would report warming forever and hold the launcher's startup grace open
-    until it expired on its own. Absence therefore covers both "warm is over" and "no warm is
-    coming", and the field needs no deferred companion of its own.
-    """
+    'True while the coordinated warm thread is still working through its stages.\n\n    A separate field from ``hardware_detecting`` on purpose, rather than widening that one.\n    Hardware detection is only ``_STAGES[0]``; inference_backend, transformers, and datasets\n    run after it, and those C-extension imports can hold the GIL\n    for seconds at a time. A launcher ending its startup grace on ``hardware_detecting``\n    alone ends it with the expensive half of the warm still ahead of it, which is the window\n    the grace exists for. But that marker also means "this hardware verdict is provisional,\n    re-read it", and config/hardware-verdict.ts keeps the UI provisional and polling while it\n    is set, so keeping it lit through datasets would hide Train for the whole warm over a\n    verdict that settled seconds in. Two meanings, two fields.\n\n    A snapshot read of module state, no lock and no wait, so /api/liveness stays cheap.\n\n    False whenever no warm thread is running, which is what keeps the deferred case working:\n    by a shutdown never finishes. Neither will ever set ``finished``, so deriving this from\n    "not finished" would report warming forever and hold the launcher\'s startup grace open\n    until it expired on its own. Absence therefore covers both "warm is over" and "no warm is\n    coming", and the field needs no deferred companion of its own.\n    '
     status = warm_status()
     return bool(status["started"] and not status["finished"] and status["alive"])
 
@@ -1608,7 +1597,7 @@ async def health_check(request: Request):
         authed["chat_only_reason"] = snapshot[1]
         # What specifically blocked that reason, when detection recorded one. Only the MLX
         # gate does today, and only because it is all-or-nothing: without it the greyed-out
-        # Train row can only say "run `unsloth studio update`", which is no help to someone
+
         # whose update has already run and left one package behind. From the snapshot, so it
         # cannot come from a different detection pass than the reason beside it.
         authed["chat_only_detail"] = snapshot[2]
@@ -1642,7 +1631,7 @@ def studio_install_source(_current_subject: str = Depends(get_current_subject)):
 
 @app.get("/api/studio/update-status")
 def studio_update_status(_current_subject: str = Depends(get_current_subject)):
-    """Return source-aware manual update status for browser-served Unsloth."""
+    ''
     return get_studio_update_status(UNSLOTH_VERSION)
 
 
@@ -1667,11 +1656,7 @@ def studio_download_transport_capabilities(
 
 @app.post("/api/shutdown")
 async def shutdown_server(request: Request, current_subject: str = Depends(get_current_subject)):
-    """Gracefully shut down the Unsloth Studio server.
-
-    Called by the frontend quit dialog so users can stop the server from the UI
-    without the CLI or killing the process manually.
-    """
+    '\n    Called by the frontend quit dialog so users can stop the server from the UI\n    without the CLI or killing the process manually.\n    '
 
     async def _delayed_shutdown():
         await asyncio.sleep(0.2)  # Let the HTTP response return first
@@ -1937,7 +1922,7 @@ def get_hardware_info(
     return body
 
 
-# ============ Serve Frontend (Optional) ============
+
 
 
 def _strip_crossorigin(html_bytes: bytes) -> bytes:

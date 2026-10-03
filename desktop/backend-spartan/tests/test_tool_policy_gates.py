@@ -61,8 +61,7 @@ class TestEffectiveEnableTools:
 
 
 class TestLauncherDefault:
-    """`unsloth studio [run]` installs a tools-on default (not an override), so a
-    request that never mentions tools gets them and one that says false does not."""
+    '    request that never mentions tools gets them and one that says false does not.'
 
     def test_omitted_falls_back_to_default(self):
         set_tool_policy_default(True)
@@ -167,9 +166,7 @@ class TestLauncherDefaultOnly:
 
 
 class TestSafetensorsGateHonorsStatedIntent:
-    """The safetensors path has no llama-server passthrough to fall back on, so
-    the launcher default must not withdraw tool_choice: "none" or take a client
-    catalog into Unsloth's own loop."""
+    'The safetensors path has no llama-server passthrough to fall back on, so\n    the launcher default must not withdraw tool_choice: "none" or take a client'
 
     def test_plain_chat_still_gets_the_default(self):
         set_tool_policy_default(True)

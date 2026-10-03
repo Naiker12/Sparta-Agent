@@ -13,7 +13,7 @@ let requestThread: string | null = null;
 
 export function getPendingWorkspace(): PendingWorkspace | null {
   try {
-    const value = JSON.parse(sessionStorage.getItem(key) ?? "null");
+    const value = JSON.parse(localStorage.getItem(key) ?? sessionStorage.getItem(key) ?? "null");
     return value &&
       typeof value.folder === "string" &&
       ["read", "write", "write_no_delete"].includes(value.access)
@@ -26,10 +26,13 @@ export function getPendingWorkspace(): PendingWorkspace | null {
 
 export function setPendingWorkspace(value: PendingWorkspace | null): void {
   if (value) {
-    sessionStorage.setItem(key, JSON.stringify(value));
+    localStorage.setItem(key, JSON.stringify(value));
+    sessionStorage.removeItem(key);
   } else {
     sessionStorage.removeItem(key);
+    localStorage.removeItem(key);
   }
+  window.dispatchEvent(new Event("sparta:workspace-changed"));
 }
 
 /** Both the composer and sender await the same durable binding operation. */

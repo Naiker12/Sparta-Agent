@@ -1,7 +1,4 @@
-# Model defaults for unsloth/Qwen2-VL-7B-Instruct
-# Based on Qwen2_VL_(7B)-Vision.ipynb 
-# Also applies to: unsloth/Qwen2-VL-7B-Instruct-unsloth-bnb-4bit, Qwen/Qwen2-VL-7B-Instruct, unsloth/Qwen2-VL-7B-Instruct-bnb-4bit
-# added inference parameters from unsloth notebook
+# Based on Qwen2_VL_(7B)-Vision.ipynb
 
 training:
   max_seq_length: 2048

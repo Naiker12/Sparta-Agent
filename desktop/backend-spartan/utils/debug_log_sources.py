@@ -246,7 +246,7 @@ def default_source_id() -> Optional[str]:
     # No live session: the newest file across every family, NOT any retained
     # server log. Preferring a stale server log opened the tab on a previous run
     # while the llama log holding the failure sat one entry down, which is the
-    # state after UNSLOTH_STUDIO_NO_FILE_LOG=1 or a failed log setup.
+
     return max(sources, key = lambda s: s.modified_at).id
 
 
@@ -255,13 +255,7 @@ def file_logging_disabled() -> bool:
 
 
 def source_is_frozen(source_id: Optional[str]) -> bool:
-    """Whether nothing will ever be appended to this source again.
-
-    UNSLOTH_STUDIO_NO_FILE_LOG only skips _setup_server_disk_logging in run.py.
-    The runners and the Tauri shell keep writing their own files, so treating
-    the setting as global labelled a live llama-server log an earlier session
-    that would not update, while it was still being appended to.
-    """
+    'Whether nothing will ever be appended to this source again.\n\n    The runners and the Tauri shell keep writing their own files, so treating\n    the setting as global labelled a live llama-server log an earlier session\n    that would not update, while it was still being appended to.\n    '
     if not file_logging_disabled():
         return False
     family = (source_id or "").partition(":")[0]

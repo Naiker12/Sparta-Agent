@@ -1,23 +1,5 @@
 
-"""whisper.cpp (GGML/GGUF) speech-to-text sidecar for Studio dictation.
-
-Runs the same curated Whisper checkpoints as the Transformers sidecar
-(stt_sidecar.py) through whisper.cpp's `whisper-server`, ~2.5x faster at
-identical quality on Apple Silicon and CPU because its Metal/CPU kernels run
-the weights in f16 where PyTorch MPS requires fp32.
-
-Owns a single `whisper-server` subprocess bound to 127.0.0.1 on an ephemeral
-port; the model loads on demand, stays warm between dictations, and unloads
-after the same keep-alive as the Transformers sidecar. Curated GGML checkpoints
-are single files from `unslothai/whisper-*-GGUF`, downloaded directly rather
-than through the Model Hub (whose variant planner only handles `.gguf` chat
-layouts).
-
-Binary discovery mirrors `_find_llama_server_binary`: env override, then managed
-Studio home, then PATH. With no binary the engine is unavailable and dictation
-falls back to the Transformers sidecar; `scripts/build_whisper_cpp.sh` installs
-the binary.
-"""
+"whisper.cpp (GGML/GGUF) speech-to-text sidecar for Studio dictation.\n\nRuns the same curated Whisper checkpoints as the Transformers sidecar\n(stt_sidecar.py) through whisper.cpp's `whisper-server`, ~2.5x faster at\nidentical quality on Apple Silicon and CPU because its Metal/CPU kernels run\nthe weights in f16 where PyTorch MPS requires fp32.\n\nOwns a single `whisper-server` subprocess bound to 127.0.0.1 on an ephemeral\nport; the model loads on demand, stays warm between dictations, and unloads\nafter the same keep-alive as the Transformers sidecar. Curated GGML checkpoints\nthan through the Model Hub (whose variant planner only handles `.gguf` chat\nlayouts).\n\nBinary discovery mirrors `_find_llama_server_binary`: env override, then managed\nStudio home, then PATH. With no binary the engine is unavailable and dictation\nfalls back to the Transformers sidecar; `scripts/build_whisper_cpp.sh` installs\nthe binary."
 
 from __future__ import annotations
 
@@ -113,11 +95,7 @@ def resolve_ggml_model_id(model: Optional[str]) -> str:
 
 
 def _managed_whisper_cpp_dir() -> Path:
-    """`<STUDIO_HOME>/whisper.cpp` in custom mode, else `~/.unsloth/whisper.cpp`.
-
-    Mirrors `managed_node_dir` / `_find_llama_server_binary` so managed runtimes
-    share one parent directory.
-    """
+    '\n    Mirrors `managed_node_dir` / `_find_llama_server_binary` so managed runtimes\n    share one parent directory.\n    '
     legacy = Path.home() / ".unsloth" / "whisper.cpp"
     try:
         from utils.paths.storage_roots import studio_root
@@ -142,14 +120,7 @@ def _managed_whisper_cpp_dir() -> Path:
 
 
 def find_whisper_server_binary() -> Optional[str]:
-    """Locate the whisper-server binary.
-
-    Search order:
-    1. WHISPER_SERVER_PATH environment variable (direct path to binary)
-    2. UNSLOTH_WHISPER_CPP_PATH env var (custom whisper.cpp install dir)
-    3. managed dir: <STUDIO_HOME or ~/.unsloth>/whisper.cpp/{,build/bin/}whisper-server
-    4. whisper-server on PATH
-    """
+    'Locate the whisper-server binary.\n\n    Search order:\n    1. WHISPER_SERVER_PATH environment variable (direct path to binary)\n    4. whisper-server on PATH\n    '
     binary_name = "whisper-server.exe" if sys.platform == "win32" else "whisper-server"
 
     def _layout_candidates(d: Path) -> list[Path]:
@@ -195,12 +166,7 @@ def _whisper_install_marker(binary: str) -> Optional[dict]:
 
 
 def slim_runtime_intact(binary: str) -> bool:
-    """True unless the marker says slim and the linked ggml runtime is missing
-    beside the server. New markers record the exact wired filenames
-    (linked_libraries), all of which must be present; legacy markers without the
-    field fall back to the per-OS core ggml name globs. A broken slim install
-    reads as engine-unavailable (reinstall via `unsloth studio update`), never a
-    crash at load."""
+    'True unless the marker says slim and the linked ggml runtime is missing\n    beside the server. New markers record the exact wired filenames\n    (linked_libraries), all of which must be present; legacy markers without the\n    field fall back to the per-OS core ggml name globs. A broken slim install\n    crash at load.'
     lookup = lookup_marker(binary)
     marker = lookup.marker
     if lookup.invalid or marker is None:
@@ -337,9 +303,9 @@ def ensure_engine_available() -> str:
     return binary
 
 
-# ---------------------------------------------------------------------------
+
 # whisper-server child-process environment
-# ---------------------------------------------------------------------------
+
 # Build the whisper-server env: prepend the binary dir (co-located libs win, and
 # a backstop where the loader ignores the rpath) and scrub secret-bearing vars the
 # binary never needs. On WSL2 ROCm the system HIP libs go first, since a bundle's
@@ -393,9 +359,9 @@ def _whisper_server_child_env(binary: str) -> dict[str, str]:
     return env
 
 
-# ---------------------------------------------------------------------------
+
 # Model file download (single files; deliberately outside the Model Hub flow)
-# ---------------------------------------------------------------------------
+
 
 
 def _cached_model_path(
@@ -687,9 +653,9 @@ def cancel_model_download() -> bool:
     return _download_state.cancel()
 
 
-# ---------------------------------------------------------------------------
+
 # WAV packaging
-# ---------------------------------------------------------------------------
+
 
 
 def _pcm_to_wav_bytes(decoded_audio) -> bytes:
@@ -707,9 +673,9 @@ def _pcm_to_wav_bytes(decoded_audio) -> bytes:
     return buf.getvalue()
 
 
-# ---------------------------------------------------------------------------
+
 # Sidecar
-# ---------------------------------------------------------------------------
+
 
 
 class GgmlSttSidecar:
@@ -771,7 +737,7 @@ class GgmlSttSidecar:
         process = self._process
         return process is not None and process.poll() is None
 
-    # -- idle unload ------------------------------------------------------
+
 
     def _cancel_idle_unload_locked(self) -> None:
         self._idle_generation += 1
@@ -796,7 +762,7 @@ class GgmlSttSidecar:
             logger.info("Unloading idle GGUF STT model %s", self._model_id)
             self._release_locked()
 
-    # -- process lifecycle -------------------------------------------------
+
 
     def _release_locked(self) -> None:
         self._cancel_idle_unload_locked()
@@ -1071,7 +1037,7 @@ class GgmlSttSidecar:
             return False
         return b"whisper" in body.lower()
 
-    # -- transcription ------------------------------------------------------
+
 
     def transcribe(
         self,

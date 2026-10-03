@@ -1,0 +1,50 @@
+---
+title: "Desarrollo local"
+description: "Prepara el repositorio, inicia el escritorio y trabaja en la landing con comprobaciones separadas."
+---
+
+## Requisitos
+
+El frontend declara Node.js 20.19 o posterior en la rama 20, o Node.js 22.12 o posterior. Utiliza una versión compatible y los lockfiles del repositorio. El motor Python se prepara mediante el ciclo de arranque del escritorio; no presupongas una instalación de modelos locales.
+
+## Inicia el escritorio
+
+```bash
+git clone https://github.com/Naiker12/Sparta-Agent.git
+cd Sparta-Agent
+npm ci
+npm --prefix desktop/frontend-spartan ci
+npm run dev
+```
+
+El script de desarrollo raíz prepara la integración de assistant-ui e inicia Vite. Comprueba los mensajes de arranque de Electron y del backend antes de diagnosticar un error de proveedor.
+
+## Trabaja en la landing y la documentación
+
+Desde la raíz:
+
+```bash
+npm --prefix landing ci
+npm --prefix landing run dev
+```
+
+La landing tiene su propia configuración Vite, dependencias y build. Los MDX se indexan para búsqueda y navegación. La demo comparte algunas primitivas de presentación del escritorio, sin conectar su runtime real de herramientas.
+
+## Ejecuta comprobaciones por superficie
+
+| Cambio | Comprobación inicial |
+| --- | --- |
+| Tipos de escritorio | `npm run typecheck` desde la raíz |
+| Comportamiento del frontend | `npm --prefix desktop/frontend-spartan test` |
+| Traducciones | `npm run i18n:check` |
+| MDX y enlaces | `npm --prefix landing run docs:check` |
+| Landing y documentación | `npm --prefix landing run build:gh` |
+| Distribución de escritorio | `npm run build`; incluye empaquetado y validaciones |
+
+El empaquetado tiene dependencias y efectos distintos de un build de la landing. Ejecuta las comprobaciones correspondientes al cambio; una compilación de documentación no prueba el motor de escritorio.
+
+## Antes de contribuir
+
+Describe el problema, el comportamiento resultante y las comprobaciones realizadas. Revisa el diff, conserva las modificaciones ajenas y actualiza documentación cuando cambien controles, rutas o contratos.
+
+Consulta [Estructura y mantenimiento](/docs/development/project-structure) y [Diagnóstico](/docs/guides/troubleshooting).

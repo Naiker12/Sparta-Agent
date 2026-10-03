@@ -494,7 +494,7 @@ def convert_to_vlm_format(
             logger.info(f"⚠️ Failed to build HF repo image lookup: {e}")
             _image_lookup = None
 
-    # ── URL probe: 200 parallel samples to estimate speed + failure rate ──
+
     PROBE_SIZE = 200
     MAX_FAIL_RATE = 0.3
 
@@ -571,7 +571,7 @@ def convert_to_vlm_format(
         logger.info(f"⏱️ Estimated time for {total:,} samples: ~{eta_str}")
         _notify(info_msg)
 
-    # ── Full conversion with progress ──
+
     from tqdm import tqdm
 
     logger.info(f"🔄 Converting {total} samples to VLM format...")
@@ -741,7 +741,7 @@ def convert_sharegpt_with_images_to_vlm_format(
         if progress_callback:
             progress_callback(status_message = msg)
 
-    # ── Resolve image loading (same 3-tier as convert_to_vlm_format) ──
+
     total = len(dataset)
     first_image = next(iter(dataset))[image_column]
 
@@ -844,7 +844,7 @@ def convert_sharegpt_with_images_to_vlm_format(
 
         return {"messages": new_messages}
 
-    # ── Full conversion with progress ──
+
     logger.info(f"🔄 Converting {total} samples from ShareGPT+image format...")
     converted_list = []
     failed_count = 0

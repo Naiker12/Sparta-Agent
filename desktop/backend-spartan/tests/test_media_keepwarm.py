@@ -137,8 +137,8 @@ def test_the_media_ttl_unloads_media_without_touching_chat(store):
 
 
 def test_media_ttl_env_behaves_like_the_chat_env(store, monkeypatch):
-    # UNSLOTH_MEDIA_IDLE_TTL stands in the same relationship to the media setting that
-    # UNSLOTH_MODEL_IDLE_TTL has to the chat one: the startup default while nothing is
+
+
     # stored, floored the same way, and outranked by an explicit value.
     monkeypatch.setenv(settings.MEDIA_IDLE_TTL_ENV_VAR, "900")
     assert settings.get_media_auto_unload_idle_seconds() == 900

@@ -1,10 +1,5 @@
 
-"""Tests for the Unsloth shim over the shared unsloth_zoo Xet -> HTTP fallback.
-
-The transport-policy matrix is tested once in unsloth_zoo; here we assert only the
-Unsloth seam: re-exporting the shared API and injecting the marker-aware
-prepare_cache_for_transport on the HTTP retry. CPU-only, no network, no real subprocess.
-"""
+'\nprepare_cache_for_transport on the HTTP retry. CPU-only, no network, no real subprocess.'
 
 from __future__ import annotations
 
@@ -33,7 +28,7 @@ import huggingface_hub
 try:
     import unsloth_zoo.hf_xet_fallback as _shared_mod
     shared = _shared_mod
-except Exception:  # noqa: BLE001 - still collect degraded-path tests when unsloth_zoo is unavailable
+except Exception:
     shared = None
 
 import utils.hf_xet_fallback as xf
@@ -93,8 +88,7 @@ def test_child_should_disable_xet_truth_table():
 
 
 def test_shim_injects_studio_prepare_on_http_retry(monkeypatch):
-    """A Xet stall retries over HTTP and the shim runs Unsloth's marker-aware
-    ``prepare_cache_for_transport(..., 'http')`` before the retry."""
+    "    ``prepare_cache_for_transport(..., 'http')`` before the retry."
     _requires_shared()
     for var in ("UNSLOTH_DISABLE_XET", "UNSLOTH_STABLE_DOWNLOADS", "HF_HUB_DISABLE_XET"):
         monkeypatch.delenv(var, raising = False)
@@ -148,7 +142,7 @@ def test_shim_injects_studio_prepare_on_http_retry(monkeypatch):
 
 
 def test_shim_snapshot_injects_studio_prepare(monkeypatch):
-    """The snapshot wrapper forwards Unsloth's marker-aware prep, like the file wrapper."""
+    ''
     captured = {}
 
     def fake_snapshot(repo_id, **kwargs):
@@ -176,8 +170,7 @@ def test_shim_snapshot_injects_studio_prepare(monkeypatch):
 
 
 def test_degrades_gracefully_without_shared_helper(monkeypatch):
-    """On an older unsloth_zoo lacking the shared helper, the shim still imports (Unsloth
-    boots) and exposes stub API doing plain HF downloads with the watchdog disabled."""
+    '    boots) and exposes stub API doing plain HF downloads with the watchdog disabled.'
     import importlib
 
     class _BlockShared:
@@ -253,9 +246,7 @@ def test_degrades_gracefully_without_shared_helper(monkeypatch):
 
 
 def test_degrades_when_unsloth_zoo_entirely_absent():
-    """When unsloth_zoo is absent entirely, the import raises
-    ModuleNotFoundError(name='unsloth_zoo') (top-level package). Guard that the shim still
-    degrades and does not re-raise, breaking every Unsloth import that pulls it in."""
+    ''
     import importlib
 
     class _BlockZoo:
@@ -265,7 +256,7 @@ def test_degrades_when_unsloth_zoo_entirely_absent():
             path = None,
             target = None,
         ):
-            # Whole package absent, so ModuleNotFoundError.name is the top-level 'unsloth_zoo'.
+
             if name == "unsloth_zoo" or name.startswith("unsloth_zoo."):
                 raise ModuleNotFoundError("No module named 'unsloth_zoo'", name = "unsloth_zoo")
             return None
@@ -296,8 +287,7 @@ def test_degrades_when_unsloth_zoo_entirely_absent():
 
 
 def test_degrades_when_shared_helper_import_raises_importerror():
-    """unsloth_zoo can be installed yet fail to import when torch is missing (llama.cpp/GGUF-only
-    Unsloth), raising ImportError not ModuleNotFoundError. The shim must degrade for that too."""
+    ''
     import importlib
 
     class _BlockWithImportError:
@@ -335,12 +325,7 @@ def test_degrades_when_shared_helper_import_raises_importerror():
 
 
 def test_no_light_gpu_init_retry_on_an_accelerator_host(monkeypatch):
-    """The UNSLOTH_ZOO_DISABLE_GPU_INIT retry makes unsloth_zoo take its MLX/CPU path, which injects
-    triton and bitsandbytes STUBS into sys.modules for the whole process. On a GPU host whose
-    unsloth_zoo import failed for an unrelated reason (a bitsandbytes/CUDA mismatch, say), those
-    stubs raise "called on Apple Silicon / MLX" from the first CUDA-only kernel a later GGUF or
-    compiled diffusion generation touches, so a healthy GPU starts 500ing. The shim must degrade
-    instead of retrying there."""
+    '    triton and bitsandbytes STUBS into sys.modules for the whole process. On a GPU host whose\n    stubs raise "called on Apple Silicon / MLX" from the first CUDA-only kernel a later GGUF or\n    compiled diffusion generation touches, so a healthy GPU starts 500ing. The shim must degrade\n    instead of retrying there.'
     import importlib
     import os
 
@@ -385,10 +370,7 @@ def test_no_light_gpu_init_retry_on_an_accelerator_host(monkeypatch):
 
 
 def test_retries_under_light_gpu_init_when_import_fails(monkeypatch):
-    """GPU detection in unsloth_zoo's __init__ raises NotImplementedError on a GPU-less host. The shim
-    retries under UNSLOTH_ZOO_DISABLE_GPU_INIT=1, restores the env, and degrades if the retry fails.
-    The backend loads lazily (first use of a heavy helper), so this triggers the load explicitly
-    before asserting the retry/degrade behavior."""
+    '    The backend loads lazily (first use of a heavy helper), so this triggers the load explicitly\n    before asserting the retry/degrade behavior.'
     import importlib
     import os
 
@@ -402,7 +384,7 @@ def test_retries_under_light_gpu_init_when_import_fails(monkeypatch):
             path = None,
             target = None,
         ):
-            # Crash is in unsloth_zoo's __init__, so intercept "unsloth_zoo" itself (the parent).
+
             if name == "unsloth_zoo":
                 # Record the env each attempt sees; raise the no-GPU error both times so the shim
                 # degrades.
@@ -424,13 +406,13 @@ def test_retries_under_light_gpu_init_when_import_fails(monkeypatch):
         degraded = importlib.import_module("utils.hf_xet_fallback")
         # The retry only applies to a host with no accelerator (see _gpu_present); pin that on the freshly imported module.
         monkeypatch.setattr(degraded, "_gpu_present", lambda: False)
-        # Import is light (lazy backend); unsloth_zoo not loaded yet.
+
         assert seen_env == [], seen_env
         # First use of a heavy helper triggers the load (attempt without the light env, then a retry
         # with it set); accessing DownloadStallError drives it via __getattr__.
         stall_error = degraded.DownloadStallError
         assert seen_env == [None, "1"], seen_env
-        # Both attempts raised -> Unsloth still boots in degraded mode.
+
         assert issubclass(stall_error, RuntimeError)
         # The env override must not leak past the load.
         assert os.environ.get("UNSLOTH_ZOO_DISABLE_GPU_INIT") is None
@@ -443,9 +425,7 @@ def test_retries_under_light_gpu_init_when_import_fails(monkeypatch):
 
 
 def test_a_worker_spawned_during_the_gpu_init_retry_does_not_inherit_the_override(monkeypatch):
-    """The shim sets UNSLOTH_ZOO_DISABLE_GPU_INIT=1 process-wide while it retries an optional
-    import, and unsloth_zoo answers that flag with STUB triton and bitsandbytes, so a child that
-    inherited it would run for life against no-ops and never clear it."""
+    '    inherited it would run for life against no-ops and never clear it.'
     import importlib
     import os
 
@@ -498,11 +478,7 @@ def test_a_worker_spawned_during_the_gpu_init_retry_does_not_inherit_the_overrid
 
 
 def test_a_spawn_cannot_overlap_the_loader_env_override_window():
-    """multiprocessing spawn copies the parent's LIVE os.environ and takes no env argument, so the
-    only way to keep the shim's transient UNSLOTH_ZOO_DISABLE_GPU_INIT out of a worker is that a
-    spawn cannot start while a loader holds it; a child that inherits it silently trains against
-    unsloth_zoo's stub triton and bitsandbytes. Structural on purpose: it asserts the two share one
-    lock rather than trying to hit a microsecond window by timing."""
+    "multiprocessing spawn copies the parent's LIVE os.environ and takes no env argument, so the\n    spawn cannot start while a loader holds it; a child that inherits it silently trains against\n    lock rather than trying to hit a microsecond window by timing."
     import threading
 
     from utils.hf_cache_settings import child_environment_for_spawn
@@ -571,11 +547,7 @@ def test_an_operator_set_gpu_init_override_still_reaches_the_child(monkeypatch):
 
 
 def test_importing_child_should_disable_xet_stays_light(monkeypatch):
-    """Regression guard for the stale-transformers-sidecar bug: importing the shim (and
-    ``child_should_disable_xet``) must NOT pull in ``transformers``/``unsloth_zoo``. The worker calls
-    this at startup to decide the Xet env flip BEFORE activating the sidecar; an eager import here
-    would cache the default transformers 4.57.x in sys.modules, defeating the sidecar sys.path prepend
-    and breaking 5.x models (Qwen3.5/GLM/gemma-4)."""
+    'Regression guard for the stale-transformers-sidecar bug: importing the shim (and\n    this at startup to decide the Xet env flip BEFORE activating the sidecar; an eager import here\n    would cache the default transformers 4.57.x in sys.modules, defeating the sidecar sys.path prepend\n    and breaking 5.x models (Qwen3.5/GLM/gemma-4).'
     import importlib
 
     for name in [

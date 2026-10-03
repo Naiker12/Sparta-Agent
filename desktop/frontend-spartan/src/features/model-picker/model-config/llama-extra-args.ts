@@ -604,7 +604,7 @@ export function extraArgFlags(tokens: readonly string[]): string[] {
   return [...seen];
 }
 
-// --- diagnostics ------------------------------------------------------------
+
 // Kept in this file rather than beside it: the node test harness resolves value
 // imports at runtime with no bundler, so a tested helper importing a sibling by
 // extensionless path cannot load. Every other tested module here is self-contained

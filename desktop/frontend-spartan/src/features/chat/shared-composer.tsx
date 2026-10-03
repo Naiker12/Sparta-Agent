@@ -116,9 +116,9 @@ import type { ModelLifecycleLease } from "./utils/model-lifecycle-gate";
 import { cancelPreStreamRunReservations } from "./utils/pre-stream-run-reservation";
 import { requestLocalPromptQueueStop } from "./utils/prompt-queue-boundary";
 
-// ---------------------------------------------------------------------------
+
 // Imports desde submódulos de shared-composer/
-// ---------------------------------------------------------------------------
+
 import {
   type CompareHandle,
   type CompareHandles,
@@ -155,11 +155,11 @@ import { SharedComposerToolsMenu } from "./shared-composer/shared-composer-tools
 import { useCompareAttachments } from "./shared-composer/use-compare-attachments";
 import { useComparePromptQueue } from "./shared-composer/use-compare-prompt-queue";
 
-// ---------------------------------------------------------------------------
+
 // SharedComposer — orquestador principal
 // (useDictation, PendingImageThumb, PillGlyph, reasoning labels
 //  y compare-handle types se importan desde ./shared-composer/)
-// ---------------------------------------------------------------------------
+
 
 export function SharedComposer({
   handlesRef,
@@ -1393,6 +1393,8 @@ export function SharedComposer({
     !isDictating;
 
   return (
+    <div className="relative w-full">
+      {!isDictating && <ThreadWorkspaceChip isRunning={busy} />}
     <div
       className="chat-composer-surface"
       onDragOver={(e) => {
@@ -1546,7 +1548,7 @@ export function SharedComposer({
             onOpenChange={setNewProjectOpen}
           />
           {/* Same + menu as single-chat (ComposerToolsMenu), wired to the
-              compare composer's own file/audio inputs and tools. */}
+            compare composer's own file/audio inputs and tools. */}
           <SharedComposerToolsMenu
             onOpenPlusMenu={() => void refreshRecentPrompts()}
             onSelectImageFiles={() => fileInputRef.current?.click()}
@@ -1599,11 +1601,6 @@ export function SharedComposer({
             </PillGlyph>
             <span>{t("chat.composer.compareChat")}</span>
           </button>
-          {/* Workspace context and its permission level belong together: the
-              folder establishes scope, while this control establishes what the
-              agent can do inside it. Keeping them adjacent frees the primary
-              tool row without changing either control's behavior. */}
-          <ThreadWorkspaceChip />
           <PermissionModeComposerPill side="top" />
           <button
             type="button"
@@ -1690,7 +1687,9 @@ export function SharedComposer({
                 webFetchToolsEnabled && !webFetchDisabled ? "true" : "false"
               }
               aria-label={
-                webFetchToolsEnabled ? "Disable URL fetch" : "Enable URL fetch"
+                webFetchToolsEnabled
+                  ? "Disable URL fetch"
+                  : "Enable URL fetch"
               }
             >
               <PillGlyph>
@@ -1721,7 +1720,7 @@ export function SharedComposer({
           {mcpEnabledForChat ? <McpComposerButton side="top" /> : null}
         </div>
         {/* mr-0.5 matches the send button inset from the edge in normal chat;
-            gap-1.5 matches its control spacing. */}
+          gap-1.5 matches its control spacing. */}
         <div className="ml-auto mr-0.5 flex items-center gap-1.5">
           {showReasoningControl ? (
             isEffort || supportsPreserveThinking ? (
@@ -1993,6 +1992,7 @@ export function SharedComposer({
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 }

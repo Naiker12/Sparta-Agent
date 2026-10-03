@@ -1,12 +1,5 @@
 
-"""The MLX gate has to say what it is unhappy about.
-
-`mlx_unavailable` is a single verdict covering three packages and four runtime
-imports, and the greyed-out Train row could only answer it with "run `unsloth
-studio update`". That is a dead end for the usual cause: an update that ran, and
-a resolver backtrack that left one package missing or too old for the pinned
-transformers. These cover the blocker list that message is built from.
-"""
+'The MLX gate has to say what it is unhappy about.\n\n`mlx_unavailable` is a single verdict covering three packages and four runtime\nstudio update`". That is a dead end for the usual cause: an update that ran, and\na resolver backtrack that left one package missing or too old for the pinned\ntransformers. These cover the blocker list that message is built from.'
 
 from __future__ import annotations
 

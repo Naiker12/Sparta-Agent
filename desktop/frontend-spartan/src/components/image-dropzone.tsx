@@ -74,12 +74,14 @@ export function ImageDropzone({
       const claimed = selection.current;
       const reader = new FileReader();
       reader.onload = () => {
-        if (claimed !== selection.current) {
+        if (!mounted.current || claimed !== selection.current) {
           return;
         }
         onChange(typeof reader.result === "string" ? reader.result : null);
       };
-      reader.onerror = () => toast.error("Could not read the image");
+      reader.onerror = () => {
+        if (mounted.current && claimed === selection.current) toast.error("Could not read the image");
+      };
       reader.readAsDataURL(file);
     },
     [onChange],
@@ -111,6 +113,7 @@ export function ImageDropzone({
         }
         onChange(`data:${file.mimeType};base64,${file.base64}`);
       } catch (error) {
+        if (!mounted.current || claimed !== selection.current) return;
         toast.error("Could not read the image", {
           description: error instanceof Error ? error.message : String(error),
         });

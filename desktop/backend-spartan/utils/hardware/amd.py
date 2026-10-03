@@ -84,13 +84,7 @@ def _hip_sdk_present() -> bool:
 
 
 def _amd_smi_allowed() -> bool:
-    """Whether it is safe to spawn amd-smi here.
-
-    On Windows without a working HIP runtime, amd-smi elevates a child at
-    runtime -- popping a UAC/DiskPart prompt that RunAsInvoker can't suppress
-    (its manifest is asInvoker). So only call it on Windows with a HIP SDK
-    present or UNSLOTH_ENABLE_AMD_SMI=1. Linux amd-smi never elevates.
-    """
+    "Whether it is safe to spawn amd-smi here.\n\n    On Windows without a working HIP runtime, amd-smi elevates a child at\n    runtime -- popping a UAC/DiskPart prompt that RunAsInvoker can't suppress\n    (its manifest is asInvoker). So only call it on Windows with a HIP SDK\n    "
     if platform.system() != "Windows":
         return True
     flag = os.environ.get("UNSLOTH_ENABLE_AMD_SMI", "").strip().lower()
@@ -120,7 +114,7 @@ def _run_amd_smi(
         # Permanently skip amd-smi on Windows w/o a HIP SDK: every call would
         # pop a UAC/DiskPart prompt (see _amd_smi_allowed). VRAM polling is then
         # unavailable, but that beats the prompt. Opt back in with
-        # UNSLOTH_ENABLE_AMD_SMI=1.
+
         if not _amd_smi_disabled:
             logger.info(
                 "amd-smi disabled on Windows (no HIP SDK detected) to avoid a "
@@ -133,7 +127,7 @@ def _run_amd_smi(
         # amd-smi does not exist on Windows (neither Adrenalin nor the HIP SDK
         # ship a CLI) and can be absent on minimal Linux installs. Disable the
         # poller in one step instead of burning the 3-strike circuit breaker
-        # on guaranteed FileNotFoundError spawns. Unsloth's VRAM display falls
+
         # back to torch mem_get_info.
         if not _amd_smi_disabled:
             logger.info(

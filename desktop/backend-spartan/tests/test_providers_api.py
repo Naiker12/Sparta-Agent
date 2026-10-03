@@ -1,25 +1,5 @@
 
-"""
-Integration tests for the external providers API.
-
-Requires a running Unsloth Studio server. Configure via env vars:
-
-    export STUDIO_TEST_URL="http://localhost:8888"   # default
-    export STUDIO_TEST_USER="unsloth"                # default
-    export STUDIO_TEST_PASSWORD="..."                # required — see .bootstrap_password
-
-    # Provider API keys — tests skip when their key is unset
-    export OPENAI_API_KEY="sk-..."
-    export MISTRAL_API_KEY="..."
-    export GOOGLE_API_KEY="..."
-    export TOGETHER_API_KEY="..."
-    export FIREWORKS_API_KEY="..."
-    export PERPLEXITY_API_KEY="..."
-
-Run:
-    cd studio/spartan_backend
-    pytest tests/test_providers_api.py -v -s
-"""
+'\nIntegration tests for the external providers API.\n\n\n    export STUDIO_TEST_URL="http://localhost:8888"   # default\n    export STUDIO_TEST_PASSWORD="..."                # required — see .bootstrap_password\n\n    # Provider API keys — tests skip when their key is unset\n    export OPENAI_API_KEY="sk-..."\n    export MISTRAL_API_KEY="..."\n    export GOOGLE_API_KEY="..."\n    export TOGETHER_API_KEY="..."\n    export FIREWORKS_API_KEY="..."\n    export PERPLEXITY_API_KEY="..."\n\nRun:\n    cd studio/spartan_backend\n    pytest tests/test_providers_api.py -v -s'
 
 import base64
 import json
@@ -36,7 +16,7 @@ BASE_URL = os.getenv("STUDIO_TEST_URL", "http://localhost:8000")
 USERNAME = os.getenv("STUDIO_TEST_USER", "unsloth")
 PASSWORD = os.getenv("STUDIO_TEST_PASSWORD", "")
 
-# Skip the whole module when no live Unsloth server / bootstrap password is
+
 # available (e.g. on CI) so pytest discovery does not error out.
 pytestmark = pytest.mark.skipif(
     not PASSWORD,

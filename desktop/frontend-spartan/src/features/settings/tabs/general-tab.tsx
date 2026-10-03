@@ -29,8 +29,8 @@ import { KEYBOARD_SHORTCUTS_STORAGE_KEY } from "../stores/keyboard-shortcuts-sto
 import { SETTINGS_PANEL_PREFS_STORAGE_KEY } from "../stores/settings-panel-prefs-store";
 
 // Keys cleared by "Reset all local preferences". NEVER include auth/session keys here -- that
-// would log the user out (unsloth_auth_token, unsloth_auth_refresh_token, and
-// unsloth_auth_must_change_password are excluded).
+
+
 const PREFS_KEYS: string[] = [
   // Appearance
   "theme",

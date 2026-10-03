@@ -383,7 +383,7 @@ function useExampleModelName(): string | null {
   const [catalog, setCatalog] = useState<OpenAIModel[] | null>(null);
   // A downloaded but unloaded model is only runnable when switching is on.
   const [autoSwitch, setAutoSwitch] = useState(false);
-  // Idle-unload on its own (UNSLOTH_MODEL_IDLE_TTL, switching off) reloads exactly
+
   // what it freed: the stored checkpoint only, never an arbitrary catalog entry.
   const [idleReload, setIdleReload] = useState(false);
   const usableCheckpoint =
@@ -589,7 +589,7 @@ export function UsageExamples({ apiKey }: { apiKey?: string | null }) {
     if (!localAgentDetection) {
       setDetectedAgents([]);
       // A previously auto-picked agent was only ever verified against the
-      // Unsloth backend's PATH, which is meaningless now that this panel no
+
       // longer targets a loopback base -- don't leave it selected, but
       // never touch a choice the user made by hand.
       if (!agentPickedByUserRef.current) {

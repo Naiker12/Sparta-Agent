@@ -1,7 +1,5 @@
 
-"""Discovery decides what the log viewer is allowed to open, so it is also the
-whole path-traversal defence. The conftest _isolate_studio_home fixture already
-points UNSLOTH_STUDIO_HOME at a tmp dir."""
+'Discovery decides what the log viewer is allowed to open, so it is also the\nwhole path-traversal defence. The conftest _isolate_studio_home fixture already'
 
 from __future__ import annotations
 
@@ -95,8 +93,7 @@ def test_a_missing_family_directory_is_not_an_error():
 
 
 def test_another_installations_logs_are_not_offered(monkeypatch, tmp_path):
-    """With UNSLOTH_STUDIO_HOME set, the runners write under it, so the legacy
-    ~/.unsloth/studio belongs to a different install and must stay invisible."""
+    ''
     legacy = tmp_path / "legacy"
     (legacy / ".unsloth" / "studio" / "logs" / "diffusion-server").mkdir(parents = True)
     (

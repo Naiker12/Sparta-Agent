@@ -52,7 +52,7 @@ def test_moe_total_params_win_over_active_params(model_id):
     [
         "unsloth/Qwen3.5-4B-GGUF",
         "unsloth/Qwen3.5-0.8B-GGUF",
-        # 9B is a small-tier model: unsloth ships it with reasoning off by default.
+
         "unsloth/Qwen3.5-9B-GGUF",
         # Directory identifiers: auto-switch passes a snapshot dir, scan folders a quant subdir.
         "/models/Qwen3.5-4B-GGUF/UD-Q4_K_XL",

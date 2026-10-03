@@ -1068,7 +1068,7 @@ def test_update_openai_auto_switch_writes_both_keys_in_one_transaction(monkeypat
 
 
 def test_settings_report_idle_unload_active_when_env_backed(monkeypatch):
-    # Codex P2: with UNSLOTH_MODEL_IDLE_TTL driving idle-unload while the toggle is
+
     # off, the settings response must report idle_unload_active so the UI shows the
     # feature as active via env rather than "needs enable".
     import routes.settings as settings_route
@@ -1119,7 +1119,7 @@ def test_v1_models_retrieve_is_case_insensitive(monkeypatch):
 
 def test_index_excludes_hidden_models(tmp_path, monkeypatch):
     # The llama.cpp validation probe and RAG embedding weights are hidden from
-    # Unsloth's pickers; they must never become auto-switch targets.
+
     from types import SimpleNamespace
     import routes.models as models_route
 
@@ -2070,7 +2070,7 @@ def test_manual_unload_interrupts_even_while_inference_active(monkeypatch):
 
 
 def test_auto_switch_waits_when_unsloth_stream_active(monkeypatch):
-    # The GGUF slot is empty but an Unsloth model is streaming (counted in-flight).
+
     # The replacement waits for it just as it does for a GGUF generation.
     from core.inference import llama_keepwarm as kw
 
@@ -2083,7 +2083,7 @@ def test_auto_switch_waits_when_unsloth_stream_active(monkeypatch):
         backend = backend,
         recorder = rec,
     )
-    monkeypatch.setattr(kw, "_inflight", 2)  # an Unsloth stream + this request
+    monkeypatch.setattr(kw, "_inflight", 2)
     monkeypatch.setattr(kw, "_pending", 0)
 
     async def _drive():
@@ -2189,7 +2189,7 @@ def test_ui_training_not_blocked_by_active_inference(monkeypatch):
     assert resp.status == "error" and "already" in (resp.error or "").lower()
 
 
-# ── UNSLOTH_MODEL_IDLE_TTL env override (borrowed from PR 6517) ──
+
 
 
 def test_env_idle_ttl_standalone_when_no_stored_value(monkeypatch):
@@ -2227,7 +2227,7 @@ def test_env_idle_ttl_invalid_is_ignored(monkeypatch):
 
 
 def test_env_idle_standalone_reloads_freed_model_with_auto_switch_off(monkeypatch):
-    # C3: a standalone UNSLOTH_MODEL_IDLE_TTL (auto-switch OFF) freed the model on
+
     # idle; the next request must restore exactly what was freed even though the
     # resolver never runs while auto-switch is off.
     from core.inference import llama_keepwarm as kw
@@ -2273,9 +2273,9 @@ def test_no_stash_reload_when_idle_off_and_auto_switch_off(monkeypatch):
 
 
 def test_stash_reload_skipped_while_unsloth_model_active(monkeypatch):
-    # An Unsloth/Transformers model loaded after an idle-unload leaves the GGUF slot
+
     # empty but is the live model; an unknown /v1 name must NOT resurrect the stale
-    # GGUF stash (that reload would tear the active Unsloth model down).
+
     from types import SimpleNamespace
     from core.inference import llama_keepwarm as kw
 
@@ -2284,14 +2284,14 @@ def test_stash_reload_skipped_while_unsloth_model_active(monkeypatch):
     _wire(monkeypatch, enabled = True, resolves_to = None, backend = backend, recorder = rec)
     monkeypatch.setattr(kw, "_inflight", 0)
     monkeypatch.setattr(kw, "_last_unloaded_model", ("/cache/snap/A", "Q4_K_M", "org/A-GGUF"))
-    # An Unsloth model is the live backend.
+
     monkeypatch.setattr(
         inference_route,
         "get_inference_backend",
         lambda: SimpleNamespace(active_model_name = "unsloth/Qwen3-8B"),
     )
     _run_hook("gpt-4o-mini")
-    assert rec.calls == []  # stale GGUF not reloaded over the active Unsloth model
+    assert rec.calls == []
 
 
 def test_is_abs_path_id_distinguishes_path_from_repo_id():
@@ -3748,7 +3748,7 @@ _PASSTHROUGH_PLAIN = [{"role": "user", "content": "hi"}]
 @pytest.mark.parametrize(
     ("cli_policy", "messages", "fields", "priced_tools"),
     [
-        # The reported shape: `unsloth run --enable-tools` sets the process policy without asking
+
         # for the tool loop, so tool history still goes to llama-server verbatim, bare.
         pytest.param(
             True,
@@ -4219,11 +4219,7 @@ def test_chat_count_tokens_still_counts_without_audio(monkeypatch):
 
 
 def test_chat_count_tokens_refuses_an_empty_prompt(monkeypatch):
-    """#8882: an empty conversation renders the generation marker alone.
-
-    unsloth/Phi-4-mini-instruct-GGUF Q4_K_M renders "<|assistant|>" for an empty message list, one
-    token, and the header reported it as usage on a chat nobody had started.
-    """
+    '#8882: an empty conversation renders the generation marker alone.\n\n    token, and the header reported it as usage on a chat nobody had started.\n    '
     switched, counted = _count_tokens_backend(monkeypatch, count = 1)
     with pytest.raises(HTTPException) as excinfo:
         asyncio.run(inference_route.chat_count_tokens(_count_request([]), "tester"))
@@ -4705,7 +4701,7 @@ def test_unload_route_clears_reload_stash(monkeypatch):
 
 
 def test_non_gguf_load_clears_reload_stash():
-    # A non-GGUF (Transformers/Unsloth) load must clear the stash like the GGUF
+
     # branch, so it never lingers until the idle poll (or forever, idle-unload off).
     import inspect
 

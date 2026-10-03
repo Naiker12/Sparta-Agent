@@ -120,15 +120,15 @@ _HIDDEN_BLOCK = "#"
 _SAFE_VERSION_PATTERN = re.compile(r"^[0-9A-Za-z][0-9A-Za-z.!+-]{0,63}$")
 
 # Sections GitHub or the release workflow generates. Matched on the normalised
-# title, so `## What's Changed in Unsloth-Zoo` and a curly apostrophe still
+
 # match. Narrow rather than a substring sweep: "What changed in Gemma 4" is an
 # announcement one apostrophe away.
 _GENERATED_TITLES = frozenset({"what's changed", "whats changed", "new contributors"})
 _GENERATED_PREFIXES = ("what's changed in ", "whats changed in ")
 _GENERATED_SUFFIXES = ("zoo changes", "notebooks changes", "changelog")
 # The install block, worded differently in almost every release ("Updating /
-# installing Unsloth", "To update Studio", "Update Unsloth via `pip install`").
-# Naming Unsloth or Studio separates those from "Updating models is now 2x
+
+
 # faster", which is a change and not instructions.
 _UPGRADE_PREFIXES = ("update", "updating", "to update", "how to update")
 _UPGRADE_SUBJECTS = ("unsloth", "studio")

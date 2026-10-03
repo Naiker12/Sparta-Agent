@@ -1,7 +1,4 @@
-# Model defaults for unsloth/Pixtral-12B-2409
 # Based on Pixtral_(12B)-Vision.ipynb
-# Also applies to: unsloth/Pixtral-12B-2409-unsloth-bnb-4bit, mistralai/Pixtral-12B-2409, unsloth/Pixtral-12B-2409-bnb-4bit
-# added inference parameters from unsloth notebook
 
 training:
   max_seq_length: 2048

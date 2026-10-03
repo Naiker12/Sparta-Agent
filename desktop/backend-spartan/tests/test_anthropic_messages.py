@@ -1451,7 +1451,7 @@ class TestNormalizeAnthropicOpenAIImages:
 
 
 # =====================================================================
-# Unsloth-tool alias detection (/v1/messages tool routing)
+
 # =====================================================================
 
 
@@ -1469,7 +1469,7 @@ class TestAnthropicRequestedStudioTools:
 
     def test_client_tool_named_python_is_not_misclassified(self):
         # input_schema is the client-tool discriminator; its presence must
-        # prevent the name from being treated as an Unsloth alias.
+
         tools = [
             {
                 "name": "python",
@@ -1948,9 +1948,9 @@ class TestAnthropicMessagesToolRouting:
         assert "name" in exc.value.detail
 
     def test_alias_named_client_tool_without_schema_rejected_with_400(self, monkeypatch):
-        # Regression: a typo'd client tool whose name collides with an Unsloth
+
         # alias (e.g. a custom "python" tool missing input_schema) must
-        # surface a 400, not silently switch into Unsloth's built-in python
+
         # execution.
         _mock_backend(monkeypatch)
         payload = _basic_payload(tools = [{"name": "python"}])
@@ -1970,8 +1970,8 @@ class TestAnthropicMessagesToolRouting:
         assert backend.calls[0][0] == "plain"
 
     def test_disable_tools_policy_overrides_server_tool_alias(self, monkeypatch):
-        # CLI `unsloth run --disable-tools` sets policy=False. A request with
-        # an Unsloth server-tool alias must NOT enter the agentic loop then.
+
+
         backend = _mock_backend(monkeypatch)
         set_tool_policy(False)
         payload = _basic_payload(
@@ -2064,10 +2064,7 @@ class TestAnthropicMessagesToolRouting:
             assert backend.calls[0][0] == "tools"
 
     def test_the_process_tool_default_alone_is_not_a_server_tool_selection(self, monkeypatch):
-        """`unsloth studio run` resolves the policy to on unless --disable-tools. Reading that
-        as "this request selected server tools" rejected every plain Messages request on a
-        default server, and routing on it ran the local tool loop with terminal/python and no
-        way to confirm them. A default is not a selection, in either direction."""
+        '        as "this request selected server tools" rejected every plain Messages request on a\n        default server, and routing on it ran the local tool loop with terminal/python and no\n        way to confirm them. A default is not a selection, in either direction.'
         import routes.inference as inf_mod
         from fastapi.responses import JSONResponse
 

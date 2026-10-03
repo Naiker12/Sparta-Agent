@@ -1,11 +1,5 @@
 
-"""A traceback in the log file has to be readable as a traceback.
-
-~/.unsloth/studio/logs is a tee of stdout and stdout is JSON, so every stack trace reached
-the reader as one line with its newlines escaped to ``\\n`` -- as the reported Image
-Transform failure did. ``with_readable_traceback`` echoes the traceback under the record;
-the JSON line itself must survive byte-for-byte for anything parsing the file.
-"""
+'A traceback in the log file has to be readable as a traceback.\n\nthe reader as one line with its newlines escaped to ``\\n`` -- as the reported Image\nTransform failure did. ``with_readable_traceback`` echoes the traceback under the record;\nthe JSON line itself must survive byte-for-byte for anything parsing the file.'
 
 from __future__ import annotations
 

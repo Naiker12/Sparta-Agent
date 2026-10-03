@@ -26,6 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { authFetch } from "@/features/auth";
+import { ExtractionReview } from "./extraction-review";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import {
@@ -33,8 +34,6 @@ import {
   AiBrain01Icon,
   AiMagicIcon,
   AlertCircleIcon,
-  BookOpen01Icon,
-  CheckmarkCircle02Icon,
   Clock01Icon,
   Delete02Icon,
   Idea01Icon,
@@ -53,6 +52,8 @@ type MemoryNode = {
   content: string;
   sourceThreadId: string | null;
   confidence: number;
+  sourceRole?: string | null;
+  sourceMessageId?: string | null;
 };
 type MemoryEdge = {
   id: string;
@@ -117,68 +118,14 @@ const TYPE_CONFIG: Record<
 };
 
 function CustomMemoryNode({ data }: NodeProps) {
-  const nodeData = data as unknown as CustomNodeData;
-  const config = TYPE_CONFIG[nodeData.type] ?? TYPE_CONFIG.fact;
-  const Icon = config.icon;
-  const isSelected = nodeData.isSelected;
-
+  const node = data as unknown as CustomNodeData;
   return (
-    <div
-      className={cn(
-        "group relative flex items-center gap-3 rounded-full border px-4 py-2.5 backdrop-blur-md transition-all duration-300 cursor-pointer shadow-md select-none",
-        config.nodeBg,
-        config.nodeBorder,
-        isSelected
-          ? cn(
-              "ring-2 ring-primary ring-offset-2 scale-105 shadow-xl border-primary",
-              config.glow,
-            )
-          : "hover:scale-103 hover:shadow-lg",
-      )}
-    >
-      <Handle
-        type="target"
-        position={Position.Top}
-        className="!opacity-0 !size-1 !border-0 !pointer-events-none"
-      />
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="!opacity-0 !size-1 !border-0 !pointer-events-none"
-      />
-      <Handle
-        type="target"
-        position={Position.Left}
-        className="!opacity-0 !size-1 !border-0 !pointer-events-none"
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="!opacity-0 !size-1 !border-0 !pointer-events-none"
-      />
-
-      <div
-        className={cn(
-          "flex size-8 shrink-0 items-center justify-center rounded-full shadow-xs",
-          config.iconBadge,
-        )}
-      >
-        <HugeiconsIcon icon={Icon} strokeWidth={2} className="size-4" />
-      </div>
-
-      <div className="min-w-0 pr-1">
-        <div className="flex items-center gap-1.5">
-          <span className="text-[9px] font-bold uppercase tracking-wider opacity-75">
-            {config.label}
-          </span>
-          <span className="text-[9px] opacity-50">
-            · {Math.round((nodeData.confidence ?? 1) * 100)}%
-          </span>
-        </div>
-        <p className="max-w-[200px] truncate text-xs font-semibold text-foreground tracking-tight">
-          {nodeData.label}
-        </p>
-      </div>
+    <div className="relative flex flex-col items-center">
+      <Handle type="target" position={Position.Top} className="!opacity-0" />
+      <div className={cn("size-5 rounded-full border-2 border-background bg-primary shadow-sm",
+        node.isSelected && "ring-4 ring-primary/25")} />
+      <span className="absolute top-7 max-w-40 truncate text-xs text-foreground">{node.label}</span>
+      <Handle type="source" position={Position.Bottom} className="!opacity-0" />
     </div>
   );
 }
@@ -245,10 +192,8 @@ export function MemoryPage() {
   const [targetId, setTargetId] = useState("");
   const [relation, setRelation] = useState("relacionado con");
   const [error, setError] = useState<string | null>(null);
-  const [syncNotice, setSyncNotice] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
 
   const nodeTypes = useMemo(() => ({ memoryNode: CustomMemoryNode }), []);
   const edgeTypes = useMemo(() => ({ memoryEdge: CustomMemoryEdge }), []);
@@ -286,6 +231,13 @@ export function MemoryPage() {
     void refresh();
   }, [refresh]);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refresh();
+    }, 10000);
+    return () => window.clearInterval(timer);
+  }, [refresh]);
+
   const add = async () => {
     if (!(label.trim() && content.trim()) || isSaving) {
       return;
@@ -316,44 +268,6 @@ export function MemoryPage() {
       );
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleSyncFromChats = async () => {
-    setIsSyncing(true);
-    setError(null);
-    setSyncNotice(null);
-    try {
-      const response = await authFetch("/api/memory/sync-from-chats", {
-        method: "POST",
-      });
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error(
-            "El nuevo endpoint de sincronización requiere reiniciar la aplicación para que el motor local lo cargue.",
-          );
-        }
-        throw new Error(
-          `Error al sincronizar recuerdos desde los chats (HTTP ${response.status})`,
-        );
-      }
-      const data = await response.json();
-      if (data.graph) {
-        setGraph(data.graph);
-      } else {
-        await refresh();
-      }
-      setSyncNotice(
-        data.synced > 0
-          ? `Se actualizaron ${data.synced} recuerdos desde conversaciones activas.`
-          : "No se encontraron conversaciones activas con información para guardar.",
-      );
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error sincronizando desde chats",
-      );
-    } finally {
-      setIsSyncing(false);
     }
   };
 
@@ -434,23 +348,23 @@ export function MemoryPage() {
   // Smooth curved bezier connections rendered via CustomMemoryEdge
   const flowEdges = useMemo<Edge[]>(
     () =>
-      graph.edges.map((edge) => ({
+      graph.edges.filter((edge) => filteredNodes.some((n) => n.id === edge.source) && filteredNodes.some((n) => n.id === edge.target)).map((edge) => ({
         id: edge.id,
         source: edge.source,
         target: edge.target,
         type: "memoryEdge",
-        animated: true,
+        animated: false,
         label: edge.relation,
       })),
-    [graph.edges],
+    [graph.edges, filteredNodes],
   );
 
   const selected = graph.nodes.find((node) => node.id === selectedId) ?? null;
 
   return (
-    <main className="flex w-full flex-1 flex-col gap-6 p-4 sm:p-6 md:p-8 lg:p-10 transition-all">
+    <main className="flex min-h-0 w-full flex-1 flex-col gap-4 overflow-hidden px-4 py-4 sm:px-6">
       {/* Top Header */}
-      <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <header className="flex shrink-0 items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2.5">
             <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -460,37 +374,21 @@ export function MemoryPage() {
                 className="size-5"
               />
             </div>
-            <h1 className="text-3xl font-semibold tracking-tight">
+            <h1 className="text-xl font-semibold tracking-tight">
               {t("shell.navigation.memory") || "Memoria Agéntica"}
             </h1>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Consulta, conecta y edita el grafo de conocimientos y hechos que
-            Sparta recupera cuando son relevantes.
+          <p className="mt-1 hidden text-xs text-muted-foreground sm:block">
+            Conexiones y recuerdos de tus conversaciones.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <Button
-            variant="default"
-            size="sm"
-            onClick={() => void handleSyncFromChats()}
-            disabled={isSyncing}
-            className="gap-1.5"
-          >
-            <HugeiconsIcon
-              icon={AiMagicIcon}
-              strokeWidth={1.75}
-              className={cn("size-3.5", isSyncing && "animate-spin")}
-            />
-            {isSyncing ? "Sincronizando..." : "Sincronizar desde chats"}
-          </Button>
-
-          <Button
             variant="outline"
             size="sm"
             onClick={() => void refresh()}
-            disabled={isLoading || isSyncing}
+            disabled={isLoading}
             className="gap-2 min-w-[120px]"
           >
             <HugeiconsIcon
@@ -529,75 +427,9 @@ export function MemoryPage() {
         </div>
       )}
 
-      {syncNotice && !error && (
-        <div className="flex items-start gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm text-emerald-900 dark:text-emerald-100">
-          <HugeiconsIcon
-            icon={CheckmarkCircle02Icon}
-            strokeWidth={1.75}
-            className="mt-0.5 size-5 shrink-0"
-          />
-          <div className="flex-1">
-            <p className="font-medium">Memoria sincronizada</p>
-            <p className="mt-0.5 text-xs opacity-90">{syncNotice}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Quick Stats */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="flex items-center gap-4 rounded-3xl border border-foreground/10 bg-card p-4 ring-1 ring-foreground/5 shadow-xs">
-          <div className="flex size-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-            <HugeiconsIcon
-              icon={Idea01Icon}
-              strokeWidth={1.75}
-              className="size-5"
-            />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Recuerdos Guardados</p>
-            <p className="mt-0.5 text-xl font-bold tracking-tight">
-              {graph.nodes.length}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 rounded-3xl border border-foreground/10 bg-card p-4 ring-1 ring-foreground/5 shadow-xs">
-          <div className="flex size-10 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-600 dark:text-sky-400">
-            <HugeiconsIcon
-              icon={Share01Icon}
-              strokeWidth={1.75}
-              className="size-5"
-            />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">
-              Relaciones del Grafo
-            </p>
-            <p className="mt-0.5 text-xl font-bold tracking-tight">
-              {graph.edges.length}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 rounded-3xl border border-foreground/10 bg-card p-4 ring-1 ring-foreground/5 shadow-xs">
-          <div className="flex size-10 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
-            <HugeiconsIcon
-              icon={BookOpen01Icon}
-              strokeWidth={1.75}
-              className="size-5"
-            />
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">
-              Recuperación Semántica
-            </p>
-            <p className="mt-0.5 text-sm font-semibold">Integrada al Chat</p>
-          </div>
-        </div>
-      </section>
-
+      <p className="text-xs text-muted-foreground">{graph.nodes.length} nodos · {graph.edges.length} conexiones · Episodios con fuente original</p>
       {/* Search and Filters Bar */}
-      <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <section className="flex shrink-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1 max-w-md">
           <HugeiconsIcon
             icon={Search01Icon}
@@ -640,9 +472,9 @@ export function MemoryPage() {
       </section>
 
       {/* Interactive Knowledge Graph & Detail Section */}
-      <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] xl:grid-cols-[minmax(0,1fr)_26rem]">
+      <section className={cn("grid min-h-0 flex-1 gap-4", selected && "lg:grid-cols-[minmax(0,1fr)_20rem]")}>
         {/* ReactFlow Canvas */}
-        <div className="h-[580px] xl:h-[680px] 2xl:h-[760px] min-h-[480px] overflow-hidden rounded-3xl border border-foreground/10 bg-card ring-1 ring-foreground/5 shadow-xs relative">
+        <div className="relative min-h-0 overflow-hidden rounded-xl bg-background">
           {graph.nodes.length > 0 ? (
             <ReactFlow
               nodes={flowNodes}
@@ -653,6 +485,7 @@ export function MemoryPage() {
               minZoom={0.2}
               maxZoom={2}
               onNodeClick={(_, node) => setSelectedId(node.id)}
+              onPaneClick={() => setSelectedId(null)}
             >
               <Background
                 gap={28}
@@ -683,15 +516,13 @@ export function MemoryPage() {
                 Aún no hay recuerdos guardados
               </h3>
               <p className="mt-1 max-w-sm text-xs text-muted-foreground">
-                Agrega tu primer hecho o preferencia en el panel inferior, o
-                sincroniza automáticamente los temas clave de tus conversaciones
-                recientes.
+                Tus preguntas y respuestas guardadas aparecerán aquí con sus conexiones.
               </p>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => void handleSyncFromChats()}
-                disabled={isSyncing}
+                onClick={() => void refresh()}
+                disabled={isLoading}
                 className="mt-4 gap-1.5 rounded-full"
               >
                 <HugeiconsIcon
@@ -699,19 +530,19 @@ export function MemoryPage() {
                   strokeWidth={1.75}
                   className={cn(
                     "size-3.5 text-primary",
-                    isSyncing && "animate-spin",
+                    isLoading && "animate-spin",
                   )}
                 />
-                {isSyncing
+                {isLoading
                   ? "Extrayendo de conversaciones..."
-                  : "Sincronizar recuerdos desde mis chats"}
+                  : "Actualizar grafo"}
               </Button>
             </div>
           )}
         </div>
 
         {/* Selected Node Detail Sidebar */}
-        <aside className="flex flex-col justify-between rounded-3xl border border-foreground/10 bg-card p-5 ring-1 ring-foreground/5 shadow-xs">
+        <aside className={cn("flex min-h-0 flex-col overflow-y-auto border-l p-4", !selected && "hidden")}>
           {selected ? (
             <div className="space-y-4">
               <div>
@@ -723,7 +554,7 @@ export function MemoryPage() {
                     {TYPE_CONFIG[selected.type]?.label ?? selected.type}
                   </Badge>
                   <span className="text-[11px] text-muted-foreground">
-                    Confianza: {Math.round((selected.confidence ?? 1) * 100)}%
+                    {selected.sourceRole ? (selected.sourceRole === "assistant" ? "Respuesta generada" : "Mensaje del usuario") : `Confianza: ${Math.round((selected.confidence ?? 1) * 100)}%`}
                   </span>
                 </div>
                 <h3 className="mt-2 text-lg font-semibold tracking-tight text-foreground">
@@ -739,6 +570,7 @@ export function MemoryPage() {
                 </p>
               </div>
 
+              {selected.sourceMessageId && <ExtractionReview key={selected.id} nodeId={selected.id} onSaved={() => refresh()} />}
               {/* Connect to Another Memory */}
               <div className="space-y-2.5 border-t border-border/60 pt-4">
                 <div className="flex items-center gap-1.5 text-xs font-medium">
@@ -813,6 +645,7 @@ export function MemoryPage() {
       </section>
 
       {/* Add Memory Card Form */}
+      <details className="shrink-0 overflow-y-auto open:max-h-[45%]"><summary className="cursor-pointer text-xs text-muted-foreground">Añadir un recuerdo manualmente</summary>
       <Card className="rounded-4xl border border-foreground/10 ring-1 ring-foreground/5 shadow-sm">
         <CardHeader>
           <div className="flex items-center gap-2">
@@ -901,6 +734,7 @@ export function MemoryPage() {
           </Button>
         </div>
       </Card>
+      </details>
     </main>
   );
 }

@@ -1,20 +1,5 @@
 
-"""Invariant: the training worker must not import ``transformers`` before it activates the
-transformers sidecar.
-
-``core/training/worker.py:run_training_process`` runs a preflight (Xet decision, logging, hardware
-detection) and only THEN calls ``_activate_transformers_version`` -> ``activate_transformers_for_subprocess``,
-which prepends the correct ``.venv_t5_*`` (5.x) sidecar to ``sys.path``. Because activation only edits
-``sys.path``, it is a no-op for any module already cached in ``sys.modules``. So if the preflight imports
-``transformers`` (directly or transitively via ``unsloth_zoo``), the default 4.57.x gets pinned before
-the sidecar is on the path -- and 5.x models (Qwen3.5, GLM-4.7, gemma-4) then fail to load their
-tokenizer/config ("Tokenizer class TokenizersBackend does not exist").
-
-This regression shipped once when ``utils/hf_xet_fallback.py`` eagerly imported ``unsloth_zoo`` (which
-imports ``transformers``) at module load; the worker imports that shim during preflight to decide the
-Xet env flip (see issue #6951). This test locks the invariant in a fresh interpreter. It is CPU-only,
-needs no network/GPU/weights/sidecars, so it runs in the standard ``studio-backend-ci`` matrix.
-"""
+'Invariant: the training worker must not import ``transformers`` before it activates the\ntransformers sidecar.\n\n``core/training/worker.py:run_training_process`` runs a preflight (Xet decision, logging, hardware\ndetection) and only THEN calls ``_activate_transformers_version`` -> ``activate_transformers_for_subprocess``,\nwhich prepends the correct ``.venv_t5_*`` (5.x) sidecar to ``sys.path``. Because activation only edits\n``sys.path``, it is a no-op for any module already cached in ``sys.modules``. So if the preflight imports\nthe sidecar is on the path -- and 5.x models (Qwen3.5, GLM-4.7, gemma-4) then fail to load their\ntokenizer/config ("Tokenizer class TokenizersBackend does not exist").\n\nimports ``transformers``) at module load; the worker imports that shim during preflight to decide the\nXet env flip (see issue #6951). This test locks the invariant in a fresh interpreter. It is CPU-only,\nneeds no network/GPU/weights/sidecars, so it runs in the standard ``studio-backend-ci`` matrix.'
 
 from __future__ import annotations
 
@@ -64,8 +49,7 @@ print("PREFLIGHT_CLEAN")
 
 
 def test_worker_preflight_does_not_import_transformers():
-    """A fresh interpreter running the worker's pre-activation imports must leave ``transformers``
-    (and ``unsloth_zoo``) unimported, so the 5.x sidecar prepend is not defeated by a stale module."""
+    "A fresh interpreter running the worker's pre-activation imports must leave ``transformers``"
     result = subprocess.run(
         [sys.executable, "-c", _PREFLIGHT_SNIPPET],
         cwd = str(_BACKEND_DIR),

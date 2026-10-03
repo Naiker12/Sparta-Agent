@@ -1,11 +1,5 @@
 
-"""Presence-penalty logits helpers for the safetensors/MLX inference paths.
-
-Kept in a dependency-light leaf module (torch + transformers only, no unsloth /
-peft) so the pure logic can be imported and unit-tested without pulling in the
-full inference backend. ``core.inference.inference`` re-exports these for the
-runtime generate paths.
-"""
+'Presence-penalty logits helpers for the safetensors/MLX inference paths.\n\npeft) so the pure logic can be imported and unit-tested without pulling in the\nfull inference backend. ``core.inference.inference`` re-exports these for the\nruntime generate paths.'
 
 import torch
 

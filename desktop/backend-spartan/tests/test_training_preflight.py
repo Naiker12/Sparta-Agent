@@ -26,14 +26,7 @@ _STUBBED: list[str] = []
 
 
 def _stub_if_missing(name, attrs):
-    """Register a stub module for a dep the CPU backend CI job does not install.
-
-    The pytest job has studio.txt + torch + transformers but not unsloth/trl,
-    which core.training.trainer imports at module scope. Stub the absent ones
-    (real installs are left alone) so importing it for the two pure helper
-    methods never breaks test collection. __spec__ = None keeps the trainer's
-    own _ensure_real_packages namespace-shadow guard a no-op on the stub.
-    """
+    "Register a stub module for a dep the CPU backend CI job does not install.\n\n    which core.training.trainer imports at module scope. Stub the absent ones\n    (real installs are left alone) so importing it for the two pure helper\n    methods never breaks test collection. __spec__ = None keeps the trainer's\n    own _ensure_real_packages namespace-shadow guard a no-op on the stub.\n    "
     if name in sys.modules:
         return
     try:
@@ -61,15 +54,7 @@ _STUB_SPECS = (
 
 @contextlib.contextmanager
 def _stubbed():
-    """Hold the stubs for the duration of an import of the trainer, then drop them again.
-
-    Leaving them in sys.modules outlives this module and the rest of the suite then runs against
-    them: utils.hardware.hardware._shared_policy branches on `"unsloth" in sys.modules` and then
-    reaches for unsloth.dataset_num_proc, which a spec-less non-package stub cannot provide, so it
-    returns None and every shared-policy case in test_dataset_map_num_proc.py skips instead of
-    running. _load_trainer_module re-imports the trainer per test, so scoping beats a one-shot
-    cleanup after the import below. A real install stubs nothing, so this is a no-op there.
-    """
+    'Hold the stubs for the duration of an import of the trainer, then drop them again.\n\n    Leaving them in sys.modules outlives this module and the rest of the suite then runs against\n    returns None and every shared-policy case in test_dataset_map_num_proc.py skips instead of\n    running. _load_trainer_module re-imports the trainer per test, so scoping beats a one-shot\n    cleanup after the import below. A real install stubs nothing, so this is a no-op there.\n    '
     for name, attrs in _STUB_SPECS:
         _stub_if_missing(name, attrs)
     try:

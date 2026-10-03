@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 MAX_JSON_SAFE_INTEGER = 9_007_199_254_740_991
 
 
-# ── Registry (static provider info) ───────────────────────────────
+
 
 
 class ProviderRegistryEntry(BaseModel):
@@ -49,7 +49,7 @@ class ProviderRegistryEntry(BaseModel):
     )
 
 
-# ── Provider config CRUD ──────────────────────────────────────────
+
 
 
 class ProviderCreate(BaseModel):
@@ -151,7 +151,7 @@ class ProviderResponse(BaseModel):
     updated_at: str = Field(..., description = "ISO 8601 last-update timestamp")
 
 
-# ── Model listing ─────────────────────────────────────────────────
+
 
 
 class ProviderModelInfo(BaseModel):
@@ -161,6 +161,7 @@ class ProviderModelInfo(BaseModel):
     display_name: str = Field("", description = "Human-readable model name")
     context_length: Optional[int] = Field(None, description = "Maximum context length in tokens")
     owned_by: Optional[str] = Field(None, description = "Model owner/organization")
+    reasoning: Optional[dict] = Field(None, description = "Provider-reported reasoning capabilities")
 
 
 class ProviderModelsRequest(BaseModel):
@@ -180,7 +181,7 @@ class ProviderModelsRequest(BaseModel):
     )
 
 
-# ── Connection testing ────────────────────────────────────────────
+
 
 
 class ProviderTestRequest(BaseModel):

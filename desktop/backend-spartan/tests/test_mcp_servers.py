@@ -656,8 +656,7 @@ def test_clear_oauth_tokens_swallows_constructor_errors(tmp_path, monkeypatch):
 
 
 def test_tool_xml_parser_handles_hyphenated_function_names():
-    """Hyphenated tool names like `mcp__srv__list-issues` must parse, else the
-    model can call the tool but Unsloth can't dispatch."""
+    'Hyphenated tool names like `mcp__srv__list-issues` must parse, else the'
     from core.inference.tool_call_parser import parse_tool_calls_from_text
 
     calls = parse_tool_calls_from_text(

@@ -1,18 +1,5 @@
 
-"""The extra-arguments pass-through across every platform and accelerator.
-
-Studio emits a different command on each of these: CUDA, ROCm and Vulkan take
-different offload flags, Metal takes none of them, and Windows spells the binary
-and the paths differently. The claim this suite has to defend is the same on all of
-them, and it is a claim about what does NOT change:
-
-  with the box empty, the command is byte-identical to the one Unsloth emitted
-  before this feature existed.
-
-The matrix is the Cartesian product of the platforms Studio ships on and the
-accelerators it detects, driven through the real ``load_model`` with the command
-captured at the Popen boundary.
-"""
+'The extra-arguments pass-through across every platform and accelerator.\n\nStudio emits a different command on each of these: CUDA, ROCm and Vulkan take\ndifferent offload flags, Metal takes none of them, and Windows spells the binary\nand the paths differently. The claim this suite has to defend is the same on all of\nthem, and it is a claim about what does NOT change:\n\n  before this feature existed.\n\nThe matrix is the Cartesian product of the platforms Studio ships on and the\naccelerators it detects, driven through the real ``load_model`` with the command\ncaptured at the Popen boundary.'
 
 from __future__ import annotations
 
@@ -104,7 +91,7 @@ def test_an_extra_arg_lands_last_and_changes_nothing_before_it(
     tmp_path, monkeypatch, platform, accelerator
 ):
     # Appended, never interleaved: llama.cpp's last-wins parsing is the whole
-    # mechanism, and a flag that landed early would lose to Unsloth's own.
+
     _apply_platform(monkeypatch, platform)
     _label, vulkan, memory = accelerator
 
@@ -121,7 +108,7 @@ def test_an_extra_arg_lands_last_and_changes_nothing_before_it(
 def test_placement_is_not_moved_by_an_unrelated_extra_arg(
     tmp_path, monkeypatch, platform, accelerator
 ):
-    # A flag Unsloth's estimator knows nothing about must not disturb the flags it
+
     # computed: the offload decision belongs to the placement code on every one of
     # these accelerators, and --seed has no business changing it.
     _apply_platform(monkeypatch, platform)
@@ -158,7 +145,7 @@ def test_placement_is_not_moved_by_an_unrelated_extra_arg(
 def test_a_denied_flag_is_refused_identically_everywhere(
     tmp_path, monkeypatch, platform, accelerator
 ):
-    # The denylist is a property of Unsloth, not of the host: a flag refused on
+
     # Linux must not be reachable by running the same build on Windows.
     from core.inference.llama_server_args import validate_extra_args
     _apply_platform(monkeypatch, platform)
@@ -220,7 +207,7 @@ def test_the_denied_env_twins_are_scrubbed_on_every_platform(tmp_path, monkeypat
 @pytest.mark.parametrize("platform", PLATFORMS, ids = [p[0] for p in PLATFORMS])
 def test_the_size_cap_leaves_room_for_the_rest_of_a_windows_command(monkeypatch, platform):
     # CreateProcess takes ONE string for the whole command line, capped at 32767
-    # characters, and the model path, Unsloth's own flags and subprocess's quoting
+
     # come out of the same budget. A grammar that passed here and then failed inside
     # Popen would do so after the load had begun switching models.
     import sys as _sys

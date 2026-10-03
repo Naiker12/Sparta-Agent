@@ -4452,7 +4452,7 @@ def test_base_download_files_skips_precast_text_encoder_weights():
 
 
 def test_download_plan_swaps_the_dense_encoder_for_the_precast_checkpoint(monkeypatch):
-    # An fp8 encoder request loads unsloth/LTX-2-FP8, so staging the dense Gemma3 downloads ~49 GB the pipeline never opens, and the checkpoint it DOES read was missing from the plan.
+
     _cuda_bf16_target(monkeypatch)
     _plan_api(
         monkeypatch,
@@ -4854,16 +4854,7 @@ def test_h3_rejects_companion_checkpoints_as_the_transformer():
 
 
 def test_the_h3_native_repo_matches_the_family_gguf_repo():
-    """The declared pick and the actual download must be the same repo.
-
-    Main's `test_curated_gguf_repos_are_unsloth_mirrors` only inspects `VideoFamily.gguf_repo`,
-    but H3's native path downloads from its own `H3_GGUF_REPO` constant and never reads the
-    family field. So the two can drift apart and that test still passes while the one-click pick
-    resolves to a community repack, which is exactly the failure it exists to prevent.
-
-    Also asserts the transformer and the text encoder come from the same repo, since the mirror
-    has to carry both for the pick to be self-contained.
-    """
+    "The declared pick and the actual download must be the same repo.\n\n    but H3's native path downloads from its own `H3_GGUF_REPO` constant and never reads the\n    family field. So the two can drift apart and that test still passes while the one-click pick\n    resolves to a community repack, which is exactly the failure it exists to prevent.\n\n    Also asserts the transformer and the text encoder come from the same repo, since the mirror\n    has to carry both for the pick to be self-contained.\n    "
     from core.inference.video_families import detect_video_family
     from core.inference.video_minimax_h3 import (
         H3_GGUF_REPO,

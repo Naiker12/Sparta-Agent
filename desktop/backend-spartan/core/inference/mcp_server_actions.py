@@ -39,7 +39,7 @@ from utils.utils import safe_curated_detail
 logger = get_logger(__name__)
 
 
-# ── Shared validation helpers ───────────────────────────────────────
+
 # Called by both the REST routes (which translate errors into
 # HTTPException) and the tool functions (which return error strings).
 
@@ -98,7 +98,7 @@ def normalize_headers(headers: dict[str, str] | None) -> dict[str, str] | None:
     return out or None
 
 
-# ── Tool-facing functions ───────────────────────────────────────────
+
 # Each returns a str suitable as a tool result for the model.
 
 
@@ -395,7 +395,7 @@ def import_config_for_model(arguments: dict) -> str:
     return summary_header + "\n" + "\n".join(results)
 
 
-# ── Internal helpers ────────────────────────────────────────────────
+
 
 
 def _classify_probe_error(exc: Exception) -> str:

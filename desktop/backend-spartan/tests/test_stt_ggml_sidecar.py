@@ -75,7 +75,7 @@ def test_curated_ids_mirror_transformers_sidecar():
 
 
 def test_curated_filenames_match_repo_naming():
-    # unslothai/whisper-<id>-GGUF hosts whisper-<id>.bin; keep the download
+
     # filename in lockstep with the repo so it resolves instead of 404ing.
     for model_id, repo in GGML_STT_REPOS.items():
         expected = repo.split("/", 1)[1].removesuffix("-GGUF") + ".bin"

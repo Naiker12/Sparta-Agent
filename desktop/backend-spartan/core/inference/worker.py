@@ -155,14 +155,7 @@ _NEMOTRON_TRUST_SUBSTRINGS = ("nemotron_h", "nemotron-h", "nemotron-3-nano")
 
 
 def _needs_nemotron_trust(model_name: str, hf_token: str | None = None) -> bool:
-    """Whether *model_name* is a NemotronH/Nano model that needs trust_remote_code.
-
-    NemotronH/Nano have config-parsing bugs that require it. Must NOT match
-    Llama-Nemotron (standard Llama arch), so also require the unsloth/ or nvidia/
-    namespace, and a genuine first-party Hub repo (not a local path or a spoof
-    name starting with "unsloth/"). The repo check is authenticated so private
-    first-party repos still resolve, and runs only after the cheap checks pass.
-    """
+    'Whether *model_name* is a NemotronH/Nano model that needs trust_remote_code.\n\n    NemotronH/Nano have config-parsing bugs that require it. Must NOT match\n    namespace, and a genuine first-party Hub repo (not a local path or a spoof\n    first-party repos still resolve, and runs only after the cheap checks pass.\n    '
     mn = model_name.lower()
     if not (
         any(sub in mn for sub in _NEMOTRON_TRUST_SUBSTRINGS)
@@ -963,7 +956,7 @@ def run_inference_process(
 
     model_name = config["model_name"]
 
-    # ── 0. MLX fast-path — skip torch/transformers ──
+
     _ensure_backend_on_path()
 
     if is_apple_silicon():
@@ -1151,7 +1144,7 @@ def run_inference_process(
 
     install_torchao_windows_rocm_stub()
 
-    # ── Resolve the effective base once, before activation/gates/install ──
+
     # No ML import on the common path; a local adapter with no recorded base pulls
     # transformers via utils.models, which is why the stub above precedes this.
     # A remote LoRA's base is in its Hub adapter_config.json (else surfaced only by ModelConfig
@@ -1180,7 +1173,7 @@ def run_inference_process(
     # fine-tune's recorded base from config.json (its name reveals the SSM/sidecar arch).
     _base = _lora_base or _resolve_base_model(model_name)
 
-    # ── 1. Activate transformers version (on the resolved base) BEFORE any ML imports ──
+
     try:
         _activate_transformers_version(_base, _hf_token)
     except Exception as exc:
@@ -1224,7 +1217,7 @@ def run_inference_process(
     if not _ensure_ssm_kernels(_ssm_targets, resp_queue):
         return
 
-    # ── 2. Import ML libraries (fresh in this clean process) ──
+
     try:
         _send_response(
             resp_queue,
@@ -1236,7 +1229,7 @@ def run_inference_process(
 
         _ensure_backend_on_path()
 
-        # Recover from any namespace-package shadow before importing Unsloth.
+
         from core.import_guards import ensure_real_packages
 
         ensure_real_packages("unsloth_zoo", "unsloth")
@@ -1258,7 +1251,7 @@ def run_inference_process(
         )
         return
 
-    # ── 3. Create inference backend and load initial model ──
+
     try:
         backend = InferenceBackend()
 
@@ -1283,7 +1276,7 @@ def run_inference_process(
         )
         return
 
-    # ── 4. Command loop — process commands until shutdown ──
+
     # cancel_event is an mp.Event the parent can set anytime to cancel
     # generation instantly (no queue polling needed).
     logger.info("Inference subprocess ready, entering command loop")

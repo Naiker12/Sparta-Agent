@@ -73,7 +73,7 @@ class ApiMonitorEntry:
     updated_at: float
     # Who this row is attributed to; on a shared row it does not restrict visibility.
     subject: Optional[str] = None
-    # True for sk-unsloth callers only: the panel auto-opens on these, not Studio's chat.
+
     via_api_key: bool = False
     # Monotonic anchors so duration math survives wall-clock steps (NTP).
     started_monotonic: float = 0.0

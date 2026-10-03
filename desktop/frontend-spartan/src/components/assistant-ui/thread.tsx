@@ -72,6 +72,11 @@ import {
   writePasteDraft,
 } from "@/features/chat";
 import { ThreadWorkspaceChip } from "@/features/chat/components/thread-workspace-chip";
+import type { QueuedChatRunSettings } from "@/features/chat/utils/queued-chat-run-settings";
+import { durableQueueSettings } from "@/features/chat/utils/durable-queue-settings";
+import { queueExecutionResult } from "@/features/chat/utils/queue-execution-result";
+import { getAuthSessionEpoch } from "@/features/auth";
+import { usePromptQueueRecovery } from "./thread/use-prompt-queue-recovery";
 import { ComposerMentions } from "@/features/chat/composer-mentions";
 import { McpComposerButton } from "@/features/chat/mcp-composer-button";
 import { PermissionModeComposerPill } from "@/features/chat/permission-mode-select";
@@ -741,7 +746,7 @@ const ComposerAnimated: FC<{
   disableQueue?: boolean;
 }> = ({ disabled, threadId, menuSide, disableQueue }) => {
   return (
-    <div className="relative mx-auto min-w-0 w-full max-w-[42rem]">
+    <div className="relative mx-auto min-w-0 w-full max-w-[48rem]">
       <div className="relative z-10 w-full">
         <Composer
           disabled={disabled}
@@ -1894,9 +1899,13 @@ const Composer: FC<{
   }, []);
 
   const createPromptQueueTarget =
-    useCallback(async (): Promise<PromptQueueTarget | null> => {
+    useCallback(async (restoredSettings?: QueuedChatRunSettings): Promise<PromptQueueTarget | null> => {
+      const targetAuthEpoch = getAuthSessionEpoch();
       const assistantRuntime = aui.threads().__internal_getAssistantRuntime?.();
       const initialState = aui.threadListItem().getState();
+      if (restoredSettings && (!referenceThreadId || initialState.remoteId !== referenceThreadId)) {
+        return null;
+      }
       const initialRunningThreadIds = [
         initialState.id,
         initialState.remoteId,
@@ -1928,12 +1937,12 @@ const Composer: FC<{
         ? null
         : (chatStateAtQueueStart.activeProjectId ?? null);
       const usesThreadDocumentsAtQueueStart =
-        chatStateAtQueueStart.ragEnabled &&
-        chatStateAtQueueStart.ragSource.type === "thread";
+        (restoredSettings?.ragEnabled ?? chatStateAtQueueStart.ragEnabled) &&
+        (restoredSettings?.ragSource ?? chatStateAtQueueStart.ragSource).type === "thread";
       const usesKnowledgeBaseAtQueueStart =
-        chatStateAtQueueStart.ragEnabled &&
-        chatStateAtQueueStart.ragSource.type === "kb";
-      const runSettingsAtQueueStart = snapshotQueuedChatRunSettings(
+        (restoredSettings?.ragEnabled ?? chatStateAtQueueStart.ragEnabled) &&
+        (restoredSettings?.ragSource ?? chatStateAtQueueStart.ragSource).type === "kb";
+      const runSettingsAtQueueStart = restoredSettings ? structuredClone(restoredSettings) : snapshotQueuedChatRunSettings(
         chatStateAtQueueStart,
       );
       const getThreadListItemState = () => {
@@ -1987,6 +1996,7 @@ const Composer: FC<{
       let shouldCorrectPersistedModel: boolean | null = null;
       let initializedFreshThreadId: string | null = null;
       let freshThreadAppendAccepted = false;
+      let responseBeforeAppend: Set<string> | null = null;
       const removeFreshThreadPersistedAfterAbort = () => {
         const historyWasCleared =
           chatHistoryClearBoundary.capture() !== historyClearGeneration;
@@ -2021,6 +2031,29 @@ const Composer: FC<{
         discardQueuedChatRunSettings(settingsId);
       };
       return {
+        getExecutionResult: () => queueExecutionResult(getThreadRuntime()?.getState().messages ?? [], responseBeforeAppend),
+        getDurableSettings: () => durableQueueSettings(runSettingsAtQueueStart),
+        prepareDurableThread: async () => {
+          const runtime = assistantRuntime ?? aui.threads().__internal_getAssistantRuntime?.();
+          const state = getThreadListItemState();
+          if (!(runtime && state) || cancelled || targetAuthEpoch !== getAuthSessionEpoch() ||
+              chatHistoryClearBoundary.capture() !== historyClearGeneration) {
+            throw new Error("El chat de la cola ya no está disponible");
+          }
+          shouldCorrectPersistedModel ??= !state.remoteId;
+          const { remoteId } = await runtime.threads.getItemById(state.id).initialize();
+          if (!state.remoteId) initializedFreshThreadId = remoteId;
+          if (shouldCorrectPersistedModel) {
+            await updateStoredChatThread(remoteId, {
+              modelId: runSettingsAtQueueStart.params.checkpoint ?? "",
+            });
+            shouldCorrectPersistedModel = false;
+          }
+          if (removeFreshThreadPersistedAfterAbort() || cancelled || targetAuthEpoch !== getAuthSessionEpoch()) {
+            throw new Error("La cola fue cancelada");
+          }
+          return remoteId;
+        },
         getDocumentThreadId: () => {
           const state = getThreadListItemState();
           return (
@@ -2104,6 +2137,7 @@ const Composer: FC<{
             // id. Refresh queue aliases before the run begins so stop dialogs
             // deduplicate the two identities.
             syncPromptQueueUI();
+            responseBeforeAppend = new Set(thread.getState().messages.map((message) => message.id));
             const appendResult = thread.append(
               appendTextToThread(prompt),
             ) as unknown;
@@ -2153,6 +2187,8 @@ const Composer: FC<{
         },
       };
     }, [aui, referenceThreadId]);
+
+  usePromptQueueRecovery(referenceThreadId ?? null, createPromptQueueTarget);
 
   // Whether a pending start is already going to be refused when it resolves,
   // so a retry replaces it rather than being turned away as a duplicate and
@@ -3088,9 +3124,6 @@ const Composer: FC<{
       {isDictating ? null : <ToolStatusDisplay />}
       <div
         className="unsloth-composer-line"
-        // The permission pill is always visible, so keep the two-row layout
-        // expanded whenever not dictating; dictation collapses to the bar.
-        data-expanded={isDictating ? "false" : "true"}
         data-dictating={isDictating ? "true" : undefined}
       >
         <div
@@ -3106,10 +3139,7 @@ const Composer: FC<{
               so the waveform is the sole status indicator. */}
           {isDictating ? null : (
             <>
-              {/* Model selector pill: placed next to "+" in the composer toolbar */}
-              {modelSelector ? (
-                <div className="flex min-w-0 items-center">{modelSelector}</div>
-              ) : null}
+              <PermissionModeComposerPill side={effectiveMenuSide} />
               {effectiveDeepResearchEnabled ? (
                 <DeepResearchComposerButton
                   onConfigure={() => setResearchWebsiteAccessOpen(true)}
@@ -3159,6 +3189,7 @@ const Composer: FC<{
               onPaste={handleFilePaste}
             />
             <ComposerRightControls
+              modelSelector={modelSelector}
               disabled={
                 disabled ||
                 !hasSendableContent ||
@@ -3207,14 +3238,6 @@ const Composer: FC<{
           </>
         )}
       </div>
-      {isDictating ? null : (
-        <div className="thread-workspace-strip">
-          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-            <ThreadWorkspaceChip />
-            <PermissionModeComposerPill side="top" />
-          </div>
-        </div>
-      )}
       <DeepResearchWebsiteAccessDialog
         open={researchWebsiteAccessOpen && effectiveDeepResearchEnabled}
         onOpenChange={setResearchWebsiteAccessOpen}
@@ -3283,6 +3306,7 @@ const Composer: FC<{
               </Button>
             </div>
           ) : null}
+          {!isDictating && <ThreadWorkspaceChip isRunning={threadIsRunning} />}
           {isTauri ? (
             // Phase 1 native model owns Tauri local-path drops. Restore browser
             // attachment drops in Tauri once Phase 1d adds token bridging.

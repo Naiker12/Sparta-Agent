@@ -1,4 +1,5 @@
 import { useChatProjects } from "@/features/chat/hooks/use-chat-projects";
+import { useThreadFileScope } from "@/features/chat/hooks/use-thread-file-scope";
 import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 import { useWorkspaceStore } from "@/features/chat/stores/use-workspace-store";
 import { cn } from "@/lib/utils";
@@ -166,23 +167,26 @@ export function WorkspacePanelContainer({
   projectId,
 }: { projectId?: string | null }) {
   const isOpen = useWorkspaceStore((state) => state.isOpen);
+  const panelWidth = useWorkspaceStore((state) => state.panelWidth);
+  const setPanelWidth = useWorkspaceStore((state) => state.setPanelWidth);
   const activeTab = useWorkspaceStore((state) => state.activeTab);
   const setOpen = useWorkspaceStore((state) => state.setOpen);
   const activeProjectId = useChatRuntimeStore((state) => state.activeProjectId);
+  const threadId = useChatRuntimeStore((state) => state.activeThreadId);
+  const { scope, error: scopeError, loading: scopeLoading } = useThreadFileScope(threadId);
   const { projects } = useChatProjects();
   // A new chat does not yet have a project id in its URL, but its composer can
   // already be connected to the active project workspace. Use that project for
   // the Files rail so attaching a folder immediately exposes its contents.
   const resolvedProjectId = projectId ?? activeProjectId;
-  const project =
-    projects.find((candidate) => candidate.id === resolvedProjectId) ?? null;
+  const project = scope ?? (projects.find((candidate) => candidate.id === resolvedProjectId) ?? null);
 
   const renderActiveTabContent = () => {
     switch (activeTab) {
       case "files":
-        return <FilesPanel flatView={false} project={project} />;
+        return <FilesPanel key={project?.id ?? "unconnected"} flatView={false} project={project} />;
       case "changes":
-        return <FilesPanel flatView={true} project={project} />;
+        return <FilesPanel key={project?.id ?? "unconnected"} flatView={true} project={project} />;
       case "github":
         return <GitHubPanel />;
       case "agents":
@@ -190,25 +194,36 @@ export function WorkspacePanelContainer({
       case "browser":
         return <BrowserPreviewPanel />;
       default:
-        return <FilesPanel flatView={false} project={project} />;
+        return <FilesPanel key={project?.id ?? "unconnected"} flatView={false} project={project} />;
     }
   };
 
   return (
-    <div className="flex h-full min-h-0 overflow-hidden bg-background pt-[var(--studio-custom-titlebar-height,38px)]">
+    <div className="flex h-full min-h-0 overflow-hidden bg-background">
       {/* Dynamic Pane content (collapsible) */}
       {isOpen && (
-        <div className="relative h-full w-[clamp(18rem,24vw,22rem)] min-w-0 shrink-0 border-r border-border/40 transition-all duration-300 animate-in fade-in">
+        <div style={{width: `min(${panelWidth}px, 60vw)`}} className="relative flex h-full min-w-0 shrink-0 flex-col border-l border-border/40 animate-in fade-in">
+          <div role="separator" aria-label="Redimensionar panel de archivos" aria-orientation="vertical" tabIndex={0} aria-valuemin={280} aria-valuemax={900} aria-valuenow={panelWidth}
+            className="absolute -left-1 top-0 z-30 h-full w-2 cursor-col-resize touch-none hover:bg-primary/20 focus-visible:bg-primary/20"
+            onKeyDown={e => {if(e.key === "ArrowLeft") setPanelWidth(panelWidth+24); if(e.key === "ArrowRight") setPanelWidth(panelWidth-24);}}
+            onPointerDown={e => e.currentTarget.setPointerCapture(e.pointerId)}
+            onPointerMove={e => {if(e.currentTarget.hasPointerCapture(e.pointerId)) setPanelWidth(window.innerWidth-e.clientX-48);}}
+            onPointerUp={e => {if(e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);}} />
+          <div className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-border/40 px-3">
+            <span className="truncate text-xs font-medium text-foreground">
+              {activeTab === "files" ? "Archivos" : activeTab === "changes" ? "Cambios" : activeTab === "github" ? "GitHub" : activeTab === "agents" ? "Subagentes" : "Vista previa"}
+            </span>
           <button
             type="button"
             onClick={() => setOpen(false)}
             title="Ocultar panel"
             aria-label="Ocultar panel lateral"
-            className="absolute right-3 top-[calc(var(--studio-custom-titlebar-height,38px)+0.75rem)] z-30 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-border/50 bg-background/90 text-muted-foreground shadow-sm backdrop-blur transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <PanelRightCloseIcon className="h-4 w-4" />
           </button>
-          {renderActiveTabContent()}
+          </div>
+          <div className="min-h-0 flex-1 overflow-hidden">{scopeLoading ? <p role="status" className="p-4 text-sm text-muted-foreground">Preparando carpeta…</p> : scopeError ? <p role="alert" className="p-4 text-sm text-destructive">{scopeError}</p> : renderActiveTabContent()}</div>
         </div>
       )}
 

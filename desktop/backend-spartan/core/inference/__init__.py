@@ -1,18 +1,5 @@
 
-"""
-Inference submodule - backend for model loading and generation.
-
-The default get_inference_backend() returns an InferenceOrchestrator that
-delegates to a subprocess. The original InferenceBackend runs inside the
-subprocess and can be imported directly from .inference when needed.
-
-Public names are resolved lazily (PEP 562): importing this package -- or a
-dependency-light leaf like ``core.inference.chat_eos`` -- must NOT eagerly pull
-the orchestrator / llama_cpp import chain (httpx, subprocess plumbing, the ML
-backend and its Unsloth dependencies). Those load only when a public name is
-actually accessed, so standalone helpers stay unit-testable without the full
-inference stack.
-"""
+'\nInference submodule - backend for model loading and generation.\n\nThe default get_inference_backend() returns an InferenceOrchestrator that\ndelegates to a subprocess. The original InferenceBackend runs inside the\nsubprocess and can be imported directly from .inference when needed.\n\nPublic names are resolved lazily (PEP 562): importing this package -- or a\ndependency-light leaf like ``core.inference.chat_eos`` -- must NOT eagerly pull\nthe orchestrator / llama_cpp import chain (httpx, subprocess plumbing, the ML\nactually accessed, so standalone helpers stay unit-testable without the full\ninference stack.'
 
 from typing import TYPE_CHECKING
 

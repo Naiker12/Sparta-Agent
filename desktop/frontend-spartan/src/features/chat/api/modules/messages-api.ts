@@ -57,8 +57,9 @@ export async function getChatMessage(
   threadId: string,
   messageId: string,
 ): Promise<MessageRecord | null> {
+  if (isAssistantLocalThreadId(threadId)) return null;
   const response = await authFetch(
-    `/api/chat/threads/${encodeURIComponent(threadId)}/messages/${encodeURIComponent(messageId)}`,
+    `/api/chat/threads/${encodeURIComponent(threadId)}/messages/${encodeURIComponent(messageId)}?missing_ok=true`,
   );
   if (response.status === 404) {
     return null;

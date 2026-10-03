@@ -2,41 +2,52 @@ name: Deploy Landing Page to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
     paths:
       - 'landing/**'
+      - 'desktop/frontend-spartan/src/**'
+      - 'package.json'
       - '.github/workflows/deploy-landing.yml'
   workflow_dispatch:
 
 permissions:
   contents: write
-  pages: write
-  id-token: write
+
+concurrency:
+  group: landing-deploy
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v5
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
-
-      - name: Install Landing Dependencies
-        run: npm --prefix landing ci
-
-      - name: Build Static Site
+      - run: npm ci
+      - run: npm --prefix desktop/frontend-spartan ci
+      - run: npm --prefix landing ci
+      - name: Validate and build static site
         run: |
           npm --prefix landing run docs:check
           npm --prefix landing run build:gh
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Check advertised release is public
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          VERSION="$(node -p 'require("./package.json").version')"
+          if gh release view "v$VERSION" --json isDraft --jq '.isDraft' | grep -qx false; then
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'Deployment deferred until the release workflow publishes all installers.'
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+          fi
+      - uses: peaceiris/actions-gh-pages@v4
+        if: steps.release.outputs.ready == 'true'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./landing/dist

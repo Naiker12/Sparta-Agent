@@ -145,23 +145,7 @@ def _refuse_untrainable_video_family(name: str) -> None:
 
 
 def _component_only_repos() -> dict[str, tuple[str, str, str]]:
-    """Every repo the family registries list only as a COMPONENT source, keyed by lowercased
-    repo id -> (family name, component, that family's base repo).
-
-    A pre-cast text-encoder repo (``te_prequant_repos``, present in both the image and the video
-    registry) ships a single component archive: no ``model_index.json``, no VAE, no scheduler, no
-    pipeline. ``from_pretrained`` on one can only fail. Nothing in the NAME says so, which is the
-    whole problem: ``unsloth/LTX-2-FP8`` carries the ``ltx-2`` token, so the family detectors
-    claim it and the ``unsloth/*`` trust gate passes it. The registries' own tables are the only
-    authority on what a repo actually holds, so read them rather than special-casing repo ids.
-
-    A hosted pre-quantized DENOISER (a video family's ``prequant_repos``) is the same shape: the
-    DiT alone, no pipeline around it. The image registry's identically-named table means the
-    opposite -- a full quantized pipeline mirror -- so the two are read separately rather than
-    together.
-
-    A repo that is ALSO registered as a base somewhere (a full quantized pipeline mirror, a
-    deploy base, a train base) is a base and never appears here."""
+    "Every repo the family registries list only as a COMPONENT source, keyed by lowercased\n    repo id -> (family name, component, that family's base repo).\n\n    A pre-cast text-encoder repo (``te_prequant_repos``, present in both the image and the video\n    registry) ships a single component archive: no ``model_index.json``, no VAE, no scheduler, no\n    pipeline. ``from_pretrained`` on one can only fail. Nothing in the NAME says so, which is the\n    authority on what a repo actually holds, so read them rather than special-casing repo ids.\n\n    A hosted pre-quantized DENOISER (a video family's ``prequant_repos``) is the same shape: the\n    DiT alone, no pipeline around it. The image registry's identically-named table means the\n    opposite -- a full quantized pipeline mirror -- so the two are read separately rather than\n    together.\n\n    A repo that is ALSO registered as a base somewhere (a full quantized pipeline mirror, a\n    deploy base, a train base) is a base and never appears here."
     from core.inference.diffusion_families import detect_family
     from core.inference.video_families import detect_video_family
 
@@ -183,7 +167,7 @@ def _component_only_repos() -> dict[str, tuple[str, str, str]]:
         # DENOISER -- the DiT alone, as the field's own docstring says -- which is a component in
         # exactly the way a pre-cast text encoder is: no model_index.json, no VAE, no scheduler.
         # Treating one as a base is what let it through the training preflight, resolve to its
-        # family by name, pass the unsloth/* trust gate, and fail inside from_pretrained only
+
         # after the resident GPU workloads had been evicted.
         for table in ("prequant_repos", "prequant_variant_repos"):
             for row in getattr(fam, table, ()) or ():
@@ -202,13 +186,7 @@ def _component_only_repos() -> dict[str, tuple[str, str, str]]:
 
 
 def _refuse_component_only_repo(base_model: str) -> None:
-    """Raise for a base model that is a family's component checkpoint rather than a model.
-
-    Runs from ``resolve_trainable_family``, so it fires in the ``/diffusion/start`` preflight
-    BEFORE the resident GPU workloads are freed. Without it the name match resolved a real
-    family, the trust gate passed the ``unsloth/*`` repo, the gated-access probe ignored the
-    resulting ``model_index.json`` 404 (a 404 is not an access problem), and the run evicted the
-    user's loaded model before failing inside ``from_pretrained`` in the child."""
+    "Raise for a base model that is a family's component checkpoint rather than a model.\n\n    Runs from ``resolve_trainable_family``, so it fires in the ``/diffusion/start`` preflight\n    BEFORE the resident GPU workloads are freed. Without it the name match resolved a real\n    resulting ``model_index.json`` 404 (a 404 is not an access problem), and the run evicted the\n    user's loaded model before failing inside ``from_pretrained`` in the child."
     hit = _component_only_repos().get(str(base_model or "").strip().lower())
     if hit is None:
         return
@@ -405,12 +383,7 @@ def repo_is_prequantized(base_model: str) -> bool:
 
 
 def _module_is_torchao_stub(module: Any) -> bool:
-    """True iff ``module`` is the Unsloth Windows-ROCm torchao import stub rather than the
-    real package. The stub (core/_torchao_stub.py) satisfies find_spec and even lets
-    ``from torchao.quantization import quantize_`` succeed -- but the imported symbols are
-    no-op stub types, so the quantization never happens. Every stub module carries the
-    ``_unsloth_stub`` sentinel, so match on it (comparing against the stub module's own
-    sentinel object, not identity of a re-created one)."""
+    '    real package. The stub (core/_torchao_stub.py) satisfies find_spec and even lets\n    ``from torchao.quantization import quantize_`` succeed -- but the imported symbols are\n    no-op stub types, so the quantization never happens. Every stub module carries the\n    sentinel object, not identity of a re-created one).'
     if module is None:
         return False
     sentinel = getattr(module, "_unsloth_stub", None)
@@ -1220,11 +1193,11 @@ class DiffusionLoraConfig:
             # keep the vendor id and hard-block the very case the mirrors exist for.
             #
             # Only gated, though. Most of the mirror table is ungated, mirrored to keep the
-            # fetch inside unsloth/*, and there the upstream is reachable anonymously: an
+
             # override would discard a complete local cache and re-pull gigabytes, or fail
             # outright offline. Those keep prefer_ungated_mirror's cache-aware answer.
             #
-            # UNSLOTH_DIFFUSION_NO_MIRROR still wins, exactly as it does inside
+
             # prefer_ungated_mirror: it is the documented way to pin the vendor repo, and an
             # override that ignored it would make that switch a lie on the training path only.
             #
@@ -1676,10 +1649,7 @@ LATENT_CACHE_OVER_BUDGET: Any = object()
 
 
 def _latent_cache_forced() -> bool:
-    """The user explicitly forced the latent cache on, bypassing the size gate. This is the
-    explicit opt-in counterpart to ``UNSLOTH_DIFFUSION_NO_LATENT_CACHE`` (the explicit
-    opt-out); only the automatic default is size-gated, so an explicit choice is honoured
-    verbatim in either direction."""
+    'The user explicitly forced the latent cache on, bypassing the size gate. This is the\n    opt-out); only the automatic default is size-gated, so an explicit choice is honoured\n    verbatim in either direction.'
     return os.environ.get("UNSLOTH_DIFFUSION_FORCE_LATENT_CACHE", "") in ("1", "true")
 
 
@@ -1807,14 +1777,7 @@ def _refuse_ltx23_training_base(base_model: str) -> None:
 
 
 def _assert_trusted_base_model(base_model: str, *, allow_modular: bool = False) -> None:
-    """Gate the training base model the same way the inference backend gates non-GGUF loads:
-    a local path or a trusted repo (``unsloth/*`` or an allowlisted official base). This runs
-    BEFORE ``from_pretrained`` so an untrusted remote repo (which could ship pickle weights)
-    is never fetched or deserialised.
-
-    ``allow_modular`` is for a trainer whose loader is ``ModularPipeline.from_pretrained``: a
-    local MiniMax-H3 pipeline carries ``modular_model_index.json`` and no ``model_index.json``,
-    so the conventional shape check rejected the one local layout that family HAS."""
+    'Gate the training base model the same way the inference backend gates non-GGUF loads:\n    BEFORE ``from_pretrained`` so an untrusted remote repo (which could ship pickle weights)\n    is never fetched or deserialised.\n\n    ``allow_modular`` is for a trainer whose loader is ``ModularPipeline.from_pretrained``: a\n    local MiniMax-H3 pipeline carries ``modular_model_index.json`` and no ``model_index.json``,\n    so the conventional shape check rejected the one local layout that family HAS.'
     from core.inference.diffusion import _assert_local_base_is_pipeline, _is_trusted_diffusion_repo
 
     trusted = (
@@ -1830,7 +1793,7 @@ def _assert_trusted_base_model(base_model: str, *, allow_modular: bool = False) 
     _assert_local_base_is_pipeline(base_model, allow_modular = allow_modular)
 
 
-# ── resume checkpoints ────────────────────────────────────────────────────────
+
 # One writer and one reader for BOTH trainers, so an SDXL and a DiT run resume from the same
 # bundle shape. The family-specific part (the deployable adapter export) stays in the trainers.
 def trainable_state_dict(model: Any) -> dict[str, Any]:
@@ -2039,7 +2002,7 @@ def restore_resume_state(
     optimizer_state = ckpt.torch_state("optimizer")
     if optimizer_state is not None:
         # The trainers pick their optimizer from the HOST (bitsandbytes present, a fused kernel
-        # available, UNSLOTH_DIFFUSION_FP32_OPTIM), not from the config, so a checkpoint can
+
         # legitimately arrive with foreign moments: AdamW8bit stores "state1"/"state2", torch
         # AdamW stores "exp_avg"/"exp_avg_sq". Shapes and counts match, so load_state_dict
         # accepts them and the first step dies on a bare KeyError. Refuse with a real reason.
@@ -2241,8 +2204,7 @@ _CONFIG_ALIASES = {
 
 
 def _coerce_gradient_checkpointing(value: Any) -> bool:
-    """Studio sends gradient_checkpointing as a string ("none" / "true" / "unsloth"); the
-    disable words are False, anything else truthy is True. A real bool passes through."""
+    '    disable words are False, anything else truthy is True. A real bool passes through.'
     if isinstance(value, str):
         return value.strip().lower() not in ("", "none", "false", "0", "no", "off")
     return bool(value)

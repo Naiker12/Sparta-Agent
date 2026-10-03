@@ -118,7 +118,7 @@ def _clean_state(monkeypatch, tmp_path):
     upd._reset_job_for_tests()
     upd._resolve_memo.clear()
     # Isolate the freshness disk cache so the suite never writes the real
-    # ~/.unsloth cache (the default when storage_roots can't be imported).
+
     monkeypatch.setattr(freshness, "_cache_dir", lambda: tmp_path / ".freshness_cache")
     # Deterministic markerless paths: no host-pinned binary, no custom dir.
     monkeypatch.delenv("LLAMA_SERVER_PATH", raising = False)
@@ -249,7 +249,7 @@ def test_status_source_build_suppressed_when_newer(monkeypatch, tmp_path):
 
 def test_status_source_build_offers_same_base_mix(monkeypatch, tmp_path):
     # The reported banner bug: a source build at the same upstream base as a new
-    # Unsloth prebuilt that adds a mix-<sha> suffix. The base build numbers match
+
     # (9596 == 9596) but the mix carries extra patches the source build lacks, so
     # the update must still surface -- mirroring the marker path's is_behind.
     binary = tmp_path / "llama.cpp" / "build" / "bin" / "llama-server"
@@ -314,7 +314,7 @@ def test_installed_version_skips_probe_while_job_runs(monkeypatch, tmp_path):
     # be skipped (return None) exactly like get_update_status's source probe.
     binary = tmp_path / "build" / "bin" / "llama-server"
     binary.parent.mkdir(parents = True)
-    binary.write_text("stub")  # markerless: no UNSLOTH_PREBUILT_INFO.json
+    binary.write_text("stub")
     monkeypatch.setattr(upd, "_find_binary", lambda: str(binary))
     probed = {"n": 0}
 
@@ -504,15 +504,7 @@ def test_start_update_happy_path(monkeypatch, tmp_path):
 def test_update_leaves_the_recorded_choice_to_the_installer(
     monkeypatch, tmp_path, marker_fields, expected_choice
 ):
-    """An update names no backend: install_llama_prebuilt.py reads the choice back
-    out of the marker it wrote.
-
-    That is what makes the choice survive every other entry point too (setup.sh,
-    `unsloth studio update`, the desktop updater), none of which could forward an
-    env var they were never given. Both halves are asserted here -- the command
-    carries no override, and the installer resolves the marker to the choice -- so
-    the handoff cannot silently break on one side.
-    """
+    'An update names no backend: install_llama_prebuilt.py reads the choice back\n    out of the marker it wrote.\n\n    That is what makes the choice survive every other entry point too (setup.sh,\n    env var they were never given. Both halves are asserted here -- the command\n    carries no override, and the installer resolves the marker to the choice -- so\n    the handoff cannot silently break on one side.\n    '
     monkeypatch.delenv("UNSLOTH_FORCE_VULKAN", raising = False)
     monkeypatch.delenv("UNSLOTH_LLAMA_CPP_BACKEND", raising = False)
     install_dir = tmp_path / "llama.cpp"
@@ -1035,7 +1027,7 @@ def test_llama_install_root_unmanaged_path_returns_none(monkeypatch, tmp_path):
 
 
 def test_llama_install_root_unsloth_env_dir(monkeypatch, tmp_path):
-    # UNSLOTH_LLAMA_CPP_PATH dir holding the active binary is the managed root.
+
     root = tmp_path / "vendor" / "llama"
     binary = root / "llama-server"
     binary.parent.mkdir(parents = True)
@@ -1045,7 +1037,7 @@ def test_llama_install_root_unsloth_env_dir(monkeypatch, tmp_path):
 
 
 def test_llama_install_root_ignores_inactive_env_root(monkeypatch, tmp_path):
-    # UNSLOTH_LLAMA_CPP_PATH set but the active binary is not under it: do not
+
     # target the stale env root, resolve from the binary's own llama.cpp tree.
     inactive = tmp_path / "custom-empty"
     inactive.mkdir()

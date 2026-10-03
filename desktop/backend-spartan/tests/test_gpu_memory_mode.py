@@ -179,7 +179,7 @@ def test_already_in_target_state_matches_same_mode(mode):
 @pytest.mark.parametrize("loaded,requested", [("auto", "manual"), ("manual", "auto")])
 def test_already_in_target_state_reloads_on_mode_change(loaded, requested):
     # Flipping the dropdown either direction must force a reload so the command
-    # is rebuilt with/without the Unsloth GPU masking.
+
     assert _target_state(_loaded_backend(loaded), requested) is False
 
 
@@ -192,7 +192,7 @@ def test_already_in_target_state_ignores_mode_for_diffusion(monkeypatch):
     assert _target_state(backend, "manual") is True
 
 
-# ── load_model: manual + Auto layers bypasses Unsloth GPU management ──
+
 
 
 def _load_model_source() -> str:

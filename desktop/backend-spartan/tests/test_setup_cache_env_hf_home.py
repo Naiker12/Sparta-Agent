@@ -22,7 +22,7 @@ _STORAGE_ROOTS_PATH = Path(__file__).resolve().parent.parent / "utils/paths/stor
 
 @pytest.fixture(autouse = True)
 def _isolate_studio_home(monkeypatch, tmp_path):
-    # Keep _setup_cache_env's UV/VLLM mkdirs out of the real ~/.unsloth/studio.
+
     monkeypatch.setenv("UNSLOTH_STUDIO_HOME", str(tmp_path / "studio"))
 
 

@@ -93,7 +93,7 @@ def test_loaded_repo_ids_includes_native_companions():
     assert fam.base_repo in ids
     assert fam.sd_cpp_vae[0] in ids  # black-forest-labs/FLUX.1-schnell (VAE)
     for terepo, _f, _k in fam.sd_cpp_text_encoders:
-        assert terepo in ids  # unsloth/flux-text-encoders
+        assert terepo in ids
     b._state = None
     assert b.loaded_repo_ids() == ()
 
@@ -450,7 +450,7 @@ def test_download_plan_stages_exactly_what_sd_cli_opens(monkeypatch):
 
 def test_download_plan_merges_asset_repos_that_share_one_fetch_repo(monkeypatch):
     # Two upstream repos can resolve to ONE fetch repo: on an install that already holds the
-    # Comfy-Org/flux2-dev repack, both unsloth/FLUX.2-VAE and unsloth/FLUX.2-dev-ComfyUI are
+
     # served from it. Keying the swapped map by fetch repo therefore drops whichever landed
     # first, taking its files out of the staged entry AND out of the footprint.
     import core.inference.sd_cpp_backend as S
@@ -623,7 +623,7 @@ def test_asset_specs_flux2_klein_selects_encoder_by_variant():
 
 
 # A rename or takedown in a community repack breaks every no-GPU load needing the file, so each
-# one Studio depended on now has a byte-identical unsloth mirror.
+
 _REPACKER_ORGS = frozenset(
     {"comfy-org", "comfyanonymous", "quantstack", "city96", "calcuis", "orabazes"}
 )
@@ -2045,11 +2045,7 @@ def test_status_native_reports_supports_controlnet_false():
 def test_a_cached_community_repack_is_reused_instead_of_re_downloading_the_mirror(
     monkeypatch, tmp_path
 ):
-    """Repointing the tables at unsloth mirrors would re-pull tens of GB on upgrade.
-
-    The HF cache is keyed by repo id, so an install that already holds the byte-identical repack
-    has it filed under the OLD id: the mirror's namespace is empty, the fetch re-downloads, and an
-    offline load fails outright over bytes already on disk."""
+    "\n    The HF cache is keyed by repo id, so an install that already holds the byte-identical repack\n    has it filed under the OLD id: the mirror's namespace is empty, the fetch re-downloads, and an\n    offline load fails outright over bytes already on disk."
     from core.inference.diffusion_families import prefer_cached_legacy_source
     from core.inference.sd_cpp_backend import _fetch_repo_map
 

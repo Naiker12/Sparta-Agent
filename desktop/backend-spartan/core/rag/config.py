@@ -180,13 +180,7 @@ def default_gguf_repo() -> str:
 
 
 def effective_gguf_repo() -> str:
-    """GGUF repo for the llama-server backend, tracking the effective model.
-
-    An explicit ``RAG_EMBED_GGUF_REPO`` env always wins. Otherwise any custom
-    model (saved in Settings or via ``RAG_EMBEDDING_MODEL``) maps to its
-    ``-GGUF`` companion repo (the unsloth convention the default pair follows),
-    or is used as-is when it already names a GGUF repo.
-    """
+    'GGUF repo for the llama-server backend, tracking the effective model.\n\n    An explicit ``RAG_EMBED_GGUF_REPO`` env always wins. Otherwise any custom\n    model (saved in Settings or via ``RAG_EMBEDDING_MODEL``) maps to its\n    or is used as-is when it already names a GGUF repo.\n    '
     return gguf_repo_for_embedding_model(effective_embedding_model())
 
 

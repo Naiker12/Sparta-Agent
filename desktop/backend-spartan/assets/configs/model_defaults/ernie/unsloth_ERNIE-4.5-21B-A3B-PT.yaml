@@ -1,6 +1,4 @@
-# Model defaults for unsloth/ERNIE-4.5-21B-A3B-PT
 # Based on ERNIE_4_5_21B_A3B_PT-Conversational.ipynb
-# Also applies to: unsloth/ERNIE-4.5-21B-A3B-PT
 
 training:
   max_seq_length: 2048

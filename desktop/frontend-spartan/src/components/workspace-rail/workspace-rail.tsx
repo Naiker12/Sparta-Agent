@@ -87,7 +87,7 @@ export function WorkspaceRail() {
 
   return (
     <aside
-      className="flex w-10 shrink-0 flex-col items-center border-l border-border/40 bg-muted/15 px-[5px] py-2 select-none"
+      className="flex w-12 shrink-0 flex-col items-center border-l border-border/40 bg-background px-2 py-2 select-none"
       aria-label="Workspace navigation"
     >
       <div className="flex w-full flex-col items-center gap-1">
@@ -104,19 +104,15 @@ export function WorkspaceRail() {
               key={tab.id}
               onClick={() => handleTabClick(tab.id)}
               title={tab.label}
+              aria-label={tab.label}
+              aria-pressed={isActive}
               className={cn(
-                "relative flex size-[30px] items-center justify-center rounded-md transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                "relative flex size-8 items-center justify-center rounded-lg transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 isActive
-                  ? "bg-blue-500/12 text-blue-600 dark:bg-blue-400/15 dark:text-blue-300"
+                  ? "bg-primary/10 text-primary"
                   : "text-muted-foreground/75 hover:bg-muted hover:text-foreground",
               )}
             >
-              {isActive && (
-                <span
-                  aria-hidden={true}
-                  className="absolute -left-1 h-4 w-0.5 rounded-full bg-blue-500"
-                />
-              )}
               <Icon className="size-4" />
             </button>
           );

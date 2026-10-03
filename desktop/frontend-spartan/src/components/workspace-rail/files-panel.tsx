@@ -5,6 +5,7 @@ import {
   useWorkspaceStore,
 } from "@/features/chat/stores/use-workspace-store";
 import type { ProjectRecord } from "@/features/chat/types";
+import type { FileScope } from "@/features/chat/hooks/use-thread-file-scope";
 import { cn } from "@/lib/utils";
 import {
   ChevronLeftIcon,
@@ -14,8 +15,10 @@ import {
   RefreshCwIcon,
   SearchIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DiffViewer } from "./diff-viewer";
+import { FileContentView } from "./file-content-view";
+import { ImageFileView } from "./image-file-view";
 
 type Node = { name: string; path: string; type: "file" | "directory" };
 const basename = (path: string) =>
@@ -32,7 +35,7 @@ const toStatus = (status: string): GitFileStatus =>
 export function FilesPanel({
   flatView = false,
   project,
-}: { flatView?: boolean; project: ProjectRecord | null }) {
+}: { flatView?: boolean; project: ProjectRecord | FileScope | null }) {
   const searchQuery = useWorkspaceStore((state) => state.searchQuery);
   const setSearchQuery = useWorkspaceStore((state) => state.setSearchQuery);
   const changedFiles = useWorkspaceStore((state) => state.changedFiles);
@@ -48,6 +51,19 @@ export function FilesPanel({
   const [nodes, setNodes] = useState<Node[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{path: string; content: string} | null>(null);
+  const [image, setImage] = useState<{path: string; bytes: Uint8Array; mime: string} | null>(null);
+  const generation = useRef(0);
+  const readRequest = useRef(0);
+  useEffect(() => {
+    generation.current++;
+    readRequest.current++;
+    setNodes([]); setPath(null); setError(null);
+    setPreview(null); setSelectedFilePath(null);
+    setImage(null);
+    setChangedFiles([]); setSelectedDiffFile(null);
+    return () => { generation.current++; };
+  }, [project?.id, project?.connectedFolderPath]);
 
   const loadDirectory = useCallback(
     async (nextPath: string) => {
@@ -62,13 +78,18 @@ export function FilesPanel({
         return;
       }
       setLoading(true);
+      const current = generation.current;
+      const request = ++readRequest.current;
       try {
         const result = await filesystem.readDirLevel(project.id, nextPath);
+        if (current !== generation.current || request !== readRequest.current) return;
         setNodes(result.nodes ?? []);
         setPath(nextPath);
         setError(result.error ?? null);
+      } catch (reason) {
+        if (current === generation.current && request === readRequest.current) setError(reason instanceof Error ? reason.message : "No se pudo listar la carpeta.");
       } finally {
-        setLoading(false);
+        if (current === generation.current && request === readRequest.current) setLoading(false);
       }
     },
     [project],
@@ -78,17 +99,18 @@ export function FilesPanel({
     if (!project?.connectedFolderPath || flatView) {
       return;
     }
+    let cancelled = false;
     void (async () => {
       const filesystem = getProjectNativeFilesystem();
-      await filesystem?.setWorkspaceRoot?.(
-        project.id,
-        project.connectedFolderPath!,
-        project.workspaceAccess ?? "read",
-      );
-      await loadDirectory(project.connectedFolderPath!);
+      const configured = "threadBinding" in project
+        ? await filesystem?.setWorkspaceBinding?.(project.id, project.connectedFolderPath!, project.workspaceAccess)
+        : await filesystem?.setWorkspaceRoot?.(project.id, project.connectedFolderPath!, project.workspaceAccess ?? "read");
+      if (!configured?.success) throw new Error(configured?.error ?? "El puente de archivos no está disponible.");
+      if (!cancelled) await loadDirectory(project.connectedFolderPath!);
     })().catch((reason) =>
-      setError(reason instanceof Error ? reason.message : String(reason)),
+      !cancelled && setError(reason instanceof Error ? reason.message : String(reason)),
     );
+    return () => { cancelled = true; };
   }, [flatView, loadDirectory, project]);
 
   const refreshChanges = useCallback(async () => {
@@ -151,6 +173,29 @@ export function FilesPanel({
       ),
     [nodes, searchQuery],
   );
+  async function openFile(filePath: string) {
+    if (!project) return;
+    const current = generation.current;
+    const ext = filePath.split(".").pop()?.toLowerCase() ?? "";
+    const mime = ({png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",gif:"image/gif",webp:"image/webp",bmp:"image/bmp",avif:"image/avif"} as Record<string,string>)[ext];
+    if (mime) {
+      try {
+        const result = await getProjectNativeFilesystem()?.readPreview?.(project.id, filePath);
+        if (current !== generation.current) return;
+        if (!result?.success || !result.bytes) throw new Error(result?.error ?? "No se pudo cargar la imagen.");
+        setImage({path: filePath, bytes: new Uint8Array(result.bytes), mime});
+      } catch (reason) { if (current === generation.current) setError(reason instanceof Error ? reason.message : "Error de imagen"); }
+      return;
+    }
+    if (/\.(zip|exe|dll|7z|rar|woff2?|ttf|mp4|mp3|bin)$/i.test(filePath)) { setError("Este archivo binario no admite vista de texto."); return; }
+    let result;
+    try { result = await getProjectNativeFilesystem()?.readFile?.(project.id, filePath); }
+    catch (reason) { if (current === generation.current) setError(reason instanceof Error ? reason.message : "No se pudo abrir el archivo."); return; }
+    if (current !== generation.current) return;
+    if (!result?.success) { setError(result?.error ?? "No se pudo abrir el archivo."); return; }
+    setSelectedFilePath(filePath);
+    setPreview({path: filePath, content: (result.content ?? "").slice(0, 100000)});
+  }
   if (!project?.connectedFolderPath) {
     return (
       <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted-foreground">
@@ -158,6 +203,9 @@ export function FilesPanel({
       </div>
     );
   }
+
+  if (image) return <ImageFileView key={image.path} {...image} onClose={() => setImage(null)} />;
+  if (preview) return <FileContentView key={preview.path} path={preview.path} content={preview.content} onClose={() => setPreview(null)} />;
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-background">
@@ -206,6 +254,8 @@ export function FilesPanel({
         </p>
       )}
       <div className="flex-1 overflow-y-auto p-3">
+        {loading && <p role="status" className="p-3 text-xs text-muted-foreground">Leyendo archivos…</p>}
+        {!loading && !error && !flatView && nodes.length === 0 && <p className="p-3 text-xs text-muted-foreground">La carpeta no contiene archivos visibles.</p>}
         {flatView ? (
           <div className="space-y-3">
             {changedFiles.length === 0 ? (
@@ -263,7 +313,7 @@ export function FilesPanel({
                 onClick={() =>
                   node.type === "directory"
                     ? void loadDirectory(node.path)
-                    : setSelectedFilePath(node.path)
+                    : void openFile(node.path)
                 }
                 className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs hover:bg-muted"
               >

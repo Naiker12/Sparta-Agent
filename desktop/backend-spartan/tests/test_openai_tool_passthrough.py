@@ -261,7 +261,7 @@ class TestChatMessageToolRoles:
 
     def test_tool_empty_content_accepted(self):
         # Empty tool output (mkdir, git add, ...) is routine in agentic loops;
-        # OpenAI and llama-server both accept it, so Unsloth must not 400.
+
         msg = ChatMessage(role = "tool", tool_call_id = "call_1", content = "")
         assert msg.content == ""
 
@@ -399,7 +399,7 @@ class TestChatCompletionRequestToolFields:
         assert req.session_id == "abc"
 
     def test_stream_defaults_false_matching_openai_spec(self):
-        # OpenAI defaults `stream` to false. Unsloth used to default true,
+
         # breaking naive curl/.NET clients (#5047) that omit it. Pin the fix.
         req = self._make()
         assert req.stream is False
@@ -735,11 +735,11 @@ class TestChatCompletionRequestToolFields:
         assert monitor.active_count() == 0
 
     def test_permission_mode_does_not_reject_client_tool_passthrough(self, monkeypatch):
-        # A non-streaming client-tool passthrough (client tools, no Unsloth tool
+
         # loop) that also carries permission_mode "ask"/"auto" must reach the
         # provider passthrough, not the confirm-without-stream guard: the
         # validator leaves confirm_tool_calls unset for passthrough, and a bare
-        # permission_mode only gates Unsloth's own local tool loop. An explicit
+
         # confirm_tool_calls=True still forces the local-confirm rejection.
         # The pre-switch guard only runs when an automatic load may run, so force
         # that predicate on to exercise it against a resident passthrough backend.
@@ -785,7 +785,7 @@ class TestChatCompletionRequestToolFields:
             return self._v1_client(monkeypatch, _GGUFBackend())
 
         # A process --enable-tools policy must not turn a client-tool passthrough
-        # into an Unsloth local loop, so a policy of None or True both keep the
+
         # passthrough (the guard mirrors _explicit_studio_tool_loop_requested).
         for policy in (None, True):
             for mode in ("ask", "auto"):
@@ -838,7 +838,7 @@ class TestChatCompletionRequestToolFields:
         assert "requires stream=true" in resp.json()["error"]["message"]
 
     def test_permission_mode_policy_forced_local_loop_rejected_before_switch(self, monkeypatch):
-        # A process --enable-tools policy forces Unsloth's own tool loop on even
+
         # when the request omits enable_tools and carries no client tools. A
         # non-streaming ask/auto request is then confirm-gated with no stream to
         # prompt on, so it must 400 at the pre-switch guard -- before
@@ -891,7 +891,7 @@ class TestChatCompletionRequestToolFields:
     def test_enable_tools_on_non_tool_backend_keeps_client_tools_on_passthrough(self, monkeypatch):
         # DiffusionGemma forces supports_tools off while passthrough stays
         # available (#6851): enable_tools=True must not steal client tools
-        # from the passthrough into an Unsloth tool loop that cannot run.
+
         import routes.inference as inference_route
 
         captured = {}

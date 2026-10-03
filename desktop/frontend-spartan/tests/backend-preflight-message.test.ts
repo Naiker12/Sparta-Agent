@@ -82,7 +82,7 @@ test("a path setting that cannot be resolved is told apart from an unreachable f
 });
 
 test("the setting that could not be resolved is named", () => {
-  // "one of Unsloth's folder settings" is not something anyone can act on, so
+
   // the backend appends the name and the message uses it.
   const named = preflightStaleMessage(
     "managed_stale",

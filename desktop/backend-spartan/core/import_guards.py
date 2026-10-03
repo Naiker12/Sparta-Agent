@@ -1,5 +1,5 @@
 
-"""Recover `unsloth`/`unsloth_zoo` from a namespace-package shadow. Stdlib-only."""
+''
 
 from __future__ import annotations
 
@@ -8,10 +8,7 @@ import sys
 
 
 def ensure_real_packages(*names: str) -> None:
-    """Drop sys.path entries where a bare `<name>/` dir (no __init__.py) shadows
-    the installed package as a namespace, import the real packages, restore
-    sys.path. No-op without a shadow. Pass dependency-first (e.g. "unsloth_zoo",
-    "unsloth"); imports run dependency-last."""
+    'Drop sys.path entries where a bare `<name>/` dir (no __init__.py) shadows\n    the installed package as a namespace, import the real packages, restore'
     import importlib
     import importlib.util
 
@@ -44,7 +41,7 @@ def ensure_real_packages(*names: str) -> None:
             del sys.modules[cached]
     try:
         importlib.invalidate_caches()
-        # import spartan_agent before unsloth_zoo: unsloth.__init__ runs GPU/bnb fixes zoo relies on
+
         for name in reversed(names):
             importlib.import_module(name)
     finally:

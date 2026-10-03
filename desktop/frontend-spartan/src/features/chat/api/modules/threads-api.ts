@@ -9,7 +9,7 @@ import type {
   ProjectRecord,
   ThreadRecord,
 } from "../../types";
-import { isAssistantLocalThreadId } from "../../utils/thread-ids";
+import { isAssistantLocalThreadId, notePersistedThreadId } from "../../utils/thread-ids";
 import {
   notifyChatHistoryUpdated,
   parseErrorText,
@@ -54,7 +54,9 @@ export async function listChatThreads(
   const qs = params.toString();
   const response = await authFetch(`/api/chat/threads${qs ? `?${qs}` : ""}`);
   const data = await parseJsonOrThrow<{ threads: ThreadRecord[] }>(response);
-  return Array.isArray(data.threads) ? data.threads : [];
+  const threads = Array.isArray(data.threads) ? data.threads : [];
+  for (const thread of threads) notePersistedThreadId(thread.id);
+  return threads;
 }
 
 export async function getChatThread(
@@ -101,6 +103,7 @@ export async function saveChatThread(
     throw new ChatThreadDeletedError(parseErrorText(response.status, body));
   }
   const savedThread = await parseJsonOrThrow<ThreadRecord>(response);
+  notePersistedThreadId(savedThread.id);
   notifyChatHistoryUpdated();
   return savedThread;
 }

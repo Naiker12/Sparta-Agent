@@ -1,5 +1,5 @@
 
-"""Tests for UNSLOTH_PYTORCH_MIRROR env var in install_python_stack.py."""
+''
 
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ def _reload_whl_base(monkeypatch, mirror_value = None):
 
 
 class TestPyTorchMirrorEnvVar:
-    """UNSLOTH_PYTORCH_MIRROR controls _PYTORCH_WHL_BASE in install_python_stack."""
+    ''
 
     def test_unset_uses_official_url(self, monkeypatch):
         assert _reload_whl_base(monkeypatch) == OFFICIAL_URL

@@ -1,14 +1,5 @@
 
-"""Unit tests for Anthropic server-side context compaction wiring.
-
-Compaction is a beta (header ``compact-2026-01-12``) gated to Opus 4.6/4.7,
-Sonnet 4.6, and Mythos preview. When enabled, Unsloth attaches
-``context_management.edits[{type:"compact_20260112", trigger:{type:"input_tokens",
-value:N}}]``; the 50k-token minimum is clamped up so the request doesn't 400.
-
-Pins body shape per model, beta header merge with code-execution, threshold
-clamping, and silent no-op on unsupported models.
-"""
+'Unit tests for Anthropic server-side context compaction wiring.\n\nCompaction is a beta (header ``compact-2026-01-12``) gated to Opus 4.6/4.7,\n``context_management.edits[{type:"compact_20260112", trigger:{type:"input_tokens",\nvalue:N}}]``; the 50k-token minimum is clamped up so the request doesn\'t 400.\n\nPins body shape per model, beta header merge with code-execution, threshold\nclamping, and silent no-op on unsupported models.'
 
 import asyncio
 import json

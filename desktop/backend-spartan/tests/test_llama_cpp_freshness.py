@@ -623,7 +623,7 @@ def _patch_assets(monkeypatch, mapping):
 
 
 def test_update_size_unsloth_prebuilt_exact_match(monkeypatch):
-    # The unsloth fork's own bundle (app-<tag>-<platform>): the want= exact match
+
     # on app-<latest>-<suffix> wins.
     marker = {
         "asset": "app-b9190-linux-x64-cuda13-newer.tar.gz",

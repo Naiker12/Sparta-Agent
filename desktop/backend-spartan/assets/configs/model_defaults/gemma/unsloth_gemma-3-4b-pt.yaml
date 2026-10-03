@@ -1,7 +1,4 @@
-# Model defaults for unsloth/gemma-3-4b-pt
 # Based on Gemma3_(4B)-Vision.ipynb
-# Also applies to: unsloth/gemma-3-4b-pt-unsloth-bnb-4bit, google/gemma-3-4b-pt, unsloth/gemma-3-4b-pt-bnb-4bit
-# added inference parameters from unsloth guides
 
 training:
   max_seq_length: 2048

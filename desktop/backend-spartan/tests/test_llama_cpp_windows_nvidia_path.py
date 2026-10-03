@@ -1,11 +1,5 @@
 
-"""Tests for the Windows pip-nvidia DLL dir resolver.
-
-Unsloth installs torch with bundled CUDA wheels (nvidia-cuda-runtime-cu13,
-nvidia-cublas-cu13, etc.) and the prebuilt llama-server.exe must find those
-DLLs at runtime to load CUDA. Mirrors the Linux LD_LIBRARY_PATH block.
-See unslothai/unsloth#5106.
-"""
+'Tests for the Windows pip-nvidia DLL dir resolver.\n\nnvidia-cublas-cu13, etc.) and the prebuilt llama-server.exe must find those\nDLLs at runtime to load CUDA. Mirrors the Linux LD_LIBRARY_PATH block.'
 
 from __future__ import annotations
 

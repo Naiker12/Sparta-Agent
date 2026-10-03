@@ -52,7 +52,7 @@ class _FakeBackend:
         kind = resolve_model_kind(gguf_filename, model_kind)
         if kind in ("gguf", "single_file") and not gguf_filename:
             raise ValueError("a single-file checkpoint name is required.")
-        # Non-GGUF loads are gated to unsloth/* (or a local path), like the real backend.
+
         if kind != "gguf" and not model_path.lower().startswith("unsloth/"):
             raise ValueError(
                 f"Non-GGUF diffusion loads are restricted to unsloth/* repos; got '{model_path}'."
@@ -532,7 +532,7 @@ def test_generate_rejects_batch_seed_past_json_safe_range(client):
 
 
 def test_non_gguf_load_restricted_to_unsloth(client):
-    # gguf_filename is optional; with none the load is a full-pipeline kind gated to unsloth/*, so a non-unsloth repo is a 400.
+
     resp = client.post("/api/inference/images/load", json = {"model_path": "x/z-image"})
     assert resp.status_code == 400
     assert "unsloth" in resp.json()["detail"].lower()
@@ -570,7 +570,7 @@ def test_a_too_old_diffusers_is_a_400_on_both_load_and_download_plan(client, mon
 
 
 def test_pipeline_load_allowed_for_unsloth_repo(client):
-    # An unsloth/* repo with no filename loads as a full diffusers pipeline, so the route forwards model_kind="pipeline".
+
     resp = client.post(
         "/api/inference/images/load", json = {"model_path": "unsloth/Z-Image-Turbo-unsloth-bnb-4bit"}
     )
@@ -1040,7 +1040,7 @@ def test_invalid_attention_backend_returns_422(client):
 
 
 def test_prequant_path_doc_describes_allowlist_not_toggle():
-    # The field help must match the code: UNSLOTH_ALLOW_LOCAL_PREQUANT_PATH is a directory allowlist, not a =1 toggle.
+
     from models.inference import DiffusionLoadRequest
 
     desc = DiffusionLoadRequest.model_fields["transformer_prequant_path"].description
@@ -1115,7 +1115,7 @@ def test_load_routes_to_sd_cpp_on_cpu(monkeypatch, tmp_path):
         lambda: SimpleNamespace(backend = "cpu", device = "cpu"),
     )
     # Stubbed because select_and_activate_engine probes THIS first with allow_install on. Unstubbed it ran the real installer,
-    # downloading 108 MB into the developer's own ~/.unsloth root. Returning None also keeps this test on the sd-cli path.
+
     monkeypatch.setattr(engine_router, "ensure_sd_server_binary", lambda **_: None)
     monkeypatch.setattr(engine_router, "ensure_sd_cpp_binary", lambda **_: "/x/sd-cli")
     # The router probes runnability before committing to native; treat the stub binary as executable.

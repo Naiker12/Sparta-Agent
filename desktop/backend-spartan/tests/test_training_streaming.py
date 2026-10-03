@@ -648,7 +648,7 @@ def test_preflight_first_batch_returns_error_on_empty_stream():
         def get_train_dataloader(self):
             return _EmptyLoader()
 
-    # Load UnslothTrainer class from trainer.py via importlib to avoid heavy imports.
+
     trainer_path = _BACKEND_ROOT / "core" / "training" / "trainer.py"
     spec = importlib.util.spec_from_file_location("trainer_module", trainer_path)
     trainer_mod = importlib.util.module_from_spec(spec)

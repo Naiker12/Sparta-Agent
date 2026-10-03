@@ -138,12 +138,7 @@ class TestIsImportableIsolated:
 
 
 class TestNoExitLeavesAnUnusableInstall:
-    """Every unsuccessful exit discards the distribution, not just the ones with a call.
-
-    The metadata gate in unsloth/models/_utils.py imports the extension in process, so
-    anything left behind is loaded anyway. Four rounds of review found four separate exits
-    that forgot to clean up, which is why this is enforced in one place.
-    """
+    'Every unsuccessful exit discards the distribution, not just the ones with a call.\n\n    anything left behind is loaded anyway. Four rounds of review found four separate exits\n    that forgot to clean up, which is why this is enforced in one place.\n    '
 
     def _run(self, monkeypatch, *, run_side_effect):
         removals: list[list[str]] = []

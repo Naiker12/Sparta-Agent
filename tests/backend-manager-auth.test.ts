@@ -71,7 +71,7 @@ test('startup errors never include the desktop secret', async () => {
   await expect(manager.authenticate()).rejects.toThrow('Backend is not ready')
 })
 
-test('rejects a runtime built for a different bundled backend', async () => {
+test('reuses an installed runtime after source changes only once it reaches readiness', async () => {
   mocks.readFileSync.mockImplementation((path: string) => {
     if (String(path).endsWith('sparta-runtime.json')) {
       return JSON.stringify({ backendFingerprint: 'outdated-runtime', createdAt: '2026-01-01T00:00:00.000Z' })
@@ -79,8 +79,34 @@ test('rejects a runtime built for a different bundled backend', async () => {
     return 'test-backend-file'
   })
   const manager = new BackendManager()
-  await expect(manager.start('/backend', '/runtime')).rejects.toThrow('pertenece a otra versión')
-  expect(mocks.spawn).not.toHaveBeenCalled()
+  const ready = manager.start('/backend', '/runtime')
+  expect(mocks.writeFileSync).not.toHaveBeenCalled()
+  child.stdout.write('SPARTA_DESKTOP_SECRET=desktop-test\nTAURI_PORT=12345\n')
+  await expect(ready).resolves.toBe(12345)
+  expect(mocks.writeFileSync).toHaveBeenCalled()
+})
+
+test('does not adopt a changed runtime that fails startup', async () => {
+  mocks.readFileSync.mockImplementation((path: string) => String(path).endsWith('sparta-runtime.json')
+    ? JSON.stringify({ backendFingerprint: 'outdated-runtime' }) : 'test-backend-file')
+  const manager = new BackendManager()
+  const ready = manager.start('/backend', '/runtime')
+  child.stderr.write('ModuleNotFoundError: missing dependency')
+  child.emit('exit', 1)
+  await expect(ready).rejects.toThrow('missing dependency')
+  expect(mocks.writeFileSync).not.toHaveBeenCalled()
+})
+
+test('a failed spawn clears startup state so the existing runtime can be retried', async () => {
+  const manager = new BackendManager()
+  const first = manager.start('/backend', '/runtime')
+  child.emit('error', new Error('spawn failed'))
+  await expect(first).rejects.toThrow('spawn failed')
+  child = Object.assign(new EventEmitter(), { stdout: new PassThrough(), stderr: new PassThrough(), kill: vi.fn() })
+  mocks.spawn.mockReturnValue(child)
+  const retry = manager.start('/backend', '/runtime')
+  child.stdout.write('SPARTA_DESKTOP_SECRET=desktop-test\nTAURI_PORT=12345\n')
+  await expect(retry).resolves.toBe(12345)
 })
 
 test('adopts a legacy runtime after its authenticated ready handshake', async () => {

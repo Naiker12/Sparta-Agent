@@ -1675,11 +1675,7 @@ def test_mlx_audio_classification(monkeypatch, processor, renders, capable, expe
     ],
 )
 def test_mlx_audio_classification_survives_a_broken_dependency(monkeypatch, capability):
-    """A probe must never fail a model load, whatever the dependency does.
-
-    unsloth_zoo is pinned by a floor, so a version whose capability call raises
-    or returns another shape has to degrade to "no audio", not abort the load.
-    """
+    'A probe must never fail a model load, whatever the dependency does.\n\n    or returns another shape has to degrade to "no audio", not abort the load.\n    '
     from core.inference import mlx_inference
 
     fake_utils = types.ModuleType("unsloth_zoo.mlx.utils")
@@ -1735,12 +1731,7 @@ def test_mlx_audio_classification_keeps_a_classification_it_cannot_judge(monkeyp
     ],
 )
 def test_mlx_audio_capability_survives_a_probe_that_could_not_run(monkeypatch, capability):
-    """An unjudgeable probe defers; it does not retract audio_vlm.
-
-    Every currently released unsloth_zoo lands here, so treating "could not look"
-    as a verified negative would hide the upload control the pre-load detection
-    had already earned.
-    """
+    'An unjudgeable probe defers; it does not retract audio_vlm.\n\n    as a verified negative would hide the upload control the pre-load detection\n    had already earned.\n    '
     from core.inference import mlx_inference
 
     if capability is None:

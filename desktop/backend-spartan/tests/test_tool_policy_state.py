@@ -1,12 +1,5 @@
 
-"""
-Tests for the process-level server-side tool policy used by `unsloth run`.
-
-The policy has three states:
-  None  -> no CLI override (default; honor per-request enable_tools)
-  True  -> CLI forced tools on
-  False -> CLI forced tools off
-"""
+'\n\nThe policy has three states:\n  None  -> no CLI override (default; honor per-request enable_tools)\n  True  -> CLI forced tools on\n  False -> CLI forced tools off'
 
 import os
 import sys

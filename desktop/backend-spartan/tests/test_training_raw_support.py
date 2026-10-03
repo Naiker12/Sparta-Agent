@@ -208,7 +208,7 @@ class TestTrainingRawSupport(unittest.TestCase):
         source = (_BACKEND_ROOT / "core" / "training" / "worker.py").read_text(encoding = "utf-8")
         self.assertIn('if "report_grad_norm" in _supported_fields:', source)
         self.assertIn('mlx_config_kwargs["report_grad_norm"] = True', source)
-        # Feature-detected like the other newer fields, so an older unsloth_zoo
+
         # without the flag keeps working instead of raising on construction.
         gated = source.split("_supported_fields = ")[1]
         self.assertNotIn(
@@ -371,7 +371,7 @@ class TestTrainingRawSupport(unittest.TestCase):
 
     def test_mlx_worker_feature_detects_optional_mlx_config_fields(self):
         # `cast_norm_output_to_input_dtype`, `dataset_order`, `max_grad_leaf_norm` and `append_eos` ship
-        # in the paired unsloth-zoo update, so until that floor is in place the worker must gate them
+
         # or releases predating those fields cannot construct MLXTrainingConfig.
         source = (_BACKEND_ROOT / "core" / "training" / "worker.py").read_text(encoding = "utf-8")
 

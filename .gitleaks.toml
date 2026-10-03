@@ -1,6 +1,9 @@
 # Gitleaks configuration
 # https://github.com/gitleaks/gitleaks
 
+[extend]
+  useDefault = true
+
 [allowlist]
   description = "Global allowlist"
   paths = [
@@ -13,15 +16,6 @@
     '''node_modules/''',
     '''\.env\.web$''',
   ]
-
-# Allow test fixtures that contain dummy secrets
-[[rules]]
-  id = "test-fixture-allowlist"
-  description = "Allow test fixture files"
-  path = '''tests/|__tests__|\.test\.|\.spec\.'''
-  [rules.allowlist]
-    description = "Test fixtures with dummy values"
-    regex = '''(test|fake|dummy|example|placeholder)'''
 
 [[rules]]
   id = "generic-api-key"

@@ -27,6 +27,7 @@ import { findPromptQueueEntry } from "./prompt-queue-manager";
 import { ReasoningToggle } from "./reasoning-toggle";
 
 export interface ComposerRightControlsProps {
+  modelSelector?: import("react").ReactNode;
   disabled?: boolean;
   queueDisabled?: boolean;
   onQueueClick?: () => void;
@@ -38,6 +39,7 @@ export interface ComposerRightControlsProps {
 }
 
 export const ComposerRightControls: FC<ComposerRightControlsProps> = ({
+  modelSelector,
   disabled,
   queueDisabled,
   onQueueClick,
@@ -133,6 +135,7 @@ export const ComposerRightControls: FC<ComposerRightControlsProps> = ({
 
   return (
     <div className="aui-composer-action-wrapper flex shrink-0 items-center gap-1.5">
+      {modelSelector}
       <ReasoningToggle side={menuSide} />
       <ComposerPrimitive.If dictation={false}>
         <TooltipIconButton

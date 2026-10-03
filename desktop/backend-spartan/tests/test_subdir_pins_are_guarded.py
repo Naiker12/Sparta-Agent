@@ -1,18 +1,5 @@
 
-"""The provenance attester and the worker's revalidation need the load subdirs too.
-
-``ca7c72e75`` taught three sites about subdirectory-loading repos. An audit of the full
-backend suite found only one of them was detectable: reverting the subdir expansion in
-``core/training/provenance.py`` or in ``core/training/worker.py`` left all 17,204 passing
-tests green, with a byte-identical failure set. Both were shipped unguarded.
-
-They are not decorative. For ``unsloth/Spark-TTS-0.5B`` -- snapshot root holds only
-``README.md`` and ``config.yaml``, everything trainable under ``LLM/`` -- the provenance
-site turns a snapshot sitting on disk into "The exact model snapshot for this run is no
-longer available." and refuses the resume, and the worker site either errors with "The
-cached model snapshot selected during preflight is no longer available." or silently
-drops the pin and goes back to the Hub.
-"""
+'The provenance attester and the worker\'s revalidation need the load subdirs too.\n\n``ca7c72e75`` taught three sites about subdirectory-loading repos. An audit of the full\nbackend suite found only one of them was detectable: reverting the subdir expansion in\n``core/training/provenance.py`` or in ``core/training/worker.py`` left all 17,204 passing\ntests green, with a byte-identical failure set. Both were shipped unguarded.\n\n``README.md`` and ``config.yaml``, everything trainable under ``LLM/`` -- the provenance\nsite turns a snapshot sitting on disk into "The exact model snapshot for this run is no\nlonger available." and refuses the resume, and the worker site either errors with "The\ncached model snapshot selected during preflight is no longer available." or silently\ndrops the pin and goes back to the Hub.'
 
 import json
 

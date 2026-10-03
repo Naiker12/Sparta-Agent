@@ -188,33 +188,7 @@ def _classify_mlx_audio_type(
     is_vision,
     config_audio_type = None,
 ):
-    """audio_type for the model entry: "audio_vlm" (omni audio input; is_audio
-    stays False — it means TTS and redirects in the chat route) or None.
-
-    The checkpoint's own capability comes from unsloth_zoo, which answers it by
-    observing whether audio content changes what the processor returns. Two
-    things stay here because they are this backend's, not the checkpoint's: the
-    waveform arrives at the rate the chat route decodes to, and the prompt is
-    rendered through mlx-vlm's registry, where some families accept an audio
-    count and silently drop it. The rendered prompt is what the capability call
-    probes with, so a family whose marker only its own template emits is judged
-    on the real thing.
-
-    This probe speaks for "audio_vlm" and nothing else, so `config_audio_type`
-    (the pre-load answer from detect_audio_type) is carried through untouched
-    whenever the probe has no standing:
-
-      * a non-vision checkpoint is never asked, so a TTS codec ("snac", "dac",
-        "bicodec", "csm") or Whisper keeps the classification it arrived with —
-        the worker mirrors this entry over the pre-load config, so returning a
-        bare None here would silently strip the chat route's TTS redirect;
-      * a probe that could not run (absent or older unsloth_zoo, a raising or
-        unrecognised capability result) leaves the pre-load answer standing
-        rather than downgrading a model on the strength of a missing
-        dependency.
-
-    Only a probe that actually ran and answered may retract "audio_vlm".
-    """
+    'audio_type for the model entry: "audio_vlm" (omni audio input; is_audio\n    stays False — it means TTS and redirects in the chat route) or None.\n\n    observing whether audio content changes what the processor returns. Two\n    things stay here because they are this backend\'s, not the checkpoint\'s: the\n    waveform arrives at the rate the chat route decodes to, and the prompt is\n    rendered through mlx-vlm\'s registry, where some families accept an audio\n    count and silently drop it. The rendered prompt is what the capability call\n    probes with, so a family whose marker only its own template emits is judged\n    on the real thing.\n\n    This probe speaks for "audio_vlm" and nothing else, so `config_audio_type`\n    (the pre-load answer from detect_audio_type) is carried through untouched\n    whenever the probe has no standing:\n\n      * a non-vision checkpoint is never asked, so a TTS codec ("snac", "dac",\n        "bicodec", "csm") or Whisper keeps the classification it arrived with —\n        the worker mirrors this entry over the pre-load config, so returning a\n        bare None here would silently strip the chat route\'s TTS redirect;\n        unrecognised capability result) leaves the pre-load answer standing\n        rather than downgrading a model on the strength of a missing\n        dependency.\n\n    Only a probe that actually ran and answered may retract "audio_vlm".\n    '
 
     def _probe_says_no():
         # Authoritative for audio_vlm only; anything else passes through.

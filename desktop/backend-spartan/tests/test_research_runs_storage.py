@@ -2321,7 +2321,7 @@ def test_auto_scrape_skips_already_fetched_urls(research_home, monkeypatch):
 
 
 def test_auto_scrape_honors_numeric_limit(research_home, monkeypatch):
-    # A numeric UNSLOTH_RESEARCH_AUTO_SCRAPE (persisted as maxAutoScrape=N) caps the pages read,
+
     # rather than always scraping _AUTO_SCRAPE_TOP_K.
     worker, supervisor = _bare_supervisor(monkeypatch)
     _patch_web_rank(monkeypatch)

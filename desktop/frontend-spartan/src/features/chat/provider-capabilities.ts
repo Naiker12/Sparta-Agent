@@ -2,6 +2,7 @@ import {
   normalizeProviderMaxOutputTokens,
   providerModelSupportsStudioTools,
 } from "./external-providers";
+import { getCatalogReasoning } from "./catalog-reasoning";
 
 /**
  * Per-provider sampling parameter capability matrix.
@@ -545,13 +546,13 @@ function isGeminiImageModel(modelId: string): boolean {
   return m.includes("-image") || m.includes("nano-banana");
 }
 
-/**
- * Whether the saved Gemini connection points at a custom OpenAI-compat gateway
- * (any non-Google host). The backend `_is_openai_compatible` routes these
- * through `/chat/completions` instead of the native translator, so native Gemini
- * tool envelopes never reach them. Hide the matching Unsloth pills here so the
- * request, builder, and UI agree.
- */
+
+
+
+
+
+
+
 export function isGeminiCustomOpenAICompatBase(
   baseUrl: string | null | undefined,
 ): boolean {
@@ -1064,6 +1065,23 @@ export function getExternalReasoningCapabilities(
 ): ExternalReasoningCapabilities {
   const normalizedModel = modelId?.trim().toLowerCase() ?? "";
   const normalizedProvider = providerType?.trim().toLowerCase() ?? "";
+  if (normalizedProvider === "openrouter") {
+    const catalog = getCatalogReasoning(normalizedProvider, normalizedModel);
+    if (catalog === null) return withEnableThinkingStyle();
+    if (catalog) {
+      const order = ["none", "minimal", "low", "medium", "high", "xhigh", "max"] as const;
+      const levels = order.filter(level =>
+        (catalog.supported_efforts === null || catalog.supported_efforts?.includes(level)) &&
+        !(catalog.mandatory && level === "none"));
+      return {
+        supportsReasoning: true,
+        reasoningStyle: levels.length ? "reasoning_effort" : "enable_thinking",
+        reasoningAlwaysOn: catalog.mandatory === true,
+        supportsReasoningOff: catalog.mandatory !== true,
+        reasoningEffortLevels: levels,
+      };
+    }
+  }
   const connectionLevel = resolveConnectionLevelReasoning(
     normalizedProvider,
     options,

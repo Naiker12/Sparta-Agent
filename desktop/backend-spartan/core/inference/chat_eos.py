@@ -1,17 +1,5 @@
 
-"""Resolve a chat model's assistant-turn-end stop tokens.
-
-Some checkpoints set eos_token_id to a bare document terminator (Qwen3.5 ships
-config eos ``<|endoftext|>`` though chat turns end with ``<|im_end|>``, and its
-small chat variants ship no generation_config), so generation runs past the turn
-and loops -- re-emitting tool calls or hallucinating ``<|im_start|>`` turns.
-
-Turn-end markers are derived from the tokenizer's ``chat_template`` (the tokens it
-actually uses to end a turn), not raw vocab membership: a base/coder model can
-carry ChatML control tokens in a shared vocab without using them, and a loader
-may have synced ``eos_token`` to the document terminator. Dependency-light (no
-torch / unsloth) so it is unit-testable without the full inference stack.
-"""
+"Resolve a chat model's assistant-turn-end stop tokens.\n\nSome checkpoints set eos_token_id to a bare document terminator (Qwen3.5 ships\nconfig eos ``<|endoftext|>`` though chat turns end with ``<|im_end|>``, and its\nsmall chat variants ship no generation_config), so generation runs past the turn\nand loops -- re-emitting tool calls or hallucinating ``<|im_start|>`` turns.\n\nTurn-end markers are derived from the tokenizer's ``chat_template`` (the tokens it\nactually uses to end a turn), not raw vocab membership: a base/coder model can\ncarry ChatML control tokens in a shared vocab without using them, and a loader\nmay have synced ``eos_token`` to the document terminator. Dependency-light (no"
 
 from typing import Optional
 

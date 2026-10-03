@@ -340,7 +340,7 @@ def _sanitize_config(payload: CreateResearchRun, thread: dict) -> dict:
             if key == "modelTimeoutSeconds":
                 allowed = f"0 (unlimited) or {allowed}"
             raise HTTPException(status_code = 400, detail = f"{key} must be {allowed}")
-    # Server-controlled, not client tunable. OFF unless UNSLOTH_RESEARCH_AUTO_SCRAPE=1, and
+
     # injected only when enabled, so a default run's budgets stay byte-identical to legacy.
     from core.research_runs import _auto_scrape_default
 

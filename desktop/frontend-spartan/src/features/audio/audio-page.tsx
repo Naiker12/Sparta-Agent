@@ -271,7 +271,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
   const busyRef = useRef<AudioBusy>(busy);
   busyRef.current = busy;
 
-  // --- TTS (main inference slot) -----------------------------------------
+
   const [status, setStatus] = useState<InferenceStatusResponse | null>(null);
   const [prompt, setPrompt] = useState("");
   const [temperature, setTemperature] = useState(0.6);
@@ -305,7 +305,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
     requestStarted: boolean;
   } | null>(null);
 
-  // --- STT (dictation sidecar) -------------------------------------------
+
   const [selectedSttRepo, setSelectedSttRepo] = useState<string | null>(null);
   const [sttLoadedModel, setSttLoadedModel] = useState<string | null>(null);
   const [sttLoadedEngine, setSttLoadedEngine] = useState<
@@ -403,7 +403,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
     stopRecordStream();
   }, [stopRecordStream]);
 
-  // --- Gallery ------------------------------------------------------------
+
   const [clips, setClips] = useState<AudioGalleryClip[]>(galleryCache.clips);
   const [hasMore, setHasMore] = useState(galleryCache.hasMore);
   const [selectedId, setSelectedId] = useState<string | null>(
@@ -710,7 +710,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
     }
   }, []);
 
-  // --- Model selection ----------------------------------------------------
+
 
   const loadTtsModel = useCallback(
     async (
@@ -1435,7 +1435,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
     transitionMode,
   ]);
 
-  // --- Speak --------------------------------------------------------------
+
 
   const ttsLoaded = Boolean(
     status?.active_model &&
@@ -1654,7 +1654,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
   // it is still waiting in the gallery on return.
   useEffect(() => () => generateAbort.current?.abort(), []);
 
-  // --- Transcribe ---------------------------------------------------------
+
 
   const runTranscription = useCallback(
     async (blob: Blob, name: string) => {
@@ -1862,7 +1862,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
     window.setTimeout(() => URL.revokeObjectURL(url), 0);
   }, [transcript, transcribedName]);
 
-  // --- Gallery actions ----------------------------------------------------
+
 
   const handleDeleteClip = useCallback(
     async (id: string) => {
@@ -2016,7 +2016,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
     };
   }, [active, isMac]);
 
-  // --- Render -------------------------------------------------------------
+
 
   const selectedClip = clips.find((c) => c.id === selectedId) ?? null;
   const selectorModels =

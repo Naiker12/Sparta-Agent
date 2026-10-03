@@ -36,9 +36,6 @@ module.exports = {
     '!node_modules/**',
     'node_modules/@firecrawl/**/*',
     '!public/negro/**',
-    '!public/escritorio.png',
-    '!public/post.png',
-    '!public/readmin.png',
     '!**/*.map',
     '!**/*.tsbuildinfo'
   ],
@@ -78,7 +75,7 @@ module.exports = {
     // Squirrel.Mac consumes the ZIP and latest-mac.yml; the DMG is only the
     // manual installer. Keep both artifacts in every macOS release.
     target: ['dmg', 'zip'],
-    artifactName: 'Sparta-Agent-Mac-\${version}-Installer.\${ext}',
+    artifactName: 'Sparta-Agent-Mac-\${version}-\${arch}-Installer.\${ext}',
     hardenedRuntime: true,
     gatekeeperAssess: false,
     entitlements: 'build/entitlements.mac.plist',

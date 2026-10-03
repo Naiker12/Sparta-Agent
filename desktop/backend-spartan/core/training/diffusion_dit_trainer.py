@@ -158,7 +158,7 @@ class _FamilySpec:
     save: Callable[..., None]
 
 
-# ── shared flow-matching helpers ──────────────────────────────────────────────
+
 def _gather_sigmas(sigma_table, indices, device, dtype, n_dim):
     """Gather per-sample sigmas for schedule ``indices`` and broadcast to ``n_dim``.
     Index-based (no per-item search): ``indices`` are the positions ``_sample_timesteps``
@@ -602,7 +602,7 @@ def _resolve_base_precision(cfg, spec, device) -> str:
     )
 
 
-# ── FLUX.1-dev ────────────────────────────────────────────────────────────────
+
 def _flux_load_conditioners(cfg, device, weight_dtype):
     from diffusers import FluxPipeline
     return _load_pipe_without_transformer(FluxPipeline, cfg, device)
@@ -711,7 +711,7 @@ def _flux_save(pipe_cls, out_dir, transformer_lora_layers):
     )
 
 
-# ── Qwen-Image ────────────────────────────────────────────────────────────────
+
 def _qwen_load_conditioners(cfg, device, weight_dtype):
     from diffusers import QwenImagePipeline
     return _load_pipe_without_transformer(QwenImagePipeline, cfg, device)
@@ -828,7 +828,7 @@ def _qwen_save(pipe_cls, out_dir, transformer_lora_layers):
     )
 
 
-# ── Z-Image ───────────────────────────────────────────────────────────────────
+
 def _zimage_load_conditioners(cfg, device, weight_dtype):
     from diffusers import ZImagePipeline
     return _load_pipe_without_transformer(ZImagePipeline, cfg, device)
@@ -901,7 +901,7 @@ def _zimage_save(pipe_cls, out_dir, transformer_lora_layers):
     )
 
 
-# ── Krea 2 ────────────────────────────────────────────────────────────────────
+
 def _krea2_load_conditioners(cfg, device, weight_dtype):
     # The krea repo ships transformers-5.x style configs the pinned 4.x line cannot parse, so the conditioning pipeline is assembled per-component (diffusion_krea2.py).
     import torch
@@ -989,7 +989,7 @@ def _krea2_save(pipe_cls, out_dir, transformer_lora_layers):
     )
 
 
-# ── FLUX.2 (dev + Klein) ──────────────────────────────────────────────────────
+
 # Both variants share Flux2Transformer2DModel and the upstream DreamBooth packing/forward conventions, differing only in the conditioning
 # stack (dev: Mistral-3-Small; Klein: Qwen3) and size. Latents train patchified and batch-norm-normalised, from the posterior MODE (deterministic).
 _FLUX2_COMMON_TARGETS = (
@@ -1142,7 +1142,7 @@ def _flux2_klein_save(pipe_cls, out_dir, transformer_lora_layers):
     )
 
 
-# ── LTX-2 (video) ─────────────────────────────────────────────────────────────
+
 # The first VIDEO family. Milestone one trains from STILL IMAGES: a 1-frame clip is a valid
 # LTX-2 input (its VAE compresses time by 8, so (1 - 1) // 8 + 1 = 1 latent frame), and the
 # community consensus is that style / character LoRAs converge on 20-50 stills while only
@@ -2408,14 +2408,7 @@ def _train_dit(
 
 
 def _make_optimizer(params, lr):
-    """8-bit AdamW (bitsandbytes) when available -- half the optimizer state, no accuracy
-    regression for LoRA -- else torch AdamW, fused on CUDA (with a fallback when this
-    build/device lacks the fused kernel).
-
-    UNSLOTH_DIFFUSION_FP32_OPTIM forces plain (non-fused) AdamW, as it does for SDXL: the
-    accuracy guard wants the reference optimizer, and a host where the override means one
-    thing for one trainer and nothing for the other cannot answer "can this checkpoint be
-    resumed here" before the run starts."""
+    '8-bit AdamW (bitsandbytes) when available -- half the optimizer state, no accuracy\n    regression for LoRA -- else torch AdamW, fused on CUDA (with a fallback when this\n    build/device lacks the fused kernel).\n\n    accuracy guard wants the reference optimizer, and a host where the override means one\n    thing for one trainer and nothing for the other cannot answer "can this checkpoint be\n    resumed here" before the run starts.'
     import torch
 
     if os.environ.get("UNSLOTH_DIFFUSION_FP32_OPTIM", "") in ("1", "true"):

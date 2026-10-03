@@ -1,11 +1,5 @@
 
-"""Shared controller state for Unsloth local agentic tool loops.
-
-This module is intentionally dependency-light: it owns only per-response
-ledger state and value objects used by the GGUF and safetensors loops.
-Route/SSE conversion, tool execution, and model streaming stay in the
-backend-specific modules.
-"""
+'\nThis module is intentionally dependency-light: it owns only per-response\nledger state and value objects used by the GGUF and safetensors loops.\nRoute/SSE conversion, tool execution, and model streaming stay in the\nbackend-specific modules.'
 
 from __future__ import annotations
 

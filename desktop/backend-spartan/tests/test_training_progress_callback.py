@@ -24,7 +24,7 @@ _BACKEND_DIR = str(Path(__file__).resolve().parent.parent)
 if _BACKEND_DIR not in sys.path:
     sys.path.insert(0, _BACKEND_DIR)
 
-# core/training/trainer.py imports unsloth and trl at module level (heavy, GPU init). Stub
+
 # whichever are missing just long enough to import it, then restore.
 _STUBS = {
     "unsloth": ("FastLanguageModel", "FastVisionModel", "is_bfloat16_supported"),
@@ -71,7 +71,7 @@ if not _TRAINER_PRE_IMPORTED:
     for _name in _STUBBED:
         sys.modules.pop(_name, None)
     # Drop the stub-bound module and its parent package so a later test re-imports it against the
-    # real packages; the UnslothTrainer class held above stays usable.
+
     sys.modules.pop("core.training.trainer", None)
     sys.modules.pop("core.training", None)
 
@@ -115,7 +115,7 @@ def _drive(
     return state, control
 
 
-# --- LLM/VLM/audio path: UnslothTrainer._create_progress_callback ->
+
 # worker._create_trainer_progress_callback ---
 
 

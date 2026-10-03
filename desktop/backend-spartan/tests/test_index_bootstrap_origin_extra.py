@@ -24,10 +24,7 @@ def _build_request(
 
 
 def test_is_same_origin_request_ipv6_loopback_same_origin():
-    """Unsloth supports ``-H ::1`` binds; netloc is ``[::1]:8902``. Bare
-    ``partition(":")`` mis-parses the bracketed form and would refuse the
-    bootstrap on legitimate same-origin navigation.
-    """
+    '    ``partition(":")`` mis-parses the bracketed form and would refuse the\n    bootstrap on legitimate same-origin navigation.\n    '
     from main import _is_same_origin_request
 
     req = _build_request("[::1]:8902", origin = "http://[::1]:8902")

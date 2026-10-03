@@ -486,6 +486,7 @@ def get_thread_workspace_binding(thread_id: str) -> Optional[dict]:
             "threadId": row["thread_id"],
             "access": row["access"],
             "boundAt": row["binding_created_at"],
+            "projectId": get_chat_thread(thread_id).get("projectId"),
         })
         return binding
     finally:
@@ -511,6 +512,15 @@ def bind_chat_thread_workspace(
             conn.execute("INSERT INTO chat_workspaces(id, display_name, canonical_path, filesystem_identity, created_at, updated_at, last_used_at) VALUES(?,?,?,?,?,?,?)", (workspace_id, display_name, canonical_path, filesystem_identity, now, now, now))
         binding_id = str(uuid.uuid4())
         conn.execute("INSERT INTO chat_workspace_bindings(id, thread_id, workspace_id, access, created_at, updated_at) VALUES(?,?,?,?,?,?) ON CONFLICT(thread_id) DO UPDATE SET workspace_id=excluded.workspace_id, access=excluded.access, updated_at=excluded.updated_at", (binding_id, thread_id, workspace_id, access, now, now))
+        # Project groups the folder's chats; the binding remains the authority
+        # for each chat's access. Never inherit write permission via grouping.
+        project = conn.execute("SELECT id FROM chat_projects WHERE connected_folder_path=? AND archived=0 ORDER BY created_at LIMIT 1", (canonical_path,)).fetchone()
+        project_id = project["id"] if project else str(uuid.uuid5(uuid.NAMESPACE_URL, "sparta-workspace:" + workspace_id))
+        if not project:
+            conn.execute("""INSERT INTO chat_projects(id,name,instructions,connected_folder_path,workspace_access,archived,created_at,updated_at)
+                VALUES(?,?,'',?,'read',0,?,?) ON CONFLICT(id) DO UPDATE SET archived=0,updated_at=excluded.updated_at""",
+                (project_id, display_name, canonical_path, now, now))
+        conn.execute("UPDATE chat_threads SET project_id=?,updated_at=? WHERE id=?", (project_id, now, thread_id))
         conn.commit()
     except Exception:
         conn.rollback()

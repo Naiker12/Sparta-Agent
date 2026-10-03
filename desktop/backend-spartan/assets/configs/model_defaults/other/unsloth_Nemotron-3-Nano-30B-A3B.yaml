@@ -1,7 +1,4 @@
-# Model defaults for unsloth/Nemotron-3-Nano-30B-A3B
 # Based on Nemotron-3-Nano-30B-A3B_A100.ipynb
-# Also applies to: unsloth/Nemotron-3-Nano-30B-A3B
-# added inference parameters from unsloth guides
 
 training:
   max_seq_length: 2048

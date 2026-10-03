@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.3.3] - 2026-10-02
+
+### Added
+
+- Cola de mensajes persistente con recuperación de pendientes y guardado previo al envío.
+- Bandeja de trabajo con estados observados, filtros, resultados y enlaces a conversaciones.
+- Automatizaciones con revisión de propuestas y memoria de conversaciones con revisión de extracciones.
+- Prueba de arranque en Electron con perfil aislado y comprobaciones del preload.
+
+### Changed
+
+- Landing con demo interactiva, tema del escritorio y documentación reorganizada en MDX con diagramas.
+- Contexto de proyecto, controles del composer y vistas de archivos más coherentes entre chats.
+- Limpieza de componentes, imágenes, scripts temporales y comentarios redundantes.
+
+### Fixed
+
+- Recuperación de la cola sin repetir mensajes ya despachados ni cambiar sus permisos.
+- Clasificación de respuestas completas, errores, cancelaciones e interrupciones en la bandeja.
+- Lecturas de imágenes y errores tardíos después de desmontar el selector.
+- Pantalla en blanco en el build independiente del frontend por una versión sin definir.
+- Versión mostrada por el backend sincronizada con los manifiestos de Sparta.
+
+### Release
+
+- Los builds locales no publican artefactos automáticamente; las comprobaciones preceden a la publicación.
+
 ## [0.3.2] - 2026-09-26
 
 ### Fixed

@@ -432,7 +432,7 @@ def test_a_base_outside_the_size_table_costs_no_request_at_all(base, monkeypatch
 
 
 def test_a_known_ungated_mirror_is_checked_like_its_upstream(monkeypatch, tmp_path):
-    # Not an exception to the rule above: an unsloth mirror is a byte-identical copy, canonical_base
+
     # maps it back, and skipping it would leave the mirror picks -- the ones an anonymous user
     # actually gets -- as the only unguarded path.
     _stub_range_reads(monkeypatch, {KLEIN_4B_FILE: _gguf_header(3072, tmp_path)})

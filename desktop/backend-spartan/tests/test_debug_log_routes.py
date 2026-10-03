@@ -154,12 +154,7 @@ def test_the_endpoints_stay_out_of_the_access_log():
 
 
 def test_a_stale_session_is_flagged_when_file_logging_is_off(client, monkeypatch):
-    """An old file with logging now off must not read as a live view.
-
-    Reported on the PR: with UNSLOTH_STUDIO_NO_FILE_LOG=1 and a log left over
-    from a previous run, the read path answered a plain "ok" and the viewer sat
-    there looking live while nothing would ever be appended to it again.
-    """
+    'An old file with logging now off must not read as a live view.\n\n    from a previous run, the read path answered a plain "ok" and the viewer sat\n    there looking live while nothing would ever be appended to it again.\n    '
     _seed_server_log("a previous session\n")
     monkeypatch.setenv("UNSLOTH_STUDIO_NO_FILE_LOG", "1")
     body = client.get("/api/settings/debug/logs").json()
@@ -206,12 +201,7 @@ def _source_id(client, family: str) -> str:
 
 
 def test_a_runner_log_is_not_called_stale_when_only_the_server_tee_is_off(client, monkeypatch):
-    """UNSLOTH_STUDIO_NO_FILE_LOG only skips run.py's tee.
-
-    The llama and diffusion runners and the desktop shell keep writing, so
-    treating the setting as global told a user watching a live llama-server log
-    that it would not update while the failure was still being appended to it.
-    """
+    '\n    The llama and diffusion runners and the desktop shell keep writing, so\n    treating the setting as global told a user watching a live llama-server log\n    that it would not update while the failure was still being appended to it.\n    '
     _seed_llama_log()
     monkeypatch.setenv("UNSLOTH_STUDIO_NO_FILE_LOG", "1")
     source_id = _source_id(client, "llama-server")

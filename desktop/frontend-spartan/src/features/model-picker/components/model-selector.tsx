@@ -182,8 +182,8 @@ interface ModelSelectorProps {
   task?: HfTaskFilter;
   /** Canonical model groups (Images / Video pages): collapses a model's artifact repos into one row with a format second level and device-aware routing. Undefined (chat) changes nothing. */
   catalog?: CatalogGroup[];
-  /** Also list community (non-unsloth) models for `task`. Opt-in: only pages
-   *  whose runtime loads arbitrary publishers. */
+
+
   communityModelPolicy?: CommunityModelPolicy;
   /** Trigger text when nothing is loaded. Defaults to "Select model"; task pages name what they pick so it reads as separate from the chat model. */
   placeholder?: string;

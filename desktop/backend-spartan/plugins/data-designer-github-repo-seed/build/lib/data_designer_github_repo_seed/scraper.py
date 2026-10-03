@@ -1,11 +1,5 @@
 
-"""Multi-repo GitHub scraper for the Unsloth seed plugin.
-
-Drives the GraphQL scraper in `scraper_impl/` per repo, capped via trial_limits
-to stop at `limit` items per resource. Then reads the per-resource JSONL shards
-and flattens them into one unified JSONL with stable columns (`item_type`,
-`repo`, `number`, `title`, `body`, ...).
-"""
+'\nDrives the GraphQL scraper in `scraper_impl/` per repo, capped via trial_limits\nto stop at `limit` items per resource. Then reads the per-resource JSONL shards\nand flattens them into one unified JSONL with stable columns (`item_type`,\n`repo`, `number`, `title`, `body`, ...).'
 
 from __future__ import annotations
 

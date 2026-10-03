@@ -1,12 +1,5 @@
 
-"""Tests for the server session log + native-crash capture in run.py.
-
-Field regression: Unsloth "terminates without a warning" -- a native crash in
-the GPU runtime kills the process with no Python traceback, and a desktop-
-shortcut console closes before anything can be read. The server must tee its
-console output to disk and aim faulthandler at the same file so even hard
-crashes leave evidence.
-"""
+'Tests for the server session log + native-crash capture in run.py.\n\nthe GPU runtime kills the process with no Python traceback, and a desktop-\nshortcut console closes before anything can be read. The server must tee its\nconsole output to disk and aim faulthandler at the same file so even hard\ncrashes leave evidence.'
 
 from __future__ import annotations
 
@@ -119,7 +112,7 @@ class TestSetupServerDiskLogging:
         monkeypatch.delenv("UNSLOTH_STUDIO_NO_FILE_LOG", raising = False)
         monkeypatch.delenv("PYTHONFAULTHANDLER", raising = False)
         # Both resolution paths (utils.paths.studio_root and the env
-        # fallback) honor UNSLOTH_STUDIO_HOME, so this redirects the log dir.
+
         monkeypatch.setenv("UNSLOTH_STUDIO_HOME", str(tmp_path))
         orig_out, orig_err = sys.stdout, sys.stderr
         was_enabled = faulthandler.is_enabled()

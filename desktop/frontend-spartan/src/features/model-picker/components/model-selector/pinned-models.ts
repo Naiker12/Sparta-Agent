@@ -1,7 +1,7 @@
 // Pinned models for the model selector's On Device list, persisted in
 // localStorage so pins survive reloads. GGUF quants pin individually
 // (repoId + quant); non-GGUF repos pin as a whole. Pinned entries surface
-// in a "Pinned" section above the Unsloth/Downloaded group.
+
 
 import { create } from "zustand";
 

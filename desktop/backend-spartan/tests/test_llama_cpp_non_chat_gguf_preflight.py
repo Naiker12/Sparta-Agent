@@ -1,14 +1,5 @@
 
-"""CPU-only unit tests for the pre-launch non-chat GGUF refusal.
-
-Reported: a text-to-video model opened from the Model Hub landed in a chat, ran the whole
-download-and-launch path, and died as "llama-server failed to start". ``_non_chat_gguf_refusal``
-decides that from the GGUF header instead, and names the page that does run it.
-
-Unsloth's video GGUFs (MiniMax-H3) carry a bare tensor header with ZERO KV pairs, so there is no
-``general.architecture`` to match -- which is why "declares no architecture" is a verdict here,
-and why it has to be told apart from "the header could not be read".
-"""
+'CPU-only unit tests for the pre-launch non-chat GGUF refusal.\n\nReported: a text-to-video model opened from the Model Hub landed in a chat, ran the whole\ndownload-and-launch path, and died as "llama-server failed to start". ``_non_chat_gguf_refusal``\ndecides that from the GGUF header instead, and names the page that does run it.\n\n``general.architecture`` to match -- which is why "declares no architecture" is a verdict here,\nand why it has to be told apart from "the header could not be read".'
 
 from __future__ import annotations
 
@@ -87,7 +78,7 @@ def test_diffusiongemma_arch_is_left_to_the_diffusion_runner(tmp_path):
 
 
 def test_metadata_less_video_gguf_is_refused_and_named(tmp_path):
-    # The shape of unsloth/MiniMax-H3-GGUF: valid GGUF, zero KV pairs, no architecture.
+
     backend, message = _refusal(
         tmp_path,
         arch = None,
@@ -313,8 +304,7 @@ def test_an_arch_that_names_its_own_family_still_gets_the_video_page(tmp_path):
 
 
 def _write_split_shard(path: Path) -> Path:
-    """A gguf-split shard past the first: split.no / split.count / split.tensors.count and no
-    general.architecture, as measured on unsloth/DeepSeek-R1-GGUF shard 2."""
+    'A gguf-split shard past the first: split.no / split.count / split.tensors.count and no'
     body = b""
     for key, value in ((b"split.no", 1), (b"split.count", 30), (b"split.tensors.count", 34)):
         body += struct.pack("<Q", len(key)) + key

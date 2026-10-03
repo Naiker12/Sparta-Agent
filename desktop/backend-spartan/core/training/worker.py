@@ -28,7 +28,7 @@ from typing import Any, Callable, TYPE_CHECKING
 if TYPE_CHECKING:
     from core.training.training import TrainingProgress
 
-# ── WSL AMD Strix Halo (gfx1151): enable ROCDXG before any torch import ──────
+
 # Mirrors main.py. In WSL the AMD GPU is reached via the ROCDXG bridge (librocdxg.so
 # over /dev/dxg), which HSA loads only when HSA_ENABLE_DXG_DETECTION=1 is set before
 # torch touches the GPU; a worker spawned outside a login shell misses the installer's
@@ -264,13 +264,7 @@ def _model_cache_fallback_error(config: dict, error: BaseException | None) -> Ru
 
 
 def _mlx_revision_fallback_error(config: dict) -> RuntimeError | None:
-    """Refuse an exact retry when MLX would remap the repo and drop its commit.
-
-    ``FastMLXModel`` maps Unsloth bitsandbytes repositories to their full-precision
-    base because MLX cannot read bnb-packed weights.  A commit from the selected
-    repository has no guaranteed meaning in that different repository, so silently
-    applying it (or dropping it) would violate the cache pin.
-    """
+    'Refuse an exact retry when MLX would remap the repo and drop its commit.\n\n    base because MLX cannot read bnb-packed weights.  A commit from the selected\n    repository has no guaranteed meaning in that different repository, so silently\n    applying it (or dropping it) would violate the cache pin.\n    '
     model_name = str(config.get("model_name") or "")
     revision = config.get("model_revision")
     if (
@@ -1086,13 +1080,7 @@ def _uninstall_package(pypi_name: str, display_name: str) -> bool:
 
 
 def _distribution_present(pypi_name: str) -> bool:
-    """Whether the distribution's METADATA is installed, without importing it.
-
-    Metadata is what matters: unsloth/models/_utils.py gates on ``_package_available`` and
-    only then imports the native module, so metadata left behind is what turns a rejected
-    wheel into an in-process crash. Reading it never loads the extension, so this is safe
-    even for a wheel that would abort.
-    """
+    "Whether the distribution's METADATA is installed, without importing it.\n\n    only then imports the native module, so metadata left behind is what turns a rejected\n    wheel into an in-process crash. Reading it never loads the extension, so this is safe\n    even for a wheel that would abort.\n    "
     importlib.invalidate_caches()
     try:
         importlib.metadata.distribution(pypi_name)
@@ -1580,7 +1568,7 @@ def _ensure_flash_linear_attention_unconditional(event_queue: Any) -> bool:
 
 
 def _ensure_flash_linear_attention(event_queue: Any, model_name: str) -> None:
-    """Legacy model-name-gated FLA install, used when UNSLOTH_STUDIO_SKIP_FAST_PATH_HOOKS=1."""
+    ''
     if not _model_wants_tilelang(model_name):
         return
     _ensure_flash_linear_attention_unconditional(event_queue)
@@ -1758,11 +1746,7 @@ _MEM_FRACTION_ENV = "UNSLOTH_ROCM_MEM_FRACTION"
 
 
 def _parse_mem_fraction_env(env_value: str | None) -> float | None:
-    """``UNSLOTH_ROCM_MEM_FRACTION`` as a float, None when unset or unusable.
-
-    Shared with the OOM guard's log line so it can say whether the override was
-    actually honoured, rather than just whether the variable was set.
-    """
+    "\n    Shared with the OOM guard's log line so it can say whether the override was\n    actually honoured, rather than just whether the variable was set.\n    "
     try:
         override = float(env_value)  # None -> TypeError, "" / "  " -> ValueError
     except (TypeError, ValueError):
@@ -1795,28 +1779,7 @@ def _rocm_memory_fraction(
     env_value: str | None = None,
     denominator_bytes: int | None = None,
 ) -> float:
-    """Pick the ``set_per_process_memory_fraction`` cap for a ROCm device.
-
-    ``total_bytes`` is the pool the reserve comes out of, always
-    ``get_device_properties().total_memory``: on a unified APU that is what the OS
-    shares, while ``hipMemGetInfo``'s total is a runtime budget spanning GTT.
-
-    ``denominator_bytes`` is what the allocator multiplies the fraction by, when that
-    is a different number (see ``_allocator_divides_by_props_total``). An absolute
-    byte reserve only lands where intended if the two agree, so passing it re-solves
-    the cap for the same allowed bytes, floored at the historical cap so a larger
-    driver total can never leave this tighter than the 0.80 it replaced.
-
-    - ``env_value`` (``UNSLOTH_ROCM_MEM_FRACTION``) wins when it parses to a
-      float in ``(0.0, 1.0]``; anything else is ignored, never fatal.
-    - Unified + win32: ``1.0``. The WDDM budget already excludes the OS share,
-      so any sub-1.0 cap double-taxes it (see the guard's own comment).
-    - Unified elsewhere: reserve ``min(_UNIFIED_MAX_RESERVE_FRACTION of total,
-      _UNIFIED_OS_RESERVE_BYTES)``, then clamp the cap to ``_DISCRETE_MEM_FRACTION``
-      so a huge pool never ends up looser than a discrete card. The percentage
-      ceiling keeps small pools at exactly the historical cap.
-    - Discrete: ``_DISCRETE_MEM_FRACTION``.
-    """
+    "Pick the ``set_per_process_memory_fraction`` cap for a ROCm device.\n\n    ``total_bytes`` is the pool the reserve comes out of, always\n    ``get_device_properties().total_memory``: on a unified APU that is what the OS\n    shares, while ``hipMemGetInfo``'s total is a runtime budget spanning GTT.\n\n    ``denominator_bytes`` is what the allocator multiplies the fraction by, when that\n    is a different number (see ``_allocator_divides_by_props_total``). An absolute\n    byte reserve only lands where intended if the two agree, so passing it re-solves\n    the cap for the same allowed bytes, floored at the historical cap so a larger\n    driver total can never leave this tighter than the 0.80 it replaced.\n\n      float in ``(0.0, 1.0]``; anything else is ignored, never fatal.\n    - Unified + win32: ``1.0``. The WDDM budget already excludes the OS share,\n      so any sub-1.0 cap double-taxes it (see the guard's own comment).\n    - Unified elsewhere: reserve ``min(_UNIFIED_MAX_RESERVE_FRACTION of total,\n      _UNIFIED_OS_RESERVE_BYTES)``, then clamp the cap to ``_DISCRETE_MEM_FRACTION``\n      so a huge pool never ends up looser than a discrete card. The percentage\n      ceiling keeps small pools at exactly the historical cap.\n    - Discrete: ``_DISCRETE_MEM_FRACTION``.\n    "
     override = _parse_mem_fraction_env(env_value)
     if override is not None:
         return override
@@ -1904,13 +1867,7 @@ def _run_pip(cmd: list[str], event_queue: Any, label: str) -> bool:
 
 
 def _ensure_tilelang_backend_unconditional(event_queue: Any) -> bool:
-    """Install pinned tilelang + apache-tvm-ffi; two-step repair if a broken tvm-ffi is present.
-
-    Returns True iff both import post-call. Step 1 downgrades a broken tvm-ffi
-    with --force-reinstall --no-deps so torch / CUDA stay untouched; step 2 is a
-    regular install for missing transitive deps. Bypass via
-    UNSLOTH_STUDIO_SKIP_TILELANG_INSTALL=1.
-    """
+    'Install pinned tilelang + apache-tvm-ffi; two-step repair if a broken tvm-ffi is present.\n\n    Returns True iff both import post-call. Step 1 downgrades a broken tvm-ffi\n    with --force-reinstall --no-deps so torch / CUDA stay untouched; step 2 is a\n    regular install for missing transitive deps. Bypass via\n    '
     if os.getenv(_TILELANG_SKIP_ENV) == "1":
         return False
     if sys.version_info < _FLA_MIN_PYTHON:
@@ -2001,10 +1958,10 @@ def _ensure_tilelang_backend(event_queue: Any, model_name: str) -> None:
     _ensure_tilelang_backend_unconditional(event_queue)
 
 
-# ── Fast-path hooks ──
+
 # Wrap transformers' is_{flash_linear_attention,causal_conv1d}_available so the first call
 # (at modeling import) drives the install; models that never query the gate pay nothing.
-# UNSLOTH_STUDIO_SKIP_FAST_PATH_HOOKS=1 falls back to the substring path.
+
 
 
 def _rebind_in_already_imported_modules(*, attr_name: str, old_obj: Any, new_obj: Any) -> int:
@@ -2037,10 +1994,7 @@ def _install_fast_path_hooks(
     *,
     install_causal_conv1d: bool | None = None,
 ) -> None:
-    """Hook transformers' is_*_available gates so the first call drives the install.
-
-    Idempotent. UNSLOTH_STUDIO_SKIP_FAST_PATH_HOOKS=1 falls back to the substring gate.
-    """
+    "Hook transformers' is_*_available gates so the first call drives the install.\n\n    "
     if os.getenv(_FAST_PATH_HOOKS_SKIP_ENV) == "1":
         logger.info("Fast-path hooks disabled via env; using substring fallback")
         return
@@ -2225,7 +2179,7 @@ def _mlx_vlm_max_resized_size(width: int, height: int, target: int) -> tuple[int
     largest_side = max(width, height)
     if largest_side <= target:
         return width, height
-    # Integer formula matches unsloth_zoo's collator (Python round() differs by
+
     # 1px on half-pixel cases). max(1, _) avoids a zero-side degenerate output.
     new_w = max(1, (width * target + largest_side // 2) // largest_side)
     new_h = max(1, (height * target + largest_side // 2) // largest_side)
@@ -2236,7 +2190,7 @@ _MLX_VLM_RESIZED_IMAGE_LAYOUT_CACHE = {}
 
 
 def _mlx_vlm_resized_image_layout(processor = None) -> str | None:
-    """Return the numpy image layout expected after Unsloth-side VLM resizing."""
+    ''
     image_processor = getattr(processor, "image_processor", None)
     if image_processor is None:
         return None
@@ -2390,7 +2344,7 @@ def _adapt_for_mlx_vlm(
 _MLX_STUDIO_LR_SCHEDULERS = {"linear", "cosine", "constant"}
 
 
-# Fallback alias map mirroring unsloth_zoo._normalize_mlx_optimizer_name, used only when
+
 # mlx isn't importable. The zoo function stays the source of truth.
 _MLX_STUDIO_ADAMW_ALIASES = frozenset(
     (
@@ -2440,7 +2394,7 @@ def _normalize_mlx_studio_scheduler(value):
 
 
 def _resolve_mlx_local_dataset_files(file_paths: list) -> list[str]:
-    """Resolve CLI paths and Unsloth local dataset uploads without importing the GPU trainer."""
+    ''
     from utils.paths import resolve_dataset_path
 
     all_files: list[str] = []
@@ -2597,11 +2551,7 @@ def _resolve_mlx_max_grad_norm(value):
 
 
 def _run_mlx_training(event_queue, stop_queue, config):
-    """Self-contained MLX training path for Apple Silicon.
-
-    Uses unsloth_zoo's MLXTrainer directly (no torch/SFTTrainer). Mirrors the
-    event_queue protocol so the parent process pump works unchanged.
-    """
+    'Self-contained MLX training path for Apple Silicon.\n\n    event_queue protocol so the parent process pump works unchanged.\n    '
     import time
     import math
     from pathlib import Path
@@ -2673,7 +2623,7 @@ def _run_mlx_training(event_queue, stop_queue, config):
     optim_name = _normalize_mlx_studio_optimizer(config.get("optim", "adamw_8bit"))
     lr_scheduler_type = _normalize_mlx_studio_scheduler(config.get("lr_scheduler_type", "linear"))
 
-    # ── 1. Load model ──
+
     # Force text-only for non-image datasets even on vision-capable models (e.g. Qwen3.5-VL on alpaca).
     _send("status", status_message = f"Loading {model_name}...")
     # Pull through resume_from_checkpoint so MLXTrainer.train() can restore optimizer + step
@@ -2778,7 +2728,7 @@ def _run_mlx_training(event_queue, stop_queue, config):
             "status",
             status_message = f"MLX vision image resize: {vision_image_size} (max dimension)",
         )
-    # ── 2. Apply LoRA / full FT ──
+
     # gradient_checkpointing stays a string; get_peft_model and MLXTrainer both accept strings.
     gc_setting = config.get("gradient_checkpointing", "mlx")
     if isinstance(gc_setting, str):
@@ -2824,7 +2774,7 @@ def _run_mlx_training(event_queue, stop_queue, config):
             peft_kwargs["finetune_vision_layers"] = finetune_vision
         model = FastMLXModel.get_peft_model(model, **peft_kwargs)
 
-    # ── 3. Load dataset ──
+
     _send("status", status_message = "Loading dataset...")
     hf_dataset = config.get("hf_dataset", "")
     slice_start = config.get("dataset_slice_start")
@@ -2941,7 +2891,7 @@ def _run_mlx_training(event_queue, stop_queue, config):
     if eval_enabled and not hf_dataset and config.get("local_eval_datasets"):
         eval_dataset = _load_local(config["local_eval_datasets"])
 
-    # ── 3b. Format dataset (VLM or text) ──
+
     # Reuse the GPU format pipeline for VLM (OCR/caption/llava/sharegpt+images) and text.
     format_type = config.get("format_type", "")
     custom_format_mapping = config.get("custom_format_mapping")
@@ -3045,7 +2995,7 @@ def _run_mlx_training(event_queue, stop_queue, config):
         else:
             dataset, eval_dataset = split_result
 
-    # ── 4. Resolve training steps ──
+
     max_steps = config.get("max_steps", 0) or 0
     num_epochs = config.get("num_epochs", 3)
     max_seq_length = config.get("max_seq_length", 2048)
@@ -3068,8 +3018,8 @@ def _run_mlx_training(event_queue, stop_queue, config):
     if warmup_steps is None:
         warmup_steps = 5
 
-    # ── 5. Build output dir ──
-    # Resolve to ~/.unsloth/studio/outputs/ so the export page finds it
+
+
     from utils.paths import ensure_dir
 
     # Resume must land in the original run dir even when config lacks output_dir.
@@ -3093,7 +3043,7 @@ def _run_mlx_training(event_queue, stop_queue, config):
             ),
         )
 
-    # ── 6. Create trainer ──
+
     raw_eval_steps = config.get("eval_steps", 0)
     if evaluation_enabled(raw_eval_steps):
         eval_steps_value = float(raw_eval_steps)
@@ -3170,7 +3120,7 @@ def _run_mlx_training(event_queue, stop_queue, config):
         # would alter the loss trajectory and cost VLM runs mx.compile.
         mlx_config_kwargs["report_grad_norm"] = True
     if "append_eos" in _supported_fields:
-        # Unsloth SFT formatting owns rendered examples; raw/CPT text still needs MLX to append EOS.
+
         mlx_config_kwargs["append_eos"] = bool(raw_text_mode)
 
     trainer = MLXTrainer(
@@ -3188,7 +3138,7 @@ def _run_mlx_training(event_queue, stop_queue, config):
     if eval_dataset is not None and eval_steps_val > 0:
         _send("eval_configured")
 
-    # ── 7. Apply train_on_responses_only if requested ──
+
     # Auto-detect markers from the chat template first, manual table as fallback. Mirror the
     # CUDA skips: raw/CPT text has no chat turns.
     # Check the resolved format too, since format_type="auto" can land on alpaca or raw.
@@ -3222,7 +3172,7 @@ def _run_mlx_training(event_queue, stop_queue, config):
                 ),
             )
 
-    # ── 8. Setup wandb / tensorboard ──
+
     wandb_run = None
     tb_writer = None
     if config.get("enable_wandb", False):
@@ -3261,7 +3211,7 @@ def _run_mlx_training(event_queue, stop_queue, config):
                 status_message = "tensorboard unavailable (install tensorboardX)",
             )
 
-    # ── 9. Real-time progress callback ──
+
     _send("status", status_message = f"Training {model_name}...")
 
     def _on_step(
@@ -3346,7 +3296,7 @@ def _run_mlx_training(event_queue, stop_queue, config):
 
         trainer._build_optimizer = _capture_optimizer
 
-    # ── 11. Run training ──
+
     gc.collect()
     mx.synchronize()
     _save_model = trainer.save_model
@@ -3360,7 +3310,7 @@ def _run_mlx_training(event_queue, stop_queue, config):
     finally:
         trainer.save_model = _save_model
 
-    # ── 12. Save and finalize ──
+
     def _finish_tracking() -> None:
         # Runs on every save/finalize exit so TB/W&B never leak on early return.
         if tb_writer is not None:
@@ -3428,7 +3378,7 @@ def run_mlx_training_process(
     transformers_activated: bool = False,
     config_prevalidated: bool = False,
 ) -> None:
-    """MLX worker entrypoint shared by Unsloth subprocesses and the CLI adapter."""
+    ''
     backend_path = str(Path(__file__).resolve().parent.parent.parent)
     if backend_path not in sys.path:
         sys.path.insert(0, backend_path)
@@ -3623,7 +3573,7 @@ def run_training_process(*, event_queue: Any, stop_queue: Any, config: dict) -> 
     model_name = config["model_name"]
     model_load_target = _resolve_cached_model_load_name(config)
 
-    # ── 0. MLX FAST-PATH (must run before any torch/transformers imports) ──
+
     # Apple Silicon uses MLXTrainer directly -- skip torch imports / installs.
     backend_path = str(Path(__file__).resolve().parent.parent.parent)
     if backend_path not in sys.path:
@@ -3655,7 +3605,7 @@ def run_training_process(*, event_queue: Any, stop_queue: Any, config: dict) -> 
         )
         return
 
-    # ── 1. Activate correct transformers version BEFORE any ML imports ──
+
     try:
         _activate_transformers_version(
             model_load_target,
@@ -3672,7 +3622,7 @@ def run_training_process(*, event_queue: Any, stop_queue: Any, config: dict) -> 
         )
         return
 
-    # ── 1a. Auto-enable trust_remote_code for NemotronH/Nano models ──
+
     # NemotronH needs trust_remote_code=True to work around config-parsing bugs; other 5.x
     # models are native (it bypasses the compiler, disabling fused CE). Not Llama-Nemotron.
     from utils.security.trusted_org import is_trusted_org_repo
@@ -3682,7 +3632,7 @@ def run_training_process(*, event_queue: Any, stop_queue: Any, config: dict) -> 
     if (
         any(sub in _lowered for sub in _NEMOTRON_TRUST_SUBSTRINGS)
         and (_lowered.startswith("unsloth/") or _lowered.startswith("nvidia/"))
-        # Confirm a genuine first-party Hub repo (not a spoofed "unsloth/" name); authenticated.
+
         and is_trusted_org_repo(model_name, hf_token = config.get("hf_token") or None)
         and not config.get("trust_remote_code", False)
     ):
@@ -3706,7 +3656,7 @@ def run_training_process(*, event_queue: Any, stop_queue: Any, config: dict) -> 
     #    lazy_load it without calling is_causal_conv1d_available.
     # 2) FLA + tilelang: gated by the runtime hook on is_flash_linear_attention_available.
     # 3) mamba-ssm + flash-attn keep their substring / size gates.
-    # 4) UNSLOTH_STUDIO_SKIP_FAST_PATH_HOOKS=1 falls back to the substring path.
+
     try:
         from utils.ssm_runtime import resolved_model_wants_causal_conv1d
 
@@ -3767,12 +3717,12 @@ def run_training_process(*, event_queue: Any, stop_queue: Any, config: dict) -> 
             )
 
     # ── 1d. Stub torchao on Windows ROCm ──
-    # See core/_torchao_stub.py (no RCCL on Windows ROCm); run before transformers/unsloth_zoo.
+
     from core._torchao_stub import install_torchao_windows_rocm_stub
 
     install_torchao_windows_rocm_stub()
 
-    # ── 1e. Ensure torch.distributed helper attrs are present ──
+
     # Single-GPU never inits the process group, but transformers/trl import these anyway.
     _td_stubs = {
         "is_initialized": lambda: False,
@@ -3957,7 +3907,7 @@ def run_training_process(*, event_queue: Any, stop_queue: Any, config: dict) -> 
                     "skipping Python fallback (AMD fixed gfx1200 null kernel in ROCm 7.13)"
                 )
 
-    # ── 1f-linux. Linux ROCm RDNA4 _grouped_mm null kernel ──
+
     # The win32 guard above misses Linux: RDNA4 (gfx1200/gfx1201) hits the same null HIP
     # _grouped_mm kernel at ROCm <= 7.12 (fixed 7.13, ROCm/TheRock #5284). Gate on arch + HIP.
     if sys.platform.startswith("linux") and _hw.IS_ROCM:
@@ -3992,7 +3942,7 @@ def run_training_process(*, event_queue: Any, stop_queue: Any, config: dict) -> 
         except Exception as _gm_lin_exc:
             logger.warning("Linux ROCm gfx120X: could not patch _grouped_mm: %s", _gm_lin_exc)
 
-    # ── 1g. ROCm OOM guard ──
+
     # On ROCm, exhausting VRAM can hang the HIP driver instead of raising.
     # set_per_process_memory_fraction caps the allocator so PyTorch raises OutOfMemoryError
     # first. Unified hosts share GPU+system RAM and need OS headroom, so the cap depends on
@@ -4108,7 +4058,7 @@ def run_training_process(*, event_queue: Any, stop_queue: Any, config: dict) -> 
         except Exception as _oom_guard_err:
             logger.debug("Could not set GPU memory fraction: %s", _oom_guard_err)
 
-    # ── 2. Now import ML libraries (fresh in this clean process) ──
+
     try:
         _send_status(event_queue, "Importing Unsloth...")
 
@@ -4139,7 +4089,7 @@ def run_training_process(*, event_queue: Any, stop_queue: Any, config: dict) -> 
         )
         return
 
-    # ── 2b. EMBEDDING MODEL FAST-PATH ──
+
     # Embedding models use a different pipeline (FastSentenceTransformer +
     # SentenceTransformerTrainer + MultipleNegativesRankingLoss), so branch early.
     if config.get("is_embedding", False):
@@ -4156,7 +4106,7 @@ def run_training_process(*, event_queue: Any, stop_queue: Any, config: dict) -> 
             )
         return
 
-    # ── 3. Create a fresh trainer instance ──
+
     trainer = UnslothTrainer()
 
     trainer.add_progress_callback(_create_trainer_progress_callback(event_queue))
@@ -4168,7 +4118,7 @@ def run_training_process(*, event_queue: Any, stop_queue: Any, config: dict) -> 
 
     _start_worker_stop_poller(stop_queue, _apply_stop)
 
-    # ── 4. Execute the training pipeline ──
+
     # Order: detect -> dataset -> model -> prepare -> train, so both never hold VRAM at once.
     try:
         hf_token = config.get("hf_token", "")
@@ -4225,7 +4175,7 @@ def run_training_process(*, event_queue: Any, stop_queue: Any, config: dict) -> 
                 config["dataset_snapshot_path"] = snapshot
             return loaded_dataset, loaded_eval_dataset
 
-        # ── 4a. Lightweight detection + tokenizer (no VRAM) ──
+
         _send_status(event_queue, "Detecting model type...")
         try:
             _pre_detect_training_model(
@@ -4314,7 +4264,7 @@ def run_training_process(*, event_queue: Any, stop_queue: Any, config: dict) -> 
                 )
         max_train_rows = resumed_rows
 
-        # ── 4b. Load and format dataset (LLM helper may use VRAM briefly) ──
+
         _send_status(event_queue, "Loading and formatting dataset...")
         dataset, eval_dataset = _load_training_dataset()
 
@@ -4332,7 +4282,7 @@ def run_training_process(*, event_queue: Any, stop_queue: Any, config: dict) -> 
                 )
             return
 
-        # ── Start tqdm monitor early to capture download + tokenization bars ──
+
         import threading as _th
 
         _tqdm_stop = _th.Event()
@@ -4359,7 +4309,7 @@ def run_training_process(*, event_queue: Any, stop_queue: Any, config: dict) -> 
         use_lora = training_type in ("LoRA/QLoRA", "Continued Pretraining")
         cpt_trains_embeddings = False
 
-        # ── 4c. Load training model (uses VRAM — dataset already formatted) ──
+
         # Watchdog lets the parent recover a stalled Xet download via respawn.
         _send_status(event_queue, "Loading model...")
         from utils.hf_xet_fallback import start_watchdog
@@ -4501,11 +4451,11 @@ def run_training_process(*, event_queue: Any, stop_queue: Any, config: dict) -> 
                 }
             )
 
-        # ── 4d. Prepare model (LoRA, full finetuning, or CPT) ──
+
         if is_cpt:
             _send_status(event_queue, "Configuring LoRA for continued pretraining...")
             # embed_tokens (if included) goes to modules_to_save -- trained full-precision at
-            # embedding_learning_rate. lm_head stays a LoRA target for merges (unsloth PR #4106).
+
             _user_modules = config.get("target_modules") or []
             wants_embed = "embed_tokens" in _user_modules
             cpt_trains_embeddings = wants_embed
@@ -4587,7 +4537,7 @@ def run_training_process(*, event_queue: Any, stop_queue: Any, config: dict) -> 
         if is_cpt:
             if cpt_trains_embeddings:
                 if embedding_lr_value is None:
-                    # Default embedding_learning_rate = lr/10 (Unsloth CPT notebook).
+
                     embedding_lr_value = lr_value / 10.0
                     logger.info(
                         f"CPT: using default embedding_learning_rate={embedding_lr_value:.1e} "
@@ -4824,17 +4774,7 @@ def _write_mlx_stop_checkpoint(trainer, optimizer, output_dir) -> bool:
 
 
 def _create_trainer_progress_callback(event_queue: Any) -> Callable[[TrainingProgress], None]:
-    """UnslothTrainer callback that reports training progress to the parent.
-
-    Status events go out only while the status is non-empty, so the empty status the
-    trainer reports on every log leaves the parent's last real status standing.
-
-    The trainer shares one TrainingProgress for metrics and status, so a status-only
-    update (an evaluation line, a warning) carries the last step's numbers unchanged.
-    The parent appends every progress event to the loss / grad-norm / eval-loss
-    histories without deduplicating the step, so those replays would plot the same
-    point again. Only a changed measurement is published; the status still is.
-    """
+    "\n    Status events go out only while the status is non-empty, so the empty status the\n    trainer reports on every log leaves the parent's last real status standing.\n\n    The trainer shares one TrainingProgress for metrics and status, so a status-only\n    update (an evaluation line, a warning) carries the last step's numbers unchanged.\n    The parent appends every progress event to the loss / grad-norm / eval-loss\n    histories without deduplicating the step, so those replays would plot the same\n    point again. Only a changed measurement is published; the status still is.\n    "
 
     sent_warnings: set[str] = set()
     last_metrics: list = [None]
@@ -4986,14 +4926,7 @@ def _create_embedding_progress_callback(
 
 
 def _run_embedding_training(event_queue: Any, stop_queue: Any, config: dict) -> None:
-    """Self-contained embedding model training pipeline.
-
-    Uses FastSentenceTransformer + SentenceTransformerTrainer +
-    MultipleNegativesRankingLoss — separate from UnslothTrainer's LLM/VLM/audio
-    paths. Mirrors the reference embedding notebooks:
-      All_MiniLM_L6_v2.py, BGE_M3.py, EmbeddingGemma_300M.py,
-      ModernBert.py, Qwen3_Embedding_0_6B.py
-    """
+    'Self-contained embedding model training pipeline.\n\n    Uses FastSentenceTransformer + SentenceTransformerTrainer +\n    paths. Mirrors the reference embedding notebooks:\n      All_MiniLM_L6_v2.py, BGE_M3.py, EmbeddingGemma_300M.py,\n      ModernBert.py, Qwen3_Embedding_0_6B.py\n    '
     import math
 
     model_name = config["model_name"]
@@ -5002,10 +4935,10 @@ def _run_embedding_training(event_queue: Any, stop_queue: Any, config: dict) -> 
     model_revision = None if model_local_only else config.get("model_revision")
     training_start_time = time.time()
 
-    # ── 1. Import embedding-specific libraries ──
+
     _send_status(event_queue, "Importing embedding libraries...")
     try:
-        # Recover from a namespace-package shadow (embedding imports unsloth directly).
+
         from core.import_guards import ensure_real_packages
 
         ensure_real_packages("unsloth_zoo", "unsloth")
@@ -5041,7 +4974,7 @@ def _run_embedding_training(event_queue: Any, stop_queue: Any, config: dict) -> 
     except Exception:  # noqa: BLE001 - never let log tidying stop a run
         pass
 
-    # ── Stop signal handling ──
+
     _should_stop = False
     _save_on_stop = True
 
@@ -5056,7 +4989,7 @@ def _run_embedding_training(event_queue: Any, stop_queue: Any, config: dict) -> 
 
     _start_worker_stop_poller(stop_queue, _apply_stop)
 
-    # ── 2. Load model ──
+
     _send_status(event_queue, "Loading embedding model...")
     try:
         hf_token = config.get("hf_token", "")
@@ -5123,7 +5056,7 @@ def _run_embedding_training(event_queue: Any, stop_queue: Any, config: dict) -> 
         event_queue.put({"type": "complete", "output_dir": None, "ts": time.time()})
         return
 
-    # ── 3. Apply LoRA ──
+
     if use_lora:
         _send_status(event_queue, "Configuring LoRA adapters (FEATURE_EXTRACTION)...")
         try:
@@ -5164,7 +5097,7 @@ def _run_embedding_training(event_queue: Any, stop_queue: Any, config: dict) -> 
         event_queue.put({"type": "complete", "output_dir": None, "ts": time.time()})
         return
 
-    # ── 4. Load dataset ──
+
     _send_status(event_queue, "Loading dataset...")
     try:
         config["_dataset_loaded_from_exact_snapshot"] = False
@@ -5295,10 +5228,10 @@ def _run_embedding_training(event_queue: Any, stop_queue: Any, config: dict) -> 
         dataset_loaded_from_exact_snapshot = bool(config.get("_dataset_loaded_from_exact_snapshot")),
     )
 
-    # ── 5. Create loss function ──
+
     loss = MultipleNegativesRankingLoss(model)
 
-    # ── 6. Build training arguments ──
+
     _send_status(event_queue, "Configuring training...")
     try:
         lr_value = float(config.get("learning_rate", "2e-4"))
@@ -5350,7 +5283,7 @@ def _run_embedding_training(event_queue: Any, stop_queue: Any, config: dict) -> 
         "optim": config.get("optim", "adamw_8bit"),
         "weight_decay": config.get("weight_decay", 0.001),
         "seed": config.get("random_seed", 3407),
-        # Same reason as the UnslothTrainer path: this worker has no terminal, its
+
         # stdout is teed into the server log, and _create_embedding_progress_callback
         # already publishes every number the bar carries.
         "disable_tqdm": _hf_stdout_progress_disabled(),
@@ -5373,7 +5306,7 @@ def _run_embedding_training(event_queue: Any, stop_queue: Any, config: dict) -> 
 
     args = SentenceTransformerTrainingArguments(**training_args_kwargs)
 
-    # ── 7. Calculate total steps for progress tracking ──
+
     if max_steps_val and max_steps_val > 0:
         total_steps = max_steps_val
     else:
@@ -5382,7 +5315,7 @@ def _run_embedding_training(event_queue: Any, stop_queue: Any, config: dict) -> 
         steps_per_epoch = max(len_dataloader // gradient_accumulation_steps, 1)
         total_steps = steps_per_epoch * effective_epochs
 
-    # ── 8. Create progress callback ──
+
     progress_callback = _create_embedding_progress_callback(
         event_queue,
         total_steps = total_steps,
@@ -5390,7 +5323,7 @@ def _run_embedding_training(event_queue: Any, stop_queue: Any, config: dict) -> 
         should_stop = lambda: _should_stop,
     )
 
-    # ── 9. Create trainer and train ──
+
     _send_status(event_queue, "Starting embedding training...")
     try:
         trainer = SentenceTransformerTrainer(
@@ -5416,7 +5349,7 @@ def _run_embedding_training(event_queue: Any, stop_queue: Any, config: dict) -> 
         )
         return
 
-    # ── 10. Save model ──
+
     if _should_stop and not _save_on_stop:
         event_queue.put(
             {
@@ -5447,7 +5380,7 @@ def _run_embedding_training(event_queue: Any, stop_queue: Any, config: dict) -> 
         )
         return
 
-    # ── 11. Done ──
+
     event_queue.put(
         {
             "type": "complete",

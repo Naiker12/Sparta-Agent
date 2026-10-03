@@ -36,7 +36,7 @@ def generate_smart_vlm_instruction(
     column_names = set(next(iter(dataset)).keys())
     sample = next(iter(dataset))
 
-    # ===== LEVEL 1: Explicit Instruction Columns =====
+
     # Columns that hold per-sample instructions
     question_columns = ["question", "query", "prompt", "instruction", "user_prompt"]
 
@@ -53,7 +53,7 @@ def generate_smart_vlm_instruction(
                     "confidence": 1.0,
                 }
 
-    # ===== LEVEL 2: Infer from Column Names + Content =====
+
     text_col_lower = text_column.lower()
 
     text_sample = str(sample.get(text_column, ""))[:500]  # First 500 chars
@@ -152,7 +152,7 @@ def generate_smart_vlm_instruction(
             "confidence": min(best_score, best_match["confidence"]),
         }
 
-    # ===== LEVEL 3: Analyze Dataset Name =====
+
     if dataset_name:
         name_lower = dataset_name.lower()
 
@@ -174,7 +174,7 @@ def generate_smart_vlm_instruction(
                 "confidence": 0.75,
             }
 
-    # ===== LEVEL 4: LLM-Assisted Instruction Generation =====
+
     try:
         from .llm_assist import llm_generate_vlm_instruction
 
@@ -213,7 +213,7 @@ def generate_smart_vlm_instruction(
         import logging
         logging.getLogger(__name__).debug(f"LLM-assisted instruction skipped: {e}")
 
-    # ===== LEVEL 5: Generic Fallback =====
+
     return {
         "instruction": "Describe this image in detail.",
         "instruction_column": None,

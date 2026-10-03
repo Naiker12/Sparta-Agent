@@ -240,8 +240,7 @@ def test_the_estimate_and_the_base_prefetch_stand_down_offline(monkeypatch):
 
 
 def test_the_xet_wrapper_resolves_offline_without_the_shared_backend(monkeypatch, tmp_path):
-    """``local_files_only`` must not depend on which unsloth_zoo is installed: the degraded stub
-    drops unknown keywords, so a forwarded flag would silently become a download."""
+    '    drops unknown keywords, so a forwarded flag would silently become a download.'
     monkeypatch.setattr(
         xet,
         "_shared_hf_hub_download_with_xet_fallback",

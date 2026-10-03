@@ -1,5 +1,5 @@
-// Build the `unsloth start <agent>` command for the API-keys panel.
-// `unsloth start` reads UNSLOTH_STUDIO_URL (default 127.0.0.1:8888) and only
+
+
 // auto-mints a key for a loopback server, so the bare command is correct only for
 // the default local server. For a non-default port or tunnel/remote base, emit the
 // URL (plus a key for non-loopback) so the copy targets what the UI shows.
@@ -16,9 +16,9 @@ export function normalizeHost(host: string): string {
     : lower;
 }
 
-// The bare `unsloth start` probes exactly http://127.0.0.1:8888, so only that literal
+
 // host earns the bare command. `localhost` can resolve to ::1 (and `::1` is never
-// probed), so both keep an explicit UNSLOTH_STUDIO_URL -- harmless when they alias
+
 // 127.0.0.1, correct when they don't.
 function isDefaultLocalHost(host: string): boolean {
   return host === "127.0.0.1";

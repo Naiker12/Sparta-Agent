@@ -22,17 +22,17 @@ export interface PerModelConfig {
   nUbatch: number | null;
   tensorParallel: boolean;
   chatTemplateOverride: string | null;
-  /**
-   * Pass-through llama-server args, one argv token per entry, appended after
-   * Unsloth's own flags.
-   *
-   * Three states, and the difference is load-bearing. `undefined` means this copy
-   * never read the stored value, so a save must leave the server's alone: the
-   * overrides route preserves the field when it is omitted, which is what kept
-   * CLI-set flags alive while the panel had no control for them. `null` means the
-   * user cleared the box, which has to be sent as an explicit `[]` or the clear is
-   * silently dropped. A non-empty list is what to launch with.
-   */
+
+
+
+
+
+
+
+
+
+
+
   llamaExtraArgs?: string[] | null;
   // GPU Memory controls (per-model, GGUF-only), optional so older blobs still parse. null/absent
   // selectedGpuIds means automatic. --tensor-split is not remembered: it is bound to the GPU set.

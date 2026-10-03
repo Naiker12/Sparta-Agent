@@ -414,7 +414,7 @@ export function hasDownloadedModels(): boolean {
   );
 }
 
-/** Sort LM Studio models with unsloth publisher first. */
+
 function sortLmStudio(models: LocalModelInfo[]): LocalModelInfo[] {
   return [...models].sort((a, b) => {
     const aUnsloth = (a.model_id ?? "").startsWith("unsloth/") ? 0 : 1;
@@ -430,8 +430,8 @@ function sortLmStudio(models: LocalModelInfo[]): LocalModelInfo[] {
 
 // ── Hub Model Picker ──────────────────────────────────────────
 
-// Recommended section sort. "recommended" = newly created unsloth GGUF/MLX that
-// fit the device; the rest are plain HF sort keys over all unsloth models.
+
+
 type RecommendedSortKey = "recommended" | "trendingScore" | "lastModified";
 
 const _RECOMMENDED_SORT_OPTIONS: HubOption<RecommendedSortKey>[] = [
@@ -451,7 +451,7 @@ const _LOCAL_SORT_OPTIONS: HubOption<LocalSortKey>[] = [
   { value: "downloaded", label: "Downloaded" },
 ];
 
-// Format filter dropdown for the Unsloth listing. Plain labels are reused in
+
 // the empty-state copy below.
 const FORMAT_FILTER_LABELS: Record<FormatFilter, string> = {
   all: "All",
@@ -652,9 +652,9 @@ export function HubModelPicker({
   task?: HfTaskFilter;
   /** Curated catalog for a task-scoped picker: one canonical row per model, with its published formats as the second level. */
   catalog?: CatalogGroup[];
-  /** Also surface community (non-unsloth) models carrying `task`'s pipeline tags, below
-   *  the unsloth rows and in search. Opt-in, since the runtime has to load an arbitrary
-   *  publisher's checkpoint: true of audio, not of the curated pages. */
+
+
+
   communityModelPolicy?: CommunityModelPolicy;
 }) {
   const t = useT();
@@ -692,15 +692,15 @@ export function HubModelPicker({
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query);
   // Shared Hub search stack (the same hooks the Hub page uses) so the picker
-  // and Hub run one implementation. Scoped to unsloth like the old listing.
+
   const online = useOnlineStatus();
   // Sanitize to anonymous on a malformed token, matching the Hub page.
   const accessToken = hfApiToken(hfToken);
-  // Recommended section: a live unsloth listing sorted by the dropdown. The
+
   // same sort drives the search results so the dropdown works while searching.
   const [recommendedSort, setRecommendedSort] =
     useState<RecommendedSortKey>("trendingScore");
-  // "recommended" surfaces the most recently created Unsloth repos.
+
   const recommendedSortBy: HfSortKey =
     recommendedSort === "recommended" ? "createdAt" : recommendedSort;
   const {
@@ -731,9 +731,9 @@ export function HubModelPicker({
     enabled: online && section === "recommended",
   });
 
-  // Two hooks for the same reason the unsloth pair exists: browse must not refetch
-  // per keystroke, search must not be pinned to the empty query. pinUnslothFirst is
-  // off since the unsloth rows already sit above these.
+
+
+
   const communityDiscoveryEnabled =
     shouldDiscoverCommunityModels(communityModelPolicy) &&
     Boolean(task) &&
@@ -880,7 +880,7 @@ export function HubModelPicker({
   const [fineTunedCollapsed, setFineTunedCollapsed] = useState(false);
   const [lmStudioCollapsed, setLmStudioCollapsed] = useState(false);
   const [localDirCollapsed, setLocalDirCollapsed] = useState(false);
-  // The Fine-tuned section header; the train icon on the Unsloth header scrolls
+
   // here so users can jump to their trained models.
   const fineTunedSectionRef = useRef<HTMLDivElement>(null);
   const scrollToFineTuned = useCallback(() => {
@@ -896,7 +896,7 @@ export function HubModelPicker({
       });
     });
   }, []);
-  // The Other models header; the directions icon on the Unsloth header scrolls
+
   // here.
   const otherModelsSectionRef = useRef<HTMLDivElement>(null);
   const scrollToOtherModels = useCallback(() => {
@@ -910,7 +910,7 @@ export function HubModelPicker({
       });
     });
   }, []);
-  // The Custom Folders header; the folder icon on the Unsloth header scrolls
+
   // here instead of opening the browse popup.
   const customFolderSectionRef = useRef<HTMLDivElement>(null);
   const scrollToCustomFolders = useCallback(() => {
@@ -1170,7 +1170,7 @@ export function HubModelPicker({
   const isMac = deviceType === "mac";
   const hostClass = useHostClass();
 
-  // Drop models Unsloth cannot run for chat. A task-scoped picker wants exactly the tasks the chat classifier calls unsupported, so it gates on the task.
+
   const isChatSupported = useCallback(
     (r: HfModelResult) => {
       // Image/Video tab (task set): only task-matching, non-editing results.
@@ -1280,7 +1280,7 @@ export function HubModelPicker({
   // Independent sort for each local section's inline dropdown.
   const [downloadedSort, setDownloadedSort] = useState<LocalSortKey>("recent");
   const [customSort, setCustomSort] = useState<LocalSortKey>("recent");
-  // Format filter toggle for the Unsloth listing.
+
   const [formatFilter, setFormatFilter] = useState<FormatFilter>("all");
   // What this picker's task filter has already established about every row it can show. The Images
   // and Video pages pass their generation tasks; chat passes none and keeps the full set.
@@ -1367,7 +1367,7 @@ export function HubModelPicker({
         isGguf: isKnownGgufRepo(id),
         // Size from the catalog, not an id "<n>B" guess: the guess is missing for
         // most curated ids and wrong for others (Wan2.2-TI2V-5B is 30 GB, not 2),
-        // and non-unsloth ids never get a listing row to correct it.
+
         curatedSizeBytes: catalog
           ? curatedSizeBytesFor(id, catalog)
           : undefined,
@@ -1462,7 +1462,7 @@ export function HubModelPicker({
     if (!communityRecommendedEnabled) {
       return unslothRows;
     }
-    // Appended below everything unsloth publishes, so scrolling past the unsloth
+
     // uploads continues into the wider Hub. Same keep/fits gates.
     const above = new Set(unslothRows.map((r) => r.id.toLowerCase()));
     const communityRows = communityBrowse.results
@@ -1759,7 +1759,7 @@ export function HubModelPicker({
       activeCatalogArtifactIds,
     ],
   );
-  // Cached non-GGUF repos. In chat, passesTaskGate drops diffusers image repos; the Images picker keeps them, but only unsloth-hosted ones this backend can load. Base repos are cached as dependencies and fail the trust gate.
+
   const sortedCachedModels = useMemo(
     () =>
       sortCachedRepos(
@@ -1774,8 +1774,8 @@ export function HubModelPicker({
               catalog,
               activeCatalogArtifactIds,
             ) &&
-            // Diffusion pickers: unsloth repos plus any repo the backend can LOAD. Gate on a curated ARTIFACT (what loadSpecFor resolves), not a group-key match: a base / uncurated-quant sibling matches the group by key but dead-ends at the trust gate.
-            // An unsloth repo must also be a full pipeline: the fall-through loads uncataloged rows as "pipeline", and from_pretrained on a single-file checkpoint repo fails. Curated single-file artifacts stay, since loadSpecFor carries their filename.
+
+
             (!task ||
               (isUnslothRepoId(c.repo_id) && !c.single_file) ||
               ((c.task === "automatic-speech-recognition" ||
@@ -1864,7 +1864,7 @@ export function HubModelPicker({
       activeCatalogArtifactIds,
     ],
   );
-  // Local ./models entries. Chat-only Unsloth runs GGUF (any host) and MLX (Mac only), so raw checkpoints there are hidden (mirrors the cached
+
   // non-GGUF rule); an MLX build a Mac user dropped in stays selectable. A task-scoped picker (Images) is exempt: the image backend loads local pipelines even there.
   const sortedLocalDir = useMemo(
     () =>
@@ -2160,9 +2160,9 @@ export function HubModelPicker({
     hfToken: hfToken || undefined,
   });
 
-  // Pinned entries surface in their own section above the Unsloth heading.
+
   // GGUF quants pin individually and their repo stays listed below; non-GGUF
-  // repos pin whole and leave the Unsloth / Other models groups.
+
   const pinnedIds = usePinnedModelsStore((s) => s.pinned);
   const togglePinned = usePinnedModelsStore((s) => s.togglePinned);
   const pinnedSet = useMemo(() => new Set(pinnedIds), [pinnedIds]);
@@ -2283,7 +2283,7 @@ export function HubModelPicker({
     return rows;
   }, [pinnedIds, pinnedQuants, pinnedCachedModelRows]);
 
-  // Split downloaded models so non-Unsloth repos get their own "Other models"
+
   // section above Fine-tuned.
   const unslothCachedGguf = useMemo(
     () => visibleCachedGguf.filter((c) => isUnslothPublisherRepoId(c.repo_id)),
@@ -2314,7 +2314,7 @@ export function HubModelPicker({
     [visibleCachedModelRows, pinnedSet],
   );
 
-  // Param counts come straight off the unsloth listings the picker already
+
   // loaded, so no extra per-id fetch is needed for the VRAM badges.
   const recommendedParamCountById = useMemo(() => {
     const map = new Map<string, number>();
@@ -2458,15 +2458,15 @@ export function HubModelPicker({
   );
 
   const hfIds = useMemo(() => {
-    // Only the Unsloth tab searches the HF listing.
+
     if (!showHfSection || section !== "recommended") {
       return [];
     }
     return searchIdsFrom(results, isUnslothOwned);
   }, [results, showHfSection, section, searchIdsFrom, isUnslothOwned]);
 
-  // Community search hits, listed after the unsloth ones. Deduped against them so
-  // a repo the unsloth listing already returned is not shown twice.
+
+
   const communitySearchIds = useMemo(() => {
     if (!(communityDiscoveryEnabled && showHfSection)) {
       return [];
@@ -2495,8 +2495,8 @@ export function HubModelPicker({
     isTaskRuntimeSupported,
   ]);
 
-  /** Unsloth first, then community: one list so rows, keyboard order and the
-   *  empty state cannot drift apart. */
+
+
   const searchRowIds = useMemo(
     () => [...hfIds, ...communitySearchIds],
     [hfIds, communitySearchIds],
@@ -2505,7 +2505,7 @@ export function HubModelPicker({
   const hubOptionKeys = useMemo(() => {
     const keys: string[] = [];
 
-    // Pinned rows sit above the Unsloth heading on the On Device tab.
+
     if (
       section === "downloaded" &&
       cachedReady &&
@@ -2521,7 +2521,7 @@ export function HubModelPicker({
       );
     }
 
-    // Downloaded (Unsloth) rows (query-filtered) on the On Device tab only.
+
     if (
       section === "downloaded" &&
       (cachedReady || unslothAdditionalOnDeviceModels.length > 0) &&
@@ -2547,7 +2547,7 @@ export function HubModelPicker({
       );
     }
 
-    // Unsloth-tab search keys (curated matches + HF unsloth results).
+
     if (showHfSection && section === "recommended") {
       keys.push(
         ...filteredRecommendedIds.map((id) =>
@@ -2560,7 +2560,7 @@ export function HubModelPicker({
       return keys;
     }
 
-    // Other (non-Unsloth) downloaded rows sit just above Fine-tuned.
+
     if (
       section === "downloaded" &&
       (cachedReady || otherAdditionalOnDeviceModels.length > 0) &&
@@ -2877,7 +2877,7 @@ export function HubModelPicker({
     [onSelect, isKnownGgufRepo, downloadedSet, pipelineTagById],
   );
 
-  // On Device owns the downloaded and custom-folder models; the Unsloth tab
+
   // searches the HF listing (below). Both filter locally by the query.
   const showDownloaded = section === "downloaded";
   const showCustom = section === "downloaded";
@@ -2995,7 +2995,7 @@ export function HubModelPicker({
   );
 
   // On Device rows are already on disk, so the device-fit filter
-  // only applies to the Unsloth listing.
+
   const sectionSortDropdown =
     section === "recommended" ? (
       <HubOptionMenu
@@ -3084,7 +3084,7 @@ export function HubModelPicker({
   // The Connected layout uses a wider box, so it drops the search inset to keep
   // Search Hub on the last dropdown's edge while the right gap matches the left.
   const hasConnected = externalModels.length > 0;
-  // The Other models section and its shortcut only show with non-Unsloth downloads.
+
   const hasOtherModels =
     otherCachedGguf.length > 0 ||
     otherCachedModelRows.length > 0 ||
@@ -3311,7 +3311,7 @@ export function HubModelPicker({
     );
   };
 
-  // Shared row renderers so Downloaded (Unsloth) and Other models render alike.
+
   const renderDownloadedGgufRow = (c: (typeof visibleCachedGguf)[number]) => {
     const optionKey = makeModelOptionKey("downloaded-gguf", c.repo_id);
     const isSelected = value === c.repo_id;
@@ -3710,9 +3710,9 @@ export function HubModelPicker({
                   </div>
                 ) : null}
 
-                {/* Pinned quants and models sit above the Unsloth heading so
-              favorites are always first. Filtered by the query like the
-              sections below. */}
+                {
+
+}
                 {showDownloaded && pinnedRows.length > 0 ? (
                   <>
                     <ListLabel
@@ -3733,7 +3733,7 @@ export function HubModelPicker({
                   </>
                 ) : null}
 
-                {/* Downloaded (Unsloth) stays visible (filtered) while searching. */}
+                {}
                 {showDownloaded &&
                 (unslothCachedGguf.length > 0 ||
                   unslothCachedModelRows.length > 0 ||
@@ -3815,8 +3815,8 @@ export function HubModelPicker({
                         </>
                       }
                     >
-                      {/* Rows drop the unsloth/ prefix; the heading carries
-                    it for the group. */}
+                      {
+}
                       Spartan
                     </ListLabel>
                     {!downloadedCollapsed &&
@@ -3830,8 +3830,8 @@ export function HubModelPicker({
                   </>
                 ) : null}
 
-                {/* Other models: non-Unsloth downloads, grouped just above
-              Fine-tuned. Shown only when such models exist. */}
+                {
+}
                 {showDownloaded && hasOtherModels ? (
                   <div ref={otherModelsSectionRef}>
                     <ListLabel
@@ -4541,7 +4541,7 @@ export function HubModelPicker({
                               alignMeta="hub"
                               showSize={hubRowsShowSize}
                               // A community row without its owner reads as an
-                              // unsloth upload, and two publishers would collide.
+
                               hideOwner={isUnslothOwned(id)}
                               downloaded={downloadedSet.has(id.toLowerCase())}
                               capabilities={capsById.get(id)}

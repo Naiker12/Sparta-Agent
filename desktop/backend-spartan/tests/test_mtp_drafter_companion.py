@@ -328,7 +328,7 @@ def test_detect_mtp_file_skips_foreign_drafter(tmp_path):
 
 
 def test_detect_mtp_file_qat_prefix_layout(tmp_path):
-    # unsloth's qat repo: drafter stem omits the -qat suffix but prefixes
+
     # the weight name (mtp-gemma-4-12B-it.gguf / gemma-4-12B-it-qat-Q4_0.gguf).
     (tmp_path / "gemma-4-12B-it-qat-Q4_0.gguf").write_bytes(b"x")
     (tmp_path / "mtp-gemma-4-12B-it.gguf").write_bytes(b"x")
@@ -1111,9 +1111,7 @@ def test_a_rejected_candidate_does_not_win_the_tier_comparison(tmp_path):
 
 
 def test_a_qat_weight_still_pairs_with_its_base_family_drafter(tmp_path):
-    """Negative control for the ranking above: unsloth/gemma-4-12B-it-qat-GGUF
-    ships mtp-gemma-4-12B-it.gguf, so the prefix rule has to keep working when no
-    more specific sidecar exists."""
+    '    ships mtp-gemma-4-12B-it.gguf, so the prefix rule has to keep working when no\n    more specific sidecar exists.'
     weight = tmp_path / "gemma-4-12B-it-qat-UD-Q4_K_XL.gguf"
     weight.write_bytes(b"target")
     drafter = tmp_path / "mtp-gemma-4-12B-it.gguf"
@@ -2159,9 +2157,7 @@ def test_download_dflash_takes_the_sidecar_naming_this_weight(monkeypatch):
 
 @pytest.mark.parametrize("sidecar", ["dflash-kquant.gguf", "dflash-bf16.gguf"])
 def test_download_dflash_keeps_the_single_published_sidecar(monkeypatch, sidecar):
-    """The shipped unsloth/Muse-Glimmer-30B-GGUF layout. Its sidecar's stem is a
-    precision token, not a family, so nothing may treat "names no weight here"
-    as a rejection."""
+    '    precision token, not a family, so nothing may treat "names no weight here"\n    as a rejection.'
     assert (
         _dflash_download_pick(
             monkeypatch,

@@ -1,17 +1,5 @@
 
-"""Verification tests for PR #6269 (namespace-shadow guard).
-
-`ensure_real_packages` (core/import_guards.py) drops namespace-package
-shadow dirs (a `unsloth`/`unsloth_zoo` dir with no __init__.py on sys.path)
-before `from spartan_agent import ...`. Order matters: `unsloth.__init__` runs its
-ROCm/Windows bnb fixes before importing unsloth_zoo, so the guard must import
-unsloth first. Each test runs the real guard (ast-extracted from source, no
-GPU/torch) in a subprocess, with fake packages reachable only via a meta path
-finder to mimic an editable/PEP 660 install where the shadow wins.
-
-Originally defined in core/training/trainer.py; extracted to the shared
-core/import_guards.py so the inference, export and embedding workers reuse it.
-"""
+'Verification tests for PR #6269 (namespace-shadow guard).\n\n`ensure_real_packages` (core/import_guards.py) drops namespace-package\nGPU/torch) in a subprocess, with fake packages reachable only via a meta path\nfinder to mimic an editable/PEP 660 install where the shadow wins.\n\nOriginally defined in core/training/trainer.py; extracted to the shared\ncore/import_guards.py so the inference, export and embedding workers reuse it.'
 
 import json
 import os
@@ -26,8 +14,8 @@ GUARD_PY = Path(__file__).resolve().parents[1] / "core" / "import_guards.py"
 
 
 # ── fake package bodies ──────────────────────────────────────────────
-# Real `unsloth` sets a sentinel (mimics _gpu_init's pre-zoo fixes) then
-# imports unsloth_zoo, which records whether that sentinel was set first.
+
+
 
 _REAL_UNSLOTH_INIT = textwrap.dedent(
     """
@@ -181,7 +169,7 @@ def _run(
     env.pop("PYTHONPATH", None)
 
     proc = subprocess.run(
-        # -S: skip site-packages so the installed unsloth_zoo can't shadow-beat
+
         # the namespace portion; the real package is served by the meta finder.
         [sys.executable, "-S", str(driver), str(cfg_path)],
         env = env,
@@ -199,8 +187,7 @@ def _run(
 
 
 def test_only_zoo_shadowed_imports_unsloth_first(tmp_path):
-    """Core concern: a unsloth_zoo shadow must not make the guard import
-    unsloth_zoo before unsloth -- that would skip _gpu_init's pre-zoo fixes."""
+    ''
     shadow = tmp_path / "shadow"
     _make_namespace_shadow(shadow, "unsloth_zoo")
     res = _run(tmp_path, shadow_roots = [shadow], real = True)
@@ -263,7 +250,7 @@ def test_multiple_shadow_entries_all_removed(tmp_path):
 
     assert res["error"] is None
     # if only one offending entry were dropped, zoo would still resolve to a
-    # namespace shadow and unsloth_zoo_real would be False
+
     assert res["unsloth_zoo_real"], res
     assert res["order"] == ["unsloth", "unsloth_zoo"], res
     assert res["path_restored"], res

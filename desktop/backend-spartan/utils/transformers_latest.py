@@ -1,36 +1,5 @@
 
-"""Latest-transformers support check for brand-new model architectures.
-
-When a model's ``model_type`` is absent from every installed transformers overlay
-(base 4.57.x plus the .venv_t5_530/550/510 sidecars and, if provisioned, .venv_t5_latest),
-Unsloth cannot load it today. This module answers, without authentication, code execution,
-or trust_remote_code:
-
-  1. Does the LATEST transformers release on PyPI ship this ``model_type``?
-  2. Does transformers ``main`` on GitHub ship it (dev-only, not yet installable)?
-
-Sources (all unauthenticated; raw.githubusercontent.com is not API rate-limited and
-api.github.com is deliberately never used):
-  - https://pypi.org/pypi/transformers/json                       -> latest release version
-  - https://raw.githubusercontent.com/huggingface/transformers/{ref}/src/transformers/
-        models/auto/configuration_auto.py + auto_mappings.py      -> CONFIG_MAPPING_NAMES
-
-The fetched sources are parsed with the same AST extractor the static router uses
-(:func:`utils.transformers_version._model_types_from_source`), so the remote answer is
-computed exactly like the local overlay answer.
-
-Results are cached in memory and in a small JSON snapshot under ``studio_root()/cache``
-(ttl ~1 day) so repeated tier resolutions never re-fetch; failures are backed off in
-memory. Every fetch is bounded by an explicit wall-clock budget on the transfer (not just
-the socket timeout, which only bounds one read), so a hung or drip-feeding network cannot
-block model loading. Fully offline-safe: offline env vars or the kill switch
-``UNSLOTH_STUDIO_NO_LATEST_TRANSFORMERS=1`` make every check return None (current
-behavior preserved).
-
-The consented install path (:func:`install_latest_transformers`) provisions the
-persistent ``.venv_t5_latest`` sidecar via
-:func:`utils.transformers_version.ensure_latest_transformers_venv`.
-"""
+"Latest-transformers support check for brand-new model architectures.\n\nWhen a model's ``model_type`` is absent from every installed transformers overlay\n(base 4.57.x plus the .venv_t5_530/550/510 sidecars and, if provisioned, .venv_t5_latest),\nor trust_remote_code:\n\n  1. Does the LATEST transformers release on PyPI ship this ``model_type``?\n  2. Does transformers ``main`` on GitHub ship it (dev-only, not yet installable)?\n\nSources (all unauthenticated; raw.githubusercontent.com is not API rate-limited and\napi.github.com is deliberately never used):\n  - https://pypi.org/pypi/transformers/json                       -> latest release version\n  - https://raw.githubusercontent.com/huggingface/transformers/{ref}/src/transformers/\n        models/auto/configuration_auto.py + auto_mappings.py      -> CONFIG_MAPPING_NAMES\n\nThe fetched sources are parsed with the same AST extractor the static router uses\n(:func:`utils.transformers_version._model_types_from_source`), so the remote answer is\ncomputed exactly like the local overlay answer.\n\nResults are cached in memory and in a small JSON snapshot under ``studio_root()/cache``\n(ttl ~1 day) so repeated tier resolutions never re-fetch; failures are backed off in\nmemory. Every fetch is bounded by an explicit wall-clock budget on the transfer (not just\nthe socket timeout, which only bounds one read), so a hung or drip-feeding network cannot\nblock model loading. Fully offline-safe: offline env vars or the kill switch\nbehavior preserved).\n\nThe consented install path (:func:`install_latest_transformers`) provisions the\npersistent ``.venv_t5_latest`` sidecar via\n:func:`utils.transformers_version.ensure_latest_transformers_venv`."
 
 import json
 import os
@@ -388,17 +357,7 @@ def _hardcoded_model_types() -> frozenset[str]:
 
 
 def check_upgrade_for_model(model_name: str, hf_token: str | None = None) -> dict | None:
-    """Upgrade signal for *model_name*, or None when current routing already handles it.
-
-    The tier hook for the pre-load ``/validate`` path: fires ONLY when the model's
-    ``model_type`` is absent from every installed overlay (and from the hardcoded tier
-    tables), i.e. exactly when today's load would fail with an unrecognized-architecture
-    error. Returns ``{"model_type", "pypi_version", "supported_in_pypi",
-    "supported_in_main"}`` when the newest transformers knows the type, else None.
-
-    Never raises; every network touch is bounded and cached. Offline or with the
-    ``UNSLOTH_STUDIO_NO_LATEST_TRANSFORMERS`` kill switch it returns None immediately.
-    """
+    'Upgrade signal for *model_name*, or None when current routing already handles it.\n\n    The tier hook for the pre-load ``/validate`` path: fires ONLY when the model\'s\n    ``model_type`` is absent from every installed overlay (and from the hardcoded tier\n    tables), i.e. exactly when today\'s load would fail with an unrecognized-architecture\n    error. Returns ``{"model_type", "pypi_version", "supported_in_pypi",\n    "supported_in_main"}`` when the newest transformers knows the type, else None.\n\n    Never raises; every network touch is bounded and cached. Offline or with the\n    '
     try:
         if _disabled() or _env_offline():
             return None
@@ -460,7 +419,7 @@ def check_upgrade_for_model(model_name: str, hf_token: str | None = None) -> dic
 _SHADOWABLE_DEPS = frozenset({"tokenizers", "safetensors"})
 # Provided by the sidecar recipe; checked against its pin, not the base env.
 _SIDECAR_PROVIDED = {"huggingface-hub": "1.8.0", "hf-xet": "1.4.2"}
-# CLI-only; never imported at runtime in Unsloth's workers.
+
 _IGNORED_DEPS = frozenset({"typer"})
 
 

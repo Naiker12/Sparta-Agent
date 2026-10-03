@@ -732,7 +732,7 @@ export function AgentsTab() {
   const preferredVariant = knownVariants[selectedModel] ?? null;
   const selectedAgentDetails = detailsFor(selectedAgent);
   // A GGUF outside the active cache does not resolve by repo id, so name its
-  // snapshot path; `unsloth start` now also matches a path by the basename
+
   // /v1/models advertises for it. The resident model is exempt: it already
   // loaded by id, and cached-gguf keeps the largest copy across caches, whose
   // snapshot could switch cache or quant under it.
@@ -749,7 +749,7 @@ export function AgentsTab() {
       ? `${modelId}:${selectedVariant}`
       : modelId;
   const commandModelArg = quoteShellArg(commandModel, isWindowsShell);
-  // A bare `unsloth start` attaches to whatever is loaded, which is the only way
+
   // to reach a native-grant GGUF: naming it would switch the server to another model.
   const attachOnly = selectedModel === attachOnlyModel;
   const modelArgs = attachOnly
@@ -1062,7 +1062,7 @@ export function AgentsTab() {
     // modelKey both sides: discovery folds repo-id case, so an exact match
     // would retire a valid pick just for a different spelling.
     // A path is never in discoveredKeys (the catalog drops path ids and a scan
-    // root may not cover it), but `unsloth start --model <path>` is valid, so
+
     // absence there is not evidence.
     if (
       looksLikePath(restored) ||
@@ -1226,9 +1226,9 @@ export function AgentsTab() {
         data-settings-label={t("settings.agents.intro")}
         className="text-sm text-muted-foreground leading-relaxed"
       >
-        {/* The chip is the docs entry point, so no separate link is needed.
-            No aria-label: it would replace the visible "unsloth start" as the
-            accessible name, leaving voice control unable to target it. */}
+        {
+
+}
         <a
           href={DOCS_URL}
           target="_blank"

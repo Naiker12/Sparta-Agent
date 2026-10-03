@@ -401,7 +401,7 @@ export class StudioModelDictationAdapter implements DictationAdapter {
       resolveEnded = resolve;
     });
 
-    // --- Background transcription pipeline ---------------------------------
+
     // Each segment is a self-contained clip transcribed on its own; results are
     // stored by index so the final text keeps its order.
     type Segment = {

@@ -1,6 +1,4 @@
-# Model defaults for unsloth/Qwen3-14B
 # Based on Qwen3_(14B).ipynb
-# Also applies to: unsloth/Qwen3-14B-unsloth-bnb-4bit, Qwen/Qwen3-14B, unsloth/Qwen3-14B-bnb-4bit, Qwen/Qwen3-14B-FP8, unsloth/Qwen3-14B-FP8
 # added inference parameters from Ollama
 
 training:

@@ -559,7 +559,7 @@ def test_fp16_accum_respects_kill_switch(monkeypatch):
 
 @pytest.mark.parametrize("value", ["TRUE", "Yes", "On", " true "])
 def test_fp16_accum_kill_switch_is_case_insensitive(monkeypatch, value):
-    # The escape hatch must honor the common boolean spellings, so UNSLOTH_DISABLE_FP16_ACCUM=TRUE is not ignored.
+
     _stub_torch_fp16_accum(monkeypatch, consumer = True)
     _stub_gguf_accel(monkeypatch)
     monkeypatch.setenv("UNSLOTH_DISABLE_FP16_ACCUM", value)

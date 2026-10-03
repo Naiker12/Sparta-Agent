@@ -231,8 +231,7 @@ def test_overflow_truncation_requested_reads_field(monkeypatch):
 
 
 def test_overflow_truncation_server_default_env(monkeypatch):
-    """UNSLOTH_CONTEXT_OVERFLOW enables the policy for clients that cannot
-    send custom body fields; an explicit per-request 'error' still wins."""
+    "    send custom body fields; an explicit per-request 'error' still wins."
 
     class _Unset:
         context_overflow = None

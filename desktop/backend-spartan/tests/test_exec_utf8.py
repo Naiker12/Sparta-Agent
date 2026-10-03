@@ -1,13 +1,5 @@
 
-"""_python_exec must round-trip non-ASCII output end to end.
-
-Model-written code routinely contains non-ASCII (arrows, CJK, emoji). The temp
-script and the child's stdout pipe both have to be UTF-8 or it crashes/garbles
-on Windows, whose default codec is cp1252. Mirrors the report in
-unslothai/unsloth#6489. The child is ``python`` with PYTHONIOENCODING=utf-8, so
-it emits UTF-8 on every OS; this proves the round-trip on a UTF-8 host and
-guards against a regression to the OS default codec.
-"""
+"_python_exec must round-trip non-ASCII output end to end.\n\nModel-written code routinely contains non-ASCII (arrows, CJK, emoji). The temp\nscript and the child's stdout pipe both have to be UTF-8 or it crashes/garbles\non Windows, whose default codec is cp1252. Mirrors the report in\nit emits UTF-8 on every OS; this proves the round-trip on a UTF-8 host and\nguards against a regression to the OS default codec."
 
 import sys
 from pathlib import Path

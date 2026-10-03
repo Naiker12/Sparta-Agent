@@ -248,7 +248,7 @@ def test_stream_stall_timeout_callable_re_resolved_each_read():
 
 
 def test_stream_stall_timeout_disabled_clears_read_timeout():
-    # UNSLOTH_OPENAI_COMPAT_STREAM_STALL_TIMEOUT=0 disables the stall guard, so
+
     # the callable returns None. Once a chunk has arrived the leftover
     # first-token read timeout must be cleared, else a long post-first-chunk gap
     # trips a stale deadline the operator asked to turn off.

@@ -1,24 +1,5 @@
 
-"""The pinned-snapshot path must not reach PEFT through ``name_or_path``.
-
-``restore_hf_cache_repo_identity`` runs in ``UnslothTrainer.load_model`` *before*
-``get_peft_model``, so at that point there is no ``peft_config`` for its adapter branch
-to repair. PEFT then derives the adapter's ``base_model_name_or_path`` from
-``model.__dict__["name_or_path"]``:
-
-    # peft/mapping_func.py
-    new_name = model.__dict__.get("name_or_path", None)
-    peft_config.base_model_name_or_path = new_name
-
-``PreTrainedModel.__init__`` copies ``config.name_or_path`` onto the instance, so
-restoring only ``config._name_or_path`` leaves that slot holding the machine-local
-snapshot path. It then travels into ``adapter_config.json``, every
-``checkpoint-*/adapter_config.json``, the run card, ``export_metadata.json`` and the
-model card uploaded by ``push_to_hub`` -- none of which are loadable on another machine.
-
-The existing coverage in ``test_model_identity.py`` asserts the *call site* via AST,
-which stays green even when the call cannot do anything, so these are behavioural.
-"""
+'The pinned-snapshot path must not reach PEFT through ``name_or_path``.\n\n``get_peft_model``, so at that point there is no ``peft_config`` for its adapter branch\nto repair. PEFT then derives the adapter\'s ``base_model_name_or_path`` from\n``model.__dict__["name_or_path"]``:\n\n    # peft/mapping_func.py\n    new_name = model.__dict__.get("name_or_path", None)\n    peft_config.base_model_name_or_path = new_name\n\n``PreTrainedModel.__init__`` copies ``config.name_or_path`` onto the instance, so\nrestoring only ``config._name_or_path`` leaves that slot holding the machine-local\nsnapshot path. It then travels into ``adapter_config.json``, every\n``checkpoint-*/adapter_config.json``, the run card, ``export_metadata.json`` and the\nmodel card uploaded by ``push_to_hub`` -- none of which are loadable on another machine.\n\nThe existing coverage in ``test_model_identity.py`` asserts the *call site* via AST,\nwhich stays green even when the call cannot do anything, so these are behavioural.'
 
 from types import SimpleNamespace
 

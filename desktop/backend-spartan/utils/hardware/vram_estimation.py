@@ -1,12 +1,5 @@
 
-"""
-Training VRAM estimation.
-
-Total VRAM = weights + LoRA adapters + optimizer states + gradients
-           + activations + CUDA overhead.
-Activation formula from unsloth_zoo/vllm_utils.py.
-All constants empirically calibrated against Llama-3.2-1B on B200.
-"""
+'\nTraining VRAM estimation.\n\nTotal VRAM = weights + LoRA adapters + optimizer states + gradients\n           + activations + CUDA overhead.\nAll constants empirically calibrated against Llama-3.2-1B on B200.'
 
 from __future__ import annotations
 
@@ -937,7 +930,7 @@ def compute_lora_params(arch: ModelArchConfig, lora_rank: int, target_modules: l
             n_moe = n_layers - n_dense
             # peft "all-linear" attaches LoRA to nn.Linear only; routed experts
             # are nn.Parameter and need explicit gate_proj/up_proj/down_proj
-            # naming via Unsloth's get_moe_target_parameters. Shared experts are
+
             # nn.Linear, picked up by get_peft_regex.
             routed_moe = (
                 0

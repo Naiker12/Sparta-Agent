@@ -1,10 +1,11 @@
 import { authFetch } from "@/features/auth";
 import { isAssistantLocalThreadId } from "../../utils/thread-ids";
-import { parseJsonOrThrow } from "./base";
+import { parseJsonOrThrow, notifyChatProjectsUpdated } from "./base";
 
 export type WorkspaceAccess = "read" | "write" | "write_no_delete";
 
 export interface ThreadWorkspaceBinding {
+  projectId?: string | null;
   bindingId: string;
   threadId: string;
   id: string;
@@ -46,7 +47,9 @@ export async function bindThreadWorkspace(
       body: JSON.stringify({ folderPath, access }),
     },
   );
-  return parseJsonOrThrow<ThreadWorkspaceBinding>(response);
+  const binding = await parseJsonOrThrow<ThreadWorkspaceBinding>(response);
+  notifyChatProjectsUpdated();
+  return binding;
 }
 
 export async function unbindThreadWorkspace(threadId: string): Promise<void> {

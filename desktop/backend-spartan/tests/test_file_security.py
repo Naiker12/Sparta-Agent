@@ -622,7 +622,7 @@ def _patch_status_capture(status):
 
 
 def test_spark_tts_llm_alias_scans_real_repo():
-    # "Spark-TTS-0.5B/LLM" loads as unsloth/Spark-TTS-0.5B with LLM as load root; the literal alias 404s.
+
     status = {"filesWithIssues": [{"path": "LLM/pytorch_model.bin", "level": "unsafe"}]}
     cap, seen = _patch_status_capture(status)
     with cap, patch("utils.paths.is_local_path", return_value = False), _patch_no_index():
@@ -649,7 +649,7 @@ def test_generic_slash_llm_repo_is_scanned_as_itself():
     cap, seen = _patch_status_capture(status)
     with cap, patch("utils.paths.is_local_path", return_value = False):
         d = evaluate_file_security("evil/LLM")
-    assert seen["repo"] == "evil/LLM"  # scanned the real repo, not unsloth/evil
+    assert seen["repo"] == "evil/LLM"
     assert d.model_name == "evil/LLM"
     assert d.blocked is True
 

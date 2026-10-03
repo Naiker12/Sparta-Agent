@@ -11,9 +11,9 @@
 import type { PerModelConfig } from "@/features/model-picker";
 import { DRAFT_N_MAX_SPEC_TYPES } from "@/lib/speculative-modes";
 
-// ---------------------------------------------------------------------------
-// Tipos
-// ---------------------------------------------------------------------------
+
+
+
 
 /** Selección de modelo en un pane de comparación. */
 export type CompareModelSelection = {
@@ -24,9 +24,9 @@ export type CompareModelSelection = {
   config?: PerModelConfig;
 };
 
-// ---------------------------------------------------------------------------
+
 // Helpers de configuración
-// ---------------------------------------------------------------------------
+
 
 /**
  * Limpia el valor de chat template personalizado: retorna `null` si está vacío

@@ -8,6 +8,15 @@ import { Callout } from 'fumadocs-ui/components/callout';
 
 Sparta Agent reúne conversaciones, proveedores de IA por API y herramientas en una aplicación de escritorio. Configura una credencial, elige un modelo remoto, incorpora solo el contexto necesario y ejecuta tareas con herramientas habilitadas y aprobaciones explícitas.
 
+## Elige tu recorrido
+
+| Si quieres… | Empieza por… | Resultado esperado |
+| --- | --- | --- |
+| Usar Sparta por primera vez | [Inicio rápido](/docs/quickstart) | Una conversación de prueba con tu proveedor |
+| Trabajar en un proyecto | [Tu espacio de trabajo](/docs/guides/workspace) | Carpeta, modelo y permisos identificados |
+| Entender sus límites | [Alcance del proyecto](/docs/project/status-and-scope) | Capacidades y dependencias claras |
+| Contribuir al código | [Desarrollo local](/docs/development/local-setup) | Entorno y comprobaciones por superficie |
+
 ## Empieza con una tarea pequeña
 
 La mejor forma de conocer Sparta es completar un cambio que puedas revisar: conectar un modelo, elegir una carpeta y pedir una explicación antes de solicitar una edición.
@@ -28,12 +37,18 @@ La mejor forma de conocer Sparta es completar un cambio que puedas revisar: cone
 
 ## Cómo se organiza el trabajo
 
+<DocsDiagram type="task" />
+
 1. **Contexto:** eliges el modelo, la conversación y los archivos relevantes.
 2. **Acciones:** el modelo propone herramientas; la política activa decide cuáles requieren aprobación.
 3. **Resultados:** Sparta muestra estados y salidas de las herramientas.
 4. **Verificación:** revisas los archivos y ejecutas las comprobaciones adecuadas.
 
 <Callout title="Datos locales y solicitudes remotas" type="info">El escritorio, los proyectos y las herramientas se ejecutan en tu equipo. Al usar un proveedor de IA o un conector externo, el contenido incluido en la solicitud puede enviarse a ese servicio. Sparta Agent no descarga ni ejecuta modelos locales.</Callout>
+
+## Entiende el sistema
+
+Lee la [visión general de arquitectura](/docs/architecture/overview) para distinguir interfaz, shell, puente y motor. La [estructura del repositorio](/docs/development/project-structure) explica dónde pertenece cada cambio y cómo mantener estas guías.
 
 ## Cuando algo no funciona
 

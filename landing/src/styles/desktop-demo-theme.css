@@ -1,0 +1,21 @@
+/* Generated from desktop/src/index.css. Run npm run demo:sync. */
+.sparta-preview[data-demo-theme="light"] {
+  --demo-bg: #f2ebe0;
+  --demo-card: #fbf7f0;
+  --demo-sidebar: #e8dfd3;
+  --demo-border: #d9cebf;
+  --demo-text: oklch(0.2686 0 0);
+  --demo-muted: #675f72;
+  --demo-primary: #339cff;
+  --demo-secondary: #e9dfd1;
+}
+.sparta-preview[data-demo-theme="dark"] {
+  --demo-bg: #181818;
+  --demo-card: #212121;
+  --demo-sidebar: #1f1f1f;
+  --demo-border: #303030;
+  --demo-text: #ececec;
+  --demo-muted: #9b9b9b;
+  --demo-primary: #4dabff;
+  --demo-secondary: #242424;
+}

@@ -132,11 +132,7 @@ def test_creating_a_project_says_which_folder_failed(tmp_path, monkeypatch):
 
 
 def test_a_database_folder_failure_is_not_blamed_on_the_projects_folder(monkeypatch):
-    """The same upsert opens studio.db before it picks a workspace.
-
-    That folder is UNSLOTH_STUDIO_HOME's, so answering it with "set
-    UNSLOTH_STUDIO_PROJECTS_HOME" sends the user to fix the wrong path.
-    """
+    'The same upsert opens studio.db before it picks a workspace.\n\n    '
     from routes import chat_history
 
     monkeypatch.setattr(

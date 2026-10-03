@@ -1,52 +1,5 @@
 
-"""
-End-to-end tests for Unsloth Studio's HTTP API surface.
-
-Covers the OpenAI- and Anthropic-compatible endpoints exposed by the
-server that ``unsloth studio run`` boots, plus API key authentication and
-the CLI's ``--help`` output:
-
-    1. curl -- basic chat completions (non-streaming)
-    2. curl -- streaming chat completions
-    3. Python OpenAI SDK -- streaming completions
-    4. curl -- Unsloth server-side tools (enable_tools=true)
-    5. curl -- Standard OpenAI function calling (non-streaming)
-    6. curl -- Standard OpenAI function calling (streaming)
-    7. curl -- Standard OpenAI function calling (multi-turn tool loop)
-    8. OpenAI Python SDK -- Standard function calling
-    9. Anthropic Messages API -- basic non-streaming
-    10. Anthropic Messages API -- streaming SSE
-    11. Anthropic Python SDK -- non-streaming
-    12. Anthropic Messages API -- streaming with tools
-    13. Anthropic Messages API -- tool_choice={"type":"any"} honored
-
-Training, export, fine-tuning, and chat-UI concerns are out of scope —
-see the unit suites elsewhere under ``studio/spartan_backend/tests/`` for those.
-
-Usage:
-
-    # Script mode — launches its own server via ``unsloth studio run``.
-    python tests/test_studio_api.py
-    python tests/test_studio_api.py --model unsloth/... --gguf-variant ...
-
-    # Pytest mode, external server — start an Unsloth server yourself,
-    # then point pytest at it. Fastest iteration loop.
-    unsloth studio run --model unsloth/Qwen3-1.7B-GGUF --gguf-variant UD-Q4_K_XL &
-    export UNSLOTH_E2E_BASE_URL=http://127.0.0.1:8080
-    export UNSLOTH_E2E_API_KEY=sk-unsloth-...   # from the server banner
-    pytest tests/test_studio_api.py -v
-
-    # Pytest mode, fixture-managed server — pytest launches and tears down
-    # the server itself. One-shot verification, CI-friendly.
-    pytest tests/test_studio_api.py -v \\
-        --unsloth-model unsloth/Qwen3-1.7B-GGUF \\
-        --unsloth-gguf-variant UD-Q4_K_XL
-
-The ``base_url`` / ``api_key`` parameters on the test functions resolve via
-the ``studio_server`` session fixture in ``conftest.py``.
-
-Requires a GPU and ~2 GB of disk for the GGUF download.
-"""
+'\n\nCovers the OpenAI- and Anthropic-compatible endpoints exposed by the\nthe CLI\'s ``--help`` output:\n\n    1. curl -- basic chat completions (non-streaming)\n    2. curl -- streaming chat completions\n    3. Python OpenAI SDK -- streaming completions\n    5. curl -- Standard OpenAI function calling (non-streaming)\n    6. curl -- Standard OpenAI function calling (streaming)\n    7. curl -- Standard OpenAI function calling (multi-turn tool loop)\n    8. OpenAI Python SDK -- Standard function calling\n    9. Anthropic Messages API -- basic non-streaming\n    10. Anthropic Messages API -- streaming SSE\n    11. Anthropic Python SDK -- non-streaming\n    12. Anthropic Messages API -- streaming with tools\n    13. Anthropic Messages API -- tool_choice={"type":"any"} honored\n\nTraining, export, fine-tuning, and chat-UI concerns are out of scope —\nsee the unit suites elsewhere under ``studio/spartan_backend/tests/`` for those.\n\nUsage:\n\n    python tests/test_studio_api.py\n\n    # then point pytest at it. Fastest iteration loop.\n    pytest tests/test_studio_api.py -v\n\n    # Pytest mode, fixture-managed server — pytest launches and tears down\n    # the server itself. One-shot verification, CI-friendly.\n    pytest tests/test_studio_api.py -v \\\n\nThe ``base_url`` / ``api_key`` parameters on the test functions resolve via\nthe ``studio_server`` session fixture in ``conftest.py``.\n\nRequires a GPU and ~2 GB of disk for the GGUF download.'
 
 from __future__ import annotations
 
@@ -127,7 +80,7 @@ def _stream_http(
 
 
 def test_help_output():
-    """``unsloth studio run --help`` should show all documented options."""
+    ''
     result = subprocess.run(
         ["unsloth", "studio", "run", "--help"],
         capture_output = True,
@@ -266,11 +219,11 @@ def test_curl_with_tools(base_url: str, api_key: str):
 
 # Standard OpenAI function-calling pass-through tests.
 #
-# Regression coverage for unslothai/unsloth#4999: /v1/chat/completions used
+
 # to strip standard OpenAI `tools`/`tool_choice`, so clients never got
 # structured tool_calls back. These exercise the pass-through that forwards
 # those fields to llama-server verbatim. Require a tool-capable GGUF
-# (supports_tools=True); the default unsloth/Qwen3-1.7B-GGUF qualifies.
+
 
 _WEATHER_TOOL = {
     "type": "function",
@@ -337,14 +290,7 @@ def _final_finish_reason(chunks: list[dict]) -> str | None:
 
 
 def test_openai_tools_nonstream(base_url: str, api_key: str):
-    """Standard OpenAI function calling, non-streaming, tool_choice='required'.
-
-    Regression: before the fix, Unsloth stripped `tools` and the model
-    returned plain text with finish_reason='stop'. After the fix,
-    llama-server's response is forwarded verbatim so the client sees
-    finish_reason='tool_calls' with a structured tool_calls array and
-    non-zero usage.prompt_tokens.
-    """
+    "Standard OpenAI function calling, non-streaming, tool_choice='required'.\n\n    returned plain text with finish_reason='stop'. After the fix,\n    llama-server's response is forwarded verbatim so the client sees\n    finish_reason='tool_calls' with a structured tool_calls array and\n    non-zero usage.prompt_tokens.\n    "
     status, text = _http(
         "POST",
         f"{base_url}/v1/chat/completions",
@@ -760,10 +706,7 @@ def test_anthropic_tool_choice_any(base_url: str, api_key: str):
 
 
 def _start_server(model: str, variant: str | None) -> tuple[subprocess.Popen, str]:
-    """Launch ``unsloth studio run`` and parse the API key from its banner.
-
-    Returns (process, api_key).
-    """
+    '\n    Returns (process, api_key).\n    '
     cmd = [
         "unsloth",
         "studio",

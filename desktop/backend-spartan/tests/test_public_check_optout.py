@@ -1,10 +1,5 @@
 
-"""Coverage for UNSLOTH_STUDIO_DISABLE_PUBLIC_CHECK (#7307 Problem 8).
-
-A wildcard bind asks ifconfig.me for the public IP and check-host.net whether the
-port is reachable. Both stay on by default; setting the var skips both, which is
-what lab and privacy-sensitive deployments asked for.
-"""
+'\nA wildcard bind asks ifconfig.me for the public IP and check-host.net whether the\nport is reachable. Both stay on by default; setting the var skips both, which is\nwhat lab and privacy-sensitive deployments asked for.'
 
 import socket
 import urllib.request

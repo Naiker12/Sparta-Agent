@@ -1026,7 +1026,7 @@ def _fake_hfapi(resolved_id, author = "unsloth"):
 
 
 class TestIsTrustedOrgRepo:
-    """Only a genuine unsloth/ or nvidia/ repo is trusted (Hub-verified); everything spoofed/malformed/unreachable fails closed."""
+    ''
 
     def test_accepts_genuine_unsloth_repo(self):
         with patch("huggingface_hub.HfApi", _fake_hfapi("unsloth/DeepSeek-OCR")):
@@ -1042,12 +1042,12 @@ class TestIsTrustedOrgRepo:
             assert is_trusted_org_repo(n, verify_remote = False) is False, n
 
     def test_rejects_local_path_even_if_is_local_path_says_so(self):
-        # Defensive: a bare "unsloth/x" that resolves as a local dir must fail.
+
         with patch("utils.security.trusted_org.is_local_path", return_value = True):
             assert is_trusted_org_repo("unsloth/x") is False
 
     def test_local_dir_shadowing_trusted_name_rejected(self, tmp_path, monkeypatch):
-        # A local dir literally named "unsloth/evil" must be rejected before any Hub call, even with remote verify on.
+
         monkeypatch.chdir(tmp_path)
         (tmp_path / "unsloth" / "evil").mkdir(parents = True)
         clear_cache()
@@ -1064,7 +1064,7 @@ class TestIsTrustedOrgRepo:
             assert is_trusted_org_repo(n, verify_remote = False) is False, repr(n)
 
     def test_rejects_when_resolved_owner_is_not_trusted(self):
-        # Name says unsloth/ but the Hub resolves it elsewhere -> fail closed.
+
         with patch("huggingface_hub.HfApi", _fake_hfapi("someoneelse/x", author = "someoneelse")):
             assert is_trusted_org_repo("unsloth/x") is False
 

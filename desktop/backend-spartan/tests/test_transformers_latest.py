@@ -1099,8 +1099,7 @@ def test_upgrade_check_mixed_pypi_main_reports_dev_only(monkeypatch):
 
 
 def test_install_endpoint_not_mounted_on_v1():
-    """The consented pip-install endpoint is an Unsloth admin action; it must live
-    on studio_router (kept off the OpenAI-compatible /v1 mount), not router."""
+    '    on studio_router (kept off the OpenAI-compatible /v1 mount), not router.'
     from routes import inference as ri
 
     path = "/install-latest-transformers"
@@ -1109,8 +1108,7 @@ def test_install_endpoint_not_mounted_on_v1():
 
 
 def test_kill_switch_removes_provisioned_latest_from_routing(tmp_path, monkeypatch):
-    """UNSLOTH_STUDIO_NO_LATEST_TRANSFORMERS must roll back a provisioned latest
-    sidecar: no overlay mapping, no probe participation, no file deletion needed."""
+    '    sidecar: no overlay mapping, no probe participation, no file deletion needed.'
     venv_dir = tmp_path / ".venv_t5_latest"
     (venv_dir / "transformers").mkdir(parents = True)
     (venv_dir / tv._LATEST_PIN_MARKER).write_text("5.13.0")

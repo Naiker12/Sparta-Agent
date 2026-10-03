@@ -235,7 +235,7 @@ def _apply_user_mapping(
     if meta:
         return _apply_template_mapping(dataset, column_roles, meta, batch_size)
 
-    # ── Simple mode (original logic) ──
+
     # Pre-compute: group columns by canonical chatml role
     role_groups: dict[str, list[str]] = {r: [] for r in _CHATML_ROLE_ORDER}
     for col_name, role in column_roles.items():

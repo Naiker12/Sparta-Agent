@@ -462,8 +462,7 @@ def test_the_view_yields_the_same_row_count_and_order():
 
 
 def test_the_view_attests_its_truncation_width():
-    """unsloth's `max_length` enforcement reads this instead of scanning every
-    row -- and scanning a lazy split is the eager tokenize pass all over again."""
+    '    row -- and scanning a lazy split is the eager tokenize pass all over again.'
     view = attach_online_tokenization(
         _text_dataset(32),
         tokenizer = _Tokenizer(),
@@ -475,9 +474,7 @@ def test_the_view_attests_its_truncation_width():
 
 
 def test_the_transformed_view_still_reports_its_backing_columns():
-    """Pinned because two consumers depend on it: `Trainer._remove_unused_columns`
-    (hence `remove_unused_columns = False`) and unsloth's tokenized-split probe,
-    which is why that probe reads a row rather than the metadata."""
+    'Pinned because two consumers depend on it: `Trainer._remove_unused_columns`\n    which is why that probe reads a row rather than the metadata.'
     view = attach_online_tokenization(
         _text_dataset(32),
         tokenizer = _Tokenizer(),

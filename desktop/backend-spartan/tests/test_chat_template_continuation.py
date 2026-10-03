@@ -46,13 +46,7 @@ class _AnyModule(types.ModuleType):
 
 
 def _inference_backend():
-    """``InferenceBackend`` without the training stack.
-
-    ``inference.py`` imports unsloth and peft at module scope and the dependency-light
-    CI job installs neither, but the formatters under test touch neither. Stub rather
-    than skip, or the matrix that would catch a restart regression never runs it; the
-    stubs are dropped once the module is bound. Torch and transformers it does need.
-    """
+    '``InferenceBackend`` without the training stack.\n\n    CI job installs neither, but the formatters under test touch neither. Stub rather\n    than skip, or the matrix that would catch a restart regression never runs it; the\n    stubs are dropped once the module is bound. Torch and transformers it does need.\n    '
     try:
         import transformers  # noqa: F401 - settle optional-dep probes before faking
     except ImportError:

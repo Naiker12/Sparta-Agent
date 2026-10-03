@@ -1,35 +1,5 @@
 
-"""Error-envelope helpers for the OpenAI/Anthropic-compatible ``/v1/*`` API surface.
-
-FastAPI's defaults emit ``{"detail": ...}`` bodies (status 422 for validation,
-``exc.status_code`` for ``HTTPException``). Real OpenAI/Anthropic clients expect
-provider-specific error envelopes instead, so this module re-wraps Unsloth's own
-client-error responses on the ``/v1/*`` surface:
-
-- OpenAI surface (``/v1/chat/completions``, ``/v1/completions``, ``/v1/models``,
-  ``/v1/responses``, ``/v1/embeddings``, ...)::
-
-      {"error": {"message": str, "type": str, "param": None|str, "code": None|str}}
-
-- Anthropic surface (any path starting with ``/v1/messages``)::
-
-      {"type": "error", "error": {"type": str, "message": str}}
-
-CRITICAL: the exception handlers installed by :func:`install_api_error_handlers`
-are global, but they ONLY transform responses for paths that start with ``/v1/``.
-For every other path (``/api/...``, frontend routes) they reproduce FastAPI's
-default behavior byte-for-byte, because the Unsloth frontend depends on the
-``{"detail": ...}`` shape for ``/api/*``.
-
-Public contract (other modules depend on these):
-
-- ``OPENAI_TYPE_BY_STATUS`` / ``ANTHROPIC_TYPE_BY_STATUS``: status -> type maps.
-- ``openai_error_body(message, *, status=400, err_type=None, code=None, param=None)``
-- ``anthropic_error_body(message, *, status=400, err_type=None)``
-- ``is_anthropic_path(path)``
-- ``error_body_for_path(path, message, *, status, err_type=None, code=None, param=None)``
-- ``install_api_error_handlers(app)``
-"""
+'Error-envelope helpers for the OpenAI/Anthropic-compatible ``/v1/*`` API surface.\n\nFastAPI\'s defaults emit ``{"detail": ...}`` bodies (status 422 for validation,\n``exc.status_code`` for ``HTTPException``). Real OpenAI/Anthropic clients expect\nclient-error responses on the ``/v1/*`` surface:\n\n- OpenAI surface (``/v1/chat/completions``, ``/v1/completions``, ``/v1/models``,\n  ``/v1/responses``, ``/v1/embeddings``, ...)::\n\n      {"error": {"message": str, "type": str, "param": None|str, "code": None|str}}\n\n- Anthropic surface (any path starting with ``/v1/messages``)::\n\n      {"type": "error", "error": {"type": str, "message": str}}\n\nCRITICAL: the exception handlers installed by :func:`install_api_error_handlers`\nare global, but they ONLY transform responses for paths that start with ``/v1/``.\nFor every other path (``/api/...``, frontend routes) they reproduce FastAPI\'s\n``{"detail": ...}`` shape for ``/api/*``.\n\nPublic contract (other modules depend on these):\n\n- ``OPENAI_TYPE_BY_STATUS`` / ``ANTHROPIC_TYPE_BY_STATUS``: status -> type maps.\n- ``openai_error_body(message, *, status=400, err_type=None, code=None, param=None)``\n- ``anthropic_error_body(message, *, status=400, err_type=None)``\n- ``is_anthropic_path(path)``\n- ``error_body_for_path(path, message, *, status, err_type=None, code=None, param=None)``\n- ``install_api_error_handlers(app)``'
 
 import math
 import re
@@ -105,13 +75,7 @@ def anthropic_error_body(
     status = 400,
     err_type = None,
 ) -> dict:
-    """Build an Anthropic-style error envelope.
-
-    Returns ``{"type": "error", "request_id": None, "error": {"type", "message"}}``.
-    ``request_id`` is a required (nullable) field on the spec's ErrorResponse;
-    Unsloth has no request-id system, so it is null. ``err_type`` defaults to
-    :data:`ANTHROPIC_TYPE_BY_STATUS` for ``status`` (``"api_error"`` fallback).
-    """
+    'Build an Anthropic-style error envelope.\n\n    Returns ``{"type": "error", "request_id": None, "error": {"type", "message"}}``.\n    ``request_id`` is a required (nullable) field on the spec\'s ErrorResponse;\n    :data:`ANTHROPIC_TYPE_BY_STATUS` for ``status`` (``"api_error"`` fallback).\n    '
     return {
         "type": "error",
         "request_id": None,
@@ -314,13 +278,7 @@ def safe_validation_errors(errors) -> list:
 
 
 def install_api_error_handlers(app) -> None:
-    """Register validation + HTTPException handlers that emit ``/v1/*`` envelopes.
-
-    Both handlers are global but only transform responses for OpenAI/Anthropic-
-    compatible surfaces (see :func:`wants_api_error_envelope`: the ``/v1/*`` mount
-    and the preview ``/p/.../v1/*`` mount). Every other path reproduces FastAPI's
-    default ``{"detail": ...}`` behavior exactly so the Unsloth frontend keeps working.
-    """
+    "Register validation + HTTPException handlers that emit ``/v1/*`` envelopes.\n\n    Both handlers are global but only transform responses for OpenAI/Anthropic-\n    compatible surfaces (see :func:`wants_api_error_envelope`: the ``/v1/*`` mount\n    and the preview ``/p/.../v1/*`` mount). Every other path reproduces FastAPI's\n    "
 
     @app.exception_handler(RequestValidationError)
     async def _handle_validation_error(request, exc):

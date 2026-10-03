@@ -9,11 +9,21 @@ El renderer principal vive en `desktop/frontend-spartan`. React presenta convers
 
 ## Flujo de datos
 
-```text
-Interfaz React → API autenticada → Backend Python
-       ↑                              ↓
-Estado y tarjetas ← eventos y resultados
-```
+<DocsDiagram kind="message" />
+
+Las conversaciones utilizan el backend para solicitar respuestas al proveedor configurado. Las operaciones nativas pasan por el puente de Electron; no todas las acciones de la interfaz utilizan el mismo canal.
+
+## Responsabilidades de la interfaz
+
+| Área | Responsabilidad |
+| --- | --- |
+| Navegación | Seleccionar proyectos y conversaciones, crear un chat y acceder a configuración. |
+| Composer | Recoger el mensaje, los adjuntos, el modelo y la política de aprobación. |
+| Conversación | Mostrar texto progresivo, estados de ejecución y resultados de herramientas. |
+| Panel de trabajo | Presentar archivos y las vistas habilitadas para la conversación. |
+| Estado | Conservar la selección y actualizar los componentes afectados por cada evento. |
+
+Consulta [Espacio de trabajo](/docs/guides/workspace) para el recorrido de uso y [Estructura del repositorio](/docs/development/project-structure) para localizar los módulos.
 
 ## Estado y suscripciones
 

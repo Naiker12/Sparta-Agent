@@ -388,7 +388,7 @@ def test_nothing_cached_means_the_hub_is_asked(monkeypatch, tmp_path):
 def test_a_refused_load_leaves_the_resident_process_state_alone(monkeypatch):
     # The refusal spares the resident server, so it has to spare what describes it. Resetting
     # the launch revision would say the live process launched from the binary installed NOW,
-    # so an Apply after `unsloth studio update` would dedupe against it instead of
+
     # relaunching; clearing the DFlash verdict loses a retry the same way.
     backend = LlamaCppBackend()
     order: list[str] = []

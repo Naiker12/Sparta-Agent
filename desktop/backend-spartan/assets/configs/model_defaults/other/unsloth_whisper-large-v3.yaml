@@ -1,6 +1,4 @@
-# Model defaults for unsloth/whisper-large-v3
 # Based on Whisper.ipynb
-# Also applies to: unsloth/whisper-large-v3, openai/whisper-large-v3
 
 audio_type: whisper
 audio_input: true

@@ -1282,7 +1282,7 @@ test("the managed answer is invalidated with the catalogue", () => {
     ),
     "utf8",
   ).replace(/\s+/g, " ");
-  // Its denylist is Unsloth's own, but it carries defaultParallelSlots beside it and
+
   // that is the EFFECTIVE count: a build without --kv-unified serves one slot however
   // many are configured. Updating llama.cpp from the banner left a tab that had
   // already fetched it sizing the hidden hydration check's batch floor from the

@@ -1,13 +1,5 @@
 
-"""Auto-override of the chat template for ``unsloth/gemma-4-*-GGUF``.
-
-Unsloth ships a bundled ``gemma-4.jinja`` (PR #118 based, ``preserve_thinking``
-defaulted off) and applies it to gemma-4 GGUF loads via the existing
-``chat_template_override`` -> ``--chat-template-file`` path, so users do not need
-to re-download quants. Pins the family matcher, the resolver precedence, the
-bundled asset's reasoning/tool capabilities (which drive the "Preserve thinking"
-UI toggle), the Jinja gate behaviour, and the reload-dedup interaction.
-"""
+'\ndefaulted off) and applies it to gemma-4 GGUF loads via the existing\n``chat_template_override`` -> ``--chat-template-file`` path, so users do not need\nto re-download quants. Pins the family matcher, the resolver precedence, the\nbundled asset\'s reasoning/tool capabilities (which drive the "Preserve thinking"\nUI toggle), the Jinja gate behaviour, and the reload-dedup interaction.'
 
 from __future__ import annotations
 
@@ -99,11 +91,11 @@ def _detect_reasoning_flags():
         ("unsloth/gemma-4-31B-it-GGUF", True),
         ("unsloth/gemma-4-26B-A4B-it-GGUF", True),
         ("UNSLOTH/GEMMA-4-E2B-IT-GGUF", True),  # case-insensitive
-        ("gemma-4-E2B-it-GGUF", True),  # owner-less shorthand -> unsloth/
-        ("gemma-4-31B-it-GGUF", True),  # owner-less shorthand -> unsloth/
+        ("gemma-4-E2B-it-GGUF", True),
+        ("gemma-4-31B-it-GGUF", True),
         ("unsloth/gemma-4-E2B-it", False),  # bf16, not GGUF
         ("unsloth/gemma-3-4b-it-GGUF", False),  # gemma 3
-        ("google/gemma-4-31B-it-GGUF", False),  # not unsloth
+        ("google/gemma-4-31B-it-GGUF", False),
         ("unsloth/Qwen3.5-9B-MTP-GGUF", False),
         ("/home/user/models/gemma-4-E2B.Q4_K_M.gguf", False),  # local path
         ("", False),
@@ -141,7 +133,7 @@ def test_resolver_returns_edge_template_for_e2b_e4b():
 
 
 def test_resolver_handles_owner_less_shorthand():
-    # ModelConfig.from_identifier prefixes unsloth/ for bare ids; the resolver
+
     # runs before that, so it must apply the same normalization.
     assert (
         resolve_effective_chat_template_override(

@@ -143,11 +143,7 @@ def _truncate_for_model(
     *,
     joiner: str = "\n",
 ) -> str:
-    """Hold a hosted result to the same cap a local result gets.
-
-    Read off ``tools`` rather than copied, so an install that lowers
-    ``UNSLOTH_TOOL_RESULT_MAX_CHARS`` gets the lower cap here too.
-    """
+    'Hold a hosted result to the same cap a local result gets.\n\n    Read off ``tools`` rather than copied, so an install that lowers\n    '
     if limit is None:
         limit = tools_module._MAX_OUTPUT_CHARS
     if len(text) <= limit:

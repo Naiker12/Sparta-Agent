@@ -129,7 +129,7 @@ async def confirm_tool_call(
 
 @studio_router.get("/monitor")
 async def get_api_monitor(current_subject: str = Depends(get_current_subject)):
-    """Return recent OpenAI-compatible API activity for Unsloth."""
+    ''
     # Off-loop: both helpers reach get_inference_backend(), whose first call waits on
     # hardware detection, and this is polled from first paint.
     fn_model = helpers.monitor_active_model or (lambda: None)

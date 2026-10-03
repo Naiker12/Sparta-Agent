@@ -1,13 +1,5 @@
 
-"""Tests for the per-(ip, username) login rate limiter.
-
-Covers:
-  - bucket key is (client-ip, username.lower())
-  - X-Forwarded-For honoured only when UNSLOTH_STUDIO_TRUST_FORWARDED is set
-  - 429 detail body does NOT leak the client IP
-  - One username failing doesn't lock out a different user from the same IP
-  - One IP failing doesn't lock out the same user from a different IP
-"""
+"Tests for the per-(ip, username) login rate limiter.\n\nCovers:\n  - bucket key is (client-ip, username.lower())\n  - 429 detail body does NOT leak the client IP\n  - One username failing doesn't lock out a different user from the same IP\n  - One IP failing doesn't lock out the same user from a different IP"
 
 import os
 import sys

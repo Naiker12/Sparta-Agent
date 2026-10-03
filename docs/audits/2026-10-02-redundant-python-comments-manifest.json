@@ -1,0 +1,253 @@
+{
+  "files": [
+    {
+      "file": "desktop/backend-spartan/auth/authentication.py",
+      "removed": 1
+    },
+    {
+      "file": "desktop/backend-spartan/auth/storage.py",
+      "removed": 3
+    },
+    {
+      "file": "desktop/backend-spartan/core/export/orchestrator.py",
+      "removed": 9
+    },
+    {
+      "file": "desktop/backend-spartan/core/export/worker.py",
+      "removed": 4
+    },
+    {
+      "file": "desktop/backend-spartan/core/inference/_html_to_md.py",
+      "removed": 6
+    },
+    {
+      "file": "desktop/backend-spartan/core/inference/anthropic_compat.py",
+      "removed": 4
+    },
+    {
+      "file": "desktop/backend-spartan/core/inference/audio_codecs.py",
+      "removed": 3
+    },
+    {
+      "file": "desktop/backend-spartan/core/inference/external_provider.py",
+      "removed": 2
+    },
+    {
+      "file": "desktop/backend-spartan/core/inference/inference.py",
+      "removed": 2
+    },
+    {
+      "file": "desktop/backend-spartan/core/inference/mcp_server_actions.py",
+      "removed": 3
+    },
+    {
+      "file": "desktop/backend-spartan/core/inference/media_model_index.py",
+      "removed": 2
+    },
+    {
+      "file": "desktop/backend-spartan/core/inference/orchestrator.py",
+      "removed": 18
+    },
+    {
+      "file": "desktop/backend-spartan/core/inference/stt_ggml_sidecar.py",
+      "removed": 11
+    },
+    {
+      "file": "desktop/backend-spartan/core/inference/stt_transformers_worker.py",
+      "removed": 4
+    },
+    {
+      "file": "desktop/backend-spartan/core/inference/tool_call_parser.py",
+      "removed": 4
+    },
+    {
+      "file": "desktop/backend-spartan/core/inference/tools.py",
+      "removed": 1
+    },
+    {
+      "file": "desktop/backend-spartan/core/inference/worker.py",
+      "removed": 6
+    },
+    {
+      "file": "desktop/backend-spartan/core/training/diffusion_checkpoint.py",
+      "removed": 6
+    },
+    {
+      "file": "desktop/backend-spartan/core/training/diffusion_dit_trainer.py",
+      "removed": 7
+    },
+    {
+      "file": "desktop/backend-spartan/core/training/diffusion_h3_clips.py",
+      "removed": 1
+    },
+    {
+      "file": "desktop/backend-spartan/core/training/diffusion_train_common.py",
+      "removed": 1
+    },
+    {
+      "file": "desktop/backend-spartan/core/training/diffusion_train_extras.py",
+      "removed": 5
+    },
+    {
+      "file": "desktop/backend-spartan/core/training/diffusion_training_service.py",
+      "removed": 3
+    },
+    {
+      "file": "desktop/backend-spartan/core/training/trainer.py",
+      "removed": 14
+    },
+    {
+      "file": "desktop/backend-spartan/core/training/training.py",
+      "removed": 5
+    },
+    {
+      "file": "desktop/backend-spartan/core/training/worker.py",
+      "removed": 41
+    },
+    {
+      "file": "desktop/backend-spartan/main.py",
+      "removed": 4
+    },
+    {
+      "file": "desktop/backend-spartan/models/auth.py",
+      "removed": 2
+    },
+    {
+      "file": "desktop/backend-spartan/models/inference.py",
+      "removed": 17
+    },
+    {
+      "file": "desktop/backend-spartan/models/providers.py",
+      "removed": 4
+    },
+    {
+      "file": "desktop/backend-spartan/models/responses.py",
+      "removed": 2
+    },
+    {
+      "file": "desktop/backend-spartan/models/training.py",
+      "removed": 1
+    },
+    {
+      "file": "desktop/backend-spartan/routes/auth.py",
+      "removed": 2
+    },
+    {
+      "file": "desktop/backend-spartan/routes/inference.py",
+      "removed": 50
+    },
+    {
+      "file": "desktop/backend-spartan/routes/inference_pkg/multimodal_media.py",
+      "removed": 3
+    },
+    {
+      "file": "desktop/backend-spartan/routes/inference_pkg/router_anthropic.py",
+      "removed": 10
+    },
+    {
+      "file": "desktop/backend-spartan/routes/inference_pkg/router_audio.py",
+      "removed": 1
+    },
+    {
+      "file": "desktop/backend-spartan/routes/inference_pkg/router_containers.py",
+      "removed": 1
+    },
+    {
+      "file": "desktop/backend-spartan/routes/inference_pkg/router_openai_completions.py",
+      "removed": 4
+    },
+    {
+      "file": "desktop/backend-spartan/routes/inference_pkg/router_openai_models.py",
+      "removed": 2
+    },
+    {
+      "file": "desktop/backend-spartan/routes/inference_pkg/router_openai_responses.py",
+      "removed": 4
+    },
+    {
+      "file": "desktop/backend-spartan/routes/inference_pkg/router_sandbox.py",
+      "removed": 3
+    },
+    {
+      "file": "desktop/backend-spartan/routes/inference_pkg/router_stt_studio.py",
+      "removed": 2
+    },
+    {
+      "file": "desktop/backend-spartan/routes/providers.py",
+      "removed": 6
+    },
+    {
+      "file": "desktop/backend-spartan/storage/studio/settings.py",
+      "removed": 1
+    },
+    {
+      "file": "desktop/backend-spartan/utils/datasets/dataset_none_detect.py",
+      "removed": 15
+    },
+    {
+      "file": "desktop/backend-spartan/utils/datasets/dataset_utils.py",
+      "removed": 1
+    },
+    {
+      "file": "desktop/backend-spartan/utils/datasets/format_conversion.py",
+      "removed": 4
+    },
+    {
+      "file": "desktop/backend-spartan/utils/datasets/format_detection.py",
+      "removed": 2
+    },
+    {
+      "file": "desktop/backend-spartan/utils/datasets/llm_assist.py",
+      "removed": 8
+    },
+    {
+      "file": "desktop/backend-spartan/utils/datasets/online_tokenization.py",
+      "removed": 2
+    },
+    {
+      "file": "desktop/backend-spartan/utils/datasets/vlm_processing.py",
+      "removed": 5
+    },
+    {
+      "file": "desktop/backend-spartan/utils/hardware/apple.py",
+      "removed": 4
+    },
+    {
+      "file": "desktop/backend-spartan/utils/hardware/hardware.py",
+      "removed": 12
+    },
+    {
+      "file": "desktop/backend-spartan/utils/hf_xet_fallback.py",
+      "removed": 3
+    },
+    {
+      "file": "desktop/backend-spartan/utils/inference/inference_config.py",
+      "removed": 1
+    },
+    {
+      "file": "desktop/backend-spartan/utils/models/model_config.py",
+      "removed": 4
+    },
+    {
+      "file": "desktop/backend-spartan/utils/openai_auto_switch_settings.py",
+      "removed": 1
+    },
+    {
+      "file": "desktop/backend-spartan/utils/process_lifetime.py",
+      "removed": 3
+    },
+    {
+      "file": "desktop/backend-spartan/utils/transformers_version.py",
+      "removed": 13
+    },
+    {
+      "file": "desktop/backend-spartan/utils/utils.py",
+      "removed": 2
+    },
+    {
+      "file": "desktop/backend-spartan/utils/wheel_utils.py",
+      "removed": 1
+    }
+  ],
+  "removed": 366
+}

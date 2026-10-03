@@ -86,7 +86,7 @@ print("OFFLINE_GUARDED_OK")
 
 
 def test_offline_guarded_runtime_contract():
-    # utf-8 both ways: the child prints Unsloth's non-ASCII banner, and a Windows runner
+
     # would otherwise decode it as cp1252 and fail on the banner rather than the contract.
     env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
     proc = subprocess.run(

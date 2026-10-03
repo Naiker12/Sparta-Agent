@@ -193,13 +193,7 @@ def test_gated_mirror_table_round_trips():
 
 
 def test_only_the_genuinely_gated_half_reads_as_gated():
-    """Redirecting a fetch and needing credentials are different questions.
-
-    Most of the table is mirrored to keep the fetch inside ``unsloth/*``, not to route around a
-    gate, and callers that override a user's cache must key on the gate rather than on "a mirror
-    exists". Klein base-4B is the one that makes this concrete: a default trainable base, which
-    is mirrored, and which the Hub serves anonymously.
-    """
+    'Redirecting a fetch and needing credentials are different questions.\n\n    gate, and callers that override a user\'s cache must key on the gate rather than on "a mirror\n    exists". Klein base-4B is the one that makes this concrete: a default trainable base, which\n    is mirrored, and which the Hub serves anonymously.\n    '
     assert len(_GATED_MIRROR_PAIRS) == 12
     assert len(_UNGATED_MIRROR_PAIRS) == 12
     for upstream, _mirror in _GATED_MIRROR_PAIRS:
@@ -246,7 +240,7 @@ def test_every_third_party_bf16_pipeline_the_catalog_offers_is_mirrored():
     )[0]
     offered = set(re.findall(r'bf16Pipeline\(\s*"([^"]+)"', images))
     mirrored = {u.lower() for u, _m in _MIRROR_PAIRS}
-    # Anything under unsloth/ is already ours, and the deliberate Hunyuan exception is recorded
+
     # beside the table with the territorial reason it cannot be mirrored.
     missing = sorted(
         repo
@@ -259,12 +253,7 @@ def test_every_third_party_bf16_pipeline_the_catalog_offers_is_mirrored():
 
 
 def test_the_qwen_2512_mirror_covers_the_card_tag_route(monkeypatch):
-    """#8001: the 2512 companions come from a repo the family table never names.
-
-    ``unsloth/Qwen-Image-2512-GGUF`` carries ``base_model: Qwen/Qwen-Image-2512`` and
-    ``_resolve_base_repo`` trusts that tag, so the fetch lands on the vendor repo whatever the
-    family default says. The mirror is the only thing that redirects it.
-    """
+    '#8001: the 2512 companions come from a repo the family table never names.\n\n    ``_resolve_base_repo`` trusts that tag, so the fetch lands on the vendor repo whatever the\n    family default says. The mirror is the only thing that redirects it.\n    '
     _no_cache(monkeypatch)
     assert mirror_repo("Qwen/Qwen-Image-2512") == "unsloth/Qwen-Image-2512"
     assert prefer_ungated_mirror("Qwen/Qwen-Image-2512") == "unsloth/Qwen-Image-2512"
@@ -1775,9 +1764,7 @@ def test_edit_family_uses_own_pipeline_and_requires_image(fake_runtime, tmp_path
 
 
 def test_load_pipeline_kind_uses_from_pretrained(fake_runtime):
-    """A full-pipeline (no single-file) load on an unsloth/* repo builds the pipe with
-    pipeline_cls.from_pretrained(repo_id) -- NO single-file transformer build, NO GGUF
-    quant config -- so an embedded bnb-4bit config is reloaded by diffusers itself."""
+    '    pipeline_cls.from_pretrained(repo_id) -- NO single-file transformer build, NO GGUF\n    quant config -- so an embedded bnb-4bit config is reloaded by diffusers itself.'
     backend = DiffusionBackend()
     status = backend.load_pipeline(
         "unsloth/Z-Image-Turbo-unsloth-bnb-4bit", family_override = "z-image"
@@ -1849,8 +1836,7 @@ def test_load_sdxl_single_file_uses_pipeline_from_single_file(fake_runtime, tmp_
 
 
 def test_load_sdxl_allowlisted_turbo_repo_is_trusted(fake_runtime):
-    """The official sdxl-turbo repo is on the non-GGUF allowlist, so a full-pipeline load
-    is permitted even though it is not under unsloth/*."""
+    'The official sdxl-turbo repo is on the non-GGUF allowlist, so a full-pipeline load'
     backend = DiffusionBackend()
     status = backend.load_pipeline("stabilityai/sdxl-turbo")
     assert status["loaded"] is True
@@ -1864,8 +1850,7 @@ def test_load_pipeline_rejects_non_unsloth_repo(fake_runtime):
 
 
 def test_load_sdxl_rejects_untrusted_repo(fake_runtime):
-    """A random non-allowlisted, non-unsloth repo is still rejected for a full pipeline
-    load even when it detects as SDXL -- the allowlist is exact-match only."""
+    '    load even when it detects as SDXL -- the allowlist is exact-match only.'
     backend = DiffusionBackend()
     with pytest.raises(ValueError, match = "unsloth"):
         backend.load_pipeline("randomorg/my-sdxl-merge", family_override = "sdxl")
@@ -2103,7 +2088,7 @@ def test_resolve_base_repo_prefers_caller_then_hf_tag_then_fallback(monkeypatch)
 
 def test_load_without_gguf_raises():
     backend = DiffusionBackend()
-    # No gguf_filename means a full-pipeline load, gated to unsloth/*, so a non-unsloth repo is rejected up front.
+
     with pytest.raises(ValueError, match = "unsloth"):
         backend.load_pipeline("some-org/Z-Image-bnb-4bit")
 
@@ -2859,9 +2844,9 @@ def test_callback_cancellation_interrupts_denoise(fake_runtime):
 
 def test_validate_load_request(tmp_path):
     backend = DiffusionBackend()
-    # No filename + unsloth repo -> a full-pipeline load (allowed for unsloth/*).
+
     assert backend.validate_load_request("unsloth/Z-Image-Turbo-unsloth-bnb-4bit").name == "z-image"
-    # No filename + non-unsloth repo -> a pipeline load, gated to unsloth/* -> rejected.
+
     with pytest.raises(ValueError, match = "unsloth"):
         backend.validate_load_request("some-org/Z-Image-bnb-4bit")
     # An explicit gguf/single_file kind still requires a single-file name.
@@ -2872,7 +2857,7 @@ def test_validate_load_request(tmp_path):
         backend.validate_load_request(
             "unsloth/Z-Image-Turbo-bnb-4bit", gguf_filename = "q.gguf", model_kind = "pipeline"
         )
-    # A single-file safetensors load is also gated to unsloth/* repos.
+
     with pytest.raises(ValueError, match = "unsloth"):
         backend.validate_load_request("some-org/Z-Image", gguf_filename = "model.safetensors")
     with pytest.raises(ValueError, match = "family"):
@@ -4686,7 +4671,7 @@ def _dense_calls(calls, backend):
 
 
 def test_auto_quant_declines_an_uncached_hosted_prequant(fake_runtime, tmp_path, monkeypatch):
-    # The reported bug: picking unsloth/Z-Image-GGUF fetched the GGUF and THEN a 6.29 GB hosted fp8
+
     # checkpoint that became the denoiser, so the GGUF was never used.
     _stub_hosted_prequant(monkeypatch, cached = False)
     calls = _spy_dense_quant(monkeypatch)
@@ -4944,7 +4929,7 @@ def test_dense_quant_prefetch_declines_with_the_load(fake_runtime, monkeypatch):
 
 
 def test_auto_quant_declines_an_uncached_dense_base(fake_runtime, monkeypatch):
-    # The reported bug: picking unsloth/Qwen-Image-Edit-2511-GGUF Q6_K fetched the 16.85 GB GGUF
+
     # and THEN started a 57.72 GB pull of the base repo, 40.86 GB of which is the dense
     # transformer/ the fast path would denoise with instead of the GGUF the user picked. Same rule
     # as the hosted prequant: an auto quant never downloads a second transformer for a GGUF pick.
@@ -5033,8 +5018,8 @@ def test_the_load_declines_when_the_prefetch_skipped_the_dense_shards(
 def test_an_unstaged_transformer_still_takes_a_CACHED_prequant(fake_runtime, tmp_path, monkeypatch):
     # A cached pre-quant stages no transformer/ shards either, because the small quantised
     # checkpoint REPLACES them, not because a download was refused. Reading the empty stage as a
-    # decline dropped a fast path that costs nothing: unsloth/Z-Image-Turbo-GGUF at Q8_0 with
-    # unsloth/Z-Image-Turbo-FP8 already on disk loaded the GGUF instead of the fp8 checkpoint.
+
+
     _stub_hosted_prequant(monkeypatch, cached = True)
     _stub_dense_candidate(monkeypatch, prequant = True)
     calls = _spy_dense_quant(monkeypatch)
@@ -6763,7 +6748,7 @@ def test_download_plan_pipeline_kind_is_one_entry(monkeypatch):
 
 def test_download_plan_flags_a_mirrored_pipeline_as_the_checkpoint(monkeypatch):
     # The regression this flag exists for. A gated pipeline is STAGED from its ungated mirror, so
-    # the entry's repo id is unsloth/FLUX.1-dev while the pick is black-forest-labs/FLUX.1-dev.
+
     # The page used to derive the label by comparing those two ids, which made every file of the
     # selected model read as "Required assets". Only the planner knows about the swap.
     gated = "black-forest-labs/FLUX.1-dev"
@@ -8588,7 +8573,7 @@ def test_the_cache_probe_reads_the_root_the_dense_load_will_use():
 
 def test_variant_hint_carries_both_the_repo_id_and_the_base():
     # `repo_id or base` dropped the base whenever a repo id existed, which is every GGUF load, and
-    # the base is exactly where the distilled marker lives: unsloth/Z-Image-GGUF says nothing while
+
     # Tongyi-MAI/Z-Image-Turbo says turbo, so the 0.85 discount never fired for these models.
     from core.inference.diffusion import _image_variant_hint
     from core.inference.diffusion_memory import estimate_image_runtime_mib

@@ -553,7 +553,7 @@ QWEN35_TOOL_INSTRUCTION = (
 
 
 def test_detect_safetensors_features_qwen35_keeps_tools_on():
-    """unsloth/Qwen3.5-0.8B family must surface tools+reasoning on."""
+    ''
     from routes.inference import _detect_safetensors_features
 
     backend = SimpleNamespace(active_model_name = "unsloth/Qwen3.5-0.8B")

@@ -8,6 +8,10 @@ fastapi==0.128.8; python_version < "3.10"
 uvicorn==0.52.1; python_version >= "3.10"
 uvicorn==0.39.0; python_version < "3.10"
 pydantic==2.13.4
+numpy>=2.0.0,<3.0.0
+Pillow>=10.0.0
+filelock>=3.13.0
+tzdata>=2025.2
 packaging==26.3
 pyjwt==2.13.0
 nest-asyncio==1.6.0

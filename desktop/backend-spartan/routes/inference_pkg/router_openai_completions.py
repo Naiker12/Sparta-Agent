@@ -237,9 +237,9 @@ def _stop_local_disconnect_cancel_watcher(*args, **kwargs):
 _DEFAULT_FIRST_TOKEN_TIMEOUT_S = 60.0
 _DEFAULT_MAX_TOKENS_FLOOR = 1
 
-# =====================================================================
+
 # OpenAI-Compatible Completions Proxy  (/completions → /v1/completions)
-# =====================================================================
+
 
 
 def _flatten_monitor_prompt(value) -> str:
@@ -311,7 +311,7 @@ async def openai_completions(request: Request, current_subject: str = Depends(ge
         if _resolved_max_tokens is not None
         else (llama_backend.context_length or _DEFAULT_MAX_TOKENS_FLOOR)
     )
-    # Apply per-model recommended sampling and any operator UNSLOTH_SAMPLING_* pin to the raw
+
     # body so /v1/completions honors the same pins as /v1/chat/completions; it is otherwise a
     # verbatim proxy that would keep llama-server's defaults for every omitted sampling field.
     _fill_recommended_sampling_completions(body, getattr(llama_backend, "model_identifier", None))
@@ -519,9 +519,9 @@ async def openai_completions(request: Request, current_subject: str = Depends(ge
         )
 
 
-# =====================================================================
+
 # OpenAI-Compatible Embeddings Proxy  (/embeddings → /v1/embeddings)
-# =====================================================================
+
 
 
 def _embeddings_input_present(body: dict) -> bool:

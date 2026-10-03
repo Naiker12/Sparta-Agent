@@ -1,6 +1,4 @@
-# Model defaults for unsloth/Llama-3.2-1B-Instruct
 # Based on Llama3.2_(1B)-RAFT.ipynb
-# Also applies to: unsloth/Llama-3.2-1B-Instruct-unsloth-bnb-4bit, meta-llama/Llama-3.2-1B-Instruct, unsloth/Llama-3.2-1B-Instruct-bnb-4bit, RedHatAI/Llama-3.2-1B-Instruct-FP8, unsloth/Llama-3.2-1B-Instruct-FP8-Block, unsloth/Llama-3.2-1B-Instruct-FP8-Dynamic
 
 training:
   max_seq_length: 2048

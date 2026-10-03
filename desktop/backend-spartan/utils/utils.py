@@ -16,7 +16,7 @@ import tempfile
 logger = get_logger(__name__)
 
 
-# ── Offline / HF-cache helpers ──────────────────────────────────
+
 # An offline load must never touch the network (a DNS-dead session hangs on hub retries); these read the local HF cache.
 
 _HF_OFFLINE_TRUE_VALUES = frozenset({"1", "true", "yes", "on"})
@@ -252,7 +252,7 @@ def _reachability_fresh(entry) -> bool:
 
 
 def hf_probe_disabled() -> bool:
-    """True when UNSLOTH_OFFLINE_PROBE opts out of the reachability probe."""
+    ''
     return os.environ.get("UNSLOTH_OFFLINE_PROBE", "1").strip().lower() in {
         "0",
         "false",
@@ -280,14 +280,7 @@ def reset_hf_reachability_cache() -> None:
 
 
 def hf_unreachable(timeout: int = 3) -> bool:
-    """True when the HF endpoint is unreachable, memoised for _HF_REACHABILITY_TTL_S.
-
-    DNS resolving does not mean the Hub is reachable: a live router with the WAN down, a
-    captive portal or a stale DNS cache all answer lookups while every request then burns
-    huggingface_hub's retry backoff. Bounded and proxy-aware, as the export path already
-    does; UNSLOTH_OFFLINE_PROBE=0 disables it. Fails open, so an unavailable probe reports
-    reachable and the load decides as it does today.
-    """
+    "True when the HF endpoint is unreachable, memoised for _HF_REACHABILITY_TTL_S.\n\n    DNS resolving does not mean the Hub is reachable: a live router with the WAN down, a\n    captive portal or a stale DNS cache all answer lookups while every request then burns\n    huggingface_hub's retry backoff. Bounded and proxy-aware, as the export path already\n    reachable and the load decides as it does today.\n    "
     if hf_probe_disabled():
         return False
 
@@ -585,7 +578,7 @@ def hf_cache_snapshot_is_loadable(model_name: str) -> bool:
     return False
 
 
-# ── Client-safe error helpers ───────────────────────────────────
+
 # Never return raw exception text to clients; log server-side, return generic.
 
 

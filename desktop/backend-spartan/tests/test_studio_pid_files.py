@@ -1,8 +1,5 @@
 
-"""Per-port PID files, so `unsloth studio stop` can find every server.
-
-Imports run.py directly, so run under the Unsloth venv.
-"""
+''
 
 from __future__ import annotations
 
@@ -290,7 +287,7 @@ def test_a_start_time_is_the_only_thing_that_disproves_a_record(monkeypatch):
 
 
 def test_a_bare_run_py_command_line_is_not_rejected(monkeypatch):
-    # `cd studio/spartan_backend && python run.py --port 8901` has no "studio" or "unsloth"
+
     # in argv. Guessing from the command line called that "not ours".
     monkeypatch.setattr(run, "_pid_is_studio_backend", _REAL_IS_STUDIO_BACKEND)
 
@@ -477,7 +474,7 @@ def test_our_own_server_on_the_requested_port_aborts_rather_than_falling_back(
 
 
 def test_a_foreign_process_on_the_requested_port_still_falls_back(monkeypatch):
-    # jupyter-lab on 8888 must not stop Unsloth starting on 8889.
+
     monkeypatch.setattr(run, "_is_port_free", lambda host, p: p != 8888)
 
     assert run._resolve_port("127.0.0.1", 8888) == 8889

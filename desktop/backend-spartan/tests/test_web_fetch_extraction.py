@@ -1,12 +1,5 @@
 
-"""Main-content extraction and boilerplate stripping for the web fetch tool.
-
-The HTML fixtures below snapshot the relevant fragments of a real GitHub repo
-page (github.com/unslothai/unsloth, fetched 2026-07): the ``hidden``
-client-side error placeholders ("Uh oh! There was an error while loading."),
-the skip-link / nav / footer furniture, and the README rendered inside
-``<article class="markdown-body">``. No network access is required.
-"""
+'Main-content extraction and boilerplate stripping for the web fetch tool.\n\nThe HTML fixtures below snapshot the relevant fragments of a real GitHub repo\nclient-side error placeholders ("Uh oh! There was an error while loading."),\nthe skip-link / nav / footer furniture, and the README rendered inside\n``<article class="markdown-body">``. No network access is required.'
 
 from __future__ import annotations
 

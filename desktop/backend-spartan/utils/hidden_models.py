@@ -31,8 +31,8 @@ _DEFAULT_EMBEDDING_REPO_IDS = {
 # remain exact-match-only.
 _DEFAULT_EMBEDDING_PATH_BASENAMES = {"bge-small-en-v1.5"}
 # Curated dictation checkpoints (STT, never chat), hidden from the chat
-# inventory and pickers: Transformers safetensors repos (unsloth/whisper-*) and
-# their GGUF companions (unslothai/whisper-*-GGUF). Custom checkpoints are caught
+
+
 # by config below, but the GGUF companions carry a raw .bin (no config.json), so
 # they must be listed here by id or they leak into chat pickers. The Qwen3-ASR
 # GGUFs are listed for the same reason: llama.cpp will happily load one as a

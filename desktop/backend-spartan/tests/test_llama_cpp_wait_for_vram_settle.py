@@ -367,8 +367,7 @@ _NO_PROCFS = "/unsloth-test-no-such-proc-root"
 
 
 def test_kill_orphaned_servers_returns_count():
-    """The reaper reports how many owned orphans it killed, so __init__ can
-    arm the settle wait. Only Unsloth-owned llama-server procs count."""
+    'The reaper reports how many owned orphans it killed, so __init__ can'
     import os
 
     mypid = os.getpid()
@@ -416,9 +415,7 @@ def test_kill_orphaned_servers_returns_count():
 
 
 def test_kill_orphaned_servers_spares_live_parent():
-    """An Unsloth-owned llama-server whose parent is still running is not an
-    orphan (a live Unsloth or the user's shell owns it) and must never be
-    killed; only the true orphan (parent gone) is reaped."""
+    '    killed; only the true orphan (parent gone) is reaped.'
     import os
 
     mypid = os.getpid()
@@ -573,10 +570,7 @@ def test_record_then_reap_round_trip_identity_matches(tmp_path):
 
 
 def test_reap_recorded_pid_spares_live_server(tmp_path):
-    """A recorded server whose parent is still alive (the running Unsloth) is NEVER
-    reaped, and its pidfile is kept. This is the finding-3 guard: a helper backend
-    constructed in-process must not kill the active chat server. Uses the REAL
-    _pid_parent_is_alive (the child's parent is this live test process)."""
+    "    reaped, and its pidfile is kept. This is the finding-3 guard: a helper backend\n    constructed in-process must not kill the active chat server. Uses the REAL\n    _pid_parent_is_alive (the child's parent is this live test process)."
     import subprocess
 
     proc = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
@@ -704,8 +698,7 @@ def _write_fake_procfs(tmp_path, entries):
 
 @pytest.mark.skipif(sys.platform != "linux", reason = "the procfs scan only runs on Linux")
 def test_kill_orphaned_servers_procfs_matches_psutil_selection(tmp_path):
-    """The Linux /proc sweep must select exactly what the psutil sweep selects:
-    the Unsloth-owned orphan, never a foreign llama-server or another program."""
+    'The Linux /proc sweep must select exactly what the psutil sweep selects:'
     import os
 
     mypid = os.getpid()

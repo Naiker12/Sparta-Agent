@@ -1500,18 +1500,7 @@ def _vocabulary_of(tokenizer) -> Optional[list]:
 
 
 def mapped_chat_template(model_info: dict, active_model_name):
-    """The template the generate-time mapper will install, resolved once and cached.
-
-    ``_generate_chat_response_inner`` applies ``get_chat_template`` only when it renders, so
-    a profile or an authorization catalog built before that saw the LOAD-time template. A
-    tool whose schema carries a delimiter the mapped template introduces was then dropped
-    from the prompt but still authorized for healing or execution (#7066).
-
-    Resolved on a COPY of the tokenizer: ``get_chat_template`` assigns
-    ``tokenizer.chat_template`` (unsloth/chat_templates.py), and this runs before the
-    generation lock, so handing it the shared object would let this setup mutate a tokenizer
-    another request is rendering with. ``render_native_template`` clones for the same
-    reason. Only the resulting template string is kept."""
+    'The template the generate-time mapper will install, resolved once and cached.\n\n    ``_generate_chat_response_inner`` applies ``get_chat_template`` only when it renders, so\n    a profile or an authorization catalog built before that saw the LOAD-time template. A\n    tool whose schema carries a delimiter the mapped template introduces was then dropped\n    from the prompt but still authorized for healing or execution (#7066).\n\n    Resolved on a COPY of the tokenizer: ``get_chat_template`` assigns\n    generation lock, so handing it the shared object would let this setup mutate a tokenizer\n    another request is rendering with. ``render_native_template`` clones for the same\n    reason. Only the resulting template string is kept.'
     if not isinstance(model_info, dict):
         return None
     if "mapped_chat_template" in model_info:
@@ -1973,13 +1962,7 @@ def _split_partial_marker(text: str, marker: str) -> tuple[str, str]:
 
 
 class ReasoningChannelNormalizer:
-    """Incrementally convert one native reasoning channel to ``<think>``.
-
-    The parser follows mlx-vlm's streaming boundary behavior but emits Unsloth's
-    established canonical text contract. Only the configured opening and
-    closing markers are consumed; tool-call and other control markers remain
-    available to downstream parsers.
-    """
+    'Incrementally convert one native reasoning channel to ``<think>``.\n\n    established canonical text contract. Only the configured opening and\n    closing markers are consumed; tool-call and other control markers remain\n    available to downstream parsers.\n    '
 
     def __init__(
         self,
@@ -2651,31 +2634,7 @@ def render_native_template(
     hf_token: Optional[str] = None,
     return_metadata: bool = False,
 ):
-    """Render ``messages`` + ``tools`` with the model's NATIVE chat template.
-
-    Some Unsloth override templates (e.g. ``mistral``, ``gemma-4``) do not emit
-    the ``tools`` schema, so a tool-calling turn silently stops advertising tools.
-    The native template ships in the model repo and carries the family's
-    tool-calling syntax. It is loaded straight from the repo (bypassing any
-    override on the live tokenizer) and cached on ``model_info``. Returns the
-    rendered prompt only if the native template actually emits the tools (render
-    differs with vs without tools); otherwise ``None``. With ``return_metadata``,
-    returns ``ChatTemplateRenderResult`` so callers can stream with the response
-    protocol selected by this request's template.
-
-    ``hf_token`` is the token the model was loaded with -- passed to the repo load
-    so a gated/private model's native template can still be fetched (otherwise the
-    fallback fails silently and keeps the override prompt that dropped tools).
-
-    ``trust_remote_code`` is sourced from ``model_info`` (the value the model was
-    actually loaded with) rather than a call-site argument, so the native-template
-    reload uses exactly the consent already granted at load. A custom-code tokenizer
-    repo raises in ``AutoTokenizer.from_pretrained`` unless ``trust_remote_code`` is
-    passed, so without this the fallback fails silently and keeps the tool-dropping
-    prompt for a model the user already consented to run remote code for. For a LoRA
-    adapter the reload targets the base model, whose remote code was gated and loaded
-    under the same stored flag, so re-passing it executes no unconsented code.
-    """
+    "Render ``messages`` + ``tools`` with the model's NATIVE chat template.\n\n    the ``tools`` schema, so a tool-calling turn silently stops advertising tools.\n    The native template ships in the model repo and carries the family's\n    tool-calling syntax. It is loaded straight from the repo (bypassing any\n    override on the live tokenizer) and cached on ``model_info``. Returns the\n    rendered prompt only if the native template actually emits the tools (render\n    differs with vs without tools); otherwise ``None``. With ``return_metadata``,\n    returns ``ChatTemplateRenderResult`` so callers can stream with the response\n    protocol selected by this request's template.\n\n    ``hf_token`` is the token the model was loaded with -- passed to the repo load\n    so a gated/private model's native template can still be fetched (otherwise the\n    fallback fails silently and keeps the override prompt that dropped tools).\n\n    ``trust_remote_code`` is sourced from ``model_info`` (the value the model was\n    actually loaded with) rather than a call-site argument, so the native-template\n    reload uses exactly the consent already granted at load. A custom-code tokenizer\n    repo raises in ``AutoTokenizer.from_pretrained`` unless ``trust_remote_code`` is\n    passed, so without this the fallback fails silently and keeps the tool-dropping\n    prompt for a model the user already consented to run remote code for. For a LoRA\n    adapter the reload targets the base model, whose remote code was gated and loaded\n    under the same stored flag, so re-passing it executes no unconsented code.\n    "
     # ``apply_fn`` lets a backend inject its own render; defaults to the module helper.
     if apply_fn is None:
         apply_fn = apply_chat_template_for_generation
@@ -2792,7 +2751,7 @@ def render_with_native_template_fallback(
 
     if not tools:
         # Gemma 4 can emit its native reasoning protocol even when a generation-time
-        # Unsloth override rendered a marker-free prompt. Preserve the live-verified
+
         # no-tools thinking behavior without letting cached native metadata describe
         # unrelated tool prompts that kept the active override.
         markers = live_markers

@@ -16,6 +16,7 @@ import type {
   UploadedDocument,
 } from "../types/rag";
 import { noteRagAvailability, noteRagResponse } from "./rag-availability";
+import { isAssistantLocalThreadId } from "@/features/chat/utils/thread-ids";
 
 const RAG_BASE = "/api/rag";
 
@@ -190,6 +191,7 @@ export function uploadKnowledgeBaseDocument(
 export async function listThreadDocuments(
   threadId: string,
 ): Promise<RagDocument[]> {
+  if (isAssistantLocalThreadId(threadId)) return [];
   const data = await ragRequest<{ documents: RagDocument[] }>(
     `/threads/${encodeURIComponent(threadId)}/documents`,
   );

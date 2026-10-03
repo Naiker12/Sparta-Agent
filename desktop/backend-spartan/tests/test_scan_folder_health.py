@@ -1,10 +1,5 @@
 
-"""A registered folder Unsloth cannot read must say so, not look empty.
-
-Covers the add-time probe (os.access alone passes paths macOS TCC still
-refuses), the status the scan records when a folder stops being readable, and
-that reading the status back never touches the disk.
-"""
+'\nCovers the add-time probe (os.access alone passes paths macOS TCC still\nrefuses), the status the scan records when a folder stops being readable, and\nthat reading the status back never touches the disk.'
 
 import errno
 import os

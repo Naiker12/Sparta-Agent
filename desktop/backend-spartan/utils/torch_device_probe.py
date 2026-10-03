@@ -1,14 +1,5 @@
 
-"""Probe torch allocation in a child so driver crashes do not kill the backend.
-
-Only a child that ran cleanly to the end marks an accelerator usable. A crash, a hang, a
-kill and a probe that could not run or be read all leave it unusable, since the allocation
-this stands in front of ends the process rather than raising. Ordinary Python errors are
-the exception: the child ran and reported, so the in-process loader raises the same error
-and describes it better. CPU takes the opposite default, because it cannot fault a driver
-and condemning it would change the embedding backend. Set
-``UNSLOTH_STUDIO_DISABLE_DEVICE_PROBE=1`` to skip the probe.
-"""
+'Probe torch allocation in a child so driver crashes do not kill the backend.\n\nOnly a child that ran cleanly to the end marks an accelerator usable. A crash, a hang, a\nkill and a probe that could not run or be read all leave it unusable, since the allocation\nthis stands in front of ends the process rather than raising. Ordinary Python errors are\nthe exception: the child ran and reported, so the in-process loader raises the same error\nand describes it better. CPU takes the opposite default, because it cannot fault a driver\nand condemning it would change the embedding backend. Set'
 
 from __future__ import annotations
 

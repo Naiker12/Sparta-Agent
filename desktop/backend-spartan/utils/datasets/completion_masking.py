@@ -35,33 +35,7 @@ def apply_completion_masking(
     detect_fn = None,
     dataset_template = None,
 ):
-    """Apply completion-only masking with an explicit dataset template or
-    auto-detection followed by the manual model-template fallback.
-
-    Args:
-        trainer: The platform trainer (SFTTrainer or MLXTrainer).
-        model_name: Model repo id used for table lookup and the gpt-oss
-            renamed-checkpoint fallback.
-        train_fn: The platform train_on_responses_only callable.
-        num_proc: Forwarded to train_fn when not None (CUDA path only).
-        notify: Optional callback notify(level, message) with level "info" or
-            "warning" for user-visible progress and warnings.
-        detect_fn: Marker detector (tokenizer/processor) -> (instruction_part,
-            response_part). Defaults to unsloth_zoo's get_chat_template_parts,
-            which raises loudly when the template cannot be parsed. Test seam.
-        dataset_template: Explicit template-table key for already-rendered
-            dataset text. Bypasses tokenizer marker detection when provided.
-
-    Returns:
-        (trainer, applied): the possibly wrapped trainer and whether masking
-        was applied. When applied is False the trainer is unchanged and
-        training runs on full sequences.
-
-    Only marker DETECTION failures trigger the table fallback. Exceptions
-    raised while applying the masking (dataset map, tokenization) propagate
-    to the caller in both the auto and manual paths, so a real failure stops
-    the run instead of silently changing the training objective.
-    """
+    'Apply completion-only masking with an explicit dataset template or\n    auto-detection followed by the manual model-template fallback.\n\n    Args:\n        trainer: The platform trainer (SFTTrainer or MLXTrainer).\n        model_name: Model repo id used for table lookup and the gpt-oss\n            renamed-checkpoint fallback.\n        train_fn: The platform train_on_responses_only callable.\n        num_proc: Forwarded to train_fn when not None (CUDA path only).\n        notify: Optional callback notify(level, message) with level "info" or\n            "warning" for user-visible progress and warnings.\n        detect_fn: Marker detector (tokenizer/processor) -> (instruction_part,\n            which raises loudly when the template cannot be parsed. Test seam.\n        dataset_template: Explicit template-table key for already-rendered\n            dataset text. Bypasses tokenizer marker detection when provided.\n\n    Returns:\n        (trainer, applied): the possibly wrapped trainer and whether masking\n        was applied. When applied is False the trainer is unchanged and\n        training runs on full sequences.\n\n    Only marker DETECTION failures trigger the table fallback. Exceptions\n    raised while applying the masking (dataset map, tokenization) propagate\n    to the caller in both the auto and manual paths, so a real failure stops\n    the run instead of silently changing the training objective.\n    '
     if notify is None:
         notify = lambda level, message: None
     kwargs = {}
@@ -130,7 +104,7 @@ def apply_completion_masking(
     try:
         if detect_fn is None:
             # Torch-backed import is fine: the MLX train_fn itself requires
-            # unsloth_zoo.dataset_utils, so a torch-free host cannot mask either way.
+
             from unsloth_zoo.dataset_utils import get_chat_template_parts as detect_fn
         auto_instruction, auto_response = detect_fn(processor)
     except Exception as e:

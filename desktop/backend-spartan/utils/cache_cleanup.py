@@ -1,11 +1,5 @@
 
-"""Clean up the Unsloth compiled cache directory.
-
-unsloth_compiled_cache (created by unsloth_zoo/compiler.py during
-FastModel.from_pretrained) holds model-type-specific compiled files. Clear it
-selectively between model loads, preserving model-agnostic components (Trainers)
-that spawned subprocesses need.
-"""
+'\nFastModel.from_pretrained) holds model-type-specific compiled files. Clear it\nselectively between model loads, preserving model-agnostic components (Trainers)\nthat spawned subprocesses need.'
 
 import contextlib
 import errno
@@ -18,7 +12,7 @@ from typing import List, Optional
 
 logger = get_logger(__name__)
 
-# Possible locations where unsloth_compiled_cache may appear
+
 _BACKEND_DIR = Path(__file__).resolve().parent.parent  # studio/spartan_backend
 _PROJECT_ROOT = _BACKEND_DIR.parent.parent  # repo root
 
@@ -76,7 +70,7 @@ import re as _re
 
 _GENERATED_NAME_RE = _re.compile(r"\A(unsloth_compiled_module_.+|Unsloth.+Trainer)\.py\Z")
 # What may be deleted from a directory we do not own. Narrower on purpose:
-# Unsloth*Trainer.py is a convention a user's own subclass can match, and there
+
 # the marker is the only thing that would say we wrote it.
 _OWNED_DELETE_RE = _re.compile(r"\Aunsloth_compiled_module_.+\.py\Z")
 
@@ -95,9 +89,7 @@ def _is_dedicated_cache(path: Path) -> bool:
 
 
 def _trusted_cache_paths() -> set:
-    """Where a cache is ours by where it is: the source-tree candidates, and
-    whatever UNSLOTH_COMPILE_LOCATION names, since that is the caller's answer
-    to where the cache lives. Never the launch directory."""
+    'Where a cache is ours by where it is: the source-tree candidates, and\n    to where the cache lives. Never the launch directory.'
     trusted = _builtin_cache_paths()
     configured = (os.environ.get("UNSLOTH_COMPILE_LOCATION") or "").strip()
     if configured:
@@ -136,13 +128,7 @@ def _builtin_cache_paths() -> set:
 
 
 def _cleanable_cache_dirs() -> "List[tuple]":
-    """``(directory, dedicated)`` for every cache dir something may be removed from.
-
-    UNSLOTH_COMPILE_LOCATION is a user-set variable, so it can name a directory
-    that holds other things (`$HOME/.cache`). Built-in paths, and any directory
-    carrying the marker, are ours whole. Anywhere else only the generated files
-    are ours, so only those may go.
-    """
+    '``(directory, dedicated)`` for every cache dir something may be removed from.\n\n    that holds other things (`$HOME/.cache`). Built-in paths, and any directory\n    carrying the marker, are ours whole. Anywhere else only the generated files\n    are ours, so only those may go.\n    '
     builtin = _builtin_cache_paths()
     cleanable: "List[tuple]" = []
     for cache_dir in get_existing_cache_dirs():
@@ -165,11 +151,7 @@ def _cleanable_cache_dirs() -> "List[tuple]":
 
 
 def register_compiled_cache_on_path() -> None:
-    """Add all existing compiled-cache directories to sys.path and PYTHONPATH.
-
-    Ensures spawned workers (on 'spawn'-start platforms, i.e. Windows and macOS)
-    can import dynamically compiled modules such as UnslothSFTTrainer.
-    """
+    "Add all existing compiled-cache directories to sys.path and PYTHONPATH.\n\n    Ensures spawned workers (on 'spawn'-start platforms, i.e. Windows and macOS)\n    "
     import os
     import sys
 
@@ -181,7 +163,7 @@ def register_compiled_cache_on_path() -> None:
     # Same ownership test as cleanup: a directory in the launch dir that merely
     # has the name would otherwise shadow real dependencies for every worker.
     # A directory in the launch dir needs a file only the compiler writes:
-    # Unsloth*Trainer.py is a name a user's own subclass can carry, and that
+
     # directory goes on sys.path. Where we put it is ours anyway.
     trusted = _trusted_cache_paths()
     registrable = [
@@ -202,13 +184,7 @@ def register_compiled_cache_on_path() -> None:
 
 
 def cache_coordination_dir() -> Path:
-    """Where backends of this install find each other.
-
-    The studio home, the same scope the startup markers use. Two backends of one
-    install share an install-tree compiled cache and that is the case this
-    coordinates; two SEPARATE installs pointed at one UNSLOTH_COMPILE_LOCATION
-    are not coordinated, and clearing is best effort there, as it was before.
-    """
+    'Where backends of this install find each other.\n\n    The studio home, the same scope the startup markers use. Two backends of one\n    install share an install-tree compiled cache and that is the case this\n    are not coordinated, and clearing is best effort there, as it was before.\n    '
     from utils.paths.storage_roots import studio_root
     return studio_root()
 
@@ -326,22 +302,7 @@ def compiled_cache_lock(timeout: float = _LOCK_TIMEOUT):
 
 
 def clear_compiled_cache_unless_shared(sibling_probe = None) -> None:
-    """Clear the compiled cache, unless another backend of this install is live.
-
-    The cache sits in the install tree, not the studio home, so two of our own
-    backends share it and the wipe would delete modules the other one is still
-    importing -- including the Unsloth*Trainer.py that the in-process clears
-    preserve for spawn workers. run_server supplies the probe; without it (tests,
-    an embedded app) the old unconditional clear stands.
-
-    The probe and the clear run under `compiled_cache_lock` so a sibling cannot
-    publish itself in between and lose the modules it has already compiled.
-
-    Two launches that overlap from cold both keep a cache neither has cleaned,
-    so stale modules can survive until the next start that finds itself alone.
-    That is the deliberate direction: the failure this replaces was the two of
-    them deleting each other's modules mid-run.
-    """
+    "Clear the compiled cache, unless another backend of this install is live.\n\n    The cache sits in the install tree, not the studio home, so two of our own\n    backends share it and the wipe would delete modules the other one is still\n    preserve for spawn workers. run_server supplies the probe; without it (tests,\n    an embedded app) the old unconditional clear stands.\n\n    The probe and the clear run under `compiled_cache_lock` so a sibling cannot\n    publish itself in between and lose the modules it has already compiled.\n\n    Two launches that overlap from cold both keep a cache neither has cleaned,\n    so stale modules can survive until the next start that finds itself alone.\n    That is the deliberate direction: the failure this replaces was the two of\n    them deleting each other's modules mid-run.\n    "
     if not callable(sibling_probe):
         clear_unsloth_compiled_cache()
         return
@@ -363,14 +324,7 @@ def clear_compiled_cache_unless_shared(sibling_probe = None) -> None:
 
 
 def clear_unsloth_compiled_cache(preserve_patterns: Optional[List[str]] = None) -> None:
-    """
-    Remove compiled files from the cache directory (idempotent).
-
-    Args:
-        preserve_patterns: glob patterns for files to keep
-                           (e.g., ["Unsloth*Trainer.py"]). If None or empty,
-                           the entire cache directory is deleted (legacy behavior).
-    """
+    '\n    Remove compiled files from the cache directory (idempotent).\n\n    Args:\n        preserve_patterns: glob patterns for files to keep\n                           the entire cache directory is deleted (legacy behavior).\n    '
     for cache_dir, dedicated in _cleanable_cache_dirs():
         if not dedicated:
             # A shared directory we only ever wrote generated modules into, so

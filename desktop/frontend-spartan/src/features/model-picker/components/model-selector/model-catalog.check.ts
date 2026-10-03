@@ -147,7 +147,7 @@ assert.equal(
 // Unknown repos pass through ungrouped.
 assert.equal(groupForRepoId("someone/some-model-GGUF", IMAGE_CATALOG), null);
 assert.equal(groupForRepoId("unsloth/Llama-3.3-70B-GGUF", VIDEO_CATALOG), null);
-// Video: the Lightricks 2.3 checkpoints group under the unsloth 2.3 release.
+
 const ltx23 = groupForRepoId("unsloth/LTX-2.3-GGUF", VIDEO_CATALOG);
 assert.ok(ltx23);
 assert.equal(groupForRepoId("lightricks/ltx-2.3", VIDEO_CATALOG), ltx23);
@@ -858,7 +858,7 @@ assert.equal(
   "bf16",
 );
 
-// ── official BF16 artifacts (added so groups are not unsloth-quant-only) ────────
+
 // Qwen-Image-2512 BF16 (54 GB) misses a 24/48 GB budget (bnb-4bit/fp8 win there, asserted above) but on an 80 GB GPU (budget 56) it fits and wins.
 assert.equal(
   pickDefaultArtifact(qwenGroup, {
@@ -924,7 +924,7 @@ assert.equal(
   "gguf",
 );
 // LTX-2.3 video carries the official BF16 single file (no FP8: the loader refuses its scaled-fp8 one), which keeps the ~50 GB Gemma3 encoder resident, so B200-class only.
-// Looked up by the retired unsloth/LTX-2.3 id on purpose: it is no longer the canonicalId (that
+
 // repo does not exist), and a pasted or persisted copy must still land on this group through the
 // GGUF artifact's suffix-stripped key.
 const ltxGroup = groupForRepoId("unsloth/LTX-2.3", VIDEO_CATALOG);
@@ -1286,7 +1286,7 @@ async function checkCatalogAgainstTheHub(
   );
 
   // Advisory only. A canonicalId is a display/grouping key, and 15 of them are deliberately not
-  // repos; but one that is BOTH `unsloth/*`-shaped and dead clears every owner guard in the app,
+
   // so it is worth naming without failing a scheduled job over it.
   const artifactIds = new Set(
     [...artifactsByRepo.keys()].map((id) => id.toLowerCase()),

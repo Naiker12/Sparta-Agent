@@ -37,9 +37,9 @@ async def _authenticate_header_or_query(request: Request, token: Optional[str]) 
     return await get_current_subject(creds)
 
 
-# =====================================================================
+
 # Sandbox file serving  (/sandbox/{session_id}/{filename})
-# =====================================================================
+
 
 _SANDBOX_MEDIA_TYPES = {
     ".png": "image/png",
@@ -272,7 +272,7 @@ async def serve_sandbox_file(
     # ── Authentication (header or query param) ──────────────────
     await _authenticate_header_or_query(request, token)
 
-    # ── Filename sanitization + path containment ────────────────
+
     import stat as _stat
 
     from starlette.concurrency import run_in_threadpool

@@ -1062,7 +1062,7 @@ class TestHfOfflineIfUnreachable:
     def test_user_set_hf_hub_offline_is_preserved(
         self, dns, reachable, clean_offline_env, monkeypatch
     ):
-        # User explicitly set offline before launching Unsloth.
+
         monkeypatch.setenv("HF_HUB_OFFLINE", "1")
         dns.fail()
         with _hf_offline_if_unreachable() as did_set:

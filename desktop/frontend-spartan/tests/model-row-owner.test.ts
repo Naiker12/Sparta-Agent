@@ -1,5 +1,5 @@
 
-// Rows drop the "unsloth/" prefix but keep every other owner, which is what
+
 // tells the two apart.
 
 import assert from "node:assert/strict";

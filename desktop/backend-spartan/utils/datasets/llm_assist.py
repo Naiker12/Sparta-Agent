@@ -162,7 +162,7 @@ def _run_with_helper(prompt: str, max_tokens: int = 256) -> Optional[str]:
                 pass
 
 
-# ─── Public API ───────────────────────────────────────────────────────
+
 
 
 def llm_generate_vlm_instruction(
@@ -325,7 +325,7 @@ def llm_generate_dataset_warning(
     return warning
 
 
-# ─── Dataset Conversion Advisor ──────────────────────────────────────
+
 
 
 def _parse_json_response(text: str) -> Optional[dict]:
@@ -469,7 +469,7 @@ def _run_multi_pass_advisor(
             return None
 
         logger.info(f"Advisor model loaded in {time.monotonic() - t0:.1f}s")
-        # ── Format samples ──
+
         samples_text = ""
         for i, row in enumerate(samples[:5], 1):
             parts = [f"  {col}: {str(row.get(col, ''))[:200]}" for col in columns]
@@ -480,7 +480,7 @@ def _run_multi_pass_advisor(
         )
         card_excerpt = (dataset_card or "")[:1200] or "N/A"
 
-        # ── Target Model Hints ──
+
         target_hints = ""
         is_gemma_3n = False
         if model_name:
@@ -516,7 +516,7 @@ def _run_multi_pass_advisor(
                 "Ensure the dataset format mapped reflects these specialized tasks."
             )
 
-        # ── Pass 1: Classify ──
+
         logger.info("Pass 1: Classifying dataset...")
         t1 = time.monotonic()
         messages1 = [
@@ -582,7 +582,7 @@ def _run_multi_pass_advisor(
                 ),
             }
 
-        # ── Pass 2: Map columns to roles ──
+
         logger.info("Pass 2: Mapping columns to roles...")
 
         t2 = time.monotonic()
@@ -671,7 +671,7 @@ def _run_multi_pass_advisor(
             logger.warning(f"Advisor Pass 2 failed to produce JSON: {raw2[:200]}")
             return None
 
-        # ── Extract and validate column roles from Pass 2 ──
+
         column_roles = pass2.get("column_roles", {})
         label_map = pass2.get("label_mapping") or {}  # may be null
 
@@ -681,7 +681,7 @@ def _run_multi_pass_advisor(
             logger.warning(f"Pass 2 sanity fail: missing user or assistant role: {column_roles}")
             return None  # falls back to simple classification
 
-        # ── Pass 3: System prompt (non-conversational datasets only) ──
+
         sys_prompt = ""
         dtype = pass1.get("dataset_type", "unknown")
         is_conv = pass1.get("is_conversational", False)

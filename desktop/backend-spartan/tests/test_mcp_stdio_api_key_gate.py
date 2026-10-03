@@ -1,10 +1,5 @@
 
-"""stdio MCP runs a local command as the backend user, outside the sandbox, and
-sk-unsloth API keys authenticate the same routes the UI uses. So these pin that
-only a UI session may define a command, and that http(s) MCP stays usable from an
-API key. list_tools_async is stubbed to fail if called, so a gate placed after the
-probe would not pass.
-"""
+'stdio MCP runs a local command as the backend user, outside the sandbox, and\nonly a UI session may define a command, and that http(s) MCP stays usable from an\nAPI key. list_tools_async is stubbed to fail if called, so a gate placed after the\nprobe would not pass.'
 
 import asyncio
 import os

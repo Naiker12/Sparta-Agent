@@ -785,11 +785,7 @@ def test_the_saved_adapter_carries_the_diffusers_transformer_prefix(tmp_path):
 
 
 def test_the_hosted_prequant_denoiser_is_refused_as_a_training_base():
-    """The two registries mean opposite things by ``prequant_repos``: an image family's entry is a
-    full quantized PIPELINE mirror, a video family's is the pre-quantized DENOISER alone. Reading
-    both as bases let the H3 denoiser repo through the preflight -- its name resolves to the
-    family, the unsloth/* trust gate passes it -- so the run evicted the resident GPU workloads
-    and only then failed inside ModularPipeline.from_pretrained."""
+    "The two registries mean opposite things by ``prequant_repos``: an image family's entry is a\n    full quantized PIPELINE mirror, a video family's is the pre-quantized DENOISER alone. Reading\n    both as bases let the H3 denoiser repo through the preflight -- its name resolves to the\n    and only then failed inside ModularPipeline.from_pretrained."
     from core.inference.video_families import detect_video_family
     from core.training.diffusion_train_common import (
         _component_only_repos,

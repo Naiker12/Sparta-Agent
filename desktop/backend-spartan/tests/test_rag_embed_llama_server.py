@@ -151,7 +151,7 @@ def test_build_env_gpu_inherits_devices(monkeypatch):
     monkeypatch.setenv("CUDA_VISIBLE_DEVICES", "0,1")
     b = LlamaServerBackend()
     env = b._build_env("/bin/llama-server", use_gpu = True)
-    assert env.get("CUDA_VISIBLE_DEVICES") == "0,1"  # inherit Unsloth's selection
+    assert env.get("CUDA_VISIBLE_DEVICES") == "0,1"
 
 
 def test_build_env_gpu_on_macos_uses_the_dyld_search_path(monkeypatch, tmp_path):

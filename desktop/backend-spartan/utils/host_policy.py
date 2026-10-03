@@ -1,14 +1,5 @@
 
-"""Bind-host trust policy for the Unsloth backend.
-
-Stdlib only -- safe to import without the rest of the backend.
-
-`is_external_host` mirrors the CLI's `spartan_agent_cli/_tool_policy.py`: a loopback
-bind is the user's own machine, any other address is network-reachable. The
-logic is duplicated rather than shared because the backend is self-contained
-(see run.py: "can be moved to any directory") and runs from a venv that may not
-have `spartan_agent_cli` on sys.path. Keep the two in sync.
-"""
+'\nStdlib only -- safe to import without the rest of the backend.\n\n`is_external_host` mirrors the CLI\'s `spartan_agent_cli/_tool_policy.py`: a loopback\nbind is the user\'s own machine, any other address is network-reachable. The\nlogic is duplicated rather than shared because the backend is self-contained\n(see run.py: "can be moved to any directory") and runs from a venv that may not\nhave `spartan_agent_cli` on sys.path. Keep the two in sync.'
 
 from __future__ import annotations
 
@@ -37,6 +28,7 @@ def is_external_host(host: str) -> bool:
 # Tauri desktop webview origins. api-only serving (the desktop app calling a
 # local backend) locks CORS to these.
 _TAURI_CORS_ORIGINS = (
+    "null",  # Packaged Electron file:// renderer; requests still require authentication.
     "tauri://localhost",  # Linux/macOS Tauri webview
     "http://tauri.localhost",  # Windows Tauri webview
     "http://localhost",  # dev fallback
@@ -50,22 +42,23 @@ def cors_origins_for_mode(*, api_only: bool, secure: bool) -> list[str]:
     to the Tauri desktop app, except in secure mode where the API is published
     over Cloudflare and must stay reachable from remote browser origins."""
     if api_only and not secure:
-        return list(_TAURI_CORS_ORIGINS)
+        origins = list(_TAURI_CORS_ORIGINS)
+        from urllib.parse import urlsplit
+        try:
+            desktop = urlsplit(os.environ.get("SPARTA_DESKTOP_ORIGIN", ""))
+            if (desktop.scheme in ("http", "https") and desktop.hostname in _LOOPBACK_HOSTS
+                    and not desktop.username and not desktop.password and desktop.port):
+                origin = f"{desktop.scheme}://{desktop.netloc}"
+                if origin not in origins:
+                    origins.append(origin)
+        except ValueError:
+            pass
+        return origins
     return ["*"]
 
 
 def apply_stdio_mcp_loopback_default(host: str, *, is_colab: bool = False) -> None:
-    """Default stdio MCP servers on when bound to loopback.
-
-    A loopback bind is the user's own machine -- the same trust boundary the
-    Tauri desktop app relies on (see main.py, which uses this same helper).
-    Colab is excluded: even its loopback is a hosted VM
-    reachable through Colab's proxy, so it stays off unless opted in. An explicit
-    operator value wins: a pre-set `UNSLOTH_STUDIO_ALLOW_STDIO_MCP=0`
-    force-disables and `=1` opts in, including on a network bind. We only ever
-    set or clear a default we applied ourselves, so reusing run_server with a
-    public host after a loopback one does not leave the gate on.
-    """
+    "Default stdio MCP servers on when bound to loopback.\n\n    A loopback bind is the user's own machine -- the same trust boundary the\n    Tauri desktop app relies on (see main.py, which uses this same helper).\n    Colab is excluded: even its loopback is a hosted VM\n    reachable through Colab's proxy, so it stays off unless opted in. An explicit\n    force-disables and `=1` opts in, including on a network bind. We only ever\n    set or clear a default we applied ourselves, so reusing run_server with a\n    public host after a loopback one does not leave the gate on.\n    "
     global _auto_enabled
     current = os.environ.get("UNSLOTH_STUDIO_ALLOW_STDIO_MCP")
     # If our prior auto-default was changed out from under us (in-process reuse),

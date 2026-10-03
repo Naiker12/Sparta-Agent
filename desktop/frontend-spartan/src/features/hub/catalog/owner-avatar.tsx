@@ -62,11 +62,11 @@ export function OwnerAvatar({
   remote = true,
 }: {
   owner: string;
-  /**
-   * Repo name (after `owner/`). For an eligible owner (currently "unsloth"),
-   * renders the matched upstream provider's logo instead of the HF profile pic
-   * (e.g. an Unsloth Qwen2.5 re-upload shows the Qwen logo).
-   */
+
+
+
+
+
   repoName?: string;
   size?: AvatarSize;
   className?: string;

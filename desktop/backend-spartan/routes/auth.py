@@ -70,32 +70,7 @@ def _cli_is_inside(prefix: str) -> bool:
 
 
 def _reset_password_command() -> str:
-    """Shell command shown in the 'incorrect password' hint.
-
-    Prefer the absolute path to this install's ``unsloth`` launcher (sibling of
-    the running interpreter) so the hint works even when its dir isn't on PATH.
-
-    POSIX paths are shell-quoted. On Windows we use the bare absolute path only
-    when it has no spaces (a quoted path differs between cmd and PowerShell);
-    otherwise, or if the launcher can't be located, fall back to the PATH form.
-
-    Windows never names unsloth.exe here, present or not. Existing is not the
-    same as runnable: an Application Control policy leaves the generated,
-    unsigned unsloth.exe on disk and denies it at CreateProcess (issue #8490),
-    and a bare `unsloth` resolves to that same file because PATHEXT puts .EXE
-    ahead of the .cmd shim. Whoever is locked out of Studio is exactly who needs
-    this command to work, so it must not be the one a policy refuses. Preference
-    order is therefore the interpreter's module entry, which needs no quoting in
-    cmd or PowerShell, then `unsloth.cmd` -- spelling the extension is what stops
-    PATHEXT reaching for the executable.
-
-    -I only when the package is inside this interpreter's own prefix. -I implies
-    -s, so a ``pip install --user`` install would be told to run a command that
-    cannot find itself; spartan_agent_cli/__main__.py documents that exception and the
-    bootstrap to use instead, and this prints that bootstrap. It is safe to show
-    to either shell: the trampoline contains single quotes only, so one pair of
-    double quotes wraps it identically in cmd and in PowerShell.
-    """
+    "Shell command shown in the 'incorrect password' hint.\n\n    the running interpreter) so the hint works even when its dir isn't on PATH.\n\n    POSIX paths are shell-quoted. On Windows we use the bare absolute path only\n    when it has no spaces (a quoted path differs between cmd and PowerShell);\n    otherwise, or if the launcher can't be located, fall back to the PATH form.\n\n    same as runnable: an Application Control policy leaves the generated,\n    ahead of the .cmd shim. Whoever is locked out of Studio is exactly who needs\n    this command to work, so it must not be the one a policy refuses. Preference\n    order is therefore the interpreter's module entry, which needs no quoting in\n    PATHEXT reaching for the executable.\n\n    -I only when the package is inside this interpreter's own prefix. -I implies\n    -s, so a ``pip install --user`` install would be told to run a command that\n    cannot find itself; spartan_agent_cli/__main__.py documents that exception and the\n    bootstrap to use instead, and this prints that bootstrap. It is safe to show\n    to either shell: the trampoline contains single quotes only, so one pair of\n    double quotes wraps it identically in cmd and in PowerShell.\n    "
     try:
         bin_dir = os.path.dirname(os.path.abspath(sys.executable))
         if os.name == "nt":
@@ -208,10 +183,7 @@ _UNKNOWN_LOGIN_USER = "\x00unknown-user"
 
 
 def _trust_forwarded_for() -> bool:
-    """Honour X-Forwarded-For only when UNSLOTH_STUDIO_TRUST_FORWARDED is set.
-
-    Off by default so a direct caller can't spoof the header.
-    """
+    "\n    Off by default so a direct caller can't spoof the header.\n    "
     return os.environ.get("UNSLOTH_STUDIO_TRUST_FORWARDED", "").lower() in (
         "1",
         "true",
@@ -391,11 +363,7 @@ def _clear_login_bucket(key: tuple[str, str]) -> None:
 # so FastAPI runs it in the threadpool rather than blocking the event loop.
 @router.get("/identity")
 def identity(nonce: str, request: Request) -> dict:
-    """Challenge-response proof this is the real local Unsloth: caller sends a nonce,
-    gets HMAC(install identity secret, nonce, connection address + port).
-    Unauthenticated and side-effect free; a process that can't read the same-user
-    secret can't forge a proof, and binding to the address/port the connection
-    landed on stops a squatter relaying a proof from the real Unsloth elsewhere."""
+    "    gets HMAC(install identity secret, nonce, connection address + port).\n    Unauthenticated and side-effect free; a process that can't read the same-user\n    secret can't forge a proof, and binding to the address/port the connection"
     try:
         raw = base64.urlsafe_b64decode(nonce)
     except Exception:
@@ -632,9 +600,9 @@ async def change_password(
     )
 
 
-# ---------------------------------------------------------------------------
+
 # API key management
-# ---------------------------------------------------------------------------
+
 
 
 def _row_to_api_key_response(row: dict) -> ApiKeyResponse:

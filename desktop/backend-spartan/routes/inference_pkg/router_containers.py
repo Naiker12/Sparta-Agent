@@ -32,7 +32,7 @@ def _request_has_api_key(request: Request) -> bool:
     auth = request.headers.get("authorization", "")
     return bool(auth.strip().lower().startswith("bearer ") and len(auth.strip()) > 7)
 
-# ── OpenAI shell-tool container management ───────────────────────
+
 
 
 def _resolve_openai_cloud_client(

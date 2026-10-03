@@ -8,7 +8,7 @@ import { setApiBase } from "@/lib/api-base";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 
-type StartupState = "checking" | "needs_setup" | "installing" | "ready";
+type StartupState = "checking" | "needs_setup" | "installing" | "ready" | "auth_failed";
 
 /** Keeps the product closed until its required local backend is ready. */
 export function StartupGate({ children }: { children: ReactNode }) {
@@ -47,12 +47,13 @@ export function StartupGate({ children }: { children: ReactNode }) {
       if (authenticated) {
         setError(null);
         setState("ready");
+        setHasEntered(true);
       } else {
         setError(
           getTauriAuthFailure() ??
             "No se pudo autenticar el backend local. Reinicia Sparta.",
         );
-        setState("needs_setup");
+        setState("auth_failed");
       }
     };
     void api.getBackendStatus?.().then((status) => {
@@ -65,8 +66,13 @@ export function StartupGate({ children }: { children: ReactNode }) {
         setError(status.error);
         setState("needs_setup");
       } else {
-        setState("needs_setup");
+        // No port and no error means the host is still starting the backend.
+        setState("checking");
       }
+    }).catch((reason: unknown) => {
+      if (!active || revision > 0) return;
+      setError(reason instanceof Error ? reason.message : String(reason));
+      setState("auth_failed");
     });
 
     const removeReady = api.onBackendReady?.((port) => void authenticate(port));
@@ -119,8 +125,8 @@ export function StartupGate({ children }: { children: ReactNode }) {
         <section className="relative w-full max-w-lg px-6 py-10 text-center sm:px-10">
           <img
             alt="Logo de Sparta Agent"
-            className="mx-auto size-28 object-contain brightness-0"
-            src={`${import.meta.env.BASE_URL}spartan-logo.svg`}
+            className="mx-auto size-28 object-contain"
+            src={`${import.meta.env.BASE_URL}favicon.svg`}
           />
           <p className="mt-7 text-sm font-semibold tracking-wide text-primary">
             SPARTA AGENT
@@ -129,8 +135,8 @@ export function StartupGate({ children }: { children: ReactNode }) {
             Tu espacio de trabajo local
           </h1>
           <p className="mt-4 text-pretty leading-7 text-muted-foreground">
-            Conversa, crea y trabaja con tus modelos en un entorno privado
-            preparado en tu equipo.
+            Conversa, crea y trabaja con tus proveedores de IA en un entorno
+            privado preparado en tu equipo.
           </p>
           <Button
             className="mt-8 h-11 rounded-xl px-6"
@@ -160,12 +166,19 @@ export function StartupGate({ children }: { children: ReactNode }) {
 
   const installing = state === "installing";
   const checking = state === "checking";
+  const authFailed = state === "auth_failed";
   const friendlyMessage = error?.includes("ModuleNotFoundError")
     ? "Faltan componentes del backend. Sparta puede instalarlos y verificarlos automáticamente."
     : error?.includes("aún no está preparado")
       ? "El backend local aún no está instalado en este equipo."
-      : "Instala el backend una vez para poder usar todas las funciones de Sparta.";
+      : authFailed
+        ? "El motor está instalado, pero no pudimos conectar tu sesión. Reintenta la conexión."
+        : error ?? "Instala el backend una vez para poder usar todas las funciones de Sparta.";
   const install = async () => {
+    if (authFailed) {
+      window.location.reload();
+      return;
+    }
     if (!window.electronAPI?.bootstrapBackend) {
       return;
     }
@@ -175,7 +188,10 @@ export function StartupGate({ children }: { children: ReactNode }) {
     setInstallStartedAt(Date.now());
     setElapsedSeconds(0);
     setState("installing");
-    const result = await window.electronAPI.bootstrapBackend();
+    const result = await window.electronAPI.bootstrapBackend().catch((reason: unknown) => ({
+      ok: false,
+      error: reason instanceof Error ? reason.message : String(reason),
+    }));
     if (!result.ok) {
       setError(result.error ?? "No se pudo preparar el backend.");
       setState("needs_setup");
@@ -189,8 +205,8 @@ export function StartupGate({ children }: { children: ReactNode }) {
         <div className="flex items-center gap-4">
           <img
             alt="Logo de Sparta Agent"
-            className="size-14 rounded-2xl border bg-background p-2 object-contain brightness-0"
-            src={`${import.meta.env.BASE_URL}spartan-logo.svg`}
+            className="size-14 rounded-2xl border bg-background p-2 object-contain"
+            src={`${import.meta.env.BASE_URL}favicon.svg`}
           />
           <div>
             <p className="text-sm font-semibold text-primary">
@@ -208,7 +224,7 @@ export function StartupGate({ children }: { children: ReactNode }) {
               ? "Comprobando el backend…"
               : installing
                 ? "Instalando el backend…"
-                : "Backend pendiente"}
+                : authFailed ? "No se pudo conectar la sesión" : "Backend pendiente"}
           </p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             {checking
@@ -259,7 +275,7 @@ export function StartupGate({ children }: { children: ReactNode }) {
             onClick={() => void install()}
             type="button"
           >
-            {installing ? "Instalando…" : "Instalar backend"}
+            {installing ? "Instalando…" : authFailed ? "Reintentar conexión" : "Instalar o reparar backend"}
           </button>
         </div>
         {!installing && (

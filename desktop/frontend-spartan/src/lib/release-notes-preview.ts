@@ -93,7 +93,7 @@ const COMMENT_BLOCK_OPEN = /^ {0,3}<!--/;
 const COMMENT_OPEN = "<!--";
 const COMMENT_CLOSE = "-->";
 // Paired emphasis only. Underscores inside identifiers are literal, so
-// UNSLOTH_DISABLE_UPDATE_CHECK keeps its name.
+
 const BOLD_STAR = /\*\*(?=\S)([\s\S]*?\S)\*\*/g;
 const BOLD_UNDERSCORE = /(^|[^\w])__(?=\S)([\s\S]*?\S)__(?=[^\w]|$)/g;
 const ITALIC_STAR = /\*(?=\S)([^*\n]*?\S)\*/g;
@@ -771,10 +771,10 @@ function contentLines(markdown: string): ContentLine[] {
   return lines;
 }
 
-/**
- * Split a bullet at its first sentence boundary. Conservative: the next
- * sentence must start like one, so "unsloth.ai in the docs" is not a break.
- */
+
+
+
+
 function splitLeadSentence(text: string): ReleaseNotesPreviewItem {
   SENTENCE_BREAK.lastIndex = 0;
   let match = SENTENCE_BREAK.exec(text);

@@ -1,18 +1,5 @@
 
-"""The load contract the two image engines share, and the native engine's offline half.
-
-``POST /images/load`` calls ``begin_load`` through ONE call site for whichever engine was
-activated, so every keyword it passes has to be accepted by both. That is not a style rule: the
-native engine is what a CPU-only host, an opted-in MPS host and ``UNSLOTH_DIFFUSION_ENGINE=sd_cpp``
-select, so a keyword only the diffusers engine declares TypeErrors every single load on those
-hosts -- including the ordinary user-initiated ones from the Images page, which pass the flag's
-default. ``local_files_only`` shipped exactly that way.
-
-The engine doubles here are ``create_autospec`` mocks on purpose. A hand-written fake with
-``**kwargs`` accepts anything, which is why the existing route tests passed against an engine that
-could not be called at all; autospec binds against the real signature and raises the TypeError the
-user would have seen.
-"""
+"The load contract the two image engines share, and the native engine's offline half.\n\n``POST /images/load`` calls ``begin_load`` through ONE call site for whichever engine was\nactivated, so every keyword it passes has to be accepted by both. That is not a style rule: the\nselect, so a keyword only the diffusers engine declares TypeErrors every single load on those\nhosts -- including the ordinary user-initiated ones from the Images page, which pass the flag's\ndefault. ``local_files_only`` shipped exactly that way.\n\nThe engine doubles here are ``create_autospec`` mocks on purpose. A hand-written fake with\n``**kwargs`` accepts anything, which is why the existing route tests passed against an engine that\ncould not be called at all; autospec binds against the real signature and raises the TypeError the\nuser would have seen."
 
 from __future__ import annotations
 
@@ -293,12 +280,7 @@ def test_the_default_still_takes_the_xet_fallback_ladder(monkeypatch, tmp_path):
 
 
 def test_the_offline_download_never_reaches_the_shared_ladder(monkeypatch, tmp_path):
-    """And with the flag on it goes straight to huggingface_hub.
-
-    Deliberately NOT forwarded to unsloth_zoo: ``start_watchdog`` already showed that an older
-    installed zoo silently drops kwargs it does not declare, and a dropped ``local_files_only``
-    downloads -- the one outcome the flag exists to prevent.
-    """
+    'And with the flag on it goes straight to huggingface_hub.\n\n    installed zoo silently drops kwargs it does not declare, and a dropped ``local_files_only``\n    downloads -- the one outcome the flag exists to prevent.\n    '
     import huggingface_hub
 
     import utils.hf_xet_fallback as xet

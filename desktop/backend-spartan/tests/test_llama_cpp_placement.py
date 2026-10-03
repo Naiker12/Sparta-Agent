@@ -1671,9 +1671,7 @@ def test_the_guard_reads_the_model_the_child_opens(tmp_path, monkeypatch):
 
 
 def test_the_env_escape_loads_a_variant_the_guard_refuses(tmp_path, monkeypatch):
-    """The picker still offers a variant `classifyGgufFit` calls "oom", and no load
-    field carries a force, so an unconditional refusal leaves that selection with no way
-    through. UNSLOTH_ALLOW_HOST_OFFLOAD=1 abstains, and the refusal names it."""
+    'The picker still offers a variant `classifyGgufFit` calls "oom", and no load\n    field carries a force, so an unconditional refusal leaves that selection with no way'
     refused, gguf = _offload_backend(
         tmp_path, gguf_gb = 13.3, free_mib = 4877, avail_mib = 10_000, monkeypatch = monkeypatch
     )
@@ -1725,14 +1723,7 @@ def test_the_route_precheck_refuses_before_the_gpu_handoff(tmp_path, monkeypatch
 
 
 def test_the_route_precheck_credits_capacity_the_handoff_is_about_to_reclaim(tmp_path, monkeypatch):
-    """The resident llama-server, Unsloth model and media pipeline hold VRAM, and through a
-    host KV cache, CPU-offloaded weights and locked mappings they hold RAM too. The route and
-    load_model reclaim all of it after this runs, so pricing against either free reading
-    refused a switch the reclaimed machine handles outright and made switching on a busy
-    machine impossible. Both physical totals are what bound the launch.
-
-    30 GB against a 24 GB card leaves about 6.7 GB on the host, which 3 GB of MemAvailable
-    cannot hold and the machine's own 64 GB holds easily."""
+    "    host KV cache, CPU-offloaded weights and locked mappings they hold RAM too. The route and\n    load_model reclaim all of it after this runs, so pricing against either free reading\n    refused a switch the reclaimed machine handles outright and made switching on a busy\n    machine impossible. Both physical totals are what bound the launch.\n\n    30 GB against a 24 GB card leaves about 6.7 GB on the host, which 3 GB of MemAvailable\n    cannot hold and the machine's own 64 GB holds easily."
     backend, gguf = _offload_backend(
         tmp_path, gguf_gb = 30, free_mib = 900, avail_mib = 3_000, monkeypatch = monkeypatch
     )

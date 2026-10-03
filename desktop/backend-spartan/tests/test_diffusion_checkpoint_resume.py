@@ -453,14 +453,7 @@ def _forge_8bit_optimizer_class(run_dir) -> None:
 
 
 def _pretend_bitsandbytes(monkeypatch, installed: bool) -> None:
-    """Pin what ``_assert_optimizer_buildable`` sees, instead of inheriting it from the host.
-
-    That guard asks ``importlib.util.find_spec("bitsandbytes")``, so which of the two foreign
-    optimizer refusals fires depends on whether the machine running the tests happens to have
-    bitsandbytes -- the CPU CI runners do not, developer boxes with a GPU stack do. Both
-    refusals are correct and both need covering, so each test states the host it is about.
-    ``UNSLOTH_DIFFUSION_FP32_OPTIM`` is cleared for the same reason: set in the environment, it
-    short-circuits the guard before find_spec is ever consulted."""
+    'Pin what ``_assert_optimizer_buildable`` sees, instead of inheriting it from the host.\n\n    That guard asks ``importlib.util.find_spec("bitsandbytes")``, so which of the two foreign\n    optimizer refusals fires depends on whether the machine running the tests happens to have\n    bitsandbytes -- the CPU CI runners do not, developer boxes with a GPU stack do. Both\n    refusals are correct and both need covering, so each test states the host it is about.\n    short-circuits the guard before find_spec is ever consulted.'
     import importlib.util as _importlib_util
 
     monkeypatch.delenv("UNSLOTH_DIFFUSION_FP32_OPTIM", raising = False)
@@ -476,7 +469,7 @@ def _pretend_bitsandbytes(monkeypatch, installed: bool) -> None:
 
 def test_a_foreign_optimizers_state_is_refused_instead_of_key_erroring(run_dir, monkeypatch):
     # The trainers choose their optimizer from the HOST (bitsandbytes present, a fused kernel
-    # available, UNSLOTH_DIFFUSION_FP32_OPTIM), not the config, so a checkpoint can arrive with
+
     # moments from a different implementation. Shapes and counts match, so load_state_dict
     # accepts them and the first step dies on a bare KeyError deep in the optimizer.
     #
@@ -605,8 +598,8 @@ def test_bitsandbytes_adamw8bit_state_round_trips(run_dir):
     # Adam from zero moments and spikes the loss.
     bnb = pytest.importorskip("bitsandbytes")
     if not isinstance(getattr(bnb.optim, "AdamW8bit", None), type):
-        # unsloth_zoo replaces bitsandbytes with a raising stub on hosts without it; the suite
-        # imports unsloth first, so that stub can be live even where real bnb is installed.
+
+
         pytest.skip("bitsandbytes is stubbed out in this environment")
 
     torch.manual_seed(0)
@@ -2057,10 +2050,7 @@ def test_pruning_spares_the_bundle_the_run_resumed_from(run_dir):
 
 
 def test_the_resolved_cache_path_is_recorded_not_the_request(run_dir):
-    """UNSLOTH_DIFFUSION_NO_LATENT_CACHE and the over-budget fallback both turn the cache off
-    behind the request, and the two paths draw crops and flips from different RNG streams, so
-    a bundle written on one and resumed on the other restores a state that no longer
-    reproduces the run."""
+    '    behind the request, and the two paths draw crops and flips from different RNG streams, so\n    a bundle written on one and resumed on the other restores a state that no longer\n    reproduces the run.'
     base = dc.identity_for_config(_Run(run_dir).cfg)
     cached = dc.with_cache_mode(base, True)
     in_loop = dc.with_cache_mode(base, False)

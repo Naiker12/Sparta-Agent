@@ -324,7 +324,7 @@ test("the store exposes an unknown state, not just chat-only", async () => {
   );
 });
 
-// The torch-warm kill switch (UNSLOTH_STUDIO_DISABLE_TORCH_WARM=1) settles nothing until a
+
 // hardware-dependent operation runs, and a deferred reply carries no device_type, so `fetched`
 // never flips. Calling that unknown would spin Train and Video for the whole session.
 test("a deferred verdict counts as settled, not as still checking", async () => {

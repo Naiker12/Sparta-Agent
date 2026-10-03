@@ -422,7 +422,7 @@ class TestAutoVulkanCpuFallbackGate:
         )
 
     def test_auto_suppresses_a_stale_legacy_vulkan_flag(self, monkeypatch, tmp_path):
-        # UNSLOTH_LLAMA_CPP_BACKEND=auto outranks UNSLOTH_FORCE_VULKAN everywhere
+
         # else, so setup detected this bundle rather than being told to install it.
         # Reading the legacy flag as a choice here would leave a crashing Vulkan
         # install with no automatic CPU replay.

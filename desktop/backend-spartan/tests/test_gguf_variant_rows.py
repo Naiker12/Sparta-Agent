@@ -1,14 +1,5 @@
 
-"""GGUF picker rows describe one checkpoint each.
-
-A repo can publish several checkpoints under one set of quant labels
-(``unsloth/LTX-2.3-GGUF`` ships 63 GGUFs as ``ltx-2.3-22b-dev-*`` at the root,
-``distilled/ltx-2.3-22b-distilled-*`` and ``distilled-1.1/...``). Keying a row on
-the quant token alone folded those into one row per quant, hid two of the three
-checkpoints and advertised the sum of all three as the row's size.
-
-Splitting a genuinely split GGUF is the opposite mistake, so both are pinned here.
-"""
+"GGUF picker rows describe one checkpoint each.\n\nA repo can publish several checkpoints under one set of quant labels\n``distilled/ltx-2.3-22b-distilled-*`` and ``distilled-1.1/...``). Keying a row on\nthe quant token alone folded those into one row per quant, hid two of the three\ncheckpoints and advertised the sum of all three as the row's size.\n\nSplitting a genuinely split GGUF is the opposite mistake, so both are pinned here."
 
 from __future__ import annotations
 
@@ -159,7 +150,7 @@ def test_shards_stay_one_row_summing_to_the_whole_file():
 
 
 def test_one_quant_shipped_twice_is_not_advertised_twice():
-    """``unsloth/QwQ-32B-GGUF`` carries the same BF16 as ``-BF16`` and ``.BF16``."""
+    ''
     duplicated = [
         ("BF16/QwQ-32B-BF16-00001-of-00002.gguf", 50),
         ("BF16/QwQ-32B-BF16-00002-of-00002.gguf", 15),

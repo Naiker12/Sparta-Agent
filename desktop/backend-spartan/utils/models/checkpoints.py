@@ -35,7 +35,7 @@ def _checkpoint_sort_key(checkpoint_path: Path) -> tuple[int, int, str]:
 
 
 def _infer_base_model_from_history(checkpoint_dir: Path) -> Optional[str]:
-    """Best-effort base-model lookup using persisted Unsloth run metadata."""
+    ''
     checkpoint_name = checkpoint_dir.name
     resolved_checkpoint_dir = str(checkpoint_dir.resolve())
 
@@ -195,7 +195,7 @@ def scan_checkpoints(
                 pass
 
             # Fallback: extract base model name from the folder name, e.g.
-            # "unsloth_Llama-3.2-3B-Instruct_1771227800" → "unsloth/Llama-3.2-3B-Instruct"
+
             if not metadata.get("base_model"):
                 metadata["base_model"] = _infer_base_model_from_history(item)
 

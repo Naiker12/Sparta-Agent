@@ -761,12 +761,7 @@ def test_openai_image_generation_replays_the_prompt_it_actually_used(executed):
 
 
 def test_the_hosted_cap_follows_the_configured_local_one(executed, monkeypatch):
-    """An install that lowers the local cap lowers the hosted one too.
-
-    ``UNSLOTH_TOOL_RESULT_MAX_CHARS`` shrinks what a result may occupy on a
-    smaller context; a hosted copy held to its own hard-coded 16k would ignore
-    that on exactly those installs.
-    """
+    'An install that lowers the local cap lowers the hosted one too.\n\n    smaller context; a hosted copy held to its own hard-coded 16k would ignore\n    that on exactly those installs.\n    '
     monkeypatch.setattr(loop_mod.tools_module, "_MAX_OUTPUT_CHARS", 500)
     transport = FakeTransport(
         [

@@ -117,7 +117,7 @@ def test_a_local_path_load_without_a_lease_is_still_local(status_route):
 
 
 def test_a_model_cached_behind_the_gguf_is_still_reported(status_route, monkeypatch):
-    # Loading a GGUF unloads only the ACTIVE Unsloth model, so a Transformers
+
     # model cached behind it keeps its weights. Reporting only the GGUF left
     # that memory invisible to every client, and unreleasable from the UI.
     monkeypatch.setattr(

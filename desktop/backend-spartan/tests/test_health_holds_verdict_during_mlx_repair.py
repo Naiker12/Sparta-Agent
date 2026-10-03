@@ -1,25 +1,5 @@
 
-"""Invariant: /api/health does not publish a verdict the MLX self-heal is about to overturn.
-
-Detection settles before utils.mlx_repair gets its turn, so an Apple Silicon host whose MLX
-stack is missing or unreadable answers chat_only=true with reason "mlx_unavailable" first.
-The frontend reads that as measured, greys Train and Video and explains them with "run
-`unsloth studio update`"; the background reinstall then lands, chat_only flips false and the
-sidebar's recovery poll enables both rows. That is the reported "greyed out on launch, then
-they come out". Health keeps replying provisionally for that window instead, through the
-existing hardware_detecting shape, so the rows spin until there is a real answer.
-
-Everything a chat-only host relies on must be unchanged: an Intel Mac, a CPU-only Linux box,
-a Mac with the self-heal opted out, and a Mac whose repair has finished must all still get a
-settled verdict and the tooltip that goes with it.
-
-The hold is bounded in both halves. A live worker is waited on for as long as its install
-takes; a repair that has not started is only a promise, and a promise nothing ever keeps must
-expire, or the rows spin for the whole session instead of settling into the greyed state a
-broken MLX stack has genuinely earned.
-
-CPU-only, no network, no GPU, no weights.
-"""
+'Invariant: /api/health does not publish a verdict the MLX self-heal is about to overturn.\n\nDetection settles before utils.mlx_repair gets its turn, so an Apple Silicon host whose MLX\nstack is missing or unreadable answers chat_only=true with reason "mlx_unavailable" first.\nThe frontend reads that as measured, greys Train and Video and explains them with "run\nsidebar\'s recovery poll enables both rows. That is the reported "greyed out on launch, then\nthey come out". Health keeps replying provisionally for that window instead, through the\nexisting hardware_detecting shape, so the rows spin until there is a real answer.\n\nEverything a chat-only host relies on must be unchanged: an Intel Mac, a CPU-only Linux box,\na Mac with the self-heal opted out, and a Mac whose repair has finished must all still get a\nsettled verdict and the tooltip that goes with it.\n\nThe hold is bounded in both halves. A live worker is waited on for as long as its install\ntakes; a repair that has not started is only a promise, and a promise nothing ever keeps must\nexpire, or the rows spin for the whole session instead of settling into the greyed state a\nbroken MLX stack has genuinely earned.\n\nCPU-only, no network, no GPU, no weights.'
 
 from __future__ import annotations
 
@@ -128,8 +108,7 @@ def test_a_worker_that_could_not_be_started_settles_the_verdict(apple_silicon, m
 
 
 def test_the_opt_out_settles_the_verdict_immediately(apple_silicon, monkeypatch):
-    """UNSLOTH_DISABLE_MLX_AUTOREPAIR=1 means no repair is coming, so holding the verdict
-    back would spin Train and Video for the rest of the session."""
+    '    back would spin Train and Video for the rest of the session.'
     monkeypatch.setenv(mlx_repair.DISABLE_ENV_VAR, "1")
     monkeypatch.setattr(mlx_repair, "_attempted", True, raising = False)
     monkeypatch.setattr(mlx_repair, "_repair_thread", _Worker(alive = True), raising = False)
@@ -473,8 +452,7 @@ def test_health_replies_provisionally_while_the_repair_runs(apple_silicon, monke
 
 
 def test_health_settles_the_verdict_once_the_repair_has_finished(apple_silicon, monkeypatch):
-    """A Mac the self-heal could not fix must still end up with genuinely disabled rows
-    and the "run `unsloth studio update`" tooltip that explains them."""
+    'A Mac the self-heal could not fix must still end up with genuinely disabled rows'
     monkeypatch.setattr(mlx_repair, "_attempted", True, raising = False)
     monkeypatch.setattr(mlx_repair, "_repair_thread", _Worker(alive = False), raising = False)
 

@@ -1,10 +1,5 @@
 
-"""Curated MCP tools for driving an Unsloth Studio instance.
-
-The MCP surface deliberately wraps the existing Unsloth services instead of
-duplicating training or export logic. It is opt-in because several tools can
-start GPU work or write model artifacts.
-"""
+'\nduplicating training or export logic. It is opt-in because several tools can\nstart GPU work or write model artifacts.'
 
 from __future__ import annotations
 
@@ -16,7 +11,7 @@ from fastmcp import FastMCP
 
 
 class BearerTokenMiddleware:
-    """Require an exact bearer token when Unsloth MCP is exposed remotely."""
+    ''
 
     def __init__(self, app: Any, token: str) -> None:
         if not token or not token.strip():
@@ -73,16 +68,12 @@ def _dump(value: Any) -> Any:
 
 
 def _clamp(value: int, low: int, high: int) -> int:
-    """Clamp an MCP-supplied integer into an inclusive range.
-
-    MCP tools call the Unsloth route functions directly, which skips FastAPI's
-    Query(ge=, le=) validation, so we re-apply the same bounds here.
-    """
+    'Clamp an MCP-supplied integer into an inclusive range.\n\n    Query(ge=, le=) validation, so we re-apply the same bounds here.\n    '
     return max(low, min(value, high))
 
 
 def create_studio_mcp() -> FastMCP:
-    """Create the Unsloth MCP server and register the high-value tools."""
+    ''
     mcp = FastMCP(
         "Unsloth Studio",
         instructions = (
@@ -116,7 +107,7 @@ def create_studio_mcp() -> FastMCP:
 
     @mcp.tool
     async def list_local_models(models_dir: str = "./models") -> dict[str, Any]:
-        """List local and cached models available to Unsloth."""
+        ''
         from routes.models import list_local_models as list_models
         return _dump(await list_models(models_dir = models_dir, current_subject = "mcp"))
 
@@ -128,17 +119,13 @@ def create_studio_mcp() -> FastMCP:
 
     @mcp.tool
     async def start_training(config: dict[str, Any]) -> dict[str, Any]:
-        """Start a validated Unsloth training job from a TrainingStartRequest-shaped object.
-
-        The config is validated by the same Pydantic model used by the Unsloth UI.
-        Call get_training_status first and do not start work while another job runs.
-        """
+        '\n        Call get_training_status first and do not start work while another job runs.\n        '
         from models import TrainingStartRequest
         from routes.training import start_training as start
 
         request = TrainingStartRequest.model_validate(config)
         # Pass via_api_key explicitly (a direct call leaves it a Depends object).
-        # MCP drives Unsloth like the UI session, so it coexists and frees VRAM.
+
         return _dump(await start(request, current_subject = "mcp", via_api_key = False))
 
     @mcp.tool
@@ -164,7 +151,7 @@ def create_studio_mcp() -> FastMCP:
 
     @mcp.tool
     def validate_recipe(recipe: dict[str, Any]) -> dict[str, Any]:
-        """Validate a Data Recipe with the same validator used by Unsloth."""
+        ''
         from models.data_recipe import RecipePayload
         from routes.data_recipe.validate import validate
 
@@ -233,13 +220,7 @@ def create_studio_mcp() -> FastMCP:
         imatrix: bool = False,
         imatrix_path: str | None = None,
     ) -> dict[str, Any]:
-        """Export the loaded model to GGUF using Unsloth's existing path validation.
-
-        quantization_method may be a single method or a list to produce several
-        GGUFs from one load. Pass hf_token when push_to_hub is set (the backend
-        rejects a Hub upload without it). Set imatrix (or imatrix_path) for the
-        IQ low-bit quants that require an importance matrix.
-        """
+        '\n        quantization_method may be a single method or a list to produce several\n        GGUFs from one load. Pass hf_token when push_to_hub is set (the backend\n        rejects a Hub upload without it). Set imatrix (or imatrix_path) for the\n        IQ low-bit quants that require an importance matrix.\n        '
         from models import ExportGGUFRequest
         from routes.export import export_gguf as export
 

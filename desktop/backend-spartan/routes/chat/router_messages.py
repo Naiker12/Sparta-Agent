@@ -28,6 +28,16 @@ from routes.chat.helpers import _missing_thread_error
 logger = get_logger(__name__)
 router = APIRouter()
 
+
+def _capture_memory(subject: str, messages: list[dict]) -> None:
+    # Chat persistence must remain successful even if optional graph storage
+    # fails. The saved messages remain the durable source for a later retry.
+    try:
+        from storage.studio.conversation_memory import capture
+        capture(subject, messages)
+    except Exception:
+        logger.exception("conversation_memory.capture_failed")
+
 @router.get("/threads/{thread_id}/messages", response_model = ChatMessageListResponse)
 def get_thread_messages(thread_id: str, current_subject: str = Depends(get_current_subject)):
     if get_chat_thread(thread_id) is None:
@@ -50,16 +60,19 @@ def batch_thread_messages(
     return ChatMessagesBatchResponse(messagesByThreadId = by_thread)
 
 
-@router.get("/threads/{thread_id}/messages/{message_id}", response_model = ChatMessage)
+@router.get("/threads/{thread_id}/messages/{message_id}", response_model = ChatMessage | None)
 def get_thread_message(
     thread_id: str,
     message_id: str,
+    missing_ok: bool = False,
     current_subject: str = Depends(get_current_subject),
 ):
     if get_chat_thread(thread_id) is None:
         raise HTTPException(status_code = 404, detail = f"Thread {thread_id} not found")
     message = get_chat_message(thread_id, message_id)
     if message is None:
+        if missing_ok:
+            return None
         raise HTTPException(status_code = 404, detail = f"Message {message_id} not found")
     return ChatMessage(**message)
 
@@ -76,7 +89,9 @@ def save_thread_message(
     if get_chat_thread(thread_id) is None:
         raise HTTPException(status_code = 404, detail = f"Thread {thread_id} not found")
     try:
-        return ChatMessage(**upsert_chat_message(payload.model_dump()))
+        saved = upsert_chat_message(payload.model_dump())
+        _capture_memory(current_subject, [saved])
+        return ChatMessage(**saved)
     except sqlite3.IntegrityError as exc:
         if get_chat_thread(thread_id) is None:
             raise _missing_thread_error(thread_id) from exc
@@ -109,16 +124,9 @@ def replace_thread_messages(
         raise HTTPException(status_code = 404, detail = f"Thread {thread_id} not found")
     messages = [message.model_dump() for message in payload.messages]
     try:
-        return ChatMessageListResponse(
-            messages = [
-                ChatMessage(**m)
-                for m in sync_chat_messages(
-                    thread_id,
-                    messages,
-                    prune_missing = payload.pruneMissing,
-                )
-            ]
-        )
+        saved = sync_chat_messages(thread_id, messages, prune_missing=payload.pruneMissing)
+        _capture_memory(current_subject, saved)
+        return ChatMessageListResponse(messages=[ChatMessage(**m) for m in saved])
     except sqlite3.IntegrityError as exc:
         if get_chat_thread(thread_id) is None:
             raise _missing_thread_error(thread_id) from exc

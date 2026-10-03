@@ -37,7 +37,7 @@ logger = get_logger(__name__)
 
 # ── GPU index ordering ──────────────────────────────────────────────────────
 # CUDA defaults to CUDA_DEVICE_ORDER=FASTEST_FIRST, numbering GPUs by compute
-# performance. nvidia-smi -- and every free-VRAM probe in Unsloth -- numbers GPUs
+
 # by PCI bus id instead. On a mixed-GPU host (e.g. an RTX 5090 alongside an RTX
 # PRO 6000) the two orderings disagree, so an index picked from nvidia-smi data
 # ("the emptiest card is GPU 1") gets written into CUDA_VISIBLE_DEVICES and then
@@ -49,13 +49,13 @@ logger = get_logger(__name__)
 # and spawn workers copy os.environ. setdefault so an explicit user override wins.
 os.environ.setdefault("CUDA_DEVICE_ORDER", "PCI_BUS_ID")
 
-# Unsloth workers can import MLX without importing unsloth first, so mirror the
+
 # package bootstrap here. Keep an explicit user value authoritative.
 if platform.system() == "Darwin" and platform.machine() == "arm64":
     os.environ.setdefault("AGX_RELAX_CDM_CTXSTORE_TIMEOUT", "1")
 
 
-# ========== Device Enum ==========
+
 
 
 class DeviceType(str, Enum):
@@ -67,7 +67,7 @@ class DeviceType(str, Enum):
     CPU = "cpu"
 
 
-# ========== Global State (set once by detect_hardware) ==========
+
 
 DEVICE: Optional[DeviceType] = None
 CHAT_ONLY: bool = True  # No CUDA GPU -> GGUF chat only (Mac, CPU-only, etc.)
@@ -78,7 +78,7 @@ CHAT_ONLY: bool = True  # No CUDA GPU -> GGUF chat only (Mac, CPU-only, etc.)
 CHAT_ONLY_REASON: Optional[str] = None
 # What exactly blocked the reason above, when there is something specific to say. Only
 # "mlx_unavailable" sets it today: the gate is all-or-nothing across mlx, mlx-lm and
-# mlx-vlm, so "run `unsloth studio update`" was the whole message even to someone who
+
 # had just run it. Naming the package that is missing, too old, or refusing to import
 # is the difference between a dead end and a fix. Never shown on its own.
 CHAT_ONLY_DETAIL: Optional[str] = None
@@ -152,18 +152,7 @@ _DETECT_THREAD: Optional[threading.Thread] = None
 
 
 def start_background_detection() -> None:
-    """Run detection on a daemon thread if nothing is running it yet.
-
-    For callers on a deadline that cannot await ensure_hardware_detected(), such as
-    /api/health under the launcher's 2s timeout. They poll DEVICE against their own budget;
-    this guarantees someone is filling it in even when the warm is past its hardware stage
-    or a shutdown cleared the verdict. Callers skip it under
-    UNSLOTH_STUDIO_DISABLE_TORCH_WARM=1, which means no background import at all.
-
-    At most one thread, and none once DEVICE is set, so a route polling "still detecting"
-    cannot pile them up. Not the asyncio executor: a to_thread outliving its awaiter holds
-    a slot, and a polled endpoint would exhaust the pool during a slow import.
-    """
+    'Run detection on a daemon thread if nothing is running it yet.\n\n    For callers on a deadline that cannot await ensure_hardware_detected(), such as\n    /api/health under the launcher\'s 2s timeout. They poll DEVICE against their own budget;\n    this guarantees someone is filling it in even when the warm is past its hardware stage\n    or a shutdown cleared the verdict. Callers skip it under\n\n    At most one thread, and none once DEVICE is set, so a route polling "still detecting"\n    cannot pile them up. Not the asyncio executor: a to_thread outliving its awaiter holds\n    a slot, and a polled endpoint would exhaust the pool during a slow import.\n    '
     global _DETECT_THREAD
     if DEVICE is not None:
         return
@@ -194,7 +183,7 @@ def _backend_label(device: DeviceType) -> str:
     return device.value
 
 
-# ========== Detection ==========
+
 
 
 def is_apple_silicon() -> bool:
@@ -274,18 +263,7 @@ _MLX_BLOCKERS_MEASURED: Optional[list[str]] = None
 
 
 def _has_usable_mlx_stack() -> bool:
-    """True only when the FULL Unsloth MLX training/export stack is usable
-    (mlx + mlx-lm + mlx-vlm at the minimum versions unsloth-zoo requires), not
-    just a bare ``import mlx.core``. A backtracked/old mlx-vlm still imports but
-    breaks VLM Train/Export, so the training gate must match the self-heal's own
-    criterion (utils.mlx_repair) -- otherwise detect_hardware would enable
-    Train/Export on exactly the inadequate stack the MLX self-heal is trying to
-    repair, leaving the user with greyed-in-but-broken buttons.
-
-    Asked as "no blockers" rather than through mlx_stack_available(), which is the
-    same question: both run the version checks before the imports, in the same order,
-    and stop at the first failure. Reading the list is what lets the answer be
-    explained without measuring it again."""
+    '    just a bare ``import mlx.core``. A backtracked/old mlx-vlm still imports but\n    breaks VLM Train/Export, so the training gate must match the self-heal\'s own\n    criterion (utils.mlx_repair) -- otherwise detect_hardware would enable\n    Train/Export on exactly the inadequate stack the MLX self-heal is trying to\n    repair, leaving the user with greyed-in-but-broken buttons.\n\n    Asked as "no blockers" rather than through mlx_stack_available(), which is the\n    same question: both run the version checks before the imports, in the same order,\n    and stop at the first failure. Reading the list is what lets the answer be\n    explained without measuring it again.'
     global _MLX_BLOCKERS_MEASURED
     _MLX_BLOCKERS_MEASURED = None
     try:
@@ -330,22 +308,7 @@ def _mlx_stack_detail() -> Optional[str]:
 
 
 def verdict_pending_mlx_repair(chat_only: bool, reason: Optional[str]) -> bool:
-    """True when this settled verdict is one the MLX self-heal is about to overturn.
-
-    Detection gets its answer before utils.mlx_repair gets its turn, so an Apple Silicon
-    host whose MLX stack is missing or unreadable settles chat-only first and flips only
-    once the background reinstall lands. Published as final, that greys Train behind a
-    "run `unsloth studio update`" tooltip the repair makes wrong a minute later, and the row
-    then enables itself on the frontend's recovery poll -- the reported "greyed out, then
-    they come out". Callers report it as still-detecting instead. Video is unaffected either
-    way: it runs on Metal without MLX and reads its own capability verdict.
-
-    The "mlx_unavailable" check is also what lets mlx_repair_in_flight() be cheap: that
-    reason means this pass has just measured the stack as unusable, so the self-heal only
-    has to report whether it has finished, not re-probe whether it is needed.
-
-    Takes the verdict as arguments rather than reading the globals, so a caller that
-    already holds a consistent snapshot does not re-read them mid-pass."""
+    'True when this settled verdict is one the MLX self-heal is about to overturn.\n\n    Detection gets its answer before utils.mlx_repair gets its turn, so an Apple Silicon\n    host whose MLX stack is missing or unreadable settles chat-only first and flips only\n    once the background reinstall lands. Published as final, that greys Train behind a\n    then enables itself on the frontend\'s recovery poll -- the reported "greyed out, then\n    they come out". Callers report it as still-detecting instead. Video is unaffected either\n    way: it runs on Metal without MLX and reads its own capability verdict.\n\n    The "mlx_unavailable" check is also what lets mlx_repair_in_flight() be cheap: that\n    reason means this pass has just measured the stack as unusable, so the self-heal only\n    has to report whether it has finished, not re-probe whether it is needed.\n\n    Takes the verdict as arguments rather than reading the globals, so a caller that\n    already holds a consistent snapshot does not re-read them mid-pass.'
     if not chat_only or reason != "mlx_unavailable":
         return False
     if not is_apple_silicon():
@@ -395,22 +358,7 @@ def _print_cuda_device_list(is_rocm: bool) -> None:
 
 
 def detect_hardware() -> DeviceType:
-    """
-    Detect the best compute device and set the module-level DEVICE global.
-
-    Call once at FastAPI lifespan startup; idempotent.
-
-    Detection order:
-      1. XPU-preferred hint: only on an unambiguous "prefer XPU" signal
-         (CUDA hidden via ``CUDA_VISIBLE_DEVICES="" / "-1"``,
-         ``UNSLOTH_FORCE_XPU=1``, or CUDA unavailable) AND a non-empty
-         ``ZE_AFFINITY_MASK`` AND ``torch.xpu`` reports a device. A stray
-         inherited mask is not enough: CUDA still wins on hybrid hosts.
-      2. CUDA  (NVIDIA GPU, requires torch)
-      3. XPU   (Intel GPU, requires torch with XPU support)
-      4. MLX   (Apple Silicon via MLX framework)
-      5. CPU   (fallback)
-    """
+    '\n    Detect the best compute device and set the module-level DEVICE global.\n\n    Call once at FastAPI lifespan startup; idempotent.\n\n    Detection order:\n      1. XPU-preferred hint: only on an unambiguous "prefer XPU" signal\n         (CUDA hidden via ``CUDA_VISIBLE_DEVICES="" / "-1"``,\n         ``ZE_AFFINITY_MASK`` AND ``torch.xpu`` reports a device. A stray\n         inherited mask is not enough: CUDA still wins on hybrid hosts.\n      2. CUDA  (NVIDIA GPU, requires torch)\n      3. XPU   (Intel GPU, requires torch with XPU support)\n      4. MLX   (Apple Silicon via MLX framework)\n      5. CPU   (fallback)\n    '
     global DEVICE, CHAT_ONLY, CHAT_ONLY_REASON, CHAT_ONLY_DETAIL, IS_ROCM, DETECTION_GENERATION
     with _DETECT_LOCK:
         # A forced pass mutates the globals partway through; leaving the event set lets
@@ -531,12 +479,12 @@ def _detect_hardware_locked() -> DeviceType:
     # Probe torch once per pass: a failed probe is expensive and a second can disagree.
     torch_ok = _has_torch()
 
-    # --- CUDA / ROCm / XPU: try PyTorch ---
+
     if torch_ok:
         import torch
 
-        # --- Explicit-XPU hint ---
-        # Prefer XPU on UNSLOTH_FORCE_XPU=1, or ZE_AFFINITY_MASK set + CUDA
+
+
         # hidden/unavailable. A bare mask alone is NOT enough (can leak from
         # unrelated Intel tooling); torch.xpu must report a device.
         ze_mask = os.environ.get("ZE_AFFINITY_MASK")
@@ -555,7 +503,7 @@ def _detect_hardware_locked() -> DeviceType:
             except Exception:
                 xpu_ok = False
             if xpu_ok:
-                # Forced XPU on a hybrid host: unsloth's device_type picks
+
                 # CUDA before XPU and ignores this Studio-only env var, so
                 # hide CUDA or spawned workers would silently train on CUDA.
                 if force_xpu and not cuda_hidden and not cuda_unavailable:
@@ -605,7 +553,7 @@ def _detect_hardware_locked() -> DeviceType:
             print(f"Hardware detected: XPU — {device_name}")
             return DEVICE
 
-    # --- MLX: Apple Silicon ---
+
     # Require the full mlx/mlx-lm/mlx-vlm stack (not a bare `import mlx.core`) so
     # the gate matches utils.mlx_repair: a partial/backtracked stack stays
     # chat-only (reason "mlx_unavailable") and the background self-heal repairs it.
@@ -618,7 +566,7 @@ def _detect_hardware_locked() -> DeviceType:
         print(f"Hardware detected: MLX — Apple Silicon ({chip})")
         return DEVICE
 
-    # --- Fallback ---
+
     DEVICE = DeviceType.CPU
     # CHAT_ONLY is still True here (every training-capable branch returned early),
     # so record WHY so the UI can explain the greyed-out Train/Export instead of
@@ -626,7 +574,7 @@ def _detect_hardware_locked() -> DeviceType:
     if is_apple_silicon():
         # Reached the CPU fallback on Apple Silicon, so the MLX stack is missing,
         # too old, or broken. This is usually an environment problem recoverable
-        # with `unsloth studio update`.
+
         CHAT_ONLY_REASON = "mlx_unavailable"
         CHAT_ONLY_DETAIL = _mlx_stack_detail()
         logger.warning(
@@ -646,7 +594,7 @@ def _detect_hardware_locked() -> DeviceType:
     return DEVICE
 
 
-# ========== Convenience helpers ==========
+
 
 
 def get_device() -> DeviceType:
@@ -658,14 +606,7 @@ def get_device() -> DeviceType:
 
 
 def export_capability() -> dict:
-    """Whether model export can run here, with a torch-aware reason when it cannot.
-
-    Export runs through Unsloth, which hard-requires an accelerator (it calls ``torch.cuda`` at
-    import and has no CPU path), so it is supported iff ``get_device() in {CUDA, XPU, MLX}``. The
-    reason distinguishes a --no-torch install from a bare-CPU host. Safe to call without torch.
-
-    Returns {export_supported, export_unsupported_reason, export_unsupported_message}.
-    """
+    'Whether model export can run here, with a torch-aware reason when it cannot.\n\n    import and has no CPU path), so it is supported iff ``get_device() in {CUDA, XPU, MLX}``. The\n    reason distinguishes a --no-torch install from a bare-CPU host. Safe to call without torch.\n\n    Returns {export_supported, export_unsupported_reason, export_unsupported_message}.\n    '
     if get_device() in (DeviceType.CUDA, DeviceType.XPU, DeviceType.MLX):
         return {
             "export_supported": True,
@@ -858,7 +799,7 @@ def get_gpu_memory_info() -> Dict[str, Any]:
     """
     device = get_device()
 
-    # ---- CUDA path ----
+
     if device == DeviceType.CUDA:
         try:
             import torch
@@ -920,7 +861,7 @@ def get_gpu_memory_info() -> Dict[str, Any]:
                 "error": str(e),
             }
 
-    # ---- MLX path (Apple Silicon) ----
+
     if device == DeviceType.MLX:
         try:
             import mlx.core as mx
@@ -957,7 +898,7 @@ def get_gpu_memory_info() -> Dict[str, Any]:
                 "error": str(e),
             }
 
-    # ---- CPU-only ----
+
     return {"available": False, "backend": "cpu"}
 
 
@@ -1000,13 +941,7 @@ def get_gpu_summary() -> Dict[str, Any]:
 
 
 def get_package_versions() -> Dict[str, Optional[str]]:
-    """
-    Return installed versions of key ML packages.
-
-    Uses importlib.metadata (stdlib), no subprocess. CUDA version from
-    torch.version.cuda. Returns dict keyed unsloth/torch/transformers/cuda;
-    missing packages yield None.
-    """
+    '\n    Return installed versions of key ML packages.\n\n    Uses importlib.metadata (stdlib), no subprocess. CUDA version from\n    missing packages yield None.\n    '
     packages = ("unsloth", "torch", "transformers")
     versions: Dict[str, Optional[str]] = {}
 
@@ -1400,7 +1335,7 @@ def _read_apple_gpu_stats() -> Dict[str, Any]:
     }
 
 
-# ── CPU frequency on Apple Silicon ──────────────────────────────────────────
+
 # psutil divides the pmgr "voltage-statesN-sram" IORegistry tables by 1e6 to
 # reach MHz, but Apple switched them from Hz to kHz on M4, so psutil <= 7.2.2
 # shows a 4.5 GHz M4 Pro as "4 MHz" in Settings > System (issue #8519). Upstream
@@ -3737,7 +3672,7 @@ def apply_gpu_ids(gpu_ids, backend: Optional[str] = None) -> None:
     elif DEVICE is None:
         # No parent backend passed (direct caller). version.xpu can be None
         # on a working XPU build, so also accept torch.xpu._is_compiled()
-        # (a pure symbol-presence check, no runtime init). UNSLOTH_FORCE_XPU
+
         # counts only on an XPU-capable build: detect_hardware() falls back
         # to CUDA when XPU is missing, and the mask target must follow.
         try:
@@ -3902,33 +3837,15 @@ def get_torch_device_str() -> str:
     return "cpu"
 
 
-# Mirrors AUTO_NUM_PROC_CAP in unsloth_zoo.dataset_num_proc; copied rather than
+
 # imported to keep hardware detection free of the training package. A canary in
 # tests/utils/test_dataset_num_proc.py fails if the two drift.
 _STUDIO_NUM_PROC_CAP = 8
 
 
 def safe_num_proc(desired: Optional[int] = None) -> int:
-    """
-    Return a safe ``num_proc`` for ``dataset.map()`` calls.
+    '\n    Return a safe ``num_proc`` for ``dataset.map()`` calls.\n\n    On Windows always returns 1: Python uses ``spawn`` not ``fork``, so\n    than single-process for normal dataset sizes.\n\n    On multi-GPU machines (multiple GPUs *visible* to this process) the\n    NVIDIA driver spawns extra background threads, making ``os.fork()``\n    deadlock-prone with many workers, so this caps ``num_proc`` to 4.\n    The cap does not apply when ``CUDA_VISIBLE_DEVICES`` restricts to one GPU.\n\n    Args:\n        desired: The num_proc you *want*. If None, auto-computes from\n                 ``os.cpu_count()``.\n\n    Returns:\n        A safe integer ≥ 1.\n    '
 
-    On Windows always returns 1: Python uses ``spawn`` not ``fork``, so
-    re-importing torch/transformers/unsloth per worker is typically slower
-    than single-process for normal dataset sizes.
-
-    On multi-GPU machines (multiple GPUs *visible* to this process) the
-    NVIDIA driver spawns extra background threads, making ``os.fork()``
-    deadlock-prone with many workers, so this caps ``num_proc`` to 4.
-    The cap does not apply when ``CUDA_VISIBLE_DEVICES`` restricts to one GPU.
-
-    Args:
-        desired: The num_proc you *want*. If None, auto-computes from
-                 ``os.cpu_count()``.
-
-    Returns:
-        A safe integer ≥ 1.
-    """
-    # Windows/macOS use 'spawn'; re-importing torch/transformers/unsloth per
     # worker is typically slower than single-process.
     if sys.platform in ("win32", "darwin"):
         return 1
@@ -3942,7 +3859,7 @@ def safe_num_proc(desired: Optional[int] = None) -> int:
     # Dataset.map -- the shape of issue #2693, and slower besides (32 workers
     # measured 14.2s against 6.3s in-process, ~1GB each).
     if desired > _STUDIO_NUM_PROC_CAP:
-        # No mention of UNSLOTH_DATASET_NUM_PROC here: this function returns an
+
         # int >= 1 and cannot express the in-process the hatch promises. The
         # hatch is read in dataset_map_num_proc, which is the path whose value
         # reaches Dataset.map.
@@ -3987,36 +3904,9 @@ def safe_thread_num_proc(desired: Optional[int] = None) -> int:
 def dataset_map_num_proc(
     desired: Optional[int] = None, *, serial_as_none: bool = True
 ) -> Optional[int]:
-    """
-    Return a safe ``num_proc`` for ``Dataset.map()`` and ``Dataset.filter()``.
-
-    Returns ``None`` on spawn platforms (Windows, macOS). ``None`` -- not ``1``
-    -- is the disable sentinel: ``datasets`` >= 4.1 (Studio pins 4.3.0) takes
-    the pool branch for any ``num_proc >= 1``, so ``1`` still builds a
-    ``Pool(1)``.
-
-    Also returns ``None`` on XPU once its runtime is initialized in this
-    process: ``os.fork()`` corrupts the Level-Zero context, making Triton
-    kernels fail with "Pointer argument doesn't reference XPU device memory".
-    Pre-init XPU hosts can still parallelize CPU-side preprocessing.
-
-    There is deliberately no CUDA equivalent: the child only runs the tokenizer,
-    and 300 forced-fork map() runs on an initialized CUDA context produced no
-    failures. Since ``detect_hardware()`` always initializes CUDA, such a guard
-    would serialize every CUDA run for nothing. The worker-count bound in
-    ``unsloth_zoo.dataset_num_proc`` is what addresses issue #2693.
-
-    ``serial_as_none`` says how to spell "run in-process" for the layer that
-    reads the value back, exactly as in ``unsloth_zoo.dataset_num_proc``. Leave
-    it True at a ``map()`` call site, where ``None`` is the only value that
-    builds no pool. Pass **False when the result is written into a config**
-    (``SFTConfig.dataset_num_proc``): a config ``None`` means "auto-size me" to
-    every downstream reader, so a serial request stored as ``None`` comes back
-    out as a full worker set. Only ``1`` survives that round trip, and the SFT
-    map site turns it back into ``None``.
-    """
+    '\n    Return a safe ``num_proc`` for ``Dataset.map()`` and ``Dataset.filter()``.\n\n    Returns ``None`` on spawn platforms (Windows, macOS). ``None`` -- not ``1``\n    -- is the disable sentinel: ``datasets`` >= 4.1 (Studio pins 4.3.0) takes\n    the pool branch for any ``num_proc >= 1``, so ``1`` still builds a\n    ``Pool(1)``.\n\n    Also returns ``None`` on XPU once its runtime is initialized in this\n    process: ``os.fork()`` corrupts the Level-Zero context, making Triton\n    kernels fail with "Pointer argument doesn\'t reference XPU device memory".\n    Pre-init XPU hosts can still parallelize CPU-side preprocessing.\n\n    There is deliberately no CUDA equivalent: the child only runs the tokenizer,\n    and 300 forced-fork map() runs on an initialized CUDA context produced no\n    failures. Since ``detect_hardware()`` always initializes CUDA, such a guard\n    would serialize every CUDA run for nothing. The worker-count bound in\n\n    ``serial_as_none`` says how to spell "run in-process" for the layer that\n    it True at a ``map()`` call site, where ``None`` is the only value that\n    builds no pool. Pass **False when the result is written into a config**\n    (``SFTConfig.dataset_num_proc``): a config ``None`` means "auto-size me" to\n    every downstream reader, so a serial request stored as ``None`` comes back\n    out as a full worker set. Only ``1`` survives that round trip, and the SFT\n    map site turns it back into ``None``.\n    '
     if sys.platform in ("win32", "darwin"):
-        # ``UNSLOTH_DATASET_NUM_PROC`` is an unvetoed escape hatch in the shared
+
         # policy, so a user who has read the dead-worker message and accepted
         # spawn workers must not be overruled here without a word. Only the
         # hatch can produce a count on this platform; everything else falls
@@ -4064,25 +3954,14 @@ def dataset_map_num_proc(
     return _bounded_by_the_shared_policy(desired, serial_as_none)
 
 
-# sys.modules key for the copy loaded off disk below. Not "unsloth.dataset_num_proc":
+
 # that name belongs to the package, and claiming it would make a later real import
-# of unsloth return this module instead.
+
 _LOCAL_POLICY_MODULE = "unsloth_studio_local_dataset_num_proc"
 
 
 def _shared_policy():
-    """The shared num_proc policy module, or None on an installation without it.
-
-    The Zoo owns it. ``unsloth.dataset_num_proc`` is a byte-identical fallback
-    for a Zoo that predates the module. ``import spartan_agent.dataset_num_proc``
-    would run the package __init__, which patches torch and loads the model
-    stack -- unacceptable from inside hardware detection -- so that form is used
-    only when the package is already imported. Otherwise the file is loaded
-    straight off disk, which is safe because the module is stdlib-only by
-    design: the API process reaches format conversion without importing unsloth
-    at all, and leaving it with no policy there is what the 2GB container with
-    eight cores used to hit.
-    """
+    'The shared num_proc policy module, or None on an installation without it.\n\n    for a Zoo that predates the module. ``import spartan_agent.dataset_num_proc``\n    would run the package __init__, which patches torch and loads the model\n    stack -- unacceptable from inside hardware detection -- so that form is used\n    only when the package is already imported. Otherwise the file is loaded\n    straight off disk, which is safe because the module is stdlib-only by\n    at all, and leaving it with no policy there is what the 2GB container with\n    eight cores used to hit.\n    '
     try:
         import unsloth_zoo.dataset_num_proc as policy
         return policy
@@ -4105,7 +3984,7 @@ def _shared_policy():
         import importlib.util
 
         # find_spec does not execute a top-level package, so this locates
-        # unsloth/ without importing it.
+
         package = importlib.util.find_spec("unsloth")
         if package is None or not package.submodule_search_locations:
             return None
@@ -4123,12 +4002,7 @@ def _shared_policy():
 
 
 def _num_proc_override_is_set() -> bool:
-    """Whether the escape hatch decided the count, not merely whether it is set.
-
-    The policy ignores an unparseable or negative value with a warning, so
-    reading the variable directly would let ``UNSLOTH_DATASET_NUM_PROC=-1``
-    skip the multi-GPU cap while contributing nothing.
-    """
+    'Whether the escape hatch decided the count, not merely whether it is set.\n\n    The policy ignores an unparseable or negative value with a warning, so\n    skip the multi-GPU cap while contributing nothing.\n    '
     policy = _shared_policy()
     if policy is None:
         return False
@@ -4148,22 +4022,7 @@ def _num_proc_override_is_set() -> bool:
 def _bounded_by_the_shared_policy(
     desired: Optional[int], serial_as_none: bool = True
 ) -> Optional[int]:
-    """Apply the training-side num_proc policy to a Studio request.
-
-    ``format_conversion.py`` and ``chat_templates.py`` hand this straight to
-    ``Dataset.map``, so without it a container with 2GB and eight cores still got
-    eight tokenizer workers -- the OOM this policy exists to stop -- and
-    ``UNSLOTH_DATASET_NUM_PROC`` did nothing on those paths.
-
-    ``desired`` is passed through as the caller wrote it. Materializing an auto
-    request with ``safe_num_proc`` first would hide it from the policy, whose
-    auto path reads this process's CPU affinity and cgroup quota while
-    ``safe_num_proc`` reads the host's ``os.cpu_count()``: a 2-core container on
-    a 64-core box asked for 21 workers and got them bounded only by memory.
-    Studio's own caps are then applied to whatever the policy chose, since the
-    multi-GPU fork-deadlock cap is knowledge the policy does not have -- except
-    over the escape hatch, which is uncapped by contract.
-    """
+    "Apply the training-side num_proc policy to a Studio request.\n\n    ``format_conversion.py`` and ``chat_templates.py`` hand this straight to\n    ``Dataset.map``, so without it a container with 2GB and eight cores still got\n    eight tokenizer workers -- the OOM this policy exists to stop -- and\n\n    ``desired`` is passed through as the caller wrote it. Materializing an auto\n    request with ``safe_num_proc`` first would hide it from the policy, whose\n    auto path reads this process's CPU affinity and cgroup quota while\n    ``safe_num_proc`` reads the host's ``os.cpu_count()``: a 2-core container on\n    a 64-core box asked for 21 workers and got them bounded only by memory.\n    Studio's own caps are then applied to whatever the policy chose, since the\n    multi-GPU fork-deadlock cap is knowledge the policy does not have -- except\n    over the escape hatch, which is uncapped by contract.\n    "
     policy = _shared_policy()
     if policy is None:
         return safe_num_proc(desired)  # the behaviour before the shared policy

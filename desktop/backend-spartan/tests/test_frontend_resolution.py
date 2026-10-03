@@ -1,9 +1,5 @@
 
-"""Tests for the frontend-dist resolver in studio/spartan_backend/run.py.
-
-Loads only the relevant helpers via importlib to avoid pulling in
-uvicorn / FastAPI / unsloth's deps. Pairs with AST-style test_host_defaults.py.
-"""
+'Tests for the frontend-dist resolver in studio/spartan_backend/run.py.\n\nLoads only the relevant helpers via importlib to avoid pulling in'
 
 import ast
 import importlib.util

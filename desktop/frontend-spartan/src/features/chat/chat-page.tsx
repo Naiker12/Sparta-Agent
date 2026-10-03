@@ -37,7 +37,6 @@ import { isTauri } from "@/lib/api-base";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import {
-  BubbleChatTemporaryIcon,
   PencilEdit02Icon,
   Telescope02Icon,
 } from "@hugeicons/core-free-icons";
@@ -88,7 +87,9 @@ import {
 } from "./external-providers";
 import { useChatModelRuntime } from "./hooks/use-chat-model-runtime";
 import type { SelectedModelInput } from "./hooks/use-chat-model-runtime";
-import { useChatProjects } from "./hooks/use-chat-projects";
+import { ensureFolderProject, useChatProjects } from "./hooks/use-chat-projects";
+import { getPendingWorkspace } from "./utils/pending-workspace";
+import { resetNewChatWorkspace } from "./utils/reset-new-chat-workspace";
 import { useChatSidebarItems } from "./hooks/use-chat-sidebar-items";
 import { chatModelLoaded } from "./lib/chat-model-loaded";
 import { hasKnownContextWindow } from "./lib/context-window-known";
@@ -118,6 +119,7 @@ import {
 } from "./stores/chat-runtime-store";
 import { useExternalProvidersStore } from "./stores/external-providers-store";
 import { useResearchRunStore } from "./stores/research-run-store";
+import { useWorkspaceStore } from "./stores/use-workspace-store";
 import { buildChatTourSteps } from "./tour";
 import type { ChatView } from "./types";
 import {
@@ -127,7 +129,6 @@ import {
   listStoredChatThreads,
 } from "./utils/chat-history-storage";
 import { clearNewChatDraft } from "./utils/composer-draft";
-import { requestTemporaryPromptQueueStop } from "./utils/prompt-queue-boundary";
 import { isAssistantLocalThreadId } from "./utils/thread-ids";
 
 export function ChatPage({
@@ -138,33 +139,9 @@ export function ChatPage({
   const t = useT();
 
   const incognito = useChatRuntimeStore((s) => s.incognito);
+  const workspacePanelOpen = useWorkspaceStore((s) => s.isOpen);
+  const workspacePanelWidth = useWorkspaceStore((s) => s.panelWidth);
   const setIncognito = useChatRuntimeStore((s) => s.setIncognito);
-  const incognitoLabel = incognito
-    ? t("chat.toolbar.turnOffTemporaryChat")
-    : t("chat.toolbar.turnOnTemporaryChat");
-  const toggleIncognito = useCallback(() => {
-    const store = useChatRuntimeStore.getState();
-    const wasIncognito = store.incognito;
-    store.setIncognito(!store.incognito);
-    // On an empty scratch chat there's nothing to abandon, so flip in
-    // place: navigating would remount the thread and bounce the composer
-    // (it docks to the bottom before the welcome state re-centers it).
-    // Otherwise start a clean chat so the temporary session can't inherit
-    // or leave behind a persisted thread (matches ChatGPT / Gemini).
-    const onEmptyScratchChat =
-      !(search.thread || search.compare || search.project) &&
-      store.activeThreadId == null;
-    if (wasIncognito) {
-      requestTemporaryPromptQueueStop();
-    }
-    if (onEmptyScratchChat) {
-      return;
-    }
-    // setActiveThreadId already clears contextUsage.
-    store.setActiveThreadId(null);
-    store.setActiveProjectId(null);
-    navigate({ to: "/chat", search: { new: crypto.randomUUID() } });
-  }, [navigate, search]);
   const hydratePersistedSettings = useChatRuntimeStore(
     (s) => s.hydratePersistedSettings,
   );
@@ -301,17 +278,17 @@ export function ChatPage({
 
   const handleDesktopNewChat = useCallback(() => {
     clearNewChatDraft();
+    resetNewChatWorkspace();
+    setCurrentProjectId(null);
     const runtime = useChatRuntimeStore.getState();
     runtime.setActiveThreadId(null);
-    runtime.setActiveProjectId(currentProjectId);
+    runtime.setActiveProjectId(null);
     runtime.setIncognito(false);
     navigate({
       to: "/chat",
-      search: currentProjectId
-        ? { project: currentProjectId }
-        : { new: crypto.randomUUID() },
+      search: { new: crypto.randomUUID() },
     });
-  }, [currentProjectId, navigate]);
+  }, [navigate]);
   const openProjectsList = useCallback(() => {
     navigate({ to: "/projects" });
   }, [navigate]);
@@ -603,8 +580,10 @@ export function ChatPage({
 
   useEffect(() => {
     let canceled = false;
+    let resolution = 0;
 
     async function resolveProjectId(): Promise<void> {
+      const currentResolution = ++resolution;
       if (search.project || search.review) {
         const projectId = search.project ?? search.review!;
         setCurrentProjectId(projectId);
@@ -616,7 +595,7 @@ export function ChatPage({
         const thread = await getStoredChatThread(search.thread).catch(
           () => null,
         );
-        if (!canceled) {
+        if (!canceled && currentResolution === resolution) {
           const projectId = thread?.projectId ?? null;
           setCurrentProjectId(projectId);
           useChatRuntimeStore.getState().setActiveProjectId(projectId);
@@ -629,7 +608,7 @@ export function ChatPage({
           pairId: search.compare,
           includeArchived: true,
         }).catch(() => []);
-        if (!canceled) {
+        if (!canceled && currentResolution === resolution) {
           const projectId = threads[0]?.projectId ?? null;
           setCurrentProjectId(projectId);
           useChatRuntimeStore.getState().setActiveProjectId(projectId);
@@ -637,15 +616,29 @@ export function ChatPage({
         return;
       }
 
-      setCurrentProjectId(null);
-      useChatRuntimeStore.getState().setActiveProjectId(null);
+      const pending = getPendingWorkspace();
+      const project = pending && !useChatRuntimeStore.getState().incognito
+        ? await ensureFolderProject(pending.folder).catch(() => {
+          if (!canceled && currentResolution === resolution) {
+            toast.error("No se pudo restaurar el proyecto de la carpeta. Vuelve a conectar la carpeta para reintentar.");
+          }
+          return null;
+        })
+        : null;
+      if (!canceled && currentResolution === resolution) {
+        setCurrentProjectId(project?.id ?? null);
+        useChatRuntimeStore.getState().setActiveProjectId(project?.id ?? null);
+      }
     }
 
     void resolveProjectId();
+    const onWorkspaceChanged = () => void resolveProjectId();
+    window.addEventListener("sparta:workspace-changed", onWorkspaceChanged);
     return () => {
       canceled = true;
+      window.removeEventListener("sparta:workspace-changed", onWorkspaceChanged);
     };
-  }, [search.compare, search.project, search.review, search.thread]);
+  }, [search.compare, search.project, search.review, search.thread, search.new]);
 
   // Derive view from URL search params
   const view = useMemo<ChatView>(() => {
@@ -1533,8 +1526,14 @@ export function ChatPage({
             />
           )}
           <div
+            style={!isMobile && view.mode === "single" ? {right: workspacePanelOpen ? `calc(min(${workspacePanelWidth}px, 60vw) + 3rem)` : "3rem"} : undefined}
             className={cn(
-              "pointer-events-none absolute top-[var(--studio-content-top-inset,0px)] left-0 right-0 z-40 flex h-[var(--studio-chat-header-height,48px)] shrink-0 items-start bg-background pt-[var(--studio-chat-header-padding-top,11px)] pr-3 md:pr-4",
+              "pointer-events-none absolute top-[var(--studio-content-top-inset,0px)] left-0 z-40 flex h-[var(--studio-chat-header-height,48px)] shrink-0 items-start bg-background pt-[var(--studio-chat-header-padding-top,11px)] pr-3 md:pr-4",
+              isMobile || view.mode !== "single"
+                ? "right-0"
+                : workspacePanelOpen
+                  ? "right-[calc(clamp(18rem,24vw,22rem)+3rem)]"
+                  : "right-12",
               isMobile
                 ? "pl-12"
                 : pinned
@@ -1652,42 +1651,6 @@ export function ChatPage({
                   className="h-[var(--studio-chat-control-height,34px)]"
                 />
               ) : null}
-              {view.mode === "single" && (
-                <Tooltip>
-                  <TooltipPrimitive.Trigger asChild={true}>
-                    <button
-                      type="button"
-                      onClick={toggleIncognito}
-                      className={cn(
-                        "flex h-[30px] cursor-pointer items-center gap-1.5 rounded-[10px] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-                        incognito
-                          ? "bg-primary/15 px-2 font-medium text-primary text-xs hover:bg-primary/20"
-                          : "size-[30px] justify-center text-nav-fg hover:bg-nav-surface-hover hover:text-black dark:hover:text-white",
-                      )}
-                      aria-label={incognitoLabel}
-                      aria-pressed={incognito}
-                    >
-                      <HugeiconsIcon
-                        icon={BubbleChatTemporaryIcon}
-                        strokeWidth={1.75}
-                        className="size-icon shrink-0"
-                      />
-                      {incognito && (
-                        <span className="text-xs">
-                          {t("chat.toolbar.temporaryChatActive")}
-                        </span>
-                      )}
-                    </button>
-                  </TooltipPrimitive.Trigger>
-                  <TooltipContent
-                    side="bottom"
-                    sideOffset={6}
-                    className="tooltip-compact"
-                  >
-                    {incognitoLabel}
-                  </TooltipContent>
-                </Tooltip>
-              )}
               {view.mode === "single" &&
               latestResearchRunId &&
               latestResearchRunStatus ? (

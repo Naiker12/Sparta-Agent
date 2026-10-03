@@ -6,7 +6,7 @@ export type OpenAIAutoSwitchSettings = {
   autoUnloadIdleSeconds: number;
   defaultEnabled: boolean;
   // True when the idle-unload loop will actually unload (e.g. enabled via the
-  // UNSLOTH_MODEL_IDLE_TTL env var even while the toggle is off).
+
   idleUnloadActive: boolean;
   // Persist the KV cache to disk on idle unload and restore it on reload.
   autoUnloadKeepKv: boolean;

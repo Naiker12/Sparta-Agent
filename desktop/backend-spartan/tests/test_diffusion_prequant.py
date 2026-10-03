@@ -175,7 +175,7 @@ def test_usable_source_missing_path_is_none(tmp_path, monkeypatch, restricted_lo
 
 
 def test_usable_source_disallowed_path_is_none(tmp_path, monkeypatch, restricted_load_available):
-    # A path OUTSIDE the UNSLOTH_ALLOW_LOCAL_PREQUANT_PATH allowlist (including the empty default) is refused by the loader, so it resolves to None even when it exists.
+
     ckpt = tmp_path / "model.pt"
     ckpt.write_bytes(b"x")
     monkeypatch.setattr(pq, "_allowed_prequant_roots", lambda: [])

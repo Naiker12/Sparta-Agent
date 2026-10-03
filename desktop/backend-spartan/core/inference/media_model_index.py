@@ -51,7 +51,7 @@ class MediaModelPick:
 _AMBIGUOUS = MediaModelPick("", "")
 
 
-# ── resolving a name to a downloaded model ──────────────────────────
+
 
 
 def _resolve_load_dir(p: Path) -> Path:
@@ -366,7 +366,7 @@ def available_media_model_ids(task: str) -> list[str]:
     )
 
 
-# ── recognising the resident model ──────────────────────────────────
+
 
 
 def published_token(pick: MediaModelPick) -> str:

@@ -744,8 +744,7 @@ def test_a_drafter_that_cannot_be_pinned_is_dropped(monkeypatch):
 
 
 def test_the_drop_takes_a_user_owned_drafter_with_it():
-    """A user --spec-type makes _build_speculative_flags emit nothing, so clearing only
-    Unsloth's resolved path would leave their --model-draft on the device."""
+    'A user --spec-type makes _build_speculative_flags emit nothing, so clearing only'
     extras = ["--spec-type", "draft-simple", "--model-draft", "/models/d.gguf", "--top-k", "40"]
     drafter, out, warnings = _drafter_gate(
         paravirtual = True, caps = {}, drafter = None, extra_args = extras
@@ -839,10 +838,7 @@ def test_a_real_mac_keeps_the_sibling_and_the_mode_alike():
 
 
 def test_the_env_the_child_inherits_is_dropped_too():
-    """argv cannot un-set LLAMA_ARG_SPEC_DRAFT_MODEL: llama.cpp reads it directly, and
-    appends spec types rather than replacing them, so an inherited draft-simple would
-    outlive the model just removed. The same scrub covers every Unsloth-owned spec
-    block."""
+    'argv cannot un-set LLAMA_ARG_SPEC_DRAFT_MODEL: llama.cpp reads it directly, and\n    appends spec types rather than replacing them, so an inherited draft-simple would\n    block.'
     src = _load_model_source()
     for var in (
         "LLAMA_ARG_SPEC_DRAFT_MODEL",
@@ -861,11 +857,7 @@ def test_the_env_the_child_inherits_is_dropped_too():
 
 
 def test_a_managed_spec_block_clears_the_inherited_spec_env():
-    """Nothing Unsloth emits can undo an inherited LLAMA_ARG_SPEC_TYPE: llama.cpp applies
-    the env first and appends. So a managed non-MTP launch would still run MTP, a
-    crash-recovery replay could not drop it, and the fit never budgeted the drafter the
-    env adds; the launch clears it instead. Extras that own --spec-type keep theirs,
-    since there the two genuinely accumulate."""
+    '    the env first and appends. So a managed non-MTP launch would still run MTP, a\n    crash-recovery replay could not drop it, and the fit never budgeted the drafter the\n    env adds; the launch clears it instead. Extras that own --spec-type keep theirs,\n    since there the two genuinely accumulate.'
     src = _load_model_source()
     at = src.index("for _pv_spec_var in _SPEC_ENV_VARS")
     gate = src[src.rindex("if ", 0, at) : at]
@@ -972,9 +964,7 @@ def test_a_pinnable_drafter_survives_on_the_same_hardware():
     ],
 )
 def test_a_drafter_the_user_already_pinned_is_left_alone(pin):
-    """The probe only decides whether Unsloth can emit the flag. A user who passed one
-    themselves already has the drafter on the CPU, so dropping it would cost speed for
-    nothing."""
+    '    themselves already has the drafter on the CPU, so dropping it would cost speed for\n    nothing.'
     extras = [*pin, "--model-draft", "/models/d.gguf"]
     drafter, out, warnings = _drafter_gate(paravirtual = True, caps = {}, extra_args = extras)
     assert drafter == "/models/mtp-gemma.gguf"
@@ -1170,9 +1160,7 @@ def test_the_split_mode_override_outlives_the_pass_through_extras():
 
 
 def test_the_mtp_read_judges_the_env_the_child_will_actually_get():
-    """An inherited draft-mtp does launch MTP, but the launch scrubs it whenever Unsloth
-    owns the spec block, so reading os.environ would describe a server that will not run MTP.
-    The env counts only when the extras own --spec-type, the one case it reaches the child."""
+    '    owns the spec block, so reading os.environ would describe a server that will not run MTP.\n    The env counts only when the extras own --spec-type, the one case it reaches the child.'
     env = {"LLAMA_ARG_SPEC_TYPE": "draft-mtp"}
     # Managed block: scrubbed, so the env says nothing about this launch.
     assert llama_cpp._child_spec_env([]) == {}
@@ -1538,10 +1526,7 @@ def _mmproj_env_tree() -> ast.AST:
 
 
 def test_an_inherited_projector_is_dropped_from_the_child_env():
-    """argv cannot un-set LLAMA_ARG_MMPROJ: llama.cpp reads it directly, so an inherited
-    projector loads on the virtualised device independently of --gpu-layers 0.
-    LLAMA_ARG_MMPROJ_URL goes with it because its download overwrites mmproj.path, so it
-    outranks even the --mmproj Unsloth emits."""
+    'argv cannot un-set LLAMA_ARG_MMPROJ: llama.cpp reads it directly, so an inherited\n    projector loads on the virtualised device independently of --gpu-layers 0.\n    LLAMA_ARG_MMPROJ_URL goes with it because its download overwrites mmproj.path, so it'
     env = _mmproj_env_scrub(paravirtual = True)
     assert "LLAMA_ARG_MMPROJ" not in env
     assert "LLAMA_ARG_MMPROJ_URL" not in env

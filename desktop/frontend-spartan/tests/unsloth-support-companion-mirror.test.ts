@@ -7,7 +7,7 @@ import { classifyUnslothSupport } from "../src/features/hub/lib/unsloth-support.
 // The sd.cpp companion mirrors are published as ComfyUI single-file repos: library
 // "diffusion-single-file", no pipeline tag, and nothing inside but a VAE or a text encoder. The
 // cached-row `companion` flag only reaches rows the machine already downloaded, so the chat
-// picker's Unsloth Hub search is the other way in -- and a taskless repo used to classify as an
+
 // ordinary chat model there.
 test("a taskless companion mirror is not offered as a chat model", () => {
   for (const mirror of [
@@ -41,7 +41,7 @@ test("a real single-file checkpoint keeps its Images routing", () => {
 });
 
 test("a chat GGUF that sd.cpp borrows as a text encoder stays supported", () => {
-  // unsloth/Qwen2.5-VL-7B-Instruct-GGUF is in the backend's companion set (Qwen-Image's text
+
   // encoder) yet is a perfectly good chat model: filtering the picker on that set would take it
   // away from a user who downloaded it to chat with.
   const support = classifyUnslothSupport({

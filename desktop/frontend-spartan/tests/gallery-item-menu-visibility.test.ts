@@ -4,16 +4,10 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("gallery overlay actions follow interaction state instead of stale mouse focus", async () => {
-  const [menu, imagesPage] = await Promise.all([
-    readFile(
+  const menu = await readFile(
       new URL("../src/components/gallery-item-menu.tsx", import.meta.url),
       "utf8",
-    ),
-    readFile(
-      new URL("../src/features/images/images-page.tsx", import.meta.url),
-      "utf8",
-    ),
-  ]);
+    );
 
   const closedClasses =
     /:\s*"([^"]*opacity-0[^"]*)"/.exec(menu)?.[1].split(" ") ?? [];
@@ -35,5 +29,5 @@ test("gallery overlay actions follow interaction state instead of stale mouse fo
     "plain restored focus must not reveal the action",
   );
 
-  assert.doesNotMatch(imagesPage, /focus-within:opacity-100/);
+  assert.doesNotMatch(menu, /focus-within:opacity-100/);
 });

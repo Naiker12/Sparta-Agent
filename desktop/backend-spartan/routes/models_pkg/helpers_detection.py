@@ -1334,7 +1334,7 @@ def _cached_repo_task(repo_info) -> Optional[str]:
         )
 
         # An sd.cpp companion repo holds no denoiser, so it is never a pick even though its
-        # unsloth/* mirror clears the trust gate below (the third-party ids never did). No task
+
         # keeps it out of the IMAGE picker; the row's companion flag is what keeps it out of the
         # chat one, since a task of None is what every unclassified chat repo carries.
         if _is_sd_cpp_companion_repo(repo_id):

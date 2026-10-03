@@ -1,10 +1,5 @@
 
-"""No child outlives the Studio that spawned it.
-
-The chain this closes: a tool call runs under a shell wrapper, the kill path
-reaped only the wrapper on Windows, and the orphaned venv python then made
-`unsloth studio update` refuse to run until it was killed by hand.
-"""
+'No child outlives the Studio that spawned it.\n\nThe chain this closes: a tool call runs under a shell wrapper, the kill path\nreaped only the wrapper on Windows, and the orphaned venv python then made'
 
 import json
 import os
@@ -102,14 +97,14 @@ def test_tool_kill_takes_the_shell_payload_with_it(tmp_path):
         print(f"payload pid {grandchild} alive after _kill_process_tree: {survived}")
         # Windows reaches the payload via taskkill /T /F, POSIX via killpg. It
         # used to survive on Windows, orphaning the venv python that then blocked
-        # `unsloth studio update`.
+
         assert not survived, "the payload under the shell wrapper was orphaned"
     finally:
         _kill(grandchild)
 
 
 # ---------------------------------------------------------------------------
-# 2. One surviving venv process blocks `unsloth studio update` (Windows)
+
 # ---------------------------------------------------------------------------
 @pytest.mark.skipif(not IS_WINDOWS, reason = "the update gate is Windows-only")
 def test_update_gate_blocks_on_a_single_orphan(tmp_path):

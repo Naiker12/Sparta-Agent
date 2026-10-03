@@ -1,0 +1,48 @@
+---
+title: "Alcance y dirección del proyecto"
+description: "Qué documenta esta edición y cómo distinguir capacidades disponibles, integraciones y propuestas de mejora."
+---
+
+## Propósito
+
+Sparta Agent busca reunir conversaciones, contexto de proyecto y herramientas en un escritorio con control humano. La edición descrita en el README usa proveedores de IA mediante API y mantiene el motor de coordinación en el equipo.
+
+## Qué puedes esperar
+
+La versión 0.3.3 incorpora cola de mensajes persistente y una Bandeja de trabajo junto a Automatizaciones. Los mensajes pendientes pueden recuperarse desde su conversación; un envío registrado no se repite automáticamente. Los resultados inciertos requieren revisión. La bandeja muestra resúmenes y enlaces al chat, con filtros sobre la página actual.
+
+| Área | Alcance documentado |
+| --- | --- |
+| Conversaciones | Chat, contexto y presentación de respuestas progresivas |
+| Proveedores | Conexiones API y selección de modelos disponibles |
+| Proyecto | Carpeta vinculada, archivos y revisión de cambios |
+| Herramientas | Operaciones locales o externas sujetas a capacidades y permisos |
+| Integraciones | Servidores MCP y credenciales según el servicio |
+| Documentación | Guías de uso, arquitectura, diagnóstico y desarrollo |
+
+Consulta [Inicio rápido](/docs/quickstart) y [Tu espacio de trabajo](/docs/guides/workspace). La disponibilidad exacta depende de la versión instalada, el proveedor y las conexiones configuradas.
+
+## Qué depende de la configuración
+
+La visión, el razonamiento, las llamadas de herramientas y los límites de contexto dependen del modelo y su API. Las vistas de Git, GitHub, subagentes o navegador dependen de las capacidades del proyecto. Una conexión exitosa no verifica todas las operaciones de un servicio.
+
+## Límites de la edición API-only
+
+El instalador no administra pesos, entrenamiento ni motores de modelos locales. Puedes conectar un servidor API compatible que ya tengas preparado. El contexto de proyecto se obtiene mediante archivos y herramientas; esta edición no promete un índice vectorial local ni RAG persistente.
+
+Las carpetas y módulos de compatibilidad conservados en el repositorio no amplían por sí solos el alcance del producto. Los elementos marcados como próximos y las demostraciones deben distinguirse de las funciones disponibles.
+
+## Prioridades de mejora propuestas
+
+Estas prioridades sirven para ordenar trabajo; no son fechas de entrega ni anuncios de funcionalidades aprobadas.
+
+| Prioridad | Resultado buscado | Evidencia de finalización |
+| --- | --- | --- |
+| Fidelidad de interfaz | Componentes y estados coherentes entre escritorio y sitio | Revisiones de escritorio, móvil y teclado |
+| Claridad de contexto | Explicar qué carpeta, modelo y permisos se usan | Guías y controles que muestran ese alcance |
+| Diagnóstico | Errores con causa y recuperación accionables | Casos reproducibles y comprobaciones por capa |
+| Mantenimiento | Responsabilidades claras y menos duplicación | Contratos compartidos, builds y documentación vigentes |
+
+## Cómo seguir cambios reales
+
+Las [releases](https://github.com/Naiker12/Sparta-Agent/releases) describen las versiones publicadas. Los [issues](https://github.com/Naiker12/Sparta-Agent/issues) permiten seguir propuestas y defectos. Contrasta cualquier plan con su implementación y pruebas antes de atribuirlo a una versión.

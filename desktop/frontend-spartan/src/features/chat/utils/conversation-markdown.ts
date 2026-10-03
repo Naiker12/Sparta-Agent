@@ -451,7 +451,7 @@ function escapeMarkdownLabel(value: string): string {
 // A destination is parsed, not copied: CommonMark 6.2 resolves entity references
 // inside it and 2.4 consumes a backslash before ASCII punctuation. Search results
 // are attacker-controllable and both rules move where the link goes:
-// `https://docs.unsloth.ai&commat;evil.test/` decodes to credentials on evil.test.
+
 // Only an entity-opening ampersand is escaped, so ordinary query separators stay
 // readable, and &amp; not %26 because encoding one folds it into the value before.
 const ENTITY_REFERENCE_PATTERN =

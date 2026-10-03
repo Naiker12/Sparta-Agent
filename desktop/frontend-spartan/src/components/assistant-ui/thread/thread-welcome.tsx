@@ -134,7 +134,7 @@ export const ThreadWelcome: FC<ThreadWelcomeProps> = ({
   }, [t, displayName, nickname]);
 
   return (
-    <div className="aui-thread-welcome-root mx-auto my-auto flex w-full max-w-[42rem] grow flex-col">
+    <div className="aui-thread-welcome-root mx-auto my-auto flex w-full max-w-[48rem] grow flex-col">
       <div className="aui-thread-welcome-center flex w-full grow flex-col items-center justify-start pt-[27.5dvh]">
         <div className="aui-thread-welcome-message flex w-full flex-col justify-center gap-9 px-4">
           <div className="flex flex-col items-center justify-center gap-4">

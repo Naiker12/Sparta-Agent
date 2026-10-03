@@ -56,6 +56,11 @@ export interface ProviderModelInfo {
   display_name: string;
   context_length?: number | null;
   owned_by?: string | null;
+  reasoning?: {
+    supported_efforts?: string[] | null;
+    mandatory?: boolean;
+    default_effort?: string;
+  } | null;
 }
 
 export interface ProviderTestResult {

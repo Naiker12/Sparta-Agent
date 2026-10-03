@@ -104,7 +104,7 @@ def test_installable_upgrade_is_reported_with_its_version(monkeypatch):
 
 
 def test_dev_only_upgrade_does_not_claim_16bit(monkeypatch):
-    # Unsloth never installs a transformers dev build, so nothing about the run changes.
+
     inf_mod = _stub(
         monkeypatch,
         upgrade = {**UPGRADE, "supported_in_pypi": False},
