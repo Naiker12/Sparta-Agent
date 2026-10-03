@@ -3,8 +3,9 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import yaml from 'js-yaml';
 // @ts-expect-error JavaScript release tooling intentionally has no declaration file.
-import { mergeMacMetadata, validateUpdateMetadata } from '../scripts/prepare-release-assets.mjs';
+import { mergeMacMetadata, validateUpdateMetadata, prepareReleaseAssets } from '../scripts/prepare-release-assets.mjs';
 
 const metadata = (arch: string, version = '0.3.3') => ({
   version,
@@ -33,6 +34,38 @@ describe('macOS release metadata', () => {
       await expect(validateUpdateMetadata(directory, document, '0.3.3')).resolves.toBeUndefined();
       await fs.writeFile(path.join(directory, 'installer.zip'), 'modified');
       await expect(validateUpdateMetadata(directory, document, '0.3.3')).rejects.toThrow('checksum');
+    } finally {
+      if (path.dirname(directory) !== path.resolve(os.tmpdir()) || !path.basename(directory).startsWith('sparta-release-test-')) throw new Error('Unexpected temporary path');
+      await fs.rm(directory, { recursive: true, force: true });
+    }
+  });
+  it('collects version folders from all four runner artifacts before publishing', async () => {
+    const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'sparta-release-test-'));
+    const version = '0.3.3';
+    try {
+      const input = path.join(directory, 'input');
+      const output = path.join(directory, 'output');
+      for (const platform of ['windows', 'linux', 'arm64', 'x64']) {
+        const source = path.join(input, platform, version);
+        await fs.mkdir(source, { recursive: true });
+        const filenames = platform === 'windows' ? [`Sparta-Agent-Windows-${version}-Setup.exe`]
+          : platform === 'linux' ? [`Sparta-Agent-Linux-${version}.AppImage`]
+          : [`Sparta-Agent-Mac-${version}-${platform}-Installer.zip`, `Sparta-Agent-Mac-${version}-${platform}-Installer.dmg`];
+        const files = [];
+        for (const filename of filenames) {
+          const bytes = Buffer.from(filename);
+          await fs.writeFile(path.join(source, filename), bytes);
+          files.push({ url: filename, size: bytes.length, sha512: createHash('sha512').update(bytes).digest('base64') });
+        }
+        const manifest = platform === 'windows' ? 'latest.yml' : platform === 'linux' ? 'latest-linux.yml' : 'latest-mac.yml';
+        await fs.writeFile(path.join(source, manifest), yaml.dump({ version, files }));
+      }
+      await prepareReleaseAssets(input, output, version);
+      const merged = yaml.load(await fs.readFile(path.join(output, 'latest-mac.yml'), 'utf8')) as { files: unknown[] };
+      expect(merged.files).toHaveLength(4);
+      expect(await fs.readdir(output)).toHaveLength(9);
+      await fs.writeFile(path.join(input, 'linux', version, `Sparta-Agent-Linux-${version}.AppImage`), 'corrupted');
+      await expect(prepareReleaseAssets(input, output, version)).rejects.toThrow('checksum');
     } finally {
       if (path.dirname(directory) !== path.resolve(os.tmpdir()) || !path.basename(directory).startsWith('sparta-release-test-')) throw new Error('Unexpected temporary path');
       await fs.rm(directory, { recursive: true, force: true });

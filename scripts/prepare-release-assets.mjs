@@ -39,6 +39,14 @@ export function mergeMacMetadata(documents, version) {
   return { version, files, path: intel.url, sha512: intel.sha512, releaseDate: documents[0].releaseDate };
 }
 
+async function* artifactFiles(directory) {
+  for (const entry of await fs.readdir(directory, { withFileTypes: true })) {
+    const filename = path.join(directory, entry.name);
+    if (entry.isDirectory()) yield* artifactFiles(filename);
+    else if (entry.isFile()) yield filename;
+  }
+}
+
 export async function prepareReleaseAssets(input, output, version) {
   await fs.mkdir(output, { recursive: true });
   const mac = [];
@@ -46,17 +54,17 @@ export async function prepareReleaseAssets(input, output, version) {
   for (const directory of await fs.readdir(input, { withFileTypes: true })) {
     if (!directory.isDirectory()) continue;
     const source = path.join(input, directory.name);
-    for (const entry of await fs.readdir(source, { withFileTypes: true })) {
-      if (!entry.isFile() || !/\.(exe|dmg|zip|AppImage|yml|blockmap)$/.test(entry.name)) continue;
-      if (entry.name.endsWith('.yml') && !entry.name.startsWith('latest')) continue;
-      const file = path.join(source, entry.name);
-      if (entry.name === 'latest-mac.yml') {
+    for await (const file of artifactFiles(source)) {
+      const name = path.basename(file);
+      if (!/\.(exe|dmg|zip|AppImage|yml|blockmap)$/.test(name)) continue;
+      if (name.endsWith('.yml') && !name.startsWith('latest')) continue;
+      if (name === 'latest-mac.yml') {
         mac.push(yaml.load(await fs.readFile(file, 'utf8')));
         continue;
       }
-      if (names.has(entry.name)) throw new Error(`Duplicate release asset: ${entry.name}`);
-      names.add(entry.name);
-      await fs.copyFile(file, path.join(output, entry.name));
+      if (names.has(name)) throw new Error(`Duplicate release asset: ${name}`);
+      names.add(name);
+      await fs.copyFile(file, path.join(output, name));
     }
   }
   const metadata = mergeMacMetadata(mac, version);
