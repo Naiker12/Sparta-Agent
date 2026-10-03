@@ -1,0 +1,718 @@
+{
+  "../desktop/frontend-spartan/node_modules/@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2": {
+    "file": "assets/figtree-latin-wght-normal-D_ZTVpCC.woff2",
+    "src": "../desktop/frontend-spartan/node_modules/@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2"
+  },
+  "../desktop/frontend-spartan/node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2": {
+    "file": "assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+    "src": "../desktop/frontend-spartan/node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2"
+  },
+  "../desktop/frontend-spartan/node_modules/@fontsource-variable/space-grotesk/files/space-grotesk-latin-wght-normal.woff2": {
+    "file": "assets/space-grotesk-latin-wght-normal-BhU9QXUp.woff2",
+    "src": "../desktop/frontend-spartan/node_modules/@fontsource-variable/space-grotesk/files/space-grotesk-latin-wght-normal.woff2"
+  },
+  "../desktop/frontend-spartan/public/fonts/Hellix-Medium.woff": {
+    "file": "assets/Hellix-Medium-BaJQzTxc.woff",
+    "src": "../desktop/frontend-spartan/public/fonts/Hellix-Medium.woff"
+  },
+  "../desktop/frontend-spartan/public/fonts/Hellix-Regular.woff": {
+    "file": "assets/Hellix-Regular-DWoKGW5I.woff",
+    "src": "../desktop/frontend-spartan/public/fonts/Hellix-Regular.woff"
+  },
+  "../desktop/frontend-spartan/public/fonts/Hellix-SemiBold.woff2": {
+    "file": "assets/Hellix-SemiBold-ku7lU1KZ.woff2",
+    "src": "../desktop/frontend-spartan/public/fonts/Hellix-SemiBold.woff2"
+  },
+  "../desktop/frontend-spartan/public/spartan-logo.svg": {
+    "file": "assets/spartan-logo-qvz-qbG9.svg",
+    "src": "../desktop/frontend-spartan/public/spartan-logo.svg"
+  },
+  "_bundle-mjs-B_AA55HL.js": {
+    "file": "assets/bundle-mjs-B_AA55HL.js",
+    "name": "bundle-mjs"
+  },
+  "_callout-Duf6V1pM.js": {
+    "file": "assets/callout-Duf6V1pM.js",
+    "name": "callout",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_createLucideIcon-BfuKf0ug.js"
+    ]
+  },
+  "_card-BSxqW4k8.js": {
+    "file": "assets/card-BSxqW4k8.js",
+    "name": "card",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_createLucideIcon-BfuKf0ug.js",
+      "_framework-fFoLfXMa.js"
+    ]
+  },
+  "_chunk-BO2N2NFS-uwOmNbGX.js": {
+    "file": "assets/chunk-BO2N2NFS-uwOmNbGX.js",
+    "name": "chunk-BO2N2NFS",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_lib-Bgnn6Xw1.js",
+      "_bundle-mjs-B_AA55HL.js"
+    ],
+    "dynamicImports": [
+      "node_modules/streamdown/dist/highlighted-body-OFNGDK62.js",
+      "node_modules/streamdown/dist/mermaid-GHXKKRXX.js"
+    ]
+  },
+  "_chunk-Cyuzqnbw.js": {
+    "file": "assets/chunk-Cyuzqnbw.js",
+    "name": "chunk"
+  },
+  "_createLucideIcon-BfuKf0ug.js": {
+    "file": "assets/createLucideIcon-BfuKf0ug.js",
+    "name": "createLucideIcon",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "_dist-BseHsSUg.js": {
+    "file": "assets/dist-BseHsSUg.js",
+    "name": "dist",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_releases-QvOQ1vsZ.js",
+      "_createLucideIcon-BfuKf0ug.js"
+    ]
+  },
+  "_framework-fFoLfXMa.js": {
+    "file": "assets/framework-fFoLfXMa.js",
+    "name": "framework",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "_i18n-DG6R1i4R.js": {
+    "file": "assets/i18n-DG6R1i4R.js",
+    "name": "i18n",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_dist-BseHsSUg.js",
+      "_framework-fFoLfXMa.js"
+    ]
+  },
+  "_lib-Bgnn6Xw1.js": {
+    "file": "assets/lib-Bgnn6Xw1.js",
+    "name": "lib",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_play-CLPa57Nv.js"
+    ]
+  },
+  "_navigation-CU3czgVE.js": {
+    "file": "assets/navigation-CU3czgVE.js",
+    "name": "navigation"
+  },
+  "_play-CLPa57Nv.js": {
+    "file": "assets/play-CLPa57Nv.js",
+    "name": "play",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_releases-QvOQ1vsZ.js"
+    ]
+  },
+  "_releases-QvOQ1vsZ.js": {
+    "file": "assets/releases-QvOQ1vsZ.js",
+    "name": "releases",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "_remove-undefined-CzMSKybq-CUTPf38U.js": {
+    "file": "assets/remove-undefined-CzMSKybq-CUTPf38U.js",
+    "name": "remove-undefined-CzMSKybq"
+  },
+  "_search-B5P8sGru.js": {
+    "file": "assets/search-B5P8sGru.js",
+    "name": "search",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_releases-QvOQ1vsZ.js",
+      "_dist-BseHsSUg.js",
+      "_lib-Bgnn6Xw1.js",
+      "_createLucideIcon-BfuKf0ug.js",
+      "_framework-fFoLfXMa.js"
+    ]
+  },
+  "_search-y5krQ7pB.js": {
+    "file": "assets/search-y5krQ7pB.js",
+    "name": "search",
+    "imports": [
+      "_lib-Bgnn6Xw1.js",
+      "_search-B5P8sGru.js"
+    ]
+  },
+  "_sparta-mark-CU2iFNJm.js": {
+    "file": "assets/sparta-mark-CU2iFNJm.js",
+    "name": "sparta-mark",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_releases-QvOQ1vsZ.js",
+      "_bundle-mjs-B_AA55HL.js"
+    ]
+  },
+  "_url-BVHvi3_K-BT8unFa0.js": {
+    "file": "assets/url-BVHvi3_K-BT8unFa0.js",
+    "name": "url-BVHvi3_K"
+  },
+  "index.html": {
+    "file": "assets/index-CtSigyNS.js",
+    "name": "index",
+    "src": "index.html",
+    "isEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js"
+    ],
+    "dynamicImports": [
+      "src/landing-page.tsx",
+      "src/components/docs/docs-page.tsx"
+    ],
+    "css": [
+      "assets/index-BPXSQDaN.css"
+    ]
+  },
+  "node_modules/@blobatar/react/dist/index.js": {
+    "file": "assets/dist-CwLWIuM4.js",
+    "name": "dist",
+    "src": "node_modules/@blobatar/react/dist/index.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "node_modules/blobatar/dist/expression.js": {
+    "file": "assets/expression-CLQzD1vH.js",
+    "name": "expression",
+    "src": "node_modules/blobatar/dist/expression.js",
+    "isDynamicEntry": true
+  },
+  "node_modules/fumadocs-core/dist/search/client/algolia.js": {
+    "file": "assets/algolia-js2Tp-GT.js",
+    "name": "algolia",
+    "src": "node_modules/fumadocs-core/dist/search/client/algolia.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_search-y5krQ7pB.js"
+    ]
+  },
+  "node_modules/fumadocs-core/dist/search/client/fetch.js": {
+    "file": "assets/fetch-BCCJfqE9.js",
+    "name": "fetch",
+    "src": "node_modules/fumadocs-core/dist/search/client/fetch.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "node_modules/fumadocs-ui/dist/components/dialog/search-default.js"
+    ]
+  },
+  "node_modules/fumadocs-core/dist/search/client/mixedbread.js": {
+    "file": "assets/mixedbread-C_-R3hiW.js",
+    "name": "mixedbread",
+    "src": "node_modules/fumadocs-core/dist/search/client/mixedbread.js",
+    "isDynamicEntry": true
+  },
+  "node_modules/fumadocs-core/dist/search/client/orama-cloud-legacy.js": {
+    "file": "assets/orama-cloud-legacy-DrOGnUH_.js",
+    "name": "orama-cloud-legacy",
+    "src": "node_modules/fumadocs-core/dist/search/client/orama-cloud-legacy.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_remove-undefined-CzMSKybq-CUTPf38U.js",
+      "_search-y5krQ7pB.js"
+    ]
+  },
+  "node_modules/fumadocs-core/dist/search/client/orama-cloud.js": {
+    "file": "assets/orama-cloud-BA7DRvEz.js",
+    "name": "orama-cloud",
+    "src": "node_modules/fumadocs-core/dist/search/client/orama-cloud.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_remove-undefined-CzMSKybq-CUTPf38U.js",
+      "_search-y5krQ7pB.js"
+    ]
+  },
+  "node_modules/fumadocs-core/dist/search/client/orama-static.js": {
+    "file": "assets/orama-static-CDOGuJSz.js",
+    "name": "orama-static",
+    "src": "node_modules/fumadocs-core/dist/search/client/orama-static.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_remove-undefined-CzMSKybq-CUTPf38U.js",
+      "_search-y5krQ7pB.js",
+      "_url-BVHvi3_K-BT8unFa0.js"
+    ]
+  },
+  "node_modules/fumadocs-ui/dist/components/dialog/search-default.js": {
+    "file": "assets/search-default-DPhWgmlX.js",
+    "name": "search-default",
+    "src": "node_modules/fumadocs-ui/dist/components/dialog/search-default.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_dist-BseHsSUg.js",
+      "_search-B5P8sGru.js",
+      "_url-BVHvi3_K-BT8unFa0.js",
+      "_i18n-DG6R1i4R.js"
+    ],
+    "dynamicImports": [
+      "node_modules/fumadocs-ui/dist/components/dialog/search-default.js",
+      "node_modules/fumadocs-core/dist/search/client/algolia.js",
+      "node_modules/fumadocs-core/dist/search/client/orama-cloud.js",
+      "node_modules/fumadocs-core/dist/search/client/orama-cloud-legacy.js",
+      "node_modules/fumadocs-core/dist/search/client/mixedbread.js",
+      "node_modules/fumadocs-core/dist/search/client/orama-static.js"
+    ]
+  },
+  "node_modules/streamdown/dist/highlighted-body-OFNGDK62.js": {
+    "file": "assets/highlighted-body-OFNGDK62-DZA8lbGY.js",
+    "name": "highlighted-body-OFNGDK62",
+    "src": "node_modules/streamdown/dist/highlighted-body-OFNGDK62.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_chunk-BO2N2NFS-uwOmNbGX.js"
+    ]
+  },
+  "node_modules/streamdown/dist/mermaid-GHXKKRXX.js": {
+    "file": "assets/mermaid-GHXKKRXX-BB2zoNFh.js",
+    "name": "mermaid-GHXKKRXX",
+    "src": "node_modules/streamdown/dist/mermaid-GHXKKRXX.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-BO2N2NFS-uwOmNbGX.js"
+    ]
+  },
+  "src/components/docs/content/pages/architecture/backend-architecture.mdx": {
+    "file": "assets/backend-architecture-COuMoDLD.js",
+    "name": "backend-architecture",
+    "src": "src/components/docs/content/pages/architecture/backend-architecture.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/architecture/frontend-ui.mdx": {
+    "file": "assets/frontend-ui-DCrt6VHX.js",
+    "name": "frontend-ui",
+    "src": "src/components/docs/content/pages/architecture/frontend-ui.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/architecture/ipc-bridge.mdx": {
+    "file": "assets/ipc-bridge-IrJk52SM.js",
+    "name": "ipc-bridge",
+    "src": "src/components/docs/content/pages/architecture/ipc-bridge.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/architecture/overview.mdx": {
+    "file": "assets/overview-C0ctVZxs.js",
+    "name": "overview",
+    "src": "src/components/docs/content/pages/architecture/overview.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/core-concepts/chat-vs-agent-mode.mdx": {
+    "file": "assets/chat-vs-agent-mode-B_WThRzP.js",
+    "name": "chat-vs-agent-mode",
+    "src": "src/components/docs/content/pages/core-concepts/chat-vs-agent-mode.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/core-concepts/models-and-providers.mdx": {
+    "file": "assets/models-and-providers-D5vzlijP.js",
+    "name": "models-and-providers",
+    "src": "src/components/docs/content/pages/core-concepts/models-and-providers.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/core-concepts/security-and-sandbox.mdx": {
+    "file": "assets/security-and-sandbox-D58x7stk.js",
+    "name": "security-and-sandbox",
+    "src": "src/components/docs/content/pages/core-concepts/security-and-sandbox.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_callout-Duf6V1pM.js"
+    ]
+  },
+  "src/components/docs/content/pages/development/local-setup.mdx": {
+    "file": "assets/local-setup-rPESJ10r.js",
+    "name": "local-setup",
+    "src": "src/components/docs/content/pages/development/local-setup.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/development/project-structure.mdx": {
+    "file": "assets/project-structure-DfXHmZFO.js",
+    "name": "project-structure",
+    "src": "src/components/docs/content/pages/development/project-structure.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/api-monitor.mdx": {
+    "file": "assets/api-monitor-D4a8-YLh.js",
+    "name": "api-monitor",
+    "src": "src/components/docs/content/pages/features/api-monitor.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/attachments-and-files.mdx": {
+    "file": "assets/attachments-and-files-DBYuIfwj.js",
+    "name": "attachments-and-files",
+    "src": "src/components/docs/content/pages/features/attachments-and-files.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/code-execution.mdx": {
+    "file": "assets/code-execution-Cl9bFeli.js",
+    "name": "code-execution",
+    "src": "src/components/docs/content/pages/features/code-execution.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/deep-research.mdx": {
+    "file": "assets/deep-research-CRwf_-DL.js",
+    "name": "deep-research",
+    "src": "src/components/docs/content/pages/features/deep-research.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/live-tools.mdx": {
+    "file": "assets/live-tools-B8DZP84P.js",
+    "name": "live-tools",
+    "src": "src/components/docs/content/pages/features/live-tools.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/multimodal-rag.mdx": {
+    "file": "assets/multimodal-rag-Do2wD-fO.js",
+    "name": "multimodal-rag",
+    "src": "src/components/docs/content/pages/features/multimodal-rag.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/recipe-studio.mdx": {
+    "file": "assets/recipe-studio-B5F6467_.js",
+    "name": "recipe-studio",
+    "src": "src/components/docs/content/pages/features/recipe-studio.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/remote-access.mdx": {
+    "file": "assets/remote-access-DyfAMMJP.js",
+    "name": "remote-access",
+    "src": "src/components/docs/content/pages/features/remote-access.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/voice-audio.mdx": {
+    "file": "assets/voice-audio-CeDsjO-b.js",
+    "name": "voice-audio",
+    "src": "src/components/docs/content/pages/features/voice-audio.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/guides/first-task.mdx": {
+    "file": "assets/first-task-C4bByusJ.js",
+    "name": "first-task",
+    "src": "src/components/docs/content/pages/guides/first-task.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/guides/performance.mdx": {
+    "file": "assets/performance-BfcptaS5.js",
+    "name": "performance",
+    "src": "src/components/docs/content/pages/guides/performance.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/guides/troubleshooting.mdx": {
+    "file": "assets/troubleshooting-BBTPycln.js",
+    "name": "troubleshooting",
+    "src": "src/components/docs/content/pages/guides/troubleshooting.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/guides/workspace.mdx": {
+    "file": "assets/workspace-D6u1umZL.js",
+    "name": "workspace",
+    "src": "src/components/docs/content/pages/guides/workspace.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/index.mdx": {
+    "file": "assets/pages-8eZXt0Oo.js",
+    "name": "pages",
+    "src": "src/components/docs/content/pages/index.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_card-BSxqW4k8.js",
+      "_callout-Duf6V1pM.js"
+    ]
+  },
+  "src/components/docs/content/pages/mcp/configuration.mdx": {
+    "file": "assets/configuration-DilonPrd.js",
+    "name": "configuration",
+    "src": "src/components/docs/content/pages/mcp/configuration.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/mcp/introduction.mdx": {
+    "file": "assets/introduction-CYv5EEM2.js",
+    "name": "introduction",
+    "src": "src/components/docs/content/pages/mcp/introduction.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/mcp/supported-servers.mdx": {
+    "file": "assets/supported-servers-BbBuVNtF.js",
+    "name": "supported-servers",
+    "src": "src/components/docs/content/pages/mcp/supported-servers.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/project/status-and-scope.mdx": {
+    "file": "assets/status-and-scope-BzZQI7EN.js",
+    "name": "status-and-scope",
+    "src": "src/components/docs/content/pages/project/status-and-scope.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/quickstart.mdx": {
+    "file": "assets/quickstart-2ghxg-BK.js",
+    "name": "quickstart",
+    "src": "src/components/docs/content/pages/quickstart.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_callout-Duf6V1pM.js"
+    ]
+  },
+  "src/components/docs/content/pages/skills/overview.mdx": {
+    "file": "assets/overview-B_WJt6x92.js",
+    "name": "overview",
+    "src": "src/components/docs/content/pages/skills/overview.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/docs-page.tsx": {
+    "file": "assets/docs-page-qNcSezmk.js",
+    "name": "docs-page",
+    "src": "src/components/docs/docs-page.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_play-CLPa57Nv.js",
+      "_releases-QvOQ1vsZ.js",
+      "_dist-BseHsSUg.js",
+      "_createLucideIcon-BfuKf0ug.js",
+      "_framework-fFoLfXMa.js",
+      "_card-BSxqW4k8.js",
+      "_url-BVHvi3_K-BT8unFa0.js",
+      "_callout-Duf6V1pM.js",
+      "_i18n-DG6R1i4R.js",
+      "_navigation-CU3czgVE.js"
+    ],
+    "dynamicImports": [
+      "node_modules/fumadocs-ui/dist/components/dialog/search-default.js",
+      "src/components/docs/docs-search.tsx",
+      "src/components/docs/content/pages/architecture/backend-architecture.mdx",
+      "src/components/docs/content/pages/architecture/frontend-ui.mdx",
+      "src/components/docs/content/pages/architecture/ipc-bridge.mdx",
+      "src/components/docs/content/pages/architecture/overview.mdx",
+      "src/components/docs/content/pages/core-concepts/chat-vs-agent-mode.mdx",
+      "src/components/docs/content/pages/core-concepts/models-and-providers.mdx",
+      "src/components/docs/content/pages/core-concepts/security-and-sandbox.mdx",
+      "src/components/docs/content/pages/development/local-setup.mdx",
+      "src/components/docs/content/pages/development/project-structure.mdx",
+      "src/components/docs/content/pages/features/api-monitor.mdx",
+      "src/components/docs/content/pages/features/attachments-and-files.mdx",
+      "src/components/docs/content/pages/features/code-execution.mdx",
+      "src/components/docs/content/pages/features/deep-research.mdx",
+      "src/components/docs/content/pages/features/live-tools.mdx",
+      "src/components/docs/content/pages/features/multimodal-rag.mdx",
+      "src/components/docs/content/pages/features/recipe-studio.mdx",
+      "src/components/docs/content/pages/features/remote-access.mdx",
+      "src/components/docs/content/pages/features/voice-audio.mdx",
+      "src/components/docs/content/pages/guides/first-task.mdx",
+      "src/components/docs/content/pages/guides/performance.mdx",
+      "src/components/docs/content/pages/guides/troubleshooting.mdx",
+      "src/components/docs/content/pages/guides/workspace.mdx",
+      "src/components/docs/content/pages/index.mdx",
+      "src/components/docs/content/pages/mcp/configuration.mdx",
+      "src/components/docs/content/pages/mcp/introduction.mdx",
+      "src/components/docs/content/pages/mcp/supported-servers.mdx",
+      "src/components/docs/content/pages/project/status-and-scope.mdx",
+      "src/components/docs/content/pages/quickstart.mdx",
+      "src/components/docs/content/pages/skills/overview.mdx"
+    ],
+    "css": [
+      "assets/docs-page-BNpaJXEW.css"
+    ]
+  },
+  "src/components/docs/docs-search.tsx": {
+    "file": "assets/docs-search-JHfvb5xO.js",
+    "name": "docs-search",
+    "src": "src/components/docs/docs-search.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_search-B5P8sGru.js",
+      "_navigation-CU3czgVE.js"
+    ]
+  },
+  "src/components/landing/sparta-preview.tsx": {
+    "file": "assets/sparta-preview-CKSXy_H2.js",
+    "name": "sparta-preview",
+    "src": "src/components/landing/sparta-preview.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_sparta-mark-CU2iFNJm.js",
+      "_play-CLPa57Nv.js",
+      "_releases-QvOQ1vsZ.js",
+      "_lib-Bgnn6Xw1.js",
+      "_chunk-BO2N2NFS-uwOmNbGX.js"
+    ],
+    "dynamicImports": [
+      "node_modules/@blobatar/react/dist/index.js",
+      "node_modules/blobatar/dist/expression.js"
+    ],
+    "css": [
+      "assets/sparta-preview-C-KNbaT6.css"
+    ],
+    "assets": [
+      "assets/spartan-logo-qvz-qbG9.svg"
+    ]
+  },
+  "src/landing-page.tsx": {
+    "file": "assets/landing-page-B2PLYDCy.js",
+    "name": "landing-page",
+    "src": "src/landing-page.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_sparta-mark-CU2iFNJm.js",
+      "_releases-QvOQ1vsZ.js"
+    ],
+    "dynamicImports": [
+      "src/components/landing/sparta-preview.tsx"
+    ],
+    "css": [
+      "assets/landing-page-DBsYmOtE.css"
+    ],
+    "assets": [
+      "assets/Hellix-Regular-DWoKGW5I.woff",
+      "assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+      "assets/figtree-latin-wght-normal-D_ZTVpCC.woff2",
+      "assets/space-grotesk-latin-wght-normal-BhU9QXUp.woff2",
+      "assets/Hellix-Medium-BaJQzTxc.woff",
+      "assets/Hellix-SemiBold-ku7lU1KZ.woff2"
+    ]
+  }
+}
