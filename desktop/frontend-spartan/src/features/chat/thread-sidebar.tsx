@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -41,7 +43,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import {
   deleteChatItem,
   renameChatItem,
@@ -64,7 +66,7 @@ import { listStoredChatThreads } from "./utils/chat-history-storage";
 import { CONVERSATION_MARKDOWN_LABEL } from "./utils/conversation-markdown";
 
 const EXPORT_FORMATS = [
-  { label: "Raw JSONL", fn: exportConversationRawJsonl },
+  { get label() { return uiTranslate("ui.raw_jsonl"); }, fn: exportConversationRawJsonl },
   { label: "CSV", fn: exportConversationCsv },
   { label: "ShareGPT JSONL", fn: exportConversationShareGPT },
   { label: CONVERSATION_MARKDOWN_LABEL, fn: exportConversationMarkdown },
@@ -91,6 +93,8 @@ export function ThreadSidebar({
   onNewCompare: () => void;
   showCompare: boolean;
 }) {
+  const uiT = useUiT();
+
   const t = useT();
   const { items } = useChatSidebarItems();
   const storeThreadId = useChatRuntimeStore((s) => s.activeThreadId);
@@ -126,7 +130,7 @@ export function ThreadSidebar({
     try {
       await renameChatItem(renamingItem, renameDraft);
     } catch {
-      toast.error("Failed to rename chat.");
+      toast.error(uiTranslate("ui.failed_to_rename_chat"));
     } finally {
       setRenamingItem(null);
     }
@@ -143,7 +147,7 @@ export function ThreadSidebar({
       }
     } catch (error) {
       if (!isDownloadCancelled(error)) {
-        toast.error("Export failed.");
+        toast.error(uiTranslate("chat.menu.exportFailed"));
       }
     }
   }
@@ -164,7 +168,7 @@ export function ThreadSidebar({
     try {
       const ids = await getBulkThreadIds(scope);
       if (ids.length === 0) {
-        toast.info("No conversations to export.");
+        toast.info(uiTranslate("ui.no_conversations_to_export"));
         return;
       }
       const ts = new Date().toISOString().slice(0, 10);
@@ -176,7 +180,7 @@ export function ThreadSidebar({
       }
     } catch (error) {
       if (!isDownloadCancelled(error)) {
-        toast.error("Export failed.");
+        toast.error(uiTranslate("chat.menu.exportFailed"));
       }
     }
   }
@@ -185,8 +189,7 @@ export function ThreadSidebar({
     <>
       <SidebarHeader className="px-4 py-3">
         <span className="text-base font-semibold tracking-tight">
-          Playground
-        </span>
+          {uiT("ui.playground")}</span>
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup className="px-4 pt-1">
@@ -205,7 +208,7 @@ export function ThreadSidebar({
                     onClick={onNewCompare}
                   >
                     <HugeiconsIcon icon={ColumnInsertIcon} />
-                    <span>Compare</span>
+                    <span>{uiT("shell.navigation.compare")}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ) : null}
@@ -223,7 +226,7 @@ export function ThreadSidebar({
                 <button
                   type="button"
                   className="flex items-center justify-center rounded-sm p-0.5 text-muted-foreground hover:bg-accent focus:outline-none focus-visible:ring-0"
-                  title="Export options"
+                  title={uiT("ui.export_options")}
                 >
                   <HugeiconsIcon
                     icon={MoreHorizontalIcon}
@@ -238,8 +241,7 @@ export function ThreadSidebar({
                       icon={Download01Icon}
                       className="mr-2 size-4"
                     />
-                    Export Recents
-                  </DropdownMenuSubTrigger>
+                    {uiT("ui.export_recents")}</DropdownMenuSubTrigger>
                   <DropdownMenuSubContent
                     avoidCollisions={false}
                     className="w-52"
@@ -251,8 +253,7 @@ export function ThreadSidebar({
                           void handleBulkExport("recents", fmt, true)
                         }
                       >
-                        {label} — combined
-                      </DropdownMenuItem>
+                        {label} {" "}{uiT("ui.combined")}</DropdownMenuItem>
                     ))}
                     <DropdownMenuSeparator />
                     {EXPORT_FORMATS_LIST.map(({ fmt, label }) => (
@@ -262,8 +263,7 @@ export function ThreadSidebar({
                           void handleBulkExport("recents", fmt, false)
                         }
                       >
-                        {label} — per chat
-                      </DropdownMenuItem>
+                        {label} {" "}{uiT("ui.per_chat")}</DropdownMenuItem>
                     ))}
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
@@ -273,8 +273,7 @@ export function ThreadSidebar({
                       icon={Download01Icon}
                       className="mr-2 size-4"
                     />
-                    Export Recents + Projects
-                  </DropdownMenuSubTrigger>
+                    {uiT("ui.export_recents_projects")}</DropdownMenuSubTrigger>
                   <DropdownMenuSubContent
                     avoidCollisions={false}
                     className="w-52"
@@ -284,8 +283,7 @@ export function ThreadSidebar({
                         key={`a-m-${fmt}`}
                         onSelect={() => void handleBulkExport("all", fmt, true)}
                       >
-                        {label} — combined
-                      </DropdownMenuItem>
+                        {label} {" "}{uiT("ui.combined")}</DropdownMenuItem>
                     ))}
                     <DropdownMenuSeparator />
                     {EXPORT_FORMATS_LIST.map(({ fmt, label }) => (
@@ -295,8 +293,7 @@ export function ThreadSidebar({
                           void handleBulkExport("all", fmt, false)
                         }
                       >
-                        {label} — per chat
-                      </DropdownMenuItem>
+                        {label} {" "}{uiT("ui.per_chat")}</DropdownMenuItem>
                     ))}
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
@@ -314,10 +311,9 @@ export function ThreadSidebar({
                     {item.isFork ? (
                       <span
                         className="mr-1 rounded-sm bg-primary/10 px-1.5 py-0.5 text-ui-10 font-semibold uppercase tracking-wide text-primary"
-                        title="Forked from another chat"
+                        title={uiT("ui.forked_from_another_chat")}
                       >
-                        fork
-                      </span>
+                        {uiT("ui.fork")}</span>
                     ) : null}
                     <span>{item.title}</span>
                   </SidebarMenuButton>
@@ -332,7 +328,7 @@ export function ThreadSidebar({
                           icon={MoreHorizontalIcon}
                           className="size-4"
                         />
-                        <span className="sr-only">More options</span>
+                        <span className="sr-only">{uiT("ui.more_options")}</span>
                       </SidebarMenuAction>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
@@ -345,16 +341,14 @@ export function ThreadSidebar({
                           icon={PencilEdit02Icon}
                           className="mr-2 size-4"
                         />
-                        Rename
-                      </DropdownMenuItem>
+                        {uiT("chat.menu.rename")}</DropdownMenuItem>
                       <DropdownMenuSub>
                         <DropdownMenuSubTrigger>
                           <HugeiconsIcon
                             icon={Download01Icon}
                             className="mr-2 size-4"
                           />
-                          Export
-                        </DropdownMenuSubTrigger>
+                          {uiT("tour.export.ctaTitle")}</DropdownMenuSubTrigger>
                         <DropdownMenuSubContent
                           avoidCollisions={false}
                           className="w-52"
@@ -378,8 +372,7 @@ export function ThreadSidebar({
                           icon={Delete02Icon}
                           className="mr-2 size-4"
                         />
-                        Delete
-                      </DropdownMenuItem>
+                        {uiT("chat.menu.delete")}</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </SidebarMenuItem>
@@ -387,8 +380,7 @@ export function ThreadSidebar({
             </SidebarMenu>
             {items.length === 0 && (
               <p className="px-2 py-6 text-center text-xs text-muted-foreground">
-                No threads yet
-              </p>
+                {uiT("ui.no_threads_yet")}</p>
             )}
           </SidebarGroupContent>
         </SidebarGroup>
@@ -405,7 +397,7 @@ export function ThreadSidebar({
             className="size-4 shrink-0"
             strokeWidth={2}
           />
-          <span>Learn more in docs</span>
+          <span>{uiT("ui.learn_more_in_docs")}</span>
         </a>
         <a
           href="https://unsloth.ai/docs/new/changelog"
@@ -418,7 +410,7 @@ export function ThreadSidebar({
             className="size-4 shrink-0"
             strokeWidth={2}
           />
-          <span>What&apos;s new</span>
+          <span>{uiT("ui.what_apos_s_new")}</span>
         </a>
       </SidebarFooter>
 
@@ -433,7 +425,7 @@ export function ThreadSidebar({
       >
         <DialogContent className="corner-squircle dialog-soft-surface sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Rename chat</DialogTitle>
+            <DialogTitle>{uiT("shell.dialog.renameChat.title")}</DialogTitle>
           </DialogHeader>
           <Input
             value={renameDraft}
@@ -447,8 +439,7 @@ export function ThreadSidebar({
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setRenamingItem(null)}>
-              Cancel
-            </Button>
+              {uiT("chat.workspace.cancel")}</Button>
             <Button
               onClick={() => void commitRename()}
               disabled={
@@ -456,8 +447,7 @@ export function ThreadSidebar({
                 renameDraft.trim() === renamingItem?.title
               }
             >
-              Rename
-            </Button>
+              {uiT("chat.menu.rename")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

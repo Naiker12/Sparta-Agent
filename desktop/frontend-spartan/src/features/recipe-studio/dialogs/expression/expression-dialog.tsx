@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   Select,
   SelectContent,
@@ -27,6 +28,8 @@ export function ExpressionDialog({
   config,
   onUpdate,
 }: ExpressionDialogProps): ReactElement {
+  const uiT = useUiT();
+
   const configs = useRecipeStudioStore((state) => state.configs);
   const dtypeId = `${config.id}-dtype`;
   const exprId = `${config.id}-expr`;
@@ -57,7 +60,7 @@ export function ExpressionDialog({
       />
       <div className="grid gap-1.5">
         <FieldLabel
-          label="Output type"
+          label={uiT("ui.output_type")}
           htmlFor={dtypeId}
           hint="Choose how this formula should be stored in the final dataset."
         />
@@ -68,7 +71,7 @@ export function ExpressionDialog({
           }
         >
           <SelectTrigger className="nodrag w-full" id={dtypeId}>
-            <SelectValue placeholder="Select type" />
+            <SelectValue placeholder={uiT("ui.select_type")} />
           </SelectTrigger>
           <SelectContent>
             {DTYPE_OPTIONS.map((dtype) => (
@@ -81,7 +84,7 @@ export function ExpressionDialog({
       </div>
       <div className="grid gap-1.5">
         <FieldLabel
-          label="Formula"
+          label={uiT("ui.formula")}
           htmlFor={exprId}
           hint="Build this field from other fields."
         />
@@ -95,14 +98,14 @@ export function ExpressionDialog({
         />
         {invalidExprRefs.length > 0 && (
           <p className="text-xs text-destructive">
-            Unknown field: {invalidExprText}
+            {uiT("ui.unknown_field")}{" "}{invalidExprText}
             {invalidExprRefs.length > 3
               ? ` +${invalidExprRefs.length - 3} more`
               : ""}
           </p>
         )}
         <p className="text-xs text-muted-foreground">
-          Insert other fields like {"{{ field_name }}"}.
+          {uiT("ui.insert_other_fields_like")}{" "}{"{{ field_name }}"}.
         </p>
       </div>
     </div>

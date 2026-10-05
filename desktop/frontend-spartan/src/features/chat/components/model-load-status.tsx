@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
@@ -110,6 +111,8 @@ export function ModelLoadInlineStatus({
   stopLabel,
   onStop,
 }: ModelLoadInlineStatusProps) {
+  const uiT = useUiT();
+
   const hasProgress = typeof progressPercent === "number";
 
   return (
@@ -150,7 +153,7 @@ export function ModelLoadInlineStatus({
           className="shrink-0 text-ui-11"
           onClick={onStop}
         >
-          {stopLabel ?? "Stop"}
+          {stopLabel ?? uiT("studio.training.stopAction")}
         </Button>
       ) : null}
     </div>

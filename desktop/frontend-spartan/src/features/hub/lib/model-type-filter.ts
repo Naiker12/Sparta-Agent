@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 // Type filter for the On Device list. Mirrors the hub Discover capability
 // options and shares its detection, so both dropdowns behave the same.
 
@@ -19,12 +20,12 @@ export const MODEL_TYPE_FILTER_OPTIONS: ReadonlyArray<{
   value: ModelTypeFilter;
   label: string;
 }> = [
-  { value: "all", label: "All types" },
-  { value: "reasoning", label: "Reasoning" },
-  { value: "vision", label: "Vision" },
-  { value: "audio", label: "Audio" },
-  { value: "embedding", label: "Embeddings" },
-  { value: "diffusion", label: "Image generation" },
+  { value: "all", get label() { return uiTranslate("ui.all_types"); } },
+  { value: "reasoning", get label() { return uiTranslate("hub.filters.reasoning"); } },
+  { value: "vision", get label() { return uiTranslate("hub.filters.vision"); } },
+  { value: "audio", get label() { return uiTranslate("shell.navigation.audio"); } },
+  { value: "embedding", get label() { return uiTranslate("hub.filters.embeddings"); } },
+  { value: "diffusion", get label() { return uiTranslate("hub.filters.imageGeneration"); } },
 ];
 
 function rowName(row: CachedInventoryRow | LocalInventoryRow): string {

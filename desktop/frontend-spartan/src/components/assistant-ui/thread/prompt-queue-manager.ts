@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import {
   PROMPT_QUEUE_RUN_FAILED_EVENT,
   PROMPT_QUEUE_STOP_EVENT,
@@ -55,7 +56,7 @@ function saveQueueInBackground(run: PromptQueueRun, empty = false): void {
     if (run.persistence && run.persistence.epoch !== getAuthSessionEpoch()) return;
     if (checkpointErrors.has(run.id)) return;
     checkpointErrors.add(run.id);
-    toast.error("No se pudo guardar la cola", {
+    toast.error(uiTranslate("ui.could_not_save_the_queue"), {
       description: error instanceof Error ? error.message : "Los siguientes mensajes esperarán hasta poder guardar su estado.",
     });
   });
@@ -952,8 +953,8 @@ export function startPromptQueue(
   promptQueueRunOrder.push(run.id);
   void prepareQueuePersistence(run).catch(() => {
     if (promptQueueRuns.get(run.id) === run) {
-      toast.error("No se pudo guardar la cola", {
-        description: "Los mensajes siguen en esta sesión. Se intentará guardar antes de enviarlos.",
+      toast.error(uiTranslate("ui.could_not_save_the_queue"), {
+        get description() { return uiTranslate("ui.the_messages_are_still_in_this_session_we_will_try_to_save_them_b"); },
       });
     }
   });

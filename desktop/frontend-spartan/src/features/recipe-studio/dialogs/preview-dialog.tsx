@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -194,6 +195,8 @@ function ValidationResultPanel({
 }: {
   validateResult: ValidationResult;
 }): ReactElement | null {
+  const uiT = useUiT();
+
   if (!validateResult) {
     return null;
   }
@@ -232,12 +235,12 @@ function ValidationResultPanel({
                 : "text-destructive",
             )}
           >
-            {validateResult.valid ? "Ready to run" : "Fix these issues first"}
+            {validateResult.valid ? uiT("ui.ready_to_run") : uiT("ui.fix_these_issues_first")}
           </p>
           <p className="text-xs text-muted-foreground">
             {validateResult.valid
-              ? "Everything checks out. Start the run when you're ready."
-              : "Update the recipe, then check it again."}
+              ? uiT("ui.everything_checks_out_start_the_run_when_you_re_ready")
+              : uiT("ui.update_the_recipe_then_check_it_again")}
           </p>
         </div>
       </div>
@@ -288,6 +291,8 @@ function RunDialogBody({
   onValidate,
   onClose,
 }: RunDialogBodyProps): ReactElement {
+  const uiT = useUiT();
+
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const kindLabel = kind === "preview" ? "Test run" : "Full run";
   const normalizedFullRunName = fullRunName.trim();
@@ -328,13 +333,12 @@ function RunDialogBody({
       <DialogHeader className="space-y-2">
         <DialogTitle>{kindLabel}</DialogTitle>
         <p className="text-sm text-muted-foreground">
-          Choose a quick test or a full run. Advanced settings are optional.
-        </p>
+          {uiT("ui.choose_a_quick_test_or_a_full_run_advanced_settings_are_optional")}</p>
       </DialogHeader>
 
       <div className="grid gap-1.5">
         <FieldLabel
-          label="Run type"
+          label={uiT("ui.run_type")}
           hint="Start with a quick check or generate the full dataset."
         />
         <div className="grid grid-cols-2 gap-2">
@@ -345,8 +349,7 @@ function RunDialogBody({
             aria-pressed={kind === "preview"}
             onClick={() => onKindChange("preview")}
           >
-            Test run
-          </Button>
+            {uiT("ui.test_run")}</Button>
           <Button
             type="button"
             variant={kind === "full" ? "default" : "outline"}
@@ -354,15 +357,14 @@ function RunDialogBody({
             aria-pressed={kind === "full"}
             onClick={() => onKindChange("full")}
           >
-            Full run
-          </Button>
+            {uiT("ui.full_run")}</Button>
         </div>
       </div>
 
       {kind === "full" && (
         <div className="grid gap-1.5">
           <FieldLabel
-            label="Run name"
+            label={uiT("shell.dialog.renameRun.placeholder")}
             htmlFor="run-name"
             hint="Name shown in your run history."
           />
@@ -376,14 +378,13 @@ function RunDialogBody({
           />
           {isFullRunNameMissing ? (
             <p className="text-xs text-destructive">
-              Give this full run a name before you start.
-            </p>
+              {uiT("ui.give_this_full_run_a_name_before_you_start")}</p>
           ) : null}
         </div>
       )}
 
       <div className="grid gap-1.5">
-        <FieldLabel label="Records" htmlFor="run-rows" hint={rowHint} />
+        <FieldLabel label={uiT("ui.records")} htmlFor="run-rows" hint={rowHint} />
         <Input
           id="run-rows"
           type="text"
@@ -417,22 +418,21 @@ function RunDialogBody({
               )}
             />
             {advancedOpen
-              ? "Hide advanced run settings"
-              : "Show advanced run settings"}
+              ? uiT("ui.hide_advanced_run_settings")
+              : uiT("ui.show_advanced_run_settings")}
           </button>
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-3 space-y-4">
           {kind === "full" && (
             <AdvancedSettingsSection
-              title="Batching"
-              description="Use batches when you want to split a larger run into smaller pieces."
+              title={uiT("ui.batching")}
+              description={uiT("ui.use_batches_when_you_want_to_split_a_larger_run_into_smaller_piec")}
             >
               <div className="flex items-center justify-between gap-3 text-sm">
                 <div className="space-y-0.5">
-                  <span className="font-medium">Enable batching</span>
+                  <span className="font-medium">{uiT("ui.enable_batching")}</span>
                   <p className="text-xs text-muted-foreground">
-                    Split a larger run into smaller chunks.
-                  </p>
+                    {uiT("ui.split_a_larger_run_into_smaller_chunks")}</p>
                 </div>
                 <Switch
                   checked={settings.batchEnabled}
@@ -443,19 +443,18 @@ function RunDialogBody({
               </div>
               {rows >= 1000 && !settings.batchEnabled ? (
                 <p className="text-xs text-muted-foreground">
-                  Larger runs are usually easier to manage in batches.
-                </p>
+                  {uiT("ui.larger_runs_are_usually_easier_to_manage_in_batches")}</p>
               ) : null}
             </AdvancedSettingsSection>
           )}
           <AdvancedSettingsSection
-            title="Throughput"
-            description="Control how much work runs at the same time."
+            title={uiT("apiPage.throughput")}
+            description={uiT("ui.control_how_much_work_runs_at_the_same_time")}
           >
             <div className="grid gap-4 md:grid-cols-2">
               <DraftInputField
                 id="run-llm-parallel"
-                label="AI requests at once"
+                label={uiT("ui.ai_requests_at_once")}
                 hint="Leave empty to use each saved model's own setting."
                 inputMode="numeric"
                 value={llmParallelDraft}
@@ -480,11 +479,11 @@ function RunDialogBody({
                   onSettingsChange({ llmParallelRequests: next });
                   setLlmParallelDraft(String(next));
                 }}
-                placeholder="Use saved model setting"
+                placeholder={uiT("ui.use_saved_model_setting")}
               />
               <DraftInputField
                 id="run-non-inference-workers"
-                label="CPU workers"
+                label={uiT("ui.cpu_workers")}
                 hint="Used for steps like source data, generated fields, and formulas."
                 inputMode="numeric"
                 value={workersDraft}
@@ -504,7 +503,7 @@ function RunDialogBody({
                 <>
                   <DraftInputField
                     id="run-batch-size"
-                    label="Batch size"
+                    label={uiT("studio.progress.batchSize")}
                     hint="How many rows to generate in each batch."
                     inputMode="numeric"
                     value={batchSizeDraft}
@@ -522,10 +521,9 @@ function RunDialogBody({
                   />
                   <div className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-background/60 px-3 py-2 text-sm text-foreground">
                     <div className="space-y-0.5">
-                      <p className="font-medium">Merge batches into one file</p>
+                      <p className="font-medium">{uiT("ui.merge_batches_into_one_file")}</p>
                       <p className="text-xs text-muted-foreground">
-                        Combine every batch output into one final file.
-                      </p>
+                        {uiT("ui.combine_every_batch_output_into_one_final_file")}</p>
                     </div>
                     <Switch
                       checked={settings.mergeBatches}
@@ -539,13 +537,13 @@ function RunDialogBody({
             </div>
           </AdvancedSettingsSection>
           <AdvancedSettingsSection
-            title="Retries and recovery"
-            description="Choose how hard the run should try before it gives up."
+            title={uiT("ui.retries_and_recovery")}
+            description={uiT("ui.choose_how_hard_the_run_should_try_before_it_gives_up")}
           >
             <div className="grid gap-4 md:grid-cols-2">
               <DraftInputField
                 id="run-shutdown-window"
-                label="Failure check window"
+                label={uiT("ui.failure_check_window")}
                 hint="How many recent attempts to inspect before stopping early."
                 inputMode="numeric"
                 value={windowDraft}
@@ -563,7 +561,7 @@ function RunDialogBody({
               />
               <DraftInputField
                 id="run-shutdown-rate"
-                label="Stop after too many failures"
+                label={uiT("ui.stop_after_too_many_failures")}
                 hint="Example: 0.5 stops when about half of recent attempts fail."
                 inputMode="decimal"
                 value={shutdownRateDraft}
@@ -581,7 +579,7 @@ function RunDialogBody({
               />
               <DraftInputField
                 id="run-max-restarts"
-                label="Full retries"
+                label={uiT("ui.full_retries")}
                 hint="How many times to retry when a model answer fails checks."
                 inputMode="numeric"
                 value={restartsDraft}
@@ -600,7 +598,7 @@ function RunDialogBody({
               />
               <DraftInputField
                 id="run-correction-steps"
-                label="Correction attempts"
+                label={uiT("ui.correction_attempts")}
                 hint="How many follow-up fixes to try before starting over."
                 inputMode="numeric"
                 value={correctionsDraft}
@@ -621,11 +619,9 @@ function RunDialogBody({
               />
               <div className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-background/60 px-3 py-2 text-sm text-foreground md:col-span-2">
                 <div className="space-y-0.5">
-                  <p className="font-medium">Keep running through failures</p>
+                  <p className="font-medium">{uiT("ui.keep_running_through_failures")}</p>
                   <p className="text-xs text-muted-foreground">
-                    Useful for longer runs when you want as many rows as
-                    possible.
-                  </p>
+                    {uiT("ui.useful_for_longer_runs_when_you_want_as_many_rows_as_possible")}</p>
                 </div>
                 <Switch
                   checked={settings.disableEarlyShutdown}
@@ -652,8 +648,7 @@ function RunDialogBody({
               variant="outline"
               className="rounded-full text-ui-10 text-destructive"
             >
-              Before you run
-            </Badge>
+              {uiT("ui.before_you_run")}</Badge>
           </div>
           {errors.map((error) => (
             <p key={error} className="break-words text-xs text-destructive">
@@ -673,8 +668,7 @@ function RunDialogBody({
           disabled={loading}
           className="corner-squircle border-border/70 bg-card/70"
         >
-          Cancel
-        </Button>
+          {uiT("chat.workspace.cancel")}</Button>
         <Button
           type="button"
           variant="outline"
@@ -683,7 +677,7 @@ function RunDialogBody({
           className="corner-squircle border-border/70 bg-card/70"
         >
           <HugeiconsIcon icon={TestTube01Icon} className="size-3.5" />
-          {validateLoading ? "Checking..." : "Check recipe"}
+          {validateLoading ? uiT("settings.about.update.checking") : uiT("ui.check_recipe")}
         </Button>
         <Button
           type="button"
@@ -692,7 +686,7 @@ function RunDialogBody({
           className="corner-squircle"
         >
           <HugeiconsIcon icon={CookBookIcon} className="size-3.5" />
-          {loading ? "Starting..." : `Start ${kindLabel.toLowerCase()}`}
+          {loading ? uiT("studio.training.starting") : `Start ${kindLabel.toLowerCase()}`}
         </Button>
       </DialogFooter>
     </>

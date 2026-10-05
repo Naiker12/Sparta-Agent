@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 export const AUDIO_ACCEPT =
   "audio/wav,audio/mpeg,audio/webm,audio/ogg,audio/flac,audio/mp4";
 // Keep in sync with STT_AUDIO_RAW_MAX_BYTES in the backend upload limits.
@@ -19,7 +20,7 @@ export function fileToBase64(file: File): Promise<string> {
       const commaIndex = result.indexOf(",");
       resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
     };
-    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.onerror = () => reject(new Error(uiTranslate("studio.training.failedToReadFile")));
     reader.readAsDataURL(file);
   });
 }

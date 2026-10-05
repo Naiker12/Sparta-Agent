@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 /**
  * Sparta Agent – Sidebar Constants and Types
  *
@@ -138,7 +139,7 @@ export const CHAT_EXPORT_OPTIONS: Array<{
   label: string;
   format: ConversationExportFormat;
 }> = [
-  { label: "Raw JSONL", format: "raw-jsonl" },
+  { get label() { return uiTranslate("ui.raw_jsonl"); }, format: "raw-jsonl" },
   { label: "CSV", format: "csv" },
   { label: "ShareGPT JSONL", format: "sharegpt-jsonl" },
   { label: CONVERSATION_MARKDOWN_LABEL, format: CONVERSATION_MARKDOWN_FORMAT },

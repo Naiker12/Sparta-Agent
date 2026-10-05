@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { CookBookIcon, TestTube01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -21,6 +22,8 @@ export function RunValidateFloatingControls({
   onOpenRunDialog,
   onValidate,
 }: RunValidateFloatingControlsProps): ReactElement {
+  const uiT = useUiT();
+
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-3 z-20 flex justify-center">
       <div className="pointer-events-auto flex items-center gap-2">
@@ -31,7 +34,7 @@ export function RunValidateFloatingControls({
           disabled={runBusy}
         >
           <HugeiconsIcon icon={CookBookIcon} className="size-4" />
-          {runBusy ? "Running..." : "Run"}
+          {runBusy ? uiT("ui.running_") : uiT("settings.data.fineTuneRunAction")}
         </Button>
         <Button
           type="button"
@@ -41,7 +44,7 @@ export function RunValidateFloatingControls({
           disabled={validateLoading || executionLocked}
         >
           <HugeiconsIcon icon={TestTube01Icon} className="size-4" />
-          {validateLoading ? "Checking..." : "Check"}
+          {validateLoading ? uiT("settings.about.update.checking") : uiT("ui.check")}
         </Button>
       </div>
     </div>

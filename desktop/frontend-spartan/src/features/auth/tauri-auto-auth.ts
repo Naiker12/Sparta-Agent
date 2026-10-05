@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { isElectron, isTauri } from "@/lib/api-base";
 import { refreshSession } from "./api";
 import {
@@ -80,7 +81,7 @@ async function doTauriAutoAuth(
           await import("@tauri-apps/api/core")
         ).invoke<DesktopAuthResponse>("desktop_auth");
     if (!tokens) {
-      throw new Error("Desktop authentication bridge is unavailable");
+      throw new Error(uiTranslate("ui.desktop_authentication_bridge_is_unavailable"));
     }
     storeAuthTokens(tokens.access_token, tokens.refresh_token);
     setMustChangePassword(false);

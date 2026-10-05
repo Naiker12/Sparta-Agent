@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 /**
  * Sparta Agent – Compare Views
  *
@@ -180,6 +181,8 @@ export const LoraCompareContent = memo(function LoraCompareContent({
   onExitCompare?: () => void;
   projectId?: string | null;
 }): ReactElement {
+  const uiT = useUiT();
+
   const handlesRef = useRef<Record<string, CompareHandle>>({});
   const [baseThreadId, setBaseThreadId] = useState<string>();
   const [loraThreadId, setLoraThreadId] = useState<string>();
@@ -238,8 +241,7 @@ export const LoraCompareContent = memo(function LoraCompareContent({
           header={
             <div className="shrink-0 px-3 py-1.5">
               <span className="text-ui-10 font-semibold uppercase tracking-wider text-muted-foreground">
-                Base Model
-              </span>
+                {uiT("ui.base_model")}</span>
             </div>
           }
         />
@@ -253,8 +255,7 @@ export const LoraCompareContent = memo(function LoraCompareContent({
           header={
             <div className="shrink-0 px-3 py-1.5 text-start md:text-end md:pr-[calc(4rem+var(--studio-chat-header-right-inset,var(--studio-window-control-inset,0px)))]">
               <span className="text-ui-10 font-semibold uppercase tracking-wider text-primary">
-                Fine-tuned
-              </span>
+                {uiT("picker.fineTuned")}</span>
             </div>
           }
         />

@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   Collapsible,
   CollapsibleContent,
@@ -31,6 +32,8 @@ export function ModelProviderDialog({
   config,
   onUpdate,
 }: ModelProviderDialogProps): ReactElement {
+  const uiT = useUiT();
+
   const [optionalOpen, setOptionalOpen] = useState(false);
   const isLocal = config.is_local ?? false;
   const endpointId = `${config.id}-endpoint`;
@@ -66,14 +69,14 @@ export function ModelProviderDialog({
   return (
     <div className="space-y-4">
       <NameField
-        label="Connection name"
+        label={uiT("ui.connection_name")}
         value={config.name}
         onChange={(value) => onUpdate({ name: value })}
       />
 
       {/* Model source toggle */}
       <div className="grid gap-1.5">
-        <p className="text-sm font-semibold text-foreground">Model source</p>
+        <p className="text-sm font-semibold text-foreground">{uiT("picker.modelSourceAriaLabel")}</p>
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
@@ -93,10 +96,9 @@ export function ModelProviderDialog({
               })
             }
           >
-            <p className="text-sm font-semibold text-foreground">Local model</p>
+            <p className="text-sm font-semibold text-foreground">{uiT("studio.modelPicker.sourceLocalModel")}</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Use the model loaded in the Chat tab
-            </p>
+              {uiT("ui.use_the_model_loaded_in_the_chat_tab")}</p>
           </button>
           <button
             type="button"
@@ -108,36 +110,29 @@ export function ModelProviderDialog({
             onClick={() => onUpdate({ is_local: false })}
           >
             <p className="text-sm font-semibold text-foreground">
-              External endpoint
-            </p>
+              {uiT("ui.external_endpoint")}</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Connect to an API like OpenAI, Together, or a custom server
-            </p>
+              {uiT("ui.connect_to_an_api_like_openai_together_or_a_custom_server")}</p>
           </button>
         </div>
       </div>
       {isLocal ? (
         <div className="rounded-2xl border border-border/60 bg-muted/10 px-4 py-3">
-          <p className="text-sm font-semibold text-foreground">Ready to go</p>
+          <p className="text-sm font-semibold text-foreground">{uiT("ui.ready_to_go")}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Recipes will use whatever model is loaded in the Chat tab when you
-            hit run. No endpoint or API key needed.
-          </p>
+            {uiT("ui.recipes_will_use_whatever_model_is_loaded_in_the_chat_tab_when_yo")}</p>
         </div>
       ) : (
         <>
           <div className="rounded-2xl border border-border/60 bg-muted/10 px-4 py-3">
             <p className="text-sm font-semibold text-foreground">
-              Start with the endpoint you want this model to use
-            </p>
+              {uiT("ui.start_with_the_endpoint_you_want_this_model_to_use")}</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Most connections only need an endpoint. Add an API key if that
-              service requires one.
-            </p>
+              {uiT("ui.most_connections_only_need_an_endpoint_add_an_api_key_if_that_ser")}</p>
           </div>
           <div className="grid gap-1.5">
             <FieldLabel
-              label="Endpoint"
+              label={uiT("ui.endpoint")}
               htmlFor={endpointId}
               hint="Base URL for the model service or gateway."
             />
@@ -151,7 +146,7 @@ export function ModelProviderDialog({
           </div>
           <div className="grid gap-1.5">
             <FieldLabel
-              label="Provider type"
+              label={uiT("ui.provider_type")}
               htmlFor={providerTypeId}
               hint="SDK used for API calls. Most providers are OpenAI-compatible."
             />
@@ -173,7 +168,7 @@ export function ModelProviderDialog({
           </div>
           <div className="grid gap-1.5">
             <FieldLabel
-              label="API key (optional)"
+              label={uiT("chat.providersDialog.apiKeyOptional")}
               htmlFor={apiKeyId}
               hint="Paste a key here, or use an environment variable below."
             />
@@ -187,14 +182,14 @@ export function ModelProviderDialog({
           <Collapsible open={optionalOpen} onOpenChange={setOptionalOpen}>
             <CollapsibleTrigger asChild={true}>
               <CollapsibleSectionTriggerButton
-                label="Advanced request overrides"
+                label={uiT("ui.advanced_request_overrides")}
                 open={optionalOpen}
               />
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-3 space-y-4">
               <div className="grid gap-1.5">
                 <FieldLabel
-                  label="API key environment variable"
+                  label={uiT("ui.api_key_environment_variable")}
                   htmlFor={apiKeyEnvId}
                   hint="Name of the environment variable that stores the key."
                 />
@@ -210,7 +205,7 @@ export function ModelProviderDialog({
               </div>
               <div className="grid gap-1.5">
                 <FieldLabel
-                  label="Extra headers (JSON)"
+                  label={uiT("ui.extra_headers_json")}
                   htmlFor={extraHeadersId}
                   hint="Optional headers to send with every request."
                 />
@@ -226,7 +221,7 @@ export function ModelProviderDialog({
               </div>
               <div className="grid gap-1.5">
                 <FieldLabel
-                  label="Extra body (JSON)"
+                  label={uiT("ui.extra_body_json")}
                   htmlFor={extraBodyId}
                   hint="Optional request fields to send every time."
                 />

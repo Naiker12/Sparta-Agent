@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,6 +64,8 @@ function chatCount(n: number): string {
 }
 
 export function ManageChatsView() {
+  const uiT = useUiT();
+
   const { items } = useChatSidebarItems({ requireMessages: true });
   const { projects } = useChatProjects();
   const navigate = useNavigate();
@@ -225,7 +229,7 @@ export function ManageChatsView() {
       }
     } catch (error) {
       if (!isDownloadCancelled(error)) {
-        toast.error("Export failed.");
+        toast.error(uiTranslate("chat.menu.exportFailed"));
       }
     }
   }
@@ -233,8 +237,7 @@ export function ManageChatsView() {
   if (items.length === 0) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
-        No chats.
-      </p>
+        {uiT("ui.no_chats")}</p>
     );
   }
 
@@ -253,8 +256,8 @@ export function ManageChatsView() {
                   : false
             }
             onCheckedChange={toggleAllVisible}
-            aria-label="Select all visible chats"
-            title="Select all visible"
+            aria-label={uiT("ui.select_all_visible_chats")}
+            title={uiT("ui.select_all_visible")}
           />
           <span className="text-xs text-muted-foreground">
             {selectedCount > 0
@@ -270,16 +273,14 @@ export function ManageChatsView() {
                 strokeWidth={1.75}
                 className="size-3.5 mr-1.5"
               />
-              Move
-            </Button>
+              {uiT("ui.move")}</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
             <DropdownMenuItem
               disabled={selectedItems.every((item) => !item.projectId)}
               onSelect={() => void handleMove(null)}
             >
-              Recents
-            </DropdownMenuItem>
+              {uiT("chat.composer.recents")}</DropdownMenuItem>
             {projects.map((project) => (
               <DropdownMenuItem
                 key={project.id}
@@ -306,7 +307,7 @@ export function ManageChatsView() {
             strokeWidth={1.75}
             className="size-3.5 mr-1.5"
           />
-          {allSelectedPinned ? "Unpin" : "Pin"}
+          {allSelectedPinned ? uiT("hub.gguf.menu.unpin") : uiT("ui.pin")}
         </Button>
         <Button
           variant="outline"
@@ -319,8 +320,7 @@ export function ManageChatsView() {
             strokeWidth={1.75}
             className="size-3.5 mr-1.5"
           />
-          Archive
-        </Button>
+          {uiT("chat.menu.archive")}</Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild={true}>
             <Button variant="outline" size="sm" disabled={actionsDisabled}>
@@ -329,8 +329,7 @@ export function ManageChatsView() {
                 strokeWidth={1.75}
                 className="size-3.5 mr-1.5"
               />
-              Export
-            </Button>
+              {uiT("tour.export.ctaTitle")}</Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
             {EXPORT_FORMATS_LIST.map(({ fmt, label }) => (
@@ -338,8 +337,7 @@ export function ManageChatsView() {
                 key={`m-${fmt}`}
                 onSelect={() => void handleExport(fmt, true)}
               >
-                {label} (combined)
-              </DropdownMenuItem>
+                {label} {" "}{uiT("settings.chat.exportCombinedSuffix")}</DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
             {EXPORT_FORMATS_LIST.map(({ fmt, label }) => (
@@ -347,8 +345,7 @@ export function ManageChatsView() {
                 key={`s-${fmt}`}
                 onSelect={() => void handleExport(fmt, false)}
               >
-                {label} (per chat)
-              </DropdownMenuItem>
+                {label} {" "}{uiT("settings.chat.exportPerChatSuffix")}</DropdownMenuItem>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
@@ -364,16 +361,15 @@ export function ManageChatsView() {
             strokeWidth={1.75}
             className="size-3.5 mr-1.5"
           />
-          Delete
-        </Button>
+          {uiT("chat.menu.delete")}</Button>
       </div>
 
       <div>
         <div className="flex items-center gap-4 border-b border-border/60 px-1 pb-2 text-xs font-semibold text-foreground">
           <span className="w-4 shrink-0" />
-          <span className="flex-1">Name</span>
-          <span className="w-28 shrink-0">Project</span>
-          <span className="w-32 shrink-0">Date created</span>
+          <span className="flex-1">{uiT("projectsPage.colName")}</span>
+          <span className="w-28 shrink-0">{uiT("chat.projectSwitcher.project")}</span>
+          <span className="w-32 shrink-0">{uiT("settings.voice.recents.dateColumn")}</span>
         </div>
         {visible.map((item, index) => (
           <div
@@ -383,7 +379,7 @@ export function ManageChatsView() {
             <Checkbox
               checked={selectedIds.has(item.id)}
               onClick={(e) => toggleRow(index, e.shiftKey)}
-              aria-label={`Select "${item.title}"`}
+              aria-label={uiT("ui.select_value0", { value0: String(item.title) })}
             />
             <button
               type="button"
@@ -408,7 +404,7 @@ export function ManageChatsView() {
               size="sm"
               onClick={() => setVisibleCount(visibleCount + MANAGE_PAGE_SIZE)}
             >
-              Show more ({items.length - visibleCount})
+              {uiT("ui.show_more")}{items.length - visibleCount})
             </Button>
           </div>
         ) : null}
@@ -425,18 +421,17 @@ export function ManageChatsView() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Delete {chatCount(selectedCount)}
+              {uiT("chat.menu.delete")}{" "}{chatCount(selectedCount)}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Delete the{" "}
+              {uiT("ui.delete_the")}{" "}
               {selectedCount === 1
-                ? "selected chat"
+                ? uiT("ui.selected_chat")
                 : `${selectedCount} selected chats`}
-              ? This cannot be undone.
-            </AlertDialogDescription>
+              {uiT("ui.this_cannot_be_undone_")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{uiT("chat.workspace.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
@@ -444,8 +439,7 @@ export function ManageChatsView() {
                 void handleDelete();
               }}
             >
-              Delete
-            </AlertDialogAction>
+              {uiT("chat.menu.delete")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

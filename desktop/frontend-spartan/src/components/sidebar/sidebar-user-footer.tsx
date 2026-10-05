@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 /**
  * Sparta Agent – Sidebar Footer Component
  *
@@ -81,6 +82,8 @@ export function SidebarUserFooter({
   closeMobileIfOpen,
   onOpenShutdown,
 }: SidebarUserFooterProps): ReactElement {
+  const uiT = useUiT();
+
   const t = useT();
 
   return (
@@ -177,8 +180,7 @@ export function SidebarUserFooter({
                     {displayTitle}
                   </span>
                   <span className="truncate text-ui-11p5 tracking-nav text-muted-foreground">
-                    Sparta Agent
-                  </span>
+                    {uiT("settings.about.license.studioLabel")}</span>
                 </div>
               </button>
             </DropdownMenuTrigger>

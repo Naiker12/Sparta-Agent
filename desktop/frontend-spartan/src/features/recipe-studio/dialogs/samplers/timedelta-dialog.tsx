@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -25,6 +26,8 @@ export function TimedeltaDialog({
   datetimeOptions,
   onUpdate,
 }: TimedeltaDialogProps): ReactElement {
+  const uiT = useUiT();
+
   const dtMinId = `${config.id}-timedelta-min`;
   const dtMaxId = `${config.id}-timedelta-max`;
   const unitId = `${config.id}-timedelta-unit`;
@@ -73,7 +76,7 @@ export function TimedeltaDialog({
       </div>
       <div className="grid gap-1.5">
         <FieldLabel
-          label="Unit"
+          label={uiT("ui.unit")}
           htmlFor={unitId}
           hint="Offset unit. D/h/m/s."
         />
@@ -84,7 +87,7 @@ export function TimedeltaDialog({
           }
         >
           <SelectTrigger className="nodrag w-full" id={unitId}>
-            <SelectValue placeholder="Select unit" />
+            <SelectValue placeholder={uiT("ui.select_unit")} />
           </SelectTrigger>
           <SelectContent>
             {TIMEDELTA_UNITS.map((unit) => (
@@ -97,7 +100,7 @@ export function TimedeltaDialog({
       </div>
       <div className="grid gap-1.5">
         <FieldLabel
-          label="Reference datetime column"
+          label={uiT("ui.reference_datetime_column")}
           htmlFor={referenceId}
           hint="Datetime column used as anchor before offset."
         />
@@ -111,10 +114,10 @@ export function TimedeltaDialog({
           }
         >
           <SelectTrigger className="nodrag w-full" id={referenceId}>
-            <SelectValue placeholder="Select datetime column" />
+            <SelectValue placeholder={uiT("ui.select_datetime_column")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={NONE_VALUE}>None</SelectItem>
+            <SelectItem value={NONE_VALUE}>{uiT("studio.params.none")}</SelectItem>
             {datetimeOptions.map((name) => (
               <SelectItem key={name} value={name}>
                 {name}

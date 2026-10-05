@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { validateChatSearch } from "@/features/chat";
 import { createRoute } from "@tanstack/react-router";
 import { requireAuth } from "../auth-guards";
@@ -8,7 +9,7 @@ import { Route as rootRoute } from "./__root";
 export const Route = createRoute({
   getParentRoute: () => rootRoute,
   path: "/chat",
-  staticData: { title: "Chat" },
+  staticData: { get title() { return uiTranslate("settings.chat.title"); } },
   beforeLoad: () => requireAuth(),
   validateSearch: (search: Record<string, unknown>) =>
     validateChatSearch(search),

@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
 import type { ReactElement } from "react";
@@ -14,6 +15,8 @@ export function MarkdownNoteDialog({
   config,
   onUpdate,
 }: MarkdownNoteDialogProps): ReactElement {
+  const uiT = useUiT();
+
   const markdownId = `${config.id}-markdown`;
   const colorId = `${config.id}-note-color`;
   const opacity =
@@ -32,7 +35,7 @@ export function MarkdownNoteDialog({
       />
       <div className="grid gap-3">
         <FieldLabel
-          label="Note style"
+          label={uiT("ui.note_style")}
           htmlFor={colorId}
           hint="Pick a color and opacity for this note block."
         />
@@ -46,7 +49,7 @@ export function MarkdownNoteDialog({
           />
           <div className="flex-1 space-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">Opacity</span>
+              <span className="text-xs text-muted-foreground">{uiT("ui.opacity")}</span>
               <span className="text-xs tabular-nums text-muted-foreground">
                 {opacity}%
               </span>

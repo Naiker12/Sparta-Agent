@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   Collapsible,
   CollapsibleContent,
@@ -50,6 +51,8 @@ export function ValidatorDialog({
   config,
   onUpdate,
 }: ValidatorDialogProps): ReactElement {
+  const uiT = useUiT();
+
   const configs = useRecipeStudioStore((state) => state.configs);
   const targetColumnId = `${config.id}-target-column`;
   const oxcModeId = `${config.id}-oxc-mode`;
@@ -107,14 +110,14 @@ export function ValidatorDialog({
   return (
     <div className="space-y-4">
       <NameField
-        label="Check name"
+        label={uiT("ui.check_name")}
         hint="Name used for this check in the canvas and run results."
         value={config.name}
         onChange={(value) => onUpdate({ name: value })}
       />
       <div className="grid gap-1.5">
         <FieldLabel
-          label="Code to check"
+          label={uiT("ui.code_to_check")}
           htmlFor={targetColumnId}
           hint="Choose the AI code step this check should review."
         />
@@ -144,10 +147,10 @@ export function ValidatorDialog({
           }}
         >
           <SelectTrigger className="nodrag w-full" id={targetColumnId}>
-            <SelectValue placeholder="Select code column" />
+            <SelectValue placeholder={uiT("ui.select_code_column")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value={NONE_VALUE}>None</SelectItem>
+            <SelectItem value={NONE_VALUE}>{uiT("studio.params.none")}</SelectItem>
             {codeOptions.map((item) => (
               <SelectItem key={item.name} value={item.name}>
                 {item.name}
@@ -158,8 +161,8 @@ export function ValidatorDialog({
         {codeOptions.length === 0 && (
           <p className="text-xs text-muted-foreground">
             {config.validator_type === "oxc"
-              ? "Add an AI code step that generates JavaScript or TypeScript first."
-              : "Add an AI code step first."}
+              ? uiT("ui.add_an_ai_code_step_that_generates_javascript_or_typescript_first")
+              : uiT("ui.add_an_ai_code_step_first")}
           </p>
         )}
       </div>
@@ -167,7 +170,7 @@ export function ValidatorDialog({
         <div className="grid gap-3">
           <div className="grid gap-1.5">
             <FieldLabel
-              label="Check mode"
+              label={uiT("ui.check_mode")}
               htmlFor={oxcModeId}
               hint="Choose whether to check syntax, lint rules, or both."
             />
@@ -188,11 +191,11 @@ export function ValidatorDialog({
                 <ComboboxInput
                   id={oxcModeId}
                   className="nodrag w-full"
-                  placeholder="Select validation mode"
+                  placeholder={uiT("ui.select_validation_mode")}
                   readOnly={true}
                 />
                 <ComboboxContent anchor={oxcModeAnchorRef}>
-                  <ComboboxEmpty>No modes available</ComboboxEmpty>
+                  <ComboboxEmpty>{uiT("ui.no_modes_available")}</ComboboxEmpty>
                   <ComboboxList>
                     {(mode: string) => (
                       <ComboboxItem key={mode} value={mode}>
@@ -206,7 +209,7 @@ export function ValidatorDialog({
           </div>
           <div className="grid gap-1.5">
             <FieldLabel
-              label="Code shape"
+              label={uiT("ui.code_shape")}
               htmlFor={oxcCodeShapeId}
               hint="Choose whether the code should be treated like a full file or a smaller snippet."
             />
@@ -227,11 +230,11 @@ export function ValidatorDialog({
                 <ComboboxInput
                   id={oxcCodeShapeId}
                   className="nodrag w-full"
-                  placeholder="Select code shape"
+                  placeholder={uiT("ui.select_code_shape")}
                   readOnly={true}
                 />
                 <ComboboxContent anchor={oxcCodeShapeAnchorRef}>
-                  <ComboboxEmpty>No code-shape options</ComboboxEmpty>
+                  <ComboboxEmpty>{uiT("ui.no_code_shape_options")}</ComboboxEmpty>
                   <ComboboxList>
                     {(shape: string) => (
                       <ComboboxItem key={shape} value={shape}>
@@ -251,14 +254,14 @@ export function ValidatorDialog({
       >
         <CollapsibleTrigger asChild={true}>
           <CollapsibleSectionTriggerButton
-            label="Advanced check settings"
+            label={uiT("ui.advanced_check_settings")}
             open={advancedOpen}
           />
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-3">
           <div className="grid gap-1.5">
             <FieldLabel
-              label="Batch size"
+              label={uiT("studio.progress.batchSize")}
               htmlFor={batchSizeId}
               hint="How many records to check at a time."
             />

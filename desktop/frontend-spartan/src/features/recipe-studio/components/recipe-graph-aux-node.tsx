@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -76,6 +77,8 @@ function AuxNodeBase({
   id,
   data,
 }: NodeProps<RecipeGraphAuxNodeType>): ReactElement | null {
+  const uiT = useUiT();
+
   const config = useRecipeStudioStore((state) => state.configs[data.llmId]);
   const configs = useRecipeStudioStore((state) => state.configs);
   const updateConfig = useRecipeStudioStore((state) => state.updateConfig);
@@ -213,20 +216,19 @@ function AuxNodeBase({
           disabled={executionLocked}
           onClick={removeScore}
         >
-          Remove
-        </Button>
+          {uiT("settings.appearance.custom.importFont.remove")}</Button>
       </BaseNodeHeader>
       <BaseNodeContent className="gap-2 px-3 py-2">
         <Input
           className="nodrag h-7 w-full text-xs"
-          placeholder="Score name"
+          placeholder={uiT("ui.score_name")}
           value={score.name}
           disabled={executionLocked}
           onChange={(event) => updateScore({ name: event.target.value })}
         />
         <Textarea
           className="corner-squircle nodrag nowheel max-h-32 min-h-[56px] w-full resize-none overflow-y-auto text-xs"
-          placeholder="Score description"
+          placeholder={uiT("ui.score_description")}
           value={score.description}
           disabled={executionLocked}
           onChange={(event) => updateScore({ description: event.target.value })}
@@ -239,7 +241,7 @@ function AuxNodeBase({
             >
               <Input
                 className="nodrag h-7 text-xs"
-                placeholder="Value"
+                placeholder={uiT("ui.value")}
                 value={option.value}
                 disabled={executionLocked}
                 onChange={(event) =>
@@ -248,7 +250,7 @@ function AuxNodeBase({
               />
               <Input
                 className="nodrag h-7 text-xs"
-                placeholder="Description"
+                placeholder={uiT("ui.description")}
                 value={option.description}
                 disabled={executionLocked}
                 onChange={(event) =>
@@ -277,8 +279,7 @@ function AuxNodeBase({
             disabled={executionLocked}
             onClick={addOption}
           >
-            Add option
-          </Button>
+            {uiT("ui.add_option")}</Button>
         </div>
       </BaseNodeContent>
       {sourceHandles}

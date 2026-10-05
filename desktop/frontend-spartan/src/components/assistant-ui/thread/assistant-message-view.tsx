@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 /**
  * Sparta Agent - Vistas de Mensajes del Asistente y Usuario (assistant-message-view)
  * Renderizado integral de mensajes: burbujas de texto, editor de etiquetas (<THINK>/<TOOL>),
@@ -57,7 +58,7 @@ import {
 } from "@assistant-ui/react";
 import { FastForwardIcon, HeadphonesIcon, RefreshCwIcon } from "lucide-react";
 import { type FC, useEffect, useRef } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import {
   AssistantActionBar,
   BranchPicker,
@@ -298,6 +299,8 @@ export const ASSISTANT_PART_COMPONENTS = {
 } as const;
 
 export const DiffusionCanvas: FC = () => {
+  const uiT = useUiT();
+
   const isRunning = useAuiState(
     ({ message }) => message.status?.type === "running",
   );
@@ -315,9 +318,9 @@ export const DiffusionCanvas: FC = () => {
     <div className="aui-diffusion-canvas my-1.5 overflow-hidden rounded-lg border border-primary/20 bg-primary/[0.03]">
       <div className="flex items-center gap-2 border-b border-primary/10 px-3 py-1.5 text-ui-11 font-medium text-primary/80">
         <span className="inline-block size-1.5 animate-pulse rounded-full bg-primary" />
-        <span>Denoising</span>
+        <span>{uiT("chat.timing.denoising")}</span>
         <span className="opacity-60">
-          block {canvas.block + 1} - {stepLabel}
+          {uiT("ui.block")}{" "}{canvas.block + 1} - {stepLabel}
         </span>
       </div>
       <pre className="max-h-[60dvh] overflow-auto whitespace-pre-wrap px-3 py-2 font-mono text-ui-12p5 leading-relaxed text-foreground/90">
@@ -328,6 +331,8 @@ export const DiffusionCanvas: FC = () => {
 };
 
 export const AssistantMessage: FC = () => {
+  const uiT = useUiT();
+
   const t = useT();
   const aui = useAui();
   const focusReveal = useActionBarFocusReveal();
@@ -467,7 +472,7 @@ export const AssistantMessage: FC = () => {
 
       <span
         className="aui-assistant-reveal-sentinel"
-        aria-label="Message actions"
+        aria-label={uiT("ui.message_actions")}
       />
     </MessagePrimitive.Root>
   );

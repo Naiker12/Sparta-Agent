@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { FileUpIcon } from "lucide-react";
 import type { NativeModelDropState } from "../use-native-drop";
@@ -8,7 +9,7 @@ function overlayCopy(state: NativeModelDropState): {
 } {
   if (state.status === "invalid") {
     return {
-      title: "Can't use these files",
+      get title() { return uiTranslate("ui.can_t_use_these_files"); },
       description:
         state.reason ?? "Drop a .gguf model, or documents to chat with.",
     };
@@ -41,19 +42,19 @@ function overlayCopy(state: NativeModelDropState): {
   }
   if (state.status === "valid" && state.action === "replace") {
     return {
-      title: "Drop to replace model",
-      description: "Current model will unload first.",
+      get title() { return uiTranslate("ui.drop_to_replace_model"); },
+      get description() { return uiTranslate("ui.current_model_will_unload_first"); },
     };
   }
   if (state.status === "valid" && state.action === "load") {
     return {
-      title: "Drop to load model",
-      description: "Adds it as the active chat model.",
+      get title() { return uiTranslate("ui.drop_to_load_model"); },
+      get description() { return uiTranslate("ui.adds_it_as_the_active_chat_model"); },
     };
   }
   return {
-    title: "Drop to add model chip",
-    description: "Review it before loading.",
+    get title() { return uiTranslate("ui.drop_to_add_model_chip"); },
+    get description() { return uiTranslate("ui.review_it_before_loading"); },
   };
 }
 

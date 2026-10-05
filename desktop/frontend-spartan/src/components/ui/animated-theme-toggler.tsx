@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Moon, Sun } from "lucide-react"
@@ -95,6 +96,8 @@ export const AnimatedThemeToggler = ({
   duration = 400,
   ...props
 }: AnimatedThemeTogglerProps) => {
+  const uiT = useUiT();
+
   const { isDark, toggleTheme, anchorRef } = useAnimatedThemeToggle(duration)
 
   return (
@@ -107,7 +110,7 @@ export const AnimatedThemeToggler = ({
       {...props}
     >
       {isDark ? <Sun /> : <Moon />}
-      <span className="sr-only">Toggle theme</span>
+      <span className="sr-only">{uiT("ui.toggle_theme")}</span>
     </button>
   )
 }

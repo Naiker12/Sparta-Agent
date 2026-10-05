@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 /**
  * Sparta Agent – Shared Composer UI Helpers
  *
@@ -89,7 +91,7 @@ export function fileToBase64DataURL(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result as string);
-    reader.onerror = () => reject(new Error("Failed to read image file"));
+    reader.onerror = () => reject(new Error(uiTranslate("ui.failed_to_read_image_file")));
     reader.readAsDataURL(file);
   });
 }
@@ -112,6 +114,8 @@ export function PendingImageThumb({
   file: File;
   onRemove: () => void;
 }): ReactElement {
+  const uiT = useUiT();
+
   const [src, setSrc] = useState<string | null>(null);
   useEffect(() => {
     const url = URL.createObjectURL(file);
@@ -128,7 +132,7 @@ export function PendingImageThumb({
         type="button"
         onClick={onRemove}
         className="absolute top-1 right-1 flex size-5 items-center justify-center rounded-full bg-white text-muted-foreground shadow-sm hover:bg-destructive hover:text-destructive-foreground"
-        aria-label="Remove attachment"
+        aria-label={uiT("ui.remove_attachment")}
       >
         <XIcon className="size-3" />
       </button>

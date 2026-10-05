@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Spinner } from "@/components/ui/spinner";
 import {
   consumeNativePathToken,
@@ -67,6 +68,8 @@ export function UnstructuredDropZone({
   onFilesChange,
   disabled,
 }: UnstructuredDropZoneProps) {
+  const uiT = useUiT();
+
   const inputRef = useRef<HTMLInputElement>(null);
   const filesRef = useRef(files);
   const blockIdRef = useRef(blockId);
@@ -289,12 +292,10 @@ export function UnstructuredDropZone({
           className="text-muted-foreground mb-2 size-8"
         />
         <p className="text-muted-foreground text-sm">
-          Drop files here or click to browse
-        </p>
+          {uiT("ui.drop_files_here_or_click_to_browse")}</p>
         <p className="text-muted-foreground/60 mt-1 text-xs">
-          PDF, DOCX, TXT, MD - up to {UNSTRUCTURED_RECIPE_UPLOAD_MAX_LABEL}{" "}
-          each, {UNSTRUCTURED_RECIPE_UPLOAD_TOTAL_MAX_LABEL} total
-        </p>
+          {uiT("ui.pdf_docx_txt_md_up_to")}{" "}{UNSTRUCTURED_RECIPE_UPLOAD_MAX_LABEL}{" "}
+          {uiT("ui.each")}{" "}{UNSTRUCTURED_RECIPE_UPLOAD_TOTAL_MAX_LABEL} {" "}{uiT("ui.total_")}</p>
       </div>
 
       <input
@@ -349,9 +350,8 @@ export function UnstructuredDropZone({
           ))}
           <div className="text-muted-foreground flex justify-between px-1 text-xs">
             <span>
-              {successFiles.length} file{successFiles.length !== 1 ? "s" : ""}{" "}
-              uploaded
-            </span>
+              {successFiles.length} {" "}{uiT("ui.file")}{successFiles.length !== 1 ? "s" : ""}{" "}
+              {uiT("ui.uploaded")}</span>
             <span>
               {formatSize(totalSize)} /{" "}
               {UNSTRUCTURED_RECIPE_UPLOAD_TOTAL_MAX_LABEL}

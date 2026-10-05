@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 "use client";
 
 import {
@@ -214,6 +216,8 @@ function ModelSelectorTrigger({
   onEject?: () => void;
   placeholder?: string;
 }) {
+  const uiT = useUiT();
+
   return (
     <PopoverTrigger asChild={true}>
       <button
@@ -244,7 +248,7 @@ function ModelSelectorTrigger({
             // pointer-events-none disables it so taps open the picker instead.
             <span
               aria-hidden={true}
-              title="Eject model"
+              title={uiT("picker.ejectModel")}
               data-eject-hit={true}
               onPointerDown={(event) => event.stopPropagation()}
               onClick={(event) => {
@@ -350,12 +354,12 @@ const _HUB_SECTION_TABS: { value: string; label: string; icon?: ReactNode }[] =
   [
     {
       value: "recommended",
-      label: "Recommended",
+      get label() { return uiTranslate("settings.agents.recommended"); },
       icon: <HugeiconsIcon icon={StarIcon} className="size-3.5 shrink-0" />,
     },
     {
       value: "downloaded",
-      label: "On Device",
+      get label() { return uiTranslate("picker.onDevice"); },
       icon: (
         <HugeiconsIcon icon={Download01Icon} className="size-3.5 shrink-0" />
       ),

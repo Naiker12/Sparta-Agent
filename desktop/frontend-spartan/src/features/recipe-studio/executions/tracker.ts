@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { bumpInventoryVersion } from "@/features/hub";
 import { toastError, toastSuccess } from "@/shared/toast";
 import {
@@ -328,7 +329,7 @@ export async function trackRecipeExecution({
         onPreviewSuccess?.();
         toastSuccess(`Preview generated (${rows} rows).`);
       } else {
-        toastSuccess("Full run completed.");
+        toastSuccess(uiTranslate("ui.full_run_completed"));
       }
     }
     return { success: true, terminal: true };

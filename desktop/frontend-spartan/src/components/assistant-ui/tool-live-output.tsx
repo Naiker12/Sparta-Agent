@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 "use client";
 
 import { useToolOutputFor, useToolPaneScope } from "@/features/chat";
@@ -23,6 +24,8 @@ export function ToolLiveOutput({ toolCallId }: { toolCallId: string }) {
 
 /** Presentational production pane, exported so browser smoke tests this exact path. */
 export function ToolLiveOutputPane({ output }: { output: string }) {
+  const uiT = useUiT();
+
   const scrollRef = useRef<HTMLPreElement>(null);
   // Pinned to the bottom until the user scrolls up (handler below), so
   // streaming chunks no longer yank them down.
@@ -53,7 +56,7 @@ export function ToolLiveOutputPane({ output }: { output: string }) {
 
   return (
     <div className="aui-tool-live-output mt-2 border-t border-dashed pt-2">
-      <span className="text-xs font-medium text-muted-foreground">output</span>
+      <span className="text-xs font-medium text-muted-foreground">{uiT("chat.tools.output")}</span>
       <pre
         ref={scrollRef}
         onScroll={handleScroll}

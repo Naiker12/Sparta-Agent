@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import {
   SANDBOX_FILE_TOOLS,
   type SandboxFile,
@@ -311,7 +312,7 @@ export function createOpenAIStreamAdapter(
       // another chat's tools and permission level is not.
       if (!(await awaitThreadScopedPairing(runThreadId))) {
         throw new Error(
-          "This chat's settings could not be loaded, so the message was not sent. Reopen the chat and try again.",
+          uiTranslate("ui.this_chat_s_settings_could_not_be_loaded_so_the_message_was_not_s"),
         );
       }
       let runtime = useChatRuntimeStore.getState();
@@ -370,7 +371,7 @@ export function createOpenAIStreamAdapter(
         (options.modelType === undefined || options.modelType === "base")
       ) {
         if (runtime.modelLoading) {
-          toast.info("Waiting for model to finish loading…");
+          toast.info(uiTranslate("ui.waiting_for_model_to_finish_loading"));
           await waitForModelReady(abortSignal);
         }
         if (!runtime.params.checkpoint) {
@@ -385,7 +386,7 @@ export function createOpenAIStreamAdapter(
               toast.error(
                 resolution.blockedByTrustRemoteCode
                   ? "This model needs custom code approval"
-                  : "No model loaded",
+                  : uiTranslate("apiPage.overlay.noModelLoaded"),
                 {
                   description: resolution.blockedByTrustRemoteCode
                     ? "Select it from the top bar to review and approve its custom code, or pick another model."
@@ -393,7 +394,7 @@ export function createOpenAIStreamAdapter(
                 },
               );
             }
-            throw new Error("Load a model first.");
+            throw new Error(uiTranslate("ui.load_a_model_first"));
           }
         }
         const liveRuntime = useChatRuntimeStore.getState();
@@ -445,18 +446,18 @@ export function createOpenAIStreamAdapter(
               }
           : liveRuntime;
         if (!resolvedThreadId) {
-          throw new Error("Research requires a saved chat.");
+          throw new Error(uiTranslate("ui.research_requires_a_saved_chat"));
         }
         if (!unstable_assistantMessageId) {
           throw new Error(
-            "Deep research could not bind its assistant message. Please retry the send.",
+            uiTranslate("ui.deep_research_could_not_bind_its_assistant_message_please_retry_t"),
           );
         }
         const userMessage = [...messages]
           .reverse()
           .find((m) => m.role === "user");
         if (!userMessage) {
-          throw new Error("Research requires a user message.");
+          throw new Error(uiTranslate("ui.research_requires_a_user_message"));
         }
         const userMessageIndex = messages.indexOf(userMessage);
         const userMessageParentId =
@@ -481,7 +482,7 @@ export function createOpenAIStreamAdapter(
             ) !== true)
         ) {
           throw new Error(
-            "Deep research requires a selected local model or a connection whose provider supports Studio tools.",
+            uiTranslate("ui.deep_research_requires_a_selected_local_model_or_a_connection_who"),
           );
         }
         const reasoningRequested =
@@ -696,7 +697,7 @@ export function createOpenAIStreamAdapter(
       };
       // Wait for in-progress model load before inferring.
       if (runtime.modelLoading) {
-        toast.info("Waiting for model to finish loading…");
+        toast.info(uiTranslate("ui.waiting_for_model_to_finish_loading"));
         try {
           await waitForModelReady(abortSignal);
         } catch (error) {
@@ -722,7 +723,7 @@ export function createOpenAIStreamAdapter(
             toast.error(
               resolution.blockedByTrustRemoteCode
                 ? "This model needs custom code approval"
-                : "No model loaded",
+                : uiTranslate("apiPage.overlay.noModelLoaded"),
               {
                 description: resolution.blockedByTrustRemoteCode
                   ? "Select it from the top bar to review and approve its custom code, or pick another model."
@@ -731,7 +732,7 @@ export function createOpenAIStreamAdapter(
             );
           }
           clearSelectedImageEditReference();
-          throw new Error("Load a model first.");
+          throw new Error(uiTranslate("ui.load_a_model_first"));
         }
       }
 
@@ -832,12 +833,11 @@ export function createOpenAIStreamAdapter(
         isExternalRequest &&
         !useExternalProvidersStore.getState().connectionsEnabled
       ) {
-        toast.error("Connections are disabled.", {
-          description:
-            "Turn on Enable connections in Settings → Connections to use hosted models.",
+        toast.error(uiTranslate("ui.connections_are_disabled"), {
+          get description() { return uiTranslate("ui.turn_on_enable_connections_in_settings_connections_to_use_hosted_"); },
         });
         clearSelectedImageEditReference();
-        throw new Error("Connections disabled.");
+        throw new Error(uiTranslate("ui.connections_disabled"));
       }
       const externalProvider = isExternalRequest
         ? loadExternalProviders().find(
@@ -863,11 +863,11 @@ export function createOpenAIStreamAdapter(
           : "";
 
       if (isExternalRequest && !externalProvider) {
-        toast.error("Connection not found.", {
-          description: "Open Settings → Connections and add it again.",
+        toast.error(uiTranslate("chat.providersDialog.connectionNotFound"), {
+          get description() { return uiTranslate("ui.open_settings_connections_and_add_it_again"); },
         });
         clearSelectedImageEditReference();
-        throw new Error("Connection not found.");
+        throw new Error(uiTranslate("chat.providersDialog.connectionNotFound"));
       }
       // Local providers and custom Gemini bases allow an empty key.
       const externalProviderIsCustom = externalProvider
@@ -889,11 +889,11 @@ export function createOpenAIStreamAdapter(
         !externalProviderIsCustom &&
         !externalProviderIsGeminiCustomBase
       ) {
-        toast.error("Missing API key for selected connection.", {
-          description: "Open Settings → Connections and set the API key again.",
+        toast.error(uiTranslate("ui.missing_api_key_for_selected_connection"), {
+          get description() { return uiTranslate("ui.open_settings_connections_and_set_the_api_key_again"); },
         });
         clearSelectedImageEditReference();
-        throw new Error("Missing connection API key.");
+        throw new Error(uiTranslate("ui.missing_connection_api_key"));
       }
 
       // Image-generation flag (OpenAI cloud + Responses-capable model);
@@ -964,11 +964,10 @@ export function createOpenAIStreamAdapter(
 
       if (selectedImageEditReference && !imageGenerationEnabledForThisTurn) {
         clearSelectedImageEditReference();
-        toast.error("Image editing is unavailable", {
-          description:
-            "Select an OpenAI image-generation model, then retry the edit.",
+        toast.error(uiTranslate("ui.image_editing_is_unavailable"), {
+          get description() { return uiTranslate("ui.select_an_openai_image_generation_model_then_retry_the_edit"); },
         });
-        throw new Error("Image generation edit unavailable.");
+        throw new Error(uiTranslate("ui.image_generation_edit_unavailable"));
       }
 
       // Drop refused assistant turns + their triggering user prompt;
@@ -999,11 +998,10 @@ export function createOpenAIStreamAdapter(
         );
         if (!referenceMessage) {
           clearSelectedImageEditReference();
-          toast.error("This generated image cannot be edited", {
-            description:
-              "The original image reference is missing. Generate the image again, then retry the edit.",
+          toast.error(uiTranslate("ui.this_generated_image_cannot_be_edited"), {
+            get description() { return uiTranslate("ui.the_original_image_reference_is_missing_generate_the_image_again_"); },
           });
-          throw new Error("Generated image edit reference missing.");
+          throw new Error(uiTranslate("ui.generated_image_edit_reference_missing"));
         }
         let insertAt = outboundMessages.length;
         for (let i = outboundMessages.length - 1; i >= 0; i -= 1) {
@@ -1295,7 +1293,7 @@ export function createOpenAIStreamAdapter(
           };
         } catch (err) {
           if (!runSignal.aborted) {
-            toast.error("Audio generation failed", {
+            toast.error(uiTranslate("ui.audio_generation_failed"), {
               description: err instanceof Error ? err.message : "Unknown error",
             });
           }
@@ -3367,12 +3365,12 @@ export function createOpenAIStreamAdapter(
         };
       } catch (err) {
         settleFirstTokenErr(
-          err instanceof Error ? err : new Error("Generation failed"),
+          err instanceof Error ? err : new Error(uiTranslate("ui.generation_failed")),
         );
         if (!runSignal.aborted) {
           const msg = err instanceof Error ? err.message : String(err);
           if (err instanceof GenerationLengthError) {
-            toast.error("Response ran out of tokens", {
+            toast.error(uiTranslate("ui.response_ran_out_of_tokens"), {
               description:
                 "The model used the full Max Tokens budget while thinking " +
                 "and did not produce a final answer. Increase Max Tokens in " +
@@ -3382,7 +3380,7 @@ export function createOpenAIStreamAdapter(
           } else if (err instanceof StreamInterruptedError) {
             // Connection dropped mid-turn: surface it explicitly (the rethrow
             // below also marks the message with an inline error + Retry).
-            toast.error("Response interrupted", {
+            toast.error(uiTranslate("chat.actions.incompleteInterrupted"), {
               description:
                 "The connection dropped before the model finished. " +
                 "The partial answer is kept. Use Retry to regenerate.",
@@ -3392,7 +3390,7 @@ export function createOpenAIStreamAdapter(
             // llama-server runs with --no-context-shift, returning a hard
             // error instead of silently dropping old KV-cache turns. Point
             // the user at the control that raises the ceiling.
-            toast.error("Context limit reached", {
+            toast.error(uiTranslate("ui.context_limit_reached"), {
               description:
                 "The conversation has filled the model's context window. " +
                 'Increase "Context Length" in the chat Settings panel (⚙ in the top-right), ' +
@@ -3400,7 +3398,7 @@ export function createOpenAIStreamAdapter(
               duration: 8000,
             });
           } else {
-            toast.error("Generation failed", {
+            toast.error(uiTranslate("ui.generation_failed"), {
               description: msg || "Unknown error",
             });
           }
@@ -3472,9 +3470,9 @@ export function createOpenAIStreamAdapter(
           if (firstTokenSettled) {
             settleFirstTokenOk();
           } else if (runSignal.aborted) {
-            settleFirstTokenErr(new Error("Cancelled"));
+            settleFirstTokenErr(new Error(uiTranslate("apiPage.filterCancelled")));
           } else {
-            settleFirstTokenErr(new Error("No tokens received"));
+            settleFirstTokenErr(new Error(uiTranslate("ui.no_tokens_received")));
           }
         }
         // serverCancel narrows both clears: runs with no resolved thread id share the "__default"

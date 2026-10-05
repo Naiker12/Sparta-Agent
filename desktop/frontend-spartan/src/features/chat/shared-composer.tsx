@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import {
   thinkEffortAriaLabel,
   thinkToggleAriaLabel,
@@ -176,6 +178,8 @@ export function SharedComposer({
   model1ThreadId?: string;
   model2ThreadId?: string;
 }): ReactElement {
+  const uiT = useUiT();
+
   const t = useT();
   const navigate = useNavigate();
   // Exit compare: parent's restore handler, or fresh chat if opened by URL.
@@ -576,9 +580,8 @@ export function SharedComposer({
     // true only in GeneralCompareContent, so LoraCompare and single-pane
     // chats are unaffected.
     if (hasCompareHandles && !isGeneralizedCompare) {
-      toast.error("Pick a model in each pane to compare", {
-        description:
-          "Use the model dropdown above each pane, then send your prompt.",
+      toast.error(uiTranslate("ui.pick_a_model_in_each_pane_to_compare"), {
+        get description() { return uiTranslate("ui.use_the_model_dropdown_above_each_pane_then_send_your_prompt"); },
       });
       resetPromptQueue();
       return;
@@ -591,11 +594,10 @@ export function SharedComposer({
       currentProviders.length === 0 &&
       !isGeneralizedCompare
     ) {
-      toast.error("No hay proveedor conectado", {
-        description:
-          "Por favor, conecta un proveedor de IA para comenzar a chatear.",
+      toast.error(uiTranslate("ui.no_provider_connected"), {
+        get description() { return uiTranslate("ui.please_connect_an_ai_provider_to_start_chatting"); },
         action: {
-          label: "Conectar proveedor",
+          get label() { return uiTranslate("ui.connect_provider"); },
           onClick: () => {
             useSettingsDialogStore.getState().openDialog("connections");
           },
@@ -651,8 +653,8 @@ export function SharedComposer({
         .getState()
         .beginModelLoading();
       if (compareLifecycleLease === null) {
-        toast.info("A model is loading", {
-          description: "Wait for it to finish or cancel it first.",
+        toast.info(uiTranslate("ui.a_model_is_loading"), {
+          get description() { return uiTranslate("ui.wait_for_it_to_finish_or_cancel_it_first"); },
         });
         resetPromptQueue();
         return;
@@ -673,7 +675,7 @@ export function SharedComposer({
         .getState()
         .beginModelLoading();
       if (compareLifecycleLease === null) {
-        throw new Error("Another model load started during comparison");
+        throw new Error(uiTranslate("ui.another_model_load_started_during_comparison"));
       }
     };
     const submittedDraftIsCurrent = () =>
@@ -683,8 +685,8 @@ export function SharedComposer({
     const keepChangedDraft = () => {
       releaseCompareModelLifecycle();
       resetPromptQueue();
-      toast.info("Message changed while preparing", {
-        description: "Your updated draft was kept. Send it again when ready.",
+      toast.info(uiTranslate("ui.message_changed_while_preparing"), {
+        get description() { return uiTranslate("ui.your_updated_draft_was_kept_send_it_again_when_ready"); },
       });
     };
     const clearSubmittedDraft = () => {
@@ -705,7 +707,7 @@ export function SharedComposer({
       } catch (error) {
         releaseCompareModelLifecycle();
         resetPromptQueue();
-        toast.error("Compare failed", {
+        toast.error(uiTranslate("ui.compare_failed"), {
           description: error instanceof Error ? error.message : "Unknown error",
         });
         return;
@@ -740,7 +742,7 @@ export function SharedComposer({
       } catch (error) {
         releaseCompareModelLifecycle();
         resetPromptQueue();
-        toast.error("Compare failed", {
+        toast.error(uiTranslate("ui.compare_failed"), {
           description: error instanceof Error ? error.message : "Unknown error",
         });
         return;
@@ -816,7 +818,7 @@ export function SharedComposer({
             currentStore.hfToken,
           );
           if (!preparedToken.proceed) {
-            throw new Error("Model load cancelled.");
+            throw new Error(uiTranslate("ui.model_load_cancelled"));
           }
           const staged = await fetchGgufStagedMetadata({
             model_path: sel.id,
@@ -1254,7 +1256,7 @@ export function SharedComposer({
 
       const name1 = model1?.id ? compareModelDisplayName(model1.id) : "";
       const name2 = model2?.id ? compareModelDisplayName(model2.id) : "";
-      const toastId = toast("Comparing models…", {
+      const toastId = toast(uiTranslate("ui.comparing_models"), {
         duration: Number.POSITIVE_INFINITY,
       });
 
@@ -1262,14 +1264,14 @@ export function SharedComposer({
       try {
         // Side 1: load → generate → wait
         if (handle1 && model1?.id) {
-          toast("Loading Model 1…", {
+          toast(uiTranslate("ui.loading_model_1"), {
             id: toastId,
             description: name1,
             duration: Number.POSITIVE_INFINITY,
           });
           const status1 = await ensureModelLoaded(model1);
           releaseCompareModelLifecycle();
-          toast("Generating with Model 1…", {
+          toast(uiTranslate("ui.generating_with_model_1"), {
             id: toastId,
             description: `${name1} (${status1})`,
             duration: Number.POSITIVE_INFINITY,
@@ -1289,10 +1291,10 @@ export function SharedComposer({
               "reload",
             );
             if (!currentStopDecision.proceed) {
-              throw new Error("Second comparison model load cancelled.");
+              throw new Error(uiTranslate("ui.second_comparison_model_load_cancelled"));
             }
             compareStopDecision = currentStopDecision;
-            toast("Loading Model 2…", {
+            toast(uiTranslate("ui.loading_model_2"), {
               id: toastId,
               description: name2,
               duration: Number.POSITIVE_INFINITY,
@@ -1300,7 +1302,7 @@ export function SharedComposer({
           }
           const status2 = await ensureModelLoaded(model2);
           releaseCompareModelLifecycle();
-          toast("Generating with Model 2…", {
+          toast(uiTranslate("ui.generating_with_model_2"), {
             id: toastId,
             description: `${name2} (${status2})`,
             duration: Number.POSITIVE_INFINITY,
@@ -1311,7 +1313,7 @@ export function SharedComposer({
         }
 
         compareStepSucceededRef.current = true;
-        toast.success("Compare complete", { id: toastId, duration: 2000 });
+        toast.success(uiTranslate("ui.compare_complete"), { id: toastId, duration: 2000 });
       } catch (err) {
         compareStepSucceededRef.current = false;
         resetPromptQueue();
@@ -1320,7 +1322,7 @@ export function SharedComposer({
         if (upgradeUnloadedActive) {
           useChatRuntimeStore.getState().clearCheckpoint();
         }
-        toast.error("Compare failed", {
+        toast.error(uiTranslate("ui.compare_failed"), {
           id: toastId,
           description: err instanceof Error ? err.message : "Unknown error",
           duration: 4000,
@@ -1430,9 +1432,8 @@ export function SharedComposer({
           const isGeneralizedCompare =
             hasCompareHandles && Boolean(model1?.id && model2?.id);
           if (hasCompareHandles && !isGeneralizedCompare) {
-            toast.error("Pick a model in each pane to compare", {
-              description:
-                "Use the model dropdown above each pane, then send your prompt.",
+            toast.error(uiTranslate("ui.pick_a_model_in_each_pane_to_compare"), {
+              get description() { return uiTranslate("ui.use_the_model_dropdown_above_each_pane_then_send_your_prompt"); },
             });
             return;
           }
@@ -1450,8 +1451,7 @@ export function SharedComposer({
           className="size-6 text-primary"
         />
         <span className="text-sm font-medium text-primary">
-          Drop files here
-        </span>
+          {uiT("ui.drop_files_here")}</span>
       </div>
       {(pendingImages.length > 0 || pendingAudio) && (
         <div className="mb-2 flex w-full flex-row flex-wrap items-center gap-2 px-1.5 pt-0.5 pb-1">
@@ -1470,7 +1470,7 @@ export function SharedComposer({
                 type="button"
                 onClick={removePendingAudio}
                 className="flex size-4 items-center justify-center rounded-full hover:bg-destructive hover:text-destructive-foreground"
-                aria-label="Remove audio"
+                aria-label={uiT("ui.remove_audio")}
               >
                 <XIcon className="size-3" />
               </button>
@@ -1509,7 +1509,7 @@ export function SharedComposer({
           // commits or cancels composition before the element loses focus.
           setCompositionState(false);
         }}
-        placeholder="Send to both models..."
+        placeholder={uiT("ui.send_to_both_models")}
         className="composer-input"
         rows={1}
         // dir="auto" detects RTL (Arabic/Hebrew/Persian/Urdu) from the first
@@ -1594,7 +1594,7 @@ export function SharedComposer({
             className="composer-pill-btn"
             data-active="true"
             data-keep-label="true"
-            aria-label="Exit compare chat"
+            aria-label={uiT("ui.exit_compare_chat")}
           >
             <PillGlyph>
               <Columns2Icon className="size-[14px]" />
@@ -1620,7 +1620,7 @@ export function SharedComposer({
             data-pill-label={t("chat.composer.searchPill")}
             data-active={toolsEnabled && !searchDisabled ? "true" : "false"}
             aria-label={
-              toolsEnabled ? "Disable web search" : "Enable web search"
+              toolsEnabled ? uiT("ui.disable_web_search") : uiT("ui.enable_web_search")
             }
           >
             <PillGlyph>
@@ -1637,8 +1637,8 @@ export function SharedComposer({
             data-active={codeToolsEnabled && !codeDisabled ? "true" : "false"}
             aria-label={
               codeToolsEnabled
-                ? "Disable code execution"
-                : "Enable code execution"
+                ? uiT("ui.disable_code_execution")
+                : uiT("ui.enable_code_execution")
             }
           >
             <PillGlyph>
@@ -1662,8 +1662,8 @@ export function SharedComposer({
               }
               aria-label={
                 imageToolsEnabled
-                  ? "Disable image generation"
-                  : "Enable image generation"
+                  ? uiT("ui.disable_image_generation")
+                  : uiT("ui.enable_image_generation")
               }
             >
               <PillGlyph>
@@ -1673,7 +1673,7 @@ export function SharedComposer({
                   strokeWidth={2}
                 />
               </PillGlyph>
-              <span>Images</span>
+              <span>{uiT("chat.composer.imagesPill")}</span>
             </button>
           )}
           {showWebFetchPill && (
@@ -1688,14 +1688,14 @@ export function SharedComposer({
               }
               aria-label={
                 webFetchToolsEnabled
-                  ? "Disable URL fetch"
-                  : "Enable URL fetch"
+                  ? uiT("ui.disable_url_fetch")
+                  : uiT("ui.enable_url_fetch")
               }
             >
               <PillGlyph>
                 <HugeiconsIcon icon={Download01Icon} className="size-3.5" />
               </PillGlyph>
-              <span>Fetch</span>
+              <span>{uiT("ui.fetch")}</span>
             </button>
           )}
           {artifactsEnabled ? (
@@ -1705,7 +1705,7 @@ export function SharedComposer({
               className="composer-pill-btn"
               data-pill-label="Canvas"
               data-active="true"
-              aria-label="Disable canvas"
+              aria-label={uiT("ui.disable_canvas")}
             >
               <PillGlyph>
                 <HugeiconsIcon
@@ -1714,7 +1714,7 @@ export function SharedComposer({
                   strokeWidth={2}
                 />
               </PillGlyph>
-              <span>Canvas</span>
+              <span>{uiT("chat.timing.canvas")}</span>
             </button>
           ) : null}
           {mcpEnabledForChat ? <McpComposerButton side="top" /> : null}
@@ -1746,7 +1746,7 @@ export function SharedComposer({
                               reasoningEffort,
                               externalSelection?.modelId,
                             )}`
-                          : "Thinking"}
+                          : uiT("chat.reasoning.thinking")}
                       </span>
                     ) : null}
                     <ArrowDownStandardIcon className="unsloth-thinking-caret size-[15px]" />
@@ -1845,8 +1845,7 @@ export function SharedComposer({
                             !effectiveReasoningEnabled && "opacity-0",
                           )}
                         />
-                        Thinking
-                      </DropdownMenuItem>
+                        {uiT("chat.reasoning.thinking")}</DropdownMenuItem>
                     )
                   )}
                   {supportsPreserveThinking && (
@@ -1871,8 +1870,7 @@ export function SharedComposer({
                           !preserveThinking && "opacity-0",
                         )}
                       />
-                      Preserve thinking
-                    </DropdownMenuItem>
+                      {uiT("ui.preserve_thinking")}</DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -1883,7 +1881,7 @@ export function SharedComposer({
                 aria-disabled={reasoningDisabled || reasoningLockedOn}
                 title={
                   reasoningLockedOn
-                    ? "This model requires reasoning to stay on."
+                    ? uiT("ui.this_model_requires_reasoning_to_stay_on")
                     : undefined
                 }
                 onClick={() => {
@@ -1913,7 +1911,7 @@ export function SharedComposer({
                   <BulbIcon className="size-[15.5px]" />
                 </PillGlyph>
                 {thinkingActiveLook ? (
-                  <span className="unsloth-thinking-label">Thinking</span>
+                  <span className="unsloth-thinking-label">{uiT("chat.reasoning.thinking")}</span>
                 ) : null}
               </button>
             )
@@ -1922,8 +1920,8 @@ export function SharedComposer({
             <TooltipIconButton
               tooltip={
                 isDictationFinalizing
-                  ? "Cancel transcription"
-                  : "Stop dictation"
+                  ? uiT("ui.cancel_transcription")
+                  : uiT("ui.stop_dictation")
               }
               side="bottom"
               variant="ghost"
@@ -1932,21 +1930,21 @@ export function SharedComposer({
               onClick={stopDictation}
               aria-label={
                 isDictationFinalizing
-                  ? "Cancel transcription"
-                  : "Stop dictation"
+                  ? uiT("ui.cancel_transcription")
+                  : uiT("ui.stop_dictation")
               }
             >
               <SquareIcon className="size-3 animate-pulse fill-current" />
             </TooltipIconButton>
           ) : (
             <TooltipIconButton
-              tooltip="Dictate"
+              tooltip={uiT("chat.composer.dictate")}
               side="bottom"
               variant="ghost"
               size="icon"
               className="size-8 rounded-full text-muted-foreground"
               onClick={startDictation}
-              aria-label="Dictate"
+              aria-label={uiT("chat.composer.dictate")}
             >
               <MicIcon className="unsloth-dictate-icon size-4" />
             </TooltipIconButton>
@@ -1958,12 +1956,12 @@ export function SharedComposer({
                 resetPromptQueue();
                 stop();
               }}
-              aria-label="Stop prompt queue"
+              aria-label={uiT("ui.stop_prompt_queue")}
               className="ml-1.5 flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/60 px-2.5 py-1 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               <SquareIcon className="size-2.5 shrink-0 fill-current" />
               <span className="tabular-nums">
-                Stop queue {queueProgress.current}/{queueProgress.total}
+                {uiT("ui.stop_queue")}{" "}{queueProgress.current}/{queueProgress.total}
               </span>
             </button>
           ) : busy ? (
@@ -1978,14 +1976,14 @@ export function SharedComposer({
             </Button>
           ) : (
             <TooltipIconButton
-              tooltip="Send message"
+              tooltip={uiT("chat.composer.sendMessage")}
               side="bottom"
               variant="default"
               size="icon"
               className="ml-1.5 size-9 rounded-full"
               onClick={send}
               disabled={!canSend}
-              aria-label="Send message"
+              aria-label={uiT("chat.composer.sendMessage")}
             >
               <ArrowUpIcon className="unsloth-send-icon size-[22px] stroke-2" />
             </TooltipIconButton>

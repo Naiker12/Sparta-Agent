@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import type { ReactElement } from "react";
@@ -25,18 +26,18 @@ export function ExecutionSidebar({
   selectedExecutionId,
   onSelectExecution,
 }: ExecutionSidebarProps): ReactElement {
+  const uiT = useUiT();
+
   return (
     <aside className="w-72 shrink-0 border-r border-border/60 bg-card/20">
       <div className="flex items-center justify-between  border-border/60 px-3 py-2">
         <p className="text-xs font-semibold uppercase text-muted-foreground">
-          Runs
-        </p>
+          {uiT("settings.profile.stats.trainingRuns")}</p>
       </div>
       <div className="h-[calc(100%-45px)] space-y-2 overflow-auto p-2">
         {executions.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border/60 p-3 text-xs text-muted-foreground">
-            No runs yet.
-          </div>
+            {uiT("ui.no_runs_yet")}</div>
         ) : (
           executions.map((execution) => {
             const title =
@@ -70,13 +71,12 @@ export function ExecutionSidebar({
                   </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {execution.rows} rows
-                </p>
+                  {execution.rows} {" "}{uiT("ui.rows_")}</p>
                 {isExecutionInProgress(execution.status) &&
                   typeof execution.batch?.total === "number" &&
                   execution.batch.total > 1 && (
                     <p className="text-xs text-muted-foreground">
-                      Batch {execution.batch.idx ?? "--"}/
+                      {uiT("studio.preview.batch")}{" "}{execution.batch.idx ?? "--"}/
                       {execution.batch.total}
                     </p>
                   )}

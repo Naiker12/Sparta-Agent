@@ -1,9 +1,11 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { Tick02Icon } from "@/lib/tick-icon";
 import { McpServerIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { XIcon } from "lucide-react";
 import { type FC, useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 import {
   DropdownMenu,
@@ -68,7 +70,7 @@ const MCP_PRESETS: readonly McpPreset[] = [
     id: "context7",
     displayName: "Context7",
     url: "https://mcp.context7.com/mcp",
-    label: "Context7 (Realtime Docs)",
+    get label() { return uiTranslate("ui.context7_realtime_docs"); },
   },
   {
     id: "huggingface",
@@ -91,6 +93,8 @@ export function McpComposerButton({
 }: {
   side?: "top" | "bottom";
 } = {}) {
+  const uiT = useUiT();
+
   const t = useT();
   const modelLoaded = useChatRuntimeStore(
     (s) => !!s.params.checkpoint && !s.modelLoading,
@@ -177,7 +181,7 @@ export function McpComposerButton({
       }
       await refresh();
     } catch (err) {
-      toast.error("Failed to update MCP server", {
+      toast.error(uiTranslate("ui.failed_to_update_mcp_server"), {
         description: err instanceof Error ? err.message : String(err),
       });
     } finally {
@@ -257,7 +261,7 @@ export function McpComposerButton({
               className="composer-pill-btn"
               data-pill-label="MCP"
               data-active={active ? "true" : "false"}
-              aria-label="MCP servers"
+              aria-label={uiT("ui.mcp_servers_")}
             >
               {/* Icon doubles as an off switch: hover swaps to an X; clicking
                   it turns MCP off without opening the menu. In compact
@@ -265,7 +269,7 @@ export function McpComposerButton({
                   through to the trigger and open the menu instead. */}
               <span
                 role="button"
-                aria-label="Turn off MCP"
+                aria-label={uiT("ui.turn_off_mcp")}
                 tabIndex={-1}
                 onPointerDown={(e) => {
                   if (e.currentTarget.closest('[data-pill-compact="true"]')) {
@@ -289,7 +293,7 @@ export function McpComposerButton({
                 />
                 <XIcon className="composer-pill-x" />
               </span>
-              <span>MCP</span>
+              <span>{uiT("chat.composer.mcp")}</span>
               <ArrowDownStandardIcon className="composer-pill-caret size-[15px]" />
             </button>
           </DropdownMenuTrigger>
@@ -301,11 +305,10 @@ export function McpComposerButton({
             className="unsloth-plus-menu mcp-menu w-[232px]"
           >
             <DropdownMenuGroup>
-              <DropdownMenuLabel>Connected MCP servers</DropdownMenuLabel>
+              <DropdownMenuLabel>{uiT("ui.connected_mcp_servers")}</DropdownMenuLabel>
               {connectedServers.length === 0 ? (
                 <DropdownMenuItem disabled={true}>
-                  No connected MCP servers
-                </DropdownMenuItem>
+                  {uiT("ui.no_connected_mcp_servers")}</DropdownMenuItem>
               ) : null}
               {connectedServers.map((server) =>
                 renderRow({
@@ -381,14 +384,14 @@ export function McpComposerButton({
               className="composer-pill-btn cursor-not-allowed opacity-40"
               data-active="false"
               aria-disabled={true}
-              aria-label="MCP servers"
+              aria-label={uiT("ui.mcp_servers_")}
             >
               <HugeiconsIcon
                 icon={McpServerIcon}
                 className="size-[15px]"
                 strokeWidth={2}
               />
-              <span>MCP</span>
+              <span>{uiT("chat.composer.mcp")}</span>
             </button>
           </TooltipTrigger>
           <TooltipContent>{t("chat.mcp.tooltip")}</TooltipContent>

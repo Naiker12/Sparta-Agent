@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -68,14 +70,14 @@ import {
 
 const SAMPLING_OPTIONS: Array<{ value: SeedSamplingStrategy; label: string }> =
   [
-    { value: "ordered", label: "Ordered" },
-    { value: "shuffle", label: "Shuffle" },
+    { value: "ordered", get label() { return uiTranslate("ui.ordered"); } },
+    { value: "shuffle", get label() { return uiTranslate("ui.shuffle"); } },
   ];
 
 const SELECTION_OPTIONS: Array<{ value: SeedSelectionType; label: string }> = [
-  { value: "none", label: "None" },
-  { value: "index_range", label: "Index range" },
-  { value: "partition_block", label: "Partition block" },
+  { value: "none", get label() { return uiTranslate("studio.params.none"); } },
+  { value: "index_range", get label() { return uiTranslate("ui.index_range"); } },
+  { value: "partition_block", get label() { return uiTranslate("ui.partition_block"); } },
 ];
 
 const LOCAL_ACCEPT = ".csv,.json,.jsonl";
@@ -147,6 +149,8 @@ export function GithubRepoSeedForm({
   config: SeedConfig;
   onUpdate: (patch: Partial<SeedConfig>) => void;
 }): ReactElement {
+  const uiT = useUiT();
+
   const [repoDraft, setRepoDraft] = useState("");
   const [serverHasEnvToken, setServerHasEnvToken] = useState<boolean | null>(
     null,
@@ -241,7 +245,7 @@ export function GithubRepoSeedForm({
     <div className="space-y-4">
       <div className="grid gap-1.5">
         <FieldLabel
-          label="GitHub repositories"
+          label={uiT("ui.github_repositories")}
           htmlFor={repoInputId}
           hint="Paste owner/name entries or GitHub URLs. Newlines, commas, and spaces are accepted."
         />
@@ -268,7 +272,7 @@ export function GithubRepoSeedForm({
                   type="button"
                   className="rounded-full px-1 text-muted-foreground hover:bg-background hover:text-foreground"
                   onClick={() => removeRepo(index)}
-                  aria-label={`Remove ${repo}`}
+                  aria-label={uiT("ui.remove_value0", { value0: String(repo) })}
                 >
                   ×
                 </button>
@@ -291,21 +295,20 @@ export function GithubRepoSeedForm({
             }}
             placeholder={
               repos.length === 0
-                ? "unslothai/unsloth or GitHub URL"
-                : "Add repo…"
+                ? uiT("ui.unslothai_unsloth_or_github_url")
+                : uiT("ui.add_repo")
             }
             aria-invalid={hasRepoErrors}
             aria-describedby={`${repoHelpId}${hasRepoErrors ? ` ${repoErrorId}` : ""}`}
           />
         </div>
         <p id={repoHelpId} className="text-xs text-muted-foreground">
-          Stored as one <code>owner/name</code> repo per line in the recipe.
-        </p>
+          {uiT("ui.stored_as_one")}{" "}<code>owner/name</code> {" "}{uiT("ui.repo_per_line_in_the_recipe")}</p>
         {hasRepoErrors && (
           <ul id={repoErrorId} className="space-y-0.5 text-xs text-red-600">
             {repoErrors.map((item) => (
               <li key={`${item.repo}-${item.index}`}>
-                Row {item.index + 1}: {item.error}
+                {uiT("ui.row")}{" "}{item.index + 1}: {item.error}
               </li>
             ))}
           </ul>
@@ -315,14 +318,13 @@ export function GithubRepoSeedForm({
       <div className="grid gap-1.5">
         <div className="flex items-start justify-between gap-2">
           <FieldLabel
-            label="GitHub token (optional)"
+            label={uiT("ui.github_token_optional")}
             htmlFor={tokenId}
             hint="Prefer the server GH_TOKEN / GITHUB_TOKEN env var. Use public_repo for public repos or repo for private repos."
           />
           {usingEnvToken && (
             <span className="shrink-0 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 text-ui-10 font-medium text-emerald-700 dark:text-emerald-300">
-              Using server env var
-            </span>
+              {uiT("ui.using_server_env_var")}</span>
           )}
         </div>
         <Input
@@ -333,31 +335,28 @@ export function GithubRepoSeedForm({
           onChange={(e) => onUpdate({ github_token: e.target.value })}
           placeholder={
             usingEnvToken
-              ? "Using server GH_TOKEN / GITHUB_TOKEN"
-              : "Leave blank to use server GH_TOKEN"
+              ? uiT("ui.using_server_gh_token_github_token")
+              : uiT("ui.leave_blank_to_use_server_gh_token")
           }
           aria-describedby={tokenHelpId}
         />
         <p id={tokenHelpId} className="text-xs text-muted-foreground">
           {usingEnvToken
-            ? "Unsloth detected a server env token, so saved/shared recipes can leave this blank."
-            : "Blank is safest for saved/shared recipes because Unsloth will read the server environment at run time."}
+            ? uiT("ui.legacy_unsloth_detected_a_server_env_token_so_saved_shared_recipes_can_l")
+            : uiT("ui.legacy_blank_is_safest_for_saved_shared_recipes_because_unsloth_will_rea")}
         </p>
         {hasToken && (
           <p className="rounded-md bg-amber-500/10 px-2 py-1.5 text-xs text-amber-700 dark:text-amber-300">
-            Personal access tokens are sensitive. Prefer server env vars when
-            possible, and avoid sharing recipes that contain a PAT.
-          </p>
+            {uiT("ui.personal_access_tokens_are_sensitive_prefer_server_env_vars_when_")}</p>
         )}
       </div>
 
       <fieldset className="space-y-3">
         <legend className="text-xs font-semibold uppercase text-muted-foreground">
-          Fetch scope
-        </legend>
+          {uiT("ui.fetch_scope")}</legend>
         <div className="grid gap-1.5">
           <FieldLabel
-            label="Items per repo"
+            label={uiT("ui.items_per_repo")}
             htmlFor={limitId}
             hint="How many issues/PRs/commits to fetch from each repo (1-5000)."
           />
@@ -373,17 +372,14 @@ export function GithubRepoSeedForm({
             aria-describedby={limitHelpId}
           />
           <p id={limitHelpId} className="text-xs text-muted-foreground">
-            Estimate before comments: up to {estimatedItems.toLocaleString()}{" "}
-            rows ({repos.length || 0} repos × {itemTypes.length} item types ×{" "}
-            {boundedLimit} limit). Commit crawling uses each repo's default
-            branch.
-          </p>
+            {uiT("ui.estimate_before_comments_up_to")}{" "}{estimatedItems.toLocaleString()}{" "}
+            {uiT("ui.rows")}{repos.length || 0} {" "}{uiT("ui.repos")}{" "}{itemTypes.length} {" "}{uiT("ui.item_types")}{" "}
+            {boundedLimit} {" "}{uiT("ui.limit_commit_crawling_uses_each_repo_s_default_branch")}</p>
         </div>
 
         <div className="grid gap-1.5">
           <span className="text-xs font-semibold uppercase text-muted-foreground">
-            Item types
-          </span>
+            {uiT("ui.item_types_")}</span>
           <div className="flex flex-wrap gap-3 text-xs">
             {(["issues", "pulls", "commits"] as const).map((kind) => {
               const checked = itemTypes.includes(kind);
@@ -426,11 +422,11 @@ export function GithubRepoSeedForm({
                 onUpdate({ github_include_comments: v === true })
               }
             />
-            <span>Include issue/PR comments</span>
+            <span>{uiT("ui.include_issue_pr_comments")}</span>
           </label>
           <div className="grid gap-1.5">
             <FieldLabel
-              label="Max comments / item"
+              label={uiT("ui.max_comments_item")}
               htmlFor={commentsId}
               hint="Comments are concatenated into the comments column for issues and PRs."
             />
@@ -448,17 +444,13 @@ export function GithubRepoSeedForm({
               aria-describedby={commentsHelpId}
             />
             <p id={commentsHelpId} className="text-xs text-muted-foreground">
-              Comments increase GraphQL cost and can make Check/Run look quiet
-              while GitHub pages and rate-limit waits stream in logs.
-            </p>
+              {uiT("ui.comments_increase_graphql_cost_and_can_make_check_run_look_quiet_")}</p>
           </div>
         </div>
       </fieldset>
 
       <p className="text-xs text-muted-foreground">
-        Backed by Unsloth's built-in <code>github_repo</code> seed reader. Large
-        repos can take minutes, so start with small limits for previews.
-      </p>
+        {uiT("ui.legacy_backed_by_unsloth_s_built_in")}{" "}<code>github_repo</code> {" "}{uiT("ui.seed_reader_large_repos_can_take_minutes_so_start_with_small_limi")}</p>
     </div>
   );
 }
@@ -504,29 +496,25 @@ function getPreviewEmptyStateCopy(mode: SeedConfig["seed_source_type"]): {
 } {
   if (mode === "local") {
     return {
-      title: "No preview yet",
-      description:
-        "Upload a CSV, JSON, or JSONL file and click Load to see a sample.",
+      get title() { return uiTranslate("ui.no_preview_yet"); },
+      get description() { return uiTranslate("ui.upload_a_csv_json_or_jsonl_file_and_click_load_to_see_a_sample"); },
     };
   }
   if (mode === "unstructured") {
     return {
-      title: "No preview yet",
-      description:
-        "Upload your documents and the preview will appear once processing is done.",
+      get title() { return uiTranslate("ui.no_preview_yet"); },
+      get description() { return uiTranslate("ui.upload_your_documents_and_the_preview_will_appear_once_processing"); },
     };
   }
   if (mode === "github_repo") {
     return {
-      title: "GitHub data loads during Check or Run",
-      description:
-        "Configure repos, item types, and limits above. GitHub crawling can take minutes on large repos; watch logs for page and rate-limit updates.",
+      get title() { return uiTranslate("ui.github_data_loads_during_check_or_run"); },
+      get description() { return uiTranslate("ui.configure_repos_item_types_and_limits_above_github_crawling_can_t"); },
     };
   }
   return {
-    title: "No preview yet",
-    description:
-      "Select a Hugging Face dataset and click Load to see a sample.",
+    get title() { return uiTranslate("ui.no_preview_yet"); },
+    get description() { return uiTranslate("ui.select_a_hugging_face_dataset_and_click_load_to_see_a_sample"); },
   };
 }
 
@@ -581,7 +569,7 @@ async function fileToBase64Payload(file: File): Promise<string> {
       const parts = value.split(",");
       resolve(parts.length > 1 ? parts[1] : value);
     };
-    reader.onerror = () => reject(new Error("Failed to read file"));
+    reader.onerror = () => reject(new Error(uiTranslate("studio.training.failedToReadFile")));
     reader.readAsDataURL(file);
   });
 }
@@ -591,6 +579,8 @@ export function SeedDialog({
   onUpdate,
   open,
 }: SeedDialogProps): ReactElement {
+  const uiT = useUiT();
+
   const [inspectError, setInspectError] = useState<string | null>(null);
   const [isInspecting, setIsInspecting] = useState(false);
   const advancedOpen = config.advancedOpen === true;
@@ -794,7 +784,7 @@ export function SeedDialog({
         if (mode === "hf") {
           const datasetName = config.hf_repo_id.trim();
           if (!datasetName) {
-            throw new Error("Dataset repo is required.");
+            throw new Error(uiTranslate("ui.dataset_repo_is_required"));
           }
           const response = await inspectSeedDataset({
             dataset_name: datasetName,
@@ -830,7 +820,7 @@ export function SeedDialog({
 
         if (mode === "local") {
           if (!localFile) {
-            throw new Error("Select a local CSV/JSON/JSONL file first.");
+            throw new Error(uiTranslate("ui.select_a_local_csv_json_jsonl_file_first"));
           }
           if (localFile.size > LOCAL_SEED_UPLOAD_MAX_BYTES) {
             throw new Error(
@@ -999,8 +989,8 @@ export function SeedDialog({
   return (
     <Tabs defaultValue="config" className="w-full min-w-0">
       <TabsList className="w-full">
-        <TabsTrigger value="config">Config</TabsTrigger>
-        <TabsTrigger value="preview">Preview</TabsTrigger>
+        <TabsTrigger value="config">{uiT("ui.config")}</TabsTrigger>
+        <TabsTrigger value="preview">{uiT("chat.files.preview")}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="config" className="min-w-0 pt-3">
@@ -1009,7 +999,7 @@ export function SeedDialog({
             <>
               <div className="grid gap-1.5">
                 <FieldLabel
-                  label="Dataset"
+                  label={uiT("studio.trainingStart.dataset")}
                   htmlFor={datasetId}
                   hint="Hugging Face dataset repo id (org/repo)."
                 />
@@ -1039,14 +1029,14 @@ export function SeedDialog({
                     onClick={() => void loadSeedMetadata()}
                     disabled={isInspecting || !config.hf_repo_id.trim()}
                   >
-                    {isInspecting ? "Loading..." : "Load"}
+                    {isInspecting ? uiT("studio.history.loading") : uiT("settings.voice.dictation.sttLoad")}
                   </Button>
                 </div>
               </div>
 
               <div className="grid gap-1.5">
                 <FieldLabel
-                  label="HF token (optional)"
+                  label={uiT("ui.hf_token_optional")}
                   htmlFor={tokenId}
                   hint="Only needed for private/gated datasets."
                 />
@@ -1066,7 +1056,7 @@ export function SeedDialog({
           {mode === "local" && (
             <div className="grid gap-1.5">
               <FieldLabel
-                label="Structured file"
+                label={uiT("ui.structured_file")}
                 hint="Upload CSV, JSON, or JSONL seed file."
               />
               <div className="flex items-center gap-2">
@@ -1093,15 +1083,14 @@ export function SeedDialog({
                   onClick={() => void loadSeedMetadata()}
                   disabled={isInspecting || !localFile}
                 >
-                  {isInspecting ? "Loading..." : "Load"}
+                  {isInspecting ? uiT("studio.history.loading") : uiT("settings.voice.dictation.sttLoad")}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Max {LOCAL_SEED_UPLOAD_MAX_LABEL} per file.
-              </p>
+                {uiT("runSettings.max")}{" "}{LOCAL_SEED_UPLOAD_MAX_LABEL} {" "}{uiT("ui.per_file")}</p>
               {(localFile?.name || config.local_file_name?.trim()) && (
                 <p className="text-xs text-muted-foreground">
-                  Selected: {localFile?.name ?? config.local_file_name?.trim()}
+                  {uiT("ui.selected")}{" "}{localFile?.name ?? config.local_file_name?.trim()}
                 </p>
               )}
             </div>
@@ -1127,13 +1116,12 @@ export function SeedDialog({
           {mode !== "unstructured" && mode !== "github_repo" && (
             <div className="space-y-2 rounded-xl corner-squircle border border-border/60 p-3">
               <FieldLabel
-                label="Drop specific seed columns"
+                label={uiT("ui.drop_specific_seed_columns")}
                 hint="Dropped columns stay usable in prompts/expressions but are omitted from final dataset."
               />
               {previewColumns.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
-                  Load columns to select which seed fields to drop.
-                </p>
+                  {uiT("ui.load_columns_to_select_which_seed_fields_to_drop")}</p>
               ) : (
                 <div className="grid gap-2 sm:grid-cols-2">
                   {previewColumns.map((columnName) => {
@@ -1175,14 +1163,14 @@ export function SeedDialog({
           >
             <CollapsibleTrigger asChild={true}>
               <CollapsibleSectionTriggerButton
-                label="Advanced source options"
+                label={uiT("ui.advanced_source_options")}
                 open={advancedOpen}
               />
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-2 space-y-3">
               <div className="grid gap-1.5">
                 <FieldLabel
-                  label="Sampling strategy"
+                  label={uiT("ui.sampling_strategy")}
                   htmlFor={samplingId}
                   hint="Ordered keeps row order. Shuffle randomizes sampled rows."
                 />
@@ -1195,7 +1183,7 @@ export function SeedDialog({
                   }
                 >
                   <SelectTrigger className="nodrag w-full" id={samplingId}>
-                    <SelectValue placeholder="Select sampling" />
+                    <SelectValue placeholder={uiT("ui.select_sampling")} />
                   </SelectTrigger>
                   <SelectContent>
                     {SAMPLING_OPTIONS.map((option) => (
@@ -1209,7 +1197,7 @@ export function SeedDialog({
 
               <div className="grid gap-1.5">
                 <FieldLabel
-                  label="Selection strategy"
+                  label={uiT("ui.selection_strategy")}
                   htmlFor={selectionId}
                   hint="Select all, a row range, or partition block."
                 />
@@ -1220,7 +1208,7 @@ export function SeedDialog({
                   }
                 >
                   <SelectTrigger className="nodrag w-full" id={selectionId}>
-                    <SelectValue placeholder="Select selection" />
+                    <SelectValue placeholder={uiT("ui.select_selection")} />
                   </SelectTrigger>
                   <SelectContent>
                     {SELECTION_OPTIONS.map((option) => (
@@ -1236,7 +1224,7 @@ export function SeedDialog({
                 <div className="grid grid-cols-2 gap-3">
                   <div className="grid gap-1.5">
                     <FieldLabel
-                      label="Chunk size"
+                      label={uiT("ui.chunk_size")}
                       htmlFor={chunkSizeId}
                       hint="Characters per chunk."
                     />
@@ -1257,7 +1245,7 @@ export function SeedDialog({
                   </div>
                   <div className="grid gap-1.5">
                     <FieldLabel
-                      label="Chunk overlap"
+                      label={uiT("ui.chunk_overlap")}
                       htmlFor={chunkOverlapId}
                       hint="Shared chars between adjacent chunks."
                     />
@@ -1283,7 +1271,7 @@ export function SeedDialog({
                 <div className="grid grid-cols-2 gap-3">
                   <div className="grid gap-1.5">
                     <FieldLabel
-                      label="Start"
+                      label={uiT("ui.start")}
                       hint="Inclusive start row index for index_range."
                     />
                     <Input
@@ -1297,7 +1285,7 @@ export function SeedDialog({
                   </div>
                   <div className="grid gap-1.5">
                     <FieldLabel
-                      label="End"
+                      label={uiT("studio.dataset.endPlaceholder")}
                       hint="Inclusive end row index for index_range."
                     />
                     <Input
@@ -1315,7 +1303,7 @@ export function SeedDialog({
               {config.selection_type === "partition_block" && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="grid gap-1.5">
-                    <FieldLabel label="Index" hint="Partition index to load." />
+                    <FieldLabel label={uiT("ui.index")} hint="Partition index to load." />
                     <Input
                       className="nodrag"
                       inputMode="numeric"
@@ -1327,7 +1315,7 @@ export function SeedDialog({
                   </div>
                   <div className="grid gap-1.5">
                     <FieldLabel
-                      label="Partitions"
+                      label={uiT("ui.partitions")}
                       hint="Total number of partitions."
                     />
                     <Input
@@ -1360,14 +1348,13 @@ export function SeedDialog({
                   </EmptyDescription>
                 </EmptyHeader>
                 <EmptyContent className="text-xs text-muted-foreground">
-                  Preview appears here after loading source metadata.
-                </EmptyContent>
+                  {uiT("ui.preview_appears_here_after_loading_source_metadata")}</EmptyContent>
               </Empty>
             </div>
           ) : (
             <div className="space-y-2">
               <div className="text-xs text-muted-foreground">
-                Loaded columns: {previewColumns.join(", ") || "None"}
+                {uiT("ui.loaded_columns")}{" "}{previewColumns.join(", ") || uiT("studio.params.none")}
               </div>
               <div className="max-h-[360px] overflow-y-auto overflow-x-hidden rounded-xl corner-squircle border border-border/60">
                 <Table className="corner-squircle min-w-max">
@@ -1413,7 +1400,7 @@ export function SeedDialog({
                                 return (
                                   <img
                                     src={imagePreview.src}
-                                    alt={`${col} preview`}
+                                    alt={uiT("ui.value0_preview", { value0: String(col) })}
                                     loading="lazy"
                                     className="h-20 w-auto max-w-[220px] rounded-md border border-border/60 bg-muted/20 object-contain"
                                   />

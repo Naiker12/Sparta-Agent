@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { createCodePlugin } from "@/components/assistant-ui/code-plugin";
 import {
   unslothDarkTheme,
@@ -50,14 +51,14 @@ type Variant = "plain" | "tools" | "advanced";
 
 const TYPE_TABS: { id: ExampleType; label: string }[] = [
   { id: "curl", label: "curl" },
-  { id: "python", label: "Python" },
+  { id: "python", get label() { return uiTranslate("chat.tools.python"); } },
   { id: "javascript", label: "JavaScript" },
-  { id: "curlTools", label: "curl + tools" },
-  { id: "pythonTools", label: "Python + tools" },
-  { id: "javascriptTools", label: "JavaScript + tools" },
-  { id: "curlAdvanced", label: "curl + advanced" },
-  { id: "pythonAdvanced", label: "Python + advanced" },
-  { id: "javascriptAdvanced", label: "JavaScript + advanced" },
+  { id: "curlTools", get label() { return uiTranslate("settings.apiKeys.exampleCurlTools"); } },
+  { id: "pythonTools", get label() { return uiTranslate("settings.apiKeys.examplePythonTools"); } },
+  { id: "javascriptTools", get label() { return uiTranslate("settings.apiKeys.exampleJavaScriptTools"); } },
+  { id: "curlAdvanced", get label() { return uiTranslate("settings.apiKeys.exampleCurlAdvanced"); } },
+  { id: "pythonAdvanced", get label() { return uiTranslate("settings.apiKeys.examplePythonAdvanced"); } },
+  { id: "javascriptAdvanced", get label() { return uiTranslate("settings.apiKeys.exampleJavaScriptAdvanced"); } },
 ];
 
 // guards a restored tab against a snippet type dropped in a later release.

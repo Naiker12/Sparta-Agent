@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { toastError, toastSuccess } from "@/shared/toast";
 import { normalizeNonEmptyName } from "@/utils";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -292,7 +293,7 @@ export function useRecipePersistence({
       setSavedSignature(buildSignature(nextName, currentPayload));
       drainQueuedUploadCleanups(currentPayload);
     } catch (_error) {
-      toastError("Save failed", "Could not save recipe.");
+      toastError(uiTranslate("ui.save_failed"), "Could not save recipe.");
     } finally {
       setSaveLoading(false);
     }
@@ -331,13 +332,13 @@ export function useRecipePersistence({
         JSON.stringify(safePayload, null, 2),
       );
       if (!ok) {
-        throw new Error("Clipboard not available.");
+        throw new Error(uiTranslate("ui.clipboard_not_available"));
       }
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1500);
-      toastSuccess("👨‍🍳 Recipe copied");
+      toastSuccess(uiTranslate("ui.recipe_copied"));
     } catch (_error) {
-      toastError("Copy failed", "Could not copy payload.");
+      toastError(uiTranslate("ui.copy_failed"), "Could not copy payload.");
     }
   }, [payloadResult.payload]);
 
@@ -348,7 +349,7 @@ export function useRecipePersistence({
         return result.errors[0] ?? "Invalid payload.";
       }
       loadRecipe(result.snapshot);
-      toastSuccess("Recipe imported");
+      toastSuccess(uiTranslate("ui.recipe_imported"));
       return null;
     },
     [loadRecipe],

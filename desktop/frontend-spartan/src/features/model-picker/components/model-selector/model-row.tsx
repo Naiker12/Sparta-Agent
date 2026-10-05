@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 /**
  * Sparta Agent – Model Selector Model Row Component
  *
@@ -106,6 +107,8 @@ export function ModelRow({
   showSize?: boolean;
   className?: string;
 }) {
+  const uiT = useUiT();
+
   const exceeds = vramStatus === "exceeds";
   const showVramTooltip =
     vramEst != null && vramEst > 0 && gpuGb != null && gpuGb > 0;
@@ -183,7 +186,7 @@ export function ModelRow({
         {aligned && loaded && (
           <DotTag
             tone="success"
-            label="Loaded"
+            label={uiT("settings.voice.dictation.sttLoaded")}
             className="ml-2 h-[18px] shrink-0 gap-1 rounded-md px-1.5"
             dotClassName="size-[5px]"
           />
@@ -234,7 +237,7 @@ export function ModelRow({
             {loaded && (
               <DotTag
                 tone="success"
-                label="Loaded"
+                label={uiT("settings.voice.dictation.sttLoaded")}
                 className="h-[18px] gap-1 rounded-md px-1.5"
                 dotClassName="size-[5px]"
               />

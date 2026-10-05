@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 /**
  * Sparta Agent - Hooks de Acciones de Mensajes (message-action-hooks)
  * Maneja operaciones sobre mensajes individuales: bifurcación (fork), conteo de ramas,
@@ -22,7 +23,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 export const getResearchRunId = (metadata: unknown): string | null => {
   const custom = (
@@ -95,7 +96,7 @@ export const useForkMessageAction = () => {
   const handleFork = async () => {
     const remoteId = aui.threadListItem().getState().remoteId;
     if (!remoteId) {
-      toast.error("Cannot fork an unsaved chat");
+      toast.error(uiTranslate("ui.cannot_fork_an_unsaved_chat"));
       return;
     }
     setPending(true);
@@ -103,9 +104,8 @@ export const useForkMessageAction = () => {
       try {
         await settleThreadScopedSettingsForCopy(remoteId);
       } catch {
-        toast.error("Could not fork this chat", {
-          description:
-            "Its settings could not be saved, so the fork would not match. Please retry.",
+        toast.error(uiTranslate("ui.could_not_fork_this_chat"), {
+          get description() { return uiTranslate("ui.its_settings_could_not_be_saved_so_the_fork_would_not_match_pleas"); },
         });
         return;
       }
@@ -121,14 +121,14 @@ export const useForkMessageAction = () => {
         replace: false,
       });
       if (result.containerSnapshotWarning) {
-        toast.info("Fork created", {
+        toast.info(uiTranslate("ui.fork_created"), {
           description: result.containerSnapshotWarning,
         });
       } else {
-        toast.success("Fork created");
+        toast.success(uiTranslate("ui.fork_created"));
       }
     } catch (error) {
-      toast.error("Failed to fork", {
+      toast.error(uiTranslate("ui.failed_to_fork"), {
         description: error instanceof Error ? error.message : undefined,
       });
     } finally {
@@ -147,7 +147,7 @@ export async function exportMessageMarkdown(content: string): Promise<void> {
     await downloadFile(content, `message-${Date.now()}.md`, "text/markdown");
   } catch (error) {
     if (!isDownloadCancelled(error)) {
-      toast.error("Could not save Markdown export.", {
+      toast.error(uiTranslate("ui.could_not_save_markdown_export"), {
         description: error instanceof Error ? error.message : String(error),
       });
     }

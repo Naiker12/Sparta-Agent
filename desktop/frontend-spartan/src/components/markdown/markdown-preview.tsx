@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { markdownPluginNeeds } from "@/lib/markdown-plugins";
 import { openLink } from "@/lib/open-link";
 import { safeMarkdownUrl } from "@/lib/safe-markdown-url";
@@ -52,6 +53,8 @@ function MarkdownPreviewImpl({
   plain = false,
   defer = false,
 }: MarkdownPreviewProps): ReactElement {
+  const uiT = useUiT();
+
   const needs = useMemo(() => markdownPluginNeeds(markdown), [markdown]);
   const [plugins, setPlugins] = useState<MarkdownPlugins | null>(null);
   const requiresPlugin = needs.code || needs.math || needs.mermaid;
@@ -141,7 +144,7 @@ function MarkdownPreviewImpl({
           controls={false}
           className={markdownClassName}
         >
-          {markdown.trim() ? markdown : "_Empty note_"}
+          {markdown.trim() ? markdown : uiT("ui.empty_note")}
         </Streamdown>
       ) : (
         <div

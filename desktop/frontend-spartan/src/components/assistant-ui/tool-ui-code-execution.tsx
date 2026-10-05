@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 "use client";
 
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
@@ -61,6 +62,8 @@ function truncateResult(text: string): string {
 }
 
 function CopyBtn({ text }: { text: string }) {
+  const uiT = useUiT();
+
   const t = useT();
   const [copied, setCopied] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -88,7 +91,7 @@ function CopyBtn({ text }: { text: string }) {
       type="button"
       onClick={copy}
       className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-      aria-label="Copy to clipboard"
+      aria-label={uiT("ui.copy_to_clipboard")}
     >
       {copied ? (
         <HugeiconsIcon icon={Tick02Icon} strokeWidth={2} className="size-3" />

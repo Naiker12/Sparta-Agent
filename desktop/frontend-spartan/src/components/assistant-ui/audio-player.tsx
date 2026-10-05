@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -13,6 +15,8 @@ interface AudioPlayerProps {
 }
 
 export const AudioPlayer: FC<AudioPlayerProps> = ({ src }) => {
+  const uiT = useUiT();
+
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -65,7 +69,7 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({ src }) => {
   const handleDownload = () => {
     downloadUrl(src, "generated-audio.wav").catch((error) => {
       if (!isDownloadCancelled(error)) {
-        toast.error("Could not save audio.");
+        toast.error(uiTranslate("ui.could_not_save_audio"));
       }
     });
   };
@@ -120,7 +124,7 @@ export const AudioPlayer: FC<AudioPlayerProps> = ({ src }) => {
         size="icon"
         className="size-7 shrink-0 text-muted-foreground"
         onClick={handleDownload}
-        title="Download audio"
+        title={uiT("ui.download_audio")}
       >
         <HugeiconsIcon icon={Download01Icon} className="size-3.5" />
       </Button>

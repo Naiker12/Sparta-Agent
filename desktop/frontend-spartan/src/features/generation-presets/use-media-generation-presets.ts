@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { toast } from "@/lib/toast";
 import {
   useCallback,
@@ -336,7 +337,7 @@ export function useMediaGenerationPresets<Params extends object>({
       }
       const trimmed = rawName.trim();
       if (!trimmed) {
-        toast.error("Enter a preset name");
+        toast.error(uiTranslate("ui.enter_a_preset_name"));
         return null;
       }
       const usedNames = new Set([
@@ -349,7 +350,7 @@ export function useMediaGenerationPresets<Params extends object>({
           : trimmed;
       const overwriting = customPresets.some((preset) => preset.name === name);
       if (!overwriting && customPresets.length >= 100) {
-        toast.error("Delete a preset before saving another one");
+        toast.error(uiTranslate("ui.delete_a_preset_before_saving_another_one"));
         return null;
       }
       const preset: MediaGenerationPreset<Params> = {

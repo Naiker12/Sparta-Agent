@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 /**
  * Sparta Agent – Project Chat Export & Storage Helpers
  *
@@ -42,7 +43,7 @@ export const PROJECT_CHAT_EXPORT_OPTIONS: Array<{
   label: string;
   format: ProjectChatExportFormat;
 }> = [
-  { label: "Raw JSONL", format: "raw-jsonl" },
+  { get label() { return uiTranslate("ui.raw_jsonl"); }, format: "raw-jsonl" },
   { label: "CSV", format: "csv" },
   { label: "ShareGPT JSONL", format: "sharegpt-jsonl" },
   {

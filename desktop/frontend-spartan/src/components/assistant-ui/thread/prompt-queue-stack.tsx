@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 /**
  * Sparta Agent - Pila Visual de la Cola de Prompts (PromptQueueStack)
  * Renderiza la lista flotante de turnos encolados con soporte para edición,
@@ -63,6 +64,8 @@ export interface PromptQueueStackProps {
 export const PromptQueueStack: FC<PromptQueueStackProps> = ({
   queueThreadIds,
 }) => {
+  const uiT = useUiT();
+
   const queueEntry = usePromptQueueUI((s) =>
     findPromptQueueEntry(s, queueThreadIds),
   );
@@ -133,7 +136,7 @@ export const PromptQueueStack: FC<PromptQueueStackProps> = ({
   return (
     <div
       className="relative z-0 mx-7 mb-[-8px] max-h-[28dvh] overflow-y-auto rounded-t-[18px] rounded-b-none border border-border/45 bg-background/90 px-5 py-2 text-muted-foreground shadow-none backdrop-blur-md dark:bg-card/85"
-      aria-label={`Prompt queue, ${current} of ${total}`}
+      aria-label={uiT("ui.prompt_queue_value0_of_value1", { value0: String(current), value1: String(total) })}
     >
       <div className="divide-y divide-border/25">
         {visibleItems.map((item, visibleIndex) => {
@@ -181,7 +184,7 @@ export const PromptQueueStack: FC<PromptQueueStackProps> = ({
                 }
                 endDrag();
               }}
-              aria-label={`${promptQueueStatusLabel(item.status)} prompt ${visiblePosition} of ${visibleItems.length}: ${item.prompt}`}
+              aria-label={uiT("ui.value0_prompt_value1_of_value2_value3", { value0: String(promptQueueStatusLabel(item.status)), value1: String(visiblePosition), value2: String(visibleItems.length), value3: String(item.prompt) })}
             >
               {isEditing ? (
                 <div className="grid min-h-10 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2.5 py-1">
@@ -205,7 +208,7 @@ export const PromptQueueStack: FC<PromptQueueStackProps> = ({
                       }
                     }}
                     className="max-h-20 min-h-8 min-w-0 resize-none rounded-md border border-border/45 bg-transparent px-2 py-1.5 text-sm leading-5 text-foreground outline-none transition-colors focus-visible:border-ring"
-                    aria-label={`Edit queued prompt ${visiblePosition}`}
+                    aria-label={uiT("ui.edit_queued_prompt_value0", { value0: String(visiblePosition) })}
                   />
                   <Button
                     type="button"
@@ -214,8 +217,7 @@ export const PromptQueueStack: FC<PromptQueueStackProps> = ({
                     className="h-7 px-2 text-xs text-muted-foreground"
                     onClick={cancelEditing}
                   >
-                    Cancel
-                  </Button>
+                    {uiT("chat.workspace.cancel")}</Button>
                   <Button
                     type="button"
                     size="sm"
@@ -223,8 +225,7 @@ export const PromptQueueStack: FC<PromptQueueStackProps> = ({
                     disabled={draftPrompt.trim().length === 0}
                     onClick={saveEditing}
                   >
-                    Save
-                  </Button>
+                    {uiT("chat.actions.save")}</Button>
                 </div>
               ) : (
                 <div className="grid h-10 grid-cols-[minmax(0,1fr)_auto_2rem] items-center gap-2.5">
@@ -233,7 +234,7 @@ export const PromptQueueStack: FC<PromptQueueStackProps> = ({
                       <button
                         type="button"
                         className="shrink-0 cursor-grab text-muted-foreground/50 outline-none hover:text-muted-foreground focus-visible:text-foreground active:cursor-grabbing"
-                        aria-label={`Reorder queued prompt ${visiblePosition} of ${visibleItems.length}`}
+                        aria-label={uiT("ui.reorder_queued_prompt_value0_of_value1", { value0: String(visiblePosition), value1: String(visibleItems.length) })}
                         onKeyDown={(event) => {
                           if (
                             event.key !== "ArrowUp" &&
@@ -266,17 +267,16 @@ export const PromptQueueStack: FC<PromptQueueStackProps> = ({
                       onClick={() => startEditing(item)}
                     >
                       <HugeiconsIcon icon={Edit03Icon} strokeWidth={2} />
-                      Edit
-                    </Button>
+                      {uiT("chat.actions.edit")}</Button>
                   ) : null}
                   <TooltipIconButton
-                    tooltip="Remove from queue"
+                    tooltip={uiT("ui.remove_from_queue")}
                     side="bottom"
                     type="button"
                     variant="ghost"
                     size="icon"
                     className="col-start-3 size-7 justify-self-center text-muted-foreground/70 hover:text-destructive"
-                    aria-label={`Remove queued prompt ${visiblePosition}`}
+                    aria-label={uiT("ui.remove_queued_prompt_value0", { value0: String(visiblePosition) })}
                     disabled={!item.canRemove}
                     onClick={() => removePromptQueueItem(item.id)}
                   >

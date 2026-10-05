@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { usePlatformStore } from "@/config/env";
 import { prepareHfTokenForUse } from "@/features/hf-auth";
 import { DOWNLOAD_KIND } from "@/features/hub/download-manager/constants";
@@ -727,7 +728,7 @@ export async function autoLoadSmallestModel(
       description,
       duration: Number.POSITIVE_INFINITY,
       action: onCancel
-        ? { label: "Cancel", onClick: () => onCancel() }
+        ? { get label() { return uiTranslate("chat.workspace.cancel"); }, onClick: () => onCancel() }
         : undefined,
     });
   };
@@ -880,7 +881,7 @@ export async function autoLoadSmallestModel(
     ) {
       const preparedToken = await prepareHfTokenForUse(hfToken);
       if (!preparedToken.proceed) {
-        const cancelled = Object.assign(new Error("Model load cancelled."), {
+        const cancelled = Object.assign(new Error(uiTranslate("ui.model_load_cancelled")), {
           unslothUserCancelled: true,
         });
         recordCandidateFailure(failureLabel, cancelled);
@@ -1306,11 +1307,10 @@ export async function autoLoadSmallestModel(
     }
 
     toast.dismiss(toastId);
-    toast.info("No hay modelos disponibles", {
-      description:
-        "No tienes ningún proveedor de IA configurado ni modelo descargado. Conecta un proveedor para comenzar a chatear.",
+    toast.info(uiTranslate("ui.no_models_available"), {
+      get description() { return uiTranslate("ui.no_ai_provider_is_configured_and_no_model_is_downloaded_connect_a"); },
       action: {
-        label: "Conectar proveedor",
+        get label() { return uiTranslate("ui.connect_provider"); },
         onClick: () => {
           useSettingsDialogStore.getState().openDialog("connections");
         },

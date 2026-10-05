@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import type { Edge, Node, XYPosition } from "@xyflow/react";
 import type { RecipeGraphAuxNodeData } from "../../components/recipe-graph-aux-node";
 import { DEFAULT_NODE_HEIGHT, DEFAULT_NODE_WIDTH } from "../../constants";
@@ -474,7 +475,7 @@ export function deriveDisplayGraph({
           kind: "llm-prompt-input",
           llmId: config.id,
           field: "system_prompt",
-          title: "System Prompt",
+          get title() { return uiTranslate("runSettings.systemPrompt"); },
           executionLocked,
         },
       });
@@ -487,7 +488,7 @@ export function deriveDisplayGraph({
           kind: "llm-prompt-input",
           llmId: config.id,
           field: "prompt",
-          title: "Prompt",
+          get title() { return uiTranslate("chat.timing.prompt"); },
           executionLocked,
         },
       });

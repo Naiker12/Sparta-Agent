@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 /**
  * Sparta Agent – GGUF Variant Expander Component
  *
@@ -339,6 +340,8 @@ export function GgufVariantExpander({
   /** Report GGUF vision support up so the parent row can badge it. */
   onHasVision?: (hasVision: boolean) => void;
 }) {
+  const uiT = useUiT();
+
   const pinnedKeys = usePinnedModelsStore((s) => s.pinned);
   const togglePinnedQuant = usePinnedModelsStore((s) => s.togglePinned);
   const onUpdateVariant = variantActions?.onUpdate;
@@ -742,7 +745,7 @@ export function GgufVariantExpander({
     return (
       <div className="flex items-center gap-2 px-5 py-2">
         <Spinner className="size-3 text-muted-foreground" />
-        <span className="text-xs text-muted-foreground">Loading variants…</span>
+        <span className="text-xs text-muted-foreground">{uiT("ui.loading_variants")}</span>
       </div>
     );
   }
@@ -756,8 +759,7 @@ export function GgufVariantExpander({
           onClick={() => setRefreshKey((key) => key + 1)}
           className="rounded-full border border-destructive/40 px-2 py-0.5 font-medium text-destructive transition-colors hover:bg-destructive/10 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
-          Retry
-        </button>
+          {uiT("chat.actions.retry")}</button>
       </div>
     );
   }
@@ -765,8 +767,7 @@ export function GgufVariantExpander({
   if (!displayVariants || displayVariants.length === 0) {
     return (
       <div className="px-5 py-2 text-xs text-muted-foreground">
-        No GGUF variants found.
-      </div>
+        {uiT("ui.no_gguf_variants_found")}</div>
     );
   }
 
@@ -785,8 +786,7 @@ export function GgufVariantExpander({
       {!(onDevice || displayVariantGroups.some((group) => group.title)) && (
         <div className="px-2 py-1 flex items-center gap-1.5">
           <span className="text-ui-10 font-semibold uppercase tracking-wider text-muted-foreground">
-            Quantizations
-          </span>
+            {uiT("ui.quantizations")}</span>
           {hasVision && (
             <span className="flex items-center gap-0.5 text-ui-9 font-medium text-indigo-700 dark:text-indigo-300">
               <HugeiconsIcon
@@ -794,8 +794,7 @@ export function GgufVariantExpander({
                 className="size-3"
                 strokeWidth={1.8}
               />
-              Vision
-            </span>
+              {uiT("hub.filters.vision")}</span>
           )}
         </div>
       )}
@@ -809,8 +808,7 @@ export function GgufVariantExpander({
                 className="size-3"
                 strokeWidth={1.8}
               />
-              Vision
-            </span>
+              {uiT("hub.filters.vision")}</span>
           </div>
         )}
       {displayVariants.map((v) => {
@@ -864,35 +862,29 @@ export function GgufVariantExpander({
               </span>
               {unusableLocal ? (
                 <span className="ml-1.5 text-ui-9 font-sans font-medium text-amber-700 dark:text-amber-300">
-                  incomplete
-                </span>
+                  {uiT("ui.incomplete")}</span>
               ) : v.downloaded ? (
                 <>
                   <span className="ml-1.5 text-ui-9 font-sans font-medium text-green-600/90 dark:text-green-400/80">
-                    downloaded
-                  </span>
+                    {uiT("ui.downloaded")}</span>
                   {v.update_available ? (
                     <span className="ml-1.5 text-ui-9 font-sans font-medium text-amber-700 dark:text-amber-300">
-                      update available
-                    </span>
+                      {uiT("ui.update_available")}</span>
                   ) : null}
                 </>
               ) : isRecommended ? (
                 <span className="ml-1.5 text-ui-9 font-sans font-medium text-primary/70">
-                  recommended
-                </span>
+                  {uiT("ui.recommended")}</span>
               ) : null}
             </span>
             <span className="flex items-center gap-1.5 shrink-0">
               {oom && (
                 <span className="text-ui-9 font-medium !text-red-700 !bg-red-50 dark:!text-red-300 dark:!bg-red-500/15 px-1.5 py-0.5 rounded">
-                  OOM
-                </span>
+                  {uiT("studio.modelPicker.vramOomBadge")}</span>
               )}
               {tight && (
                 <span className="text-ui-9 font-medium !text-amber-400">
-                  TIGHT
-                </span>
+                  {uiT("ui.tight")}</span>
               )}
               <span className="font-mono text-ui-10 text-muted-foreground tabular-nums">
                 {companionBytes === null ? (
@@ -982,7 +974,7 @@ export function GgufVariantExpander({
                             v.quant,
                           ) ?? (
                             <>
-                              This will update{" "}
+                              {uiT("ui.this_will_update")}{" "}
                               <span className="font-medium text-foreground">
                                 {repoId} ({v.quant})
                               </span>
@@ -1007,12 +999,11 @@ export function GgufVariantExpander({
                             v.quant,
                           ) ?? (
                             <>
-                              This will remove{" "}
+                              {uiT("ui.this_will_remove")}{" "}
                               <span className="font-medium text-foreground">
                                 {repoId} ({v.quant})
                               </span>{" "}
-                              from disk. You can re-download it later.
-                            </>
+                              {uiT("ui.from_disk_you_can_re_download_it_later")}</>
                           ),
                           successMessage:
                             getDeleteVariantSuccessMessage?.(v.quant) ??

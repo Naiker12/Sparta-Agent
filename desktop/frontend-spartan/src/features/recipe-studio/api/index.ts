@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { authFetch } from "@/features/auth";
 import {
   formatFastApiDetail,
@@ -506,7 +507,7 @@ export async function removeUnstructuredFile(
     { method: "DELETE" },
   );
   if (!res.ok && res.status !== 404) {
-    throw new Error("Failed to remove file");
+    throw new Error(uiTranslate("ui.failed_to_remove_file"));
   }
 }
 
@@ -516,6 +517,6 @@ export async function removeUnstructuredBlock(blockId: string): Promise<void> {
     { method: "DELETE" },
   );
   if (!res.ok && res.status !== 404) {
-    throw new Error("Failed to remove uploaded files");
+    throw new Error(uiTranslate("ui.failed_to_remove_uploaded_files"));
   }
 }

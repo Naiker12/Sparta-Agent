@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useT } from "@/i18n";
@@ -43,6 +45,8 @@ export function OpenAICodexConnect({
   ensureProvider,
   initialFlow = null,
 }: Props) {
+  const uiT = useUiT();
+
   const t = useT();
   const [flow, setFlow] = useState<CodexOAuthFlow | null>(initialFlow);
   const [callbackUrl, setCallbackUrl] = useState("");
@@ -100,7 +104,7 @@ export function OpenAICodexConnect({
           (cause) =>
             mounted.current &&
             setError(
-              cause instanceof Error ? cause.message : "Authorization failed.",
+              cause instanceof Error ? cause.message : uiTranslate("chat.providersDialog.authorizationFailed"),
             ),
         );
     }, delay);
@@ -115,7 +119,7 @@ export function OpenAICodexConnect({
     try {
       const resolvedProviderId = activeProviderId ?? (await ensureProvider?.());
       if (!resolvedProviderId) {
-        throw new Error("Could not create the ChatGPT connection.");
+        throw new Error(uiTranslate("ui.could_not_create_the_chatgpt_connection"));
       }
       setActiveProviderId(resolvedProviderId);
       const next = await startCodexOAuth(resolvedProviderId, method);
@@ -123,13 +127,13 @@ export function OpenAICodexConnect({
       const url = next.authorization_url || next.verification_url;
       if (url) {
         if (!isTrustedCodexAuthUrl(url)) {
-          throw new Error("The authorization URL was not trusted.");
+          throw new Error(uiTranslate("ui.the_authorization_url_was_not_trusted"));
         }
         openLink(url);
       }
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : "Authorization failed.",
+        cause instanceof Error ? cause.message : uiTranslate("chat.providersDialog.authorizationFailed"),
       );
     } finally {
       setBusy(false);
@@ -155,7 +159,7 @@ export function OpenAICodexConnect({
       await onChanged();
     } catch (cause) {
       setError(
-        cause instanceof Error ? cause.message : "Authorization failed.",
+        cause instanceof Error ? cause.message : uiTranslate("chat.providersDialog.authorizationFailed"),
       );
     } finally {
       setBusy(false);
@@ -278,8 +282,7 @@ export function OpenAICodexConnect({
       ) : null}
       {flow?.status === "cancelled" ? (
         <p className="text-xs text-muted-foreground">
-          Authorization cancelled.
-        </p>
+          {uiT("ui.authorization_cancelled")}</p>
       ) : null}
 
       {visibleError ? (
@@ -296,8 +299,7 @@ export function OpenAICodexConnect({
             disabled={busy}
             onClick={() => void disconnect()}
           >
-            Disconnect locally
-          </Button>
+            {uiT("ui.disconnect_locally")}</Button>
         ) : (
           <>
             <Button

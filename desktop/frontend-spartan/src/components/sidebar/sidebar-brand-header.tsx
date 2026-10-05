@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 /**
  * Sparta Agent – Sidebar Header & Brand Component
  *
@@ -43,6 +44,8 @@ export function SidebarBrandHeader({
   closeMobileIfOpen: () => void;
   searchShortcutLabel?: string | null;
 }): ReactElement {
+  const uiT = useUiT();
+
   const t = useT();
 
   return (
@@ -98,8 +101,7 @@ export function SidebarBrandHeader({
                 className="relative top-px h-[calc(24px+0.5rem*var(--ui-font-scale,1))] w-[calc(24px+0.5rem*var(--ui-font-scale,1))] shrink-0 bg-primary [mask-image:url('/spartan-logo.svg')] [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain]"
               />
               <span className="relative -top-px truncate font-heading text-[calc(10px+0.3rem*var(--ui-font-scale,1))] font-bold tracking-[0.04em] uppercase leading-tight text-nav-fg">
-                SPARTAN AGENT
-              </span>
+                {uiT("shell.brand")}</span>
             </Link>
             <div className="flex shrink-0 items-center gap-0.25">
               <Tooltip>

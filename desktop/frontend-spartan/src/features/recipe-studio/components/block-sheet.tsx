@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -247,6 +248,8 @@ export function BlockSheet({
   onCopy,
   onImport,
 }: BlockSheetProps): ReactElement {
+  const uiT = useUiT();
+
   const sheetTitle = getSheetTitle(sheetView);
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -403,8 +406,8 @@ export function BlockSheet({
             size="icon"
             className={RECIPE_FLOATING_ICON_BUTTON_CLASS}
             variant="ghost"
-            aria-label="Add a step"
-            title="Add a step"
+            aria-label={uiT("ui.add_a_step")}
+            title={uiT("ui.add_a_step")}
           >
             <HugeiconsIcon
               icon={PlusSignIcon}
@@ -428,8 +431,8 @@ export function BlockSheet({
                   variant="ghost"
                   size="icon-sm"
                   onClick={() => onViewChange("root")}
-                  aria-label="Back to step groups"
-                  title="Back to step groups"
+                  aria-label={uiT("ui.back_to_step_groups")}
+                  title={uiT("ui.back_to_step_groups")}
                 >
                   <HugeiconsIcon icon={ArrowLeft02Icon} className="size-4" />
                 </Button>
@@ -444,9 +447,9 @@ export function BlockSheet({
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search steps..."
+                placeholder={uiT("ui.search_steps")}
                 className="corner-squircle h-9 pl-8"
-                aria-label="Search steps"
+                aria-label={uiT("ui.search_steps_")}
               />
             </div>
           </SheetHeader>
@@ -468,12 +471,9 @@ export function BlockSheet({
                     <div className="min-w-0 flex-1 space-y-2">
                       <div>
                         <p className="text-sm font-semibold text-foreground">
-                          Need a place to start?
-                        </p>
+                          {uiT("ui.need_a_place_to_start")}</p>
                         <p className="text-xs text-muted-foreground">
-                          Open Source data first, then add generation and checks
-                          on top of it.
-                        </p>
+                          {uiT("ui.open_source_data_first_then_add_generation_and_checks_on_top_of_i")}</p>
                       </div>
                       <Button
                         type="button"
@@ -482,8 +482,7 @@ export function BlockSheet({
                         className="corner-squircle justify-start px-0 text-primary hover:bg-transparent hover:text-primary/80"
                         onClick={() => onViewChange("seed")}
                       >
-                        Start with source data
-                      </Button>
+                        {uiT("ui.start_with_source_data")}</Button>
                     </div>
                   </div>
                 </div>
@@ -565,12 +564,9 @@ export function BlockSheet({
                   <div className="pb-2">
                     <div className="px-3 pb-2">
                       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                        Recommended first step
-                      </p>
+                        {uiT("ui.recommended_first_step")}</p>
                       <p className="text-xs text-muted-foreground">
-                        Best when you want to turn PDFs, DOCX files, or text
-                        files into source rows.
-                      </p>
+                        {uiT("ui.best_when_you_want_to_turn_pdfs_docx_files_or_text_files_into_sou")}</p>
                     </div>
                     <BlockSheetButton
                       icon={featuredSeedBlock.icon}
@@ -598,12 +594,9 @@ export function BlockSheet({
                 otherSeedBlocks.length > 0 && (
                   <div className="px-3 pt-2 pb-2">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Other source options
-                    </p>
+                      {uiT("ui.other_source_options")}</p>
                     <p className="text-xs text-muted-foreground">
-                      Use a dataset or structured file when your source is
-                      already tabular.
-                    </p>
+                      {uiT("ui.use_a_dataset_or_structured_file_when_your_source_is_already_tabu")}</p>
                   </div>
                 )}
               {isScopedBlockView &&
@@ -611,11 +604,9 @@ export function BlockSheet({
                 llmCreateBlocks.length > 0 && (
                   <div className="px-3 pb-2">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Create
-                    </p>
+                      {uiT("images.workflows.create.label")}</p>
                     <p className="text-xs text-muted-foreground">
-                      Start with the kind of output you want to generate.
-                    </p>
+                      {uiT("ui.start_with_the_kind_of_output_you_want_to_generate")}</p>
                   </div>
                 )}
               {isScopedBlockView &&
@@ -637,11 +628,9 @@ export function BlockSheet({
                 llmSetupBlocks.length > 0 && (
                   <div className="px-3 pt-4 pb-2">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                      Setup
-                    </p>
+                      {uiT("ui.setup")}</p>
                     <p className="text-xs text-muted-foreground">
-                      Add these only when you need a new model or tool setup.
-                    </p>
+                      {uiT("ui.add_these_only_when_you_need_a_new_model_or_tool_setup")}</p>
                   </div>
                 )}
               {isScopedBlockView &&
@@ -699,11 +688,9 @@ export function BlockSheet({
                   >
                     <div className="min-w-0">
                       <p className="text-sm font-medium text-foreground">
-                        Edit final dataset shape
-                      </p>
+                        {uiT("ui.edit_final_dataset_shape")}</p>
                       <p className="break-words text-xs text-muted-foreground">
-                        Rename, reorder, or reshape your final output.
-                      </p>
+                        {uiT("ui.rename_reorder_or_reshape_your_final_output")}</p>
                     </div>
                     <HugeiconsIcon
                       icon={CodeIcon}
@@ -714,8 +701,7 @@ export function BlockSheet({
               )}
               {showNoMatches && (
                 <p className="px-3 py-2 text-xs text-muted-foreground">
-                  No matching steps.
-                </p>
+                  {uiT("ui.no_matching_steps")}</p>
               )}
             </div>
           </div>
@@ -727,8 +713,8 @@ export function BlockSheet({
         size="icon"
         className={RECIPE_FLOATING_ICON_BUTTON_CLASS}
         onClick={onImport}
-        aria-label="Paste recipe JSON"
-        title="Paste recipe JSON"
+        aria-label={uiT("ui.paste_recipe_json")}
+        title={uiT("ui.paste_recipe_json")}
       >
         <HugeiconsIcon
           icon={Upload01Icon}
@@ -741,8 +727,8 @@ export function BlockSheet({
         size="icon"
         className={RECIPE_FLOATING_ICON_BUTTON_CLASS}
         onClick={onCopy}
-        aria-label={copied ? "Recipe JSON copied" : "Copy recipe JSON"}
-        title={copied ? "Recipe JSON copied" : "Copy recipe JSON"}
+        aria-label={copied ? uiT("ui.recipe_json_copied") : uiT("ui.copy_recipe_json")}
+        title={copied ? uiT("ui.recipe_json_copied") : uiT("ui.copy_recipe_json")}
       >
         <HugeiconsIcon
           icon={copied ? Tick02Icon : Copy02Icon}

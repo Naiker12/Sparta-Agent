@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -44,6 +45,8 @@ export function CategoryDialog({
   config,
   onUpdate,
 }: CategoryDialogProps): ReactElement {
+  const uiT = useUiT();
+
   const [conditionDraft, setConditionDraft] = useState("");
   const advancedOpen = config.advancedOpen === true;
   const conditionInputId = `${config.id}-conditional-rule`;
@@ -88,7 +91,7 @@ export function CategoryDialog({
       <div className="space-y-3">
         <div className="grid gap-1.5">
           <FieldLabel
-            label="Values"
+            label={uiT("ui.values")}
             hint="Define allowed categorical values for this column."
           />
           <ChipInput
@@ -109,7 +112,7 @@ export function CategoryDialog({
               );
               onUpdate({ values, weights });
             }}
-            placeholder="Type a value and press Enter"
+            placeholder={uiT("ui.type_a_value_and_press_enter")}
           />
         </div>
       </div>
@@ -119,20 +122,19 @@ export function CategoryDialog({
       >
         <CollapsibleTrigger asChild={true}>
           <CollapsibleSectionTriggerButton
-            label="Advanced list settings"
+            label={uiT("ui.advanced_list_settings")}
             open={advancedOpen}
           />
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-2 space-y-3">
           <div className="grid gap-1.5">
             <FieldLabel
-              label="Weights (optional)"
+              label={uiT("ui.weights_optional")}
               hint="Set selection probability per value."
             />
             {(config.values ?? []).length === 0 ? (
               <p className="text-xs text-muted-foreground">
-                Add values first, then set optional weights.
-              </p>
+                {uiT("ui.add_values_first_then_set_optional_weights")}</p>
             ) : (
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {(config.values ?? []).map((value, index) => (
@@ -146,7 +148,7 @@ export function CategoryDialog({
                     <Input
                       type="number"
                       className="nodrag w-full"
-                      placeholder="Weight"
+                      placeholder={uiT("ui.weight")}
                       value={config.weights?.[index] ?? ""}
                       onChange={(event) => {
                         const weights = [...(config.weights ?? [])];
@@ -163,12 +165,11 @@ export function CategoryDialog({
           </div>
           <div className="flex items-center justify-between gap-2">
             <FieldLabel
-              label="Conditional params (category)"
+              label={uiT("ui.conditional_params_category")}
               hint="Override category values/weights when condition matches."
             />
             <span className="text-xs text-muted-foreground">
-              {conditionalCount} rules
-            </span>
+              {conditionalCount} {" "}{uiT("ui.rules")}</span>
           </div>
           <div className="flex gap-2">
             <Input
@@ -185,8 +186,7 @@ export function CategoryDialog({
               }}
             />
             <Button type="button" size="sm" onClick={handleAddCondition}>
-              Add rule
-            </Button>
+              {uiT("ui.add_rule")}</Button>
           </div>
           {Object.entries(conditional).map(([condition, params]) => (
             <div
@@ -203,8 +203,7 @@ export function CategoryDialog({
                   variant="ghost"
                   onClick={() => removeCondition(condition)}
                 >
-                  Remove
-                </Button>
+                  {uiT("settings.appearance.custom.importFont.remove")}</Button>
               </div>
               <ChipInput
                 values={params.values ?? []}
@@ -236,12 +235,11 @@ export function CategoryDialog({
                     },
                   });
                 }}
-                placeholder="Type a conditional value and press Enter"
+                placeholder={uiT("ui.type_a_conditional_value_and_press_enter")}
               />
               <div className="grid gap-1.5">
                 <p className="text-xs font-semibold uppercase text-muted-foreground">
-                  Rule weights (optional)
-                </p>
+                  {uiT("ui.rule_weights_optional")}</p>
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {(params.values ?? []).map((value, index) => (
                     <div
@@ -257,7 +255,7 @@ export function CategoryDialog({
                       <Input
                         type="number"
                         className="nodrag"
-                        placeholder="Weight"
+                        placeholder={uiT("ui.weight")}
                         value={params.weights?.[index] ?? ""}
                         onChange={(event) => {
                           const weights = [

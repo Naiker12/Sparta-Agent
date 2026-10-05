@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { localizeUiMessage } from "@/i18n/localize-message";
 export const INITIAL_STARTUP_MESSAGE = "Starting Spartan Agent...";
 export const MODELS_STARTUP_MESSAGE = "Preparing API connections...";
 export const SERVER_STARTUP_MESSAGE = "Nearly done...";
@@ -10,19 +12,27 @@ export interface InstallProgressMessage {
 
 const INSTALL_PHASE_MESSAGES: readonly InstallProgressMessage[] = [
   {
-    title: "Preparing your workspace...",
+    get title() {
+      return uiTranslate("ui.preparing_your_workspace");
+    },
     subtitle: "Checking what this computer needs.",
   },
   {
-    title: "Downloading required components...",
+    get title() {
+      return uiTranslate("ui.downloading_required_components");
+    },
     subtitle: "Creating your local environment.",
   },
   {
-    title: "Installing Spartan Agent...",
+    get title() {
+      return uiTranslate("ui.installing_spartan_agent");
+    },
     subtitle: "Setting up project tools and API connections.",
   },
   {
-    title: "Finishing setup...",
+    get title() {
+      return uiTranslate("ui.finishing_setup");
+    },
     subtitle: "Getting everything ready.",
   },
 ];
@@ -52,18 +62,22 @@ export function installProgressMessage(
           : 3;
   const phaseMessage = INSTALL_PHASE_MESSAGES[phaseIndex];
   if (rotationIndex === 0) {
-    return phaseMessage;
+    return {
+      title: localizeUiMessage(phaseMessage.title),
+      subtitle: localizeUiMessage(phaseMessage.subtitle),
+    };
   }
 
   return {
     title: phaseMessage.title,
-    subtitle:
+    subtitle: localizeUiMessage(
       INSTALL_WAITING_SUBTITLES[
         normalizedRotationIndex(
           rotationIndex - 1,
           INSTALL_WAITING_SUBTITLES.length,
         )
       ],
+    ),
   };
 }
 
@@ -82,11 +96,13 @@ export function startupWaitingMessage(
   rotationIndex: number,
 ): string {
   if (phaseMessage !== INITIAL_STARTUP_MESSAGE) {
-    return phaseMessage;
+    return localizeUiMessage(phaseMessage);
   }
-  return STARTUP_WAITING_MESSAGES[
-    normalizedRotationIndex(rotationIndex, STARTUP_WAITING_MESSAGES.length)
-  ];
+  return localizeUiMessage(
+    STARTUP_WAITING_MESSAGES[
+      normalizedRotationIndex(rotationIndex, STARTUP_WAITING_MESSAGES.length)
+    ],
+  );
 }
 
 export function startupMessageFromLog(

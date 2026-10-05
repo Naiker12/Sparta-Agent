@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { getInferenceStatus, loadModel } from "@/features/chat";
 import { createLoadingToastIcon, toast } from "@/lib/toast";
 import { toastError } from "@/shared/toast";
@@ -237,7 +238,7 @@ async function loadLocalModelSelection(
   const modelLabel = ggufVariant ? `${target} (${ggufVariant})` : target;
   let loadToastDismissed = false;
   const toastId = toast.message(`Loading ${modelLabel}...`, {
-    description: "Starting the local inference server for this recipe.",
+    get description() { return uiTranslate("ui.starting_the_local_inference_server_for_this_recipe"); },
     duration: Number.POSITIVE_INFINITY,
     closeButton: true,
     icon: createLoadingToastIcon(),
@@ -415,12 +416,12 @@ async function prepareLocalModelForRun(payload: RecipePayload): Promise<{
       ? async () => {
           const restoreError = await loadLocalModelSelection(previousSelection);
           if (restoreError) {
-            toastError("Could not restore previous local model", restoreError);
+            toastError(uiTranslate("ui.could_not_restore_previous_local_model"), restoreError);
           }
         }
       : previousSnapshot.unrestorableLabel
         ? () => {
-            toast.warning("Previous local model was not restored", {
+            toast.warning(uiTranslate("ui.previous_local_model_was_not_restored"), {
               description: `${previousSnapshot.unrestorableLabel} was selected from a native file path. Reopen it in Chat to continue with that model.`,
             });
             return Promise.resolve();
@@ -650,7 +651,7 @@ export function useRecipeExecutions({
     }
 
     setRunErrors(payloadResult.errors);
-    toastError("Invalid recipe payload", payloadErrorMessage);
+    toastError(uiTranslate("ui.invalid_recipe_payload"), payloadErrorMessage);
     return null;
   }, [payloadErrorMessage, payloadResult.errors, readPayload, setRunErrors]);
 
@@ -755,7 +756,7 @@ export function useRecipeExecutions({
         return restorePrevious;
       }
       setRunErrors([error]);
-      toastError("Local model failed to load", error);
+      toastError(uiTranslate("ui.local_model_failed_to_load"), error);
       return false;
     },
     [setRunErrors],
@@ -776,12 +777,12 @@ export function useRecipeExecutions({
         const fallback = validation.raw_detail ?? "Validation failed.";
         const nextErrors = errors.length > 0 ? errors : [fallback];
         setRunErrors(nextErrors);
-        toastError("Validation failed", nextErrors[0]);
+        toastError(uiTranslate("ui.validation_failed"), nextErrors[0]);
         return false;
       } catch (error) {
         const message = toErrorMessage(error, "Validation failed.");
         setRunErrors([message]);
-        toastError("Validation failed", message);
+        toastError(uiTranslate("ui.validation_failed"), message);
         return false;
       }
     },
@@ -798,7 +799,7 @@ export function useRecipeExecutions({
       if (kind === "full" && !trimmedRunName) {
         const message = "Run name required for full runs.";
         setRunErrors([message]);
-        toastError("Run name required", message);
+        toastError(uiTranslate("ui.run_name_required"), message);
         return false;
       }
 
@@ -919,7 +920,7 @@ export function useRecipeExecutions({
           errors: [localLoadError],
           rawDetail: null,
         });
-        toastError("Local model failed to load", localLoadError);
+        toastError(uiTranslate("ui.local_model_failed_to_load"), localLoadError);
         return false;
       }
 
@@ -989,7 +990,7 @@ export function useRecipeExecutions({
         });
       } catch (error) {
         const message = toErrorMessage(error, "Could not cancel execution.");
-        toastError("Cancel failed", message);
+        toastError(uiTranslate("ui.cancel_failed"), message);
       }
     },
     [executions, upsertAndPersist],
@@ -1027,7 +1028,7 @@ export function useRecipeExecutions({
         });
       } catch (error) {
         const message = toErrorMessage(error, "Could not load dataset page.");
-        toastError("Dataset page failed", message);
+        toastError(uiTranslate("ui.dataset_page_failed"), message);
       }
     },
     [executions, upsertAndPersist],

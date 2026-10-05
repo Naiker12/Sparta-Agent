@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -49,6 +50,8 @@ export function ExecutionsView({
   onCancelExecution,
   onLoadDatasetPage,
 }: ExecutionsViewProps): ReactElement {
+  const uiT = useUiT();
+
   const formatEta = (value: number | null | undefined): string =>
     typeof value === "number" && Number.isFinite(value)
       ? `${value.toLocaleString()} s`
@@ -142,7 +145,7 @@ export function ExecutionsView({
             <div>
               <img
                 src={imagePreview.src}
-                alt={`${name} preview`}
+                alt={uiT("ui.value0_preview", { value0: String(name) })}
                 loading="lazy"
                 className="h-24 w-auto max-w-[260px] rounded-md border border-border/60 bg-muted/20 object-contain"
               />
@@ -152,8 +155,7 @@ export function ExecutionsView({
         if (imagePreview?.kind === "too_large") {
           return (
             <p className="text-xs text-muted-foreground">
-              Image too large to preview
-            </p>
+              {uiT("ui.image_too_large_to_preview")}</p>
           );
         }
         const value = formatCellValue(rawValue);
@@ -398,8 +400,7 @@ export function ExecutionsView({
                       )}
                     />
                     <p className="text-sm font-semibold text-foreground">
-                      Progress
-                    </p>
+                      {uiT("ui.progress")}</p>
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {formatPercent(progressPercent)}
@@ -408,25 +409,25 @@ export function ExecutionsView({
                 <Progress value={progressPercent} className="h-1" />
                 <div className="grid gap-2 text-xs md:grid-cols-4">
                   <p className="text-muted-foreground">
-                    Done:{" "}
+                    {uiT("ui.done")}{" "}
                     <span className="text-foreground">
                       {selectedExecution.progress?.done ?? "--"}
                     </span>
                   </p>
                   <p className="text-muted-foreground">
-                    Total:{" "}
+                    {uiT("ui.total")}{" "}
                     <span className="text-foreground">
                       {selectedExecution.progress?.total ?? "--"}
                     </span>
                   </p>
                   <p className="text-muted-foreground">
-                    Rate:{" "}
+                    {uiT("ui.rate")}{" "}
                     <span className="text-foreground">
                       {selectedExecution.progress?.rate ?? "--"} rec/s
                     </span>
                   </p>
                   <p className="text-muted-foreground">
-                    ETA:{" "}
+                    {uiT("ui.eta")}{" "}
                     <span className="text-foreground">
                       {formatEta(selectedExecution.progress?.eta_sec)}
                     </span>
@@ -435,7 +436,7 @@ export function ExecutionsView({
                 {selectedExecution.current_column &&
                   selectedExecution.column_progress && (
                     <p className="text-xs text-muted-foreground">
-                      Column {selectedExecution.current_column}:{" "}
+                      {uiT("ui.column")}{" "}{selectedExecution.current_column}:{" "}
                       {selectedExecution.column_progress.done ?? "--"}/
                       {selectedExecution.column_progress.total ?? "--"} (
                       {formatPercent(selectedExecution.column_progress.percent)}
@@ -444,11 +445,11 @@ export function ExecutionsView({
                   )}
                 {showBatchProgress && (
                   <p className="text-xs text-muted-foreground">
-                    Processed batch: {batchIdx ?? "--"}/{batchTotal}
+                    {uiT("ui.processed_batch")}{" "}{batchIdx ?? "--"}/{batchTotal}
                   </p>
                 )}
                 {isStale && (
-                  <Badge variant="outline">Recipe changed since this run</Badge>
+                  <Badge variant="outline">{uiT("ui.recipe_changed_since_this_run")}</Badge>
                 )}
               </div>
             )}
@@ -458,11 +459,11 @@ export function ExecutionsView({
               <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-3">
                 <p className="text-sm font-semibold text-destructive">
                   {selectedExecution.status === "cancelled"
-                    ? "Execution cancelled"
-                    : "Execution failed"}
+                    ? uiT("ui.execution_cancelled")
+                    : uiT("ui.execution_failed")}
                 </p>
                 <p className="text-xs text-destructive">
-                  {selectedExecution.error ?? "Unknown error."}
+                  {selectedExecution.error ?? uiT("ui.unknown_error")}
                 </p>
               </div>
             )}
@@ -470,10 +471,10 @@ export function ExecutionsView({
             <Tabs value={detailTab} onValueChange={setDetailTab}>
               <div className="flex items-center justify-between gap-2">
                 <TabsList className="border border-border/60 bg-card/40">
-                  <TabsTrigger value="data">Data</TabsTrigger>
-                  <TabsTrigger value="overview">Overview</TabsTrigger>
-                  <TabsTrigger value="columns">Columns</TabsTrigger>
-                  <TabsTrigger value="raw">Raw</TabsTrigger>
+                  <TabsTrigger value="data">{uiT("settings.data.title")}</TabsTrigger>
+                  <TabsTrigger value="overview">{uiT("ui.overview")}</TabsTrigger>
+                  <TabsTrigger value="columns">{uiT("studio.dataset.columns")}</TabsTrigger>
+                  <TabsTrigger value="raw">{uiT("ui.raw")}</TabsTrigger>
                 </TabsList>
                 <div className="flex items-center gap-2">
                   {canPublish && (
@@ -487,8 +488,7 @@ export function ExecutionsView({
                         icon={Share08Icon}
                         className="mr-2 size-4"
                       />
-                      Publish to Hugging Face
-                    </Button>
+                      {uiT("ui.publish_to_hugging_face")}</Button>
                   )}
                   {canCancel && (
                     <Button
@@ -497,8 +497,7 @@ export function ExecutionsView({
                       variant="outline"
                       onClick={() => onCancelExecution(selectedExecution.id)}
                     >
-                      Cancel
-                    </Button>
+                      {uiT("chat.workspace.cancel")}</Button>
                   )}
                 </div>
               </div>
@@ -594,8 +593,7 @@ export function ExecutionsView({
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-border/60 p-4 text-sm text-muted-foreground">
-            Select an execution.
-          </div>
+            {uiT("ui.select_an_execution")}</div>
         )}
       </section>
       <PublishExecutionDialog

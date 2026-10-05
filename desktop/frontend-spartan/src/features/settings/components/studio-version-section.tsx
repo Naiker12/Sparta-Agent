@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { getAuthToken, refreshSession } from "@/features/auth";
 import { useT } from "@/i18n";
 import { apiUrl, isElectron } from "@/lib/api-base";
@@ -75,6 +76,8 @@ export function StudioVersionSection({
   desktopAppVersion?: string | null;
   children?: ReactNode;
 } = {}) {
+  const uiT = useUiT();
+
   const t = useT();
   const [packageVersion, setPackageVersion] = useState(SPARTA_VERSION);
   const [studioVersion, setStudioVersion] = useState(`v${SPARTA_VERSION}`);
@@ -110,7 +113,7 @@ export function StudioVersionSection({
   }, []);
 
   return (
-    <SettingsSection title="Sparta Agent">
+    <SettingsSection title={uiT("settings.about.license.studioLabel")}>
       <SettingsRow label={t("settings.about.studioVersion")}>
         <code className="font-mono text-xs text-muted-foreground">
           {studioVersion}

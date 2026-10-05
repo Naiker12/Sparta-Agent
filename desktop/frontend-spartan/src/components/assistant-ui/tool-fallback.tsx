@@ -1,3 +1,5 @@
+import { UiText } from "@/i18n/ui-text";
+import { useT as useUiT } from "@/i18n";
 "use client";
 
 import {
@@ -297,6 +299,8 @@ function ToolFallbackResult({
   result?: unknown;
   toolName?: string;
 }) {
+  const uiT = useUiT();
+
   if (result === undefined) {
     return null;
   }
@@ -312,8 +316,7 @@ function ToolFallbackResult({
           {...props}
         >
           <p className="aui-tool-fallback-result-header font-semibold">
-            Result:
-          </p>
+            {uiT("ui.result")}</p>
           {listContent}
         </div>
       );
@@ -332,7 +335,7 @@ function ToolFallbackResult({
       className={cn("aui-tool-fallback-result pt-2", className)}
       {...props}
     >
-      <p className="aui-tool-fallback-result-header font-semibold">Result:</p>
+      <p className="aui-tool-fallback-result-header font-semibold">{uiT("ui.result")}</p>
       {imageResult ? (
         <>
           {imageResult.text && (
@@ -345,7 +348,7 @@ function ToolFallbackResult({
               <img
                 key={i}
                 src={`data:${img.mimeType};base64,${img.data}`}
-                alt={`Tool result ${i + 1}`}
+                alt={uiT("ui.tool_result_value0", { value0: String(i + 1) })}
                 loading="lazy"
                 className="max-w-full rounded border border-border"
               />
@@ -404,9 +407,9 @@ function renderMcpServerList(result: unknown): ReactNode | null {
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-border text-muted-foreground">
-            <th className="pb-1.5 pr-4 font-medium">Name</th>
-            <th className="pb-1.5 pr-4 font-medium">Address</th>
-            <th className="pb-1.5 font-medium">Status</th>
+            <th className="pb-1.5 pr-4 font-medium"><UiText messageKey="projectsPage.colName" /></th>
+            <th className="pb-1.5 pr-4 font-medium"><UiText messageKey="ui.address" /></th>
+            <th className="pb-1.5 font-medium"><UiText messageKey="apiPage.status" /></th>
           </tr>
         </thead>
         <tbody>
@@ -418,9 +421,9 @@ function renderMcpServerList(result: unknown): ReactNode | null {
               </td>
               <td className="py-1.5">
                 {server.is_enabled ? (
-                  <span className="text-emerald-500">✅ Enabled</span>
+                  <span className="text-emerald-500"><UiText messageKey="ui.enabled_" /></span>
                 ) : (
-                  <span className="text-muted-foreground">⏸ Disabled</span>
+                  <span className="text-muted-foreground"><UiText messageKey="ui.disabled" /></span>
                 )}
               </td>
             </tr>

@@ -1,9 +1,10 @@
+import { translate as uiTranslate } from "@/i18n";
 import * as xlsx from "xlsx";
 
 export async function parseSpreadsheetPreview(blob: Blob) {
   try {
     if (blob.size > 25 * 1024 * 1024) {
-      throw new Error("File exceeds 25 MB preview limit");
+      throw new Error(uiTranslate("ui.file_exceeds_25_mb_preview_limit"));
     }
     const data = await blob.arrayBuffer();
     const names = xlsx.read(data, {

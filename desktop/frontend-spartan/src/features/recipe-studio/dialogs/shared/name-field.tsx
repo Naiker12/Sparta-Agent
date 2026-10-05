@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Input } from "@/components/ui/input";
 import { type ReactElement, useId } from "react";
 import { FieldLabel } from "./field-label";
@@ -17,12 +18,14 @@ export function NameField({
   label,
   hint,
 }: NameFieldProps): ReactElement {
+  const uiT = useUiT();
+
   const fallbackId = useId();
   const inputId = id ?? fallbackId;
   return (
     <div className="grid gap-1.5">
       <FieldLabel
-        label={label ?? "Field name"}
+        label={label ?? uiT("ui.field_name")}
         htmlFor={inputId}
         hint={hint ?? "This name is used in prompts and in the final dataset."}
       />

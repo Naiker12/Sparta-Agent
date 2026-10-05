@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { ReleaseNotesPanel } from "@/components/update/release-notes-panel";
 import type {
@@ -54,6 +55,8 @@ export function UpdateBanner({
   onDismiss,
   onCopyDiagnostics,
 }: UpdateBannerProps) {
+  const uiT = useUiT();
+
   const t = useT();
   const [copying, setCopying] = useState(false);
   const [manualReport, setManualReport] = useState<string | null>(null);
@@ -144,7 +147,7 @@ export function UpdateBanner({
               type="button"
               onClick={onDismiss}
               className="absolute top-2.5 right-3 flex size-6 items-center justify-center rounded-full text-muted-foreground/60 transition-colors hover:bg-muted hover:text-foreground"
-              aria-label="Dismiss app update notification"
+              aria-label={uiT("ui.dismiss_app_update_notification")}
             >
               <svg
                 aria-hidden="true"
@@ -171,7 +174,7 @@ export function UpdateBanner({
               />
               <div className="min-w-0">
                 <p className="font-heading text-base font-medium text-foreground">
-                  {showFailure ? "App update failed" : "Nueva versión de Sparta"}
+                  {showFailure ? uiT("ui.app_update_failed") : uiT("ui.new_sparta_version")}
                 </p>
                 {showFailure ? null : (
                   <p className="mt-0.5 text-xs text-muted-foreground">
@@ -183,12 +186,12 @@ export function UpdateBanner({
                 )}
                 <p className="mt-1 text-ui-11 text-muted-foreground/70">
                   {showFailure
-                    ? "Backend recovered. Diagnostics are still available."
+                    ? uiT("ui.backend_recovered_diagnostics_are_still_available")
                     : isManualLinuxPackage
-                      ? "Open the GitHub release page to install the Linux package"
+                      ? uiT("ui.open_the_github_release_page_to_install_the_linux_package")
                       : isExternalServer
-                        ? "Actualiza Sparta desde la aplicación o instala la versión más reciente"
-                        : "A new app update is available"}
+                        ? uiT("ui.update_sparta_from_the_application_or_install_the_latest_version")
+                        : uiT("ui.a_new_app_update_is_available")}
                 </p>
               </div>
             </div>
@@ -229,7 +232,7 @@ export function UpdateBanner({
                   aria-expanded={notesOpen}
                   data-testid="tauri-update-release-notes-toggle"
                 >
-                  {notesOpen ? "Hide release notes" : "Show release notes"}
+                  {notesOpen ? uiT("ui.hide_release_notes") : uiT("ui.show_release_notes")}
                 </Button>
               ) : null}
               {showFailure ? (
@@ -242,7 +245,7 @@ export function UpdateBanner({
                       handleCopyDiagnostics().catch(console.error);
                     }}
                   >
-                    {copying ? "Copying..." : "Copy diagnostics"}
+                    {copying ? uiT("update.screen.copying") : uiT("update.screen.copyDiagnostics")}
                   </Button>
                   <Button
                     size="sm"
@@ -250,8 +253,7 @@ export function UpdateBanner({
                     className="h-auto rounded-full px-3 py-2 text-ui-13 font-medium text-foreground"
                     onClick={onDismiss}
                   >
-                    Later
-                  </Button>
+                    {uiT("ui.later")}</Button>
                   <Button
                     size="sm"
                     className="-mr-1 h-auto rounded-full px-3.5 py-2 text-ui-13"
@@ -259,8 +261,8 @@ export function UpdateBanner({
                     disabled={installDisabled}
                   >
                     {isManualLinuxPackage
-                      ? "Open release page"
-                      : "Retry update"}
+                      ? uiT("update.openReleasePage")
+                      : uiT("ui.retry_update")}
                   </Button>
                 </>
               ) : (

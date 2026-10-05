@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import {
   consumeNativePathToken,
   registerNativeAttachmentPath,
@@ -119,7 +121,7 @@ async function uploadStaged(
   for (const entry of staged) {
     try {
       if (isExpired(entry, Date.now())) {
-        throw new Error("The drop expired. Add it again from the project.");
+        throw new Error(uiTranslate("ui.the_drop_expired_add_it_again_from_the_project"));
       }
       // Leases are short-lived, so mint one per file as its turn comes up.
       const source =
@@ -154,7 +156,7 @@ async function uploadStaged(
       merged.length === 1
         ? `${merged[0]} matched a file already added`
         : `${merged.length} files matched files already added`,
-      { description: "Identical contents are stored once." },
+      { get description() { return uiTranslate("ui.identical_contents_are_stored_once"); } },
     );
   }
 }
@@ -173,6 +175,8 @@ export function ProjectSourceDropzone({
    * settle. Create must wait, or it commits without the files just dropped. */
   onPendingChange?: (pending: boolean) => void;
 }) {
+  const uiT = useUiT();
+
   const t = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   // Count enter/leave pairs: children fire dragleave on the parent.
@@ -252,7 +256,7 @@ export function ProjectSourceDropzone({
           dropped === 1
             ? "A dropped file expired"
             : `${dropped} dropped files expired`,
-          { description: "Drag them in again to add them." },
+          { get description() { return uiTranslate("ui.drag_them_in_again_to_add_them"); } },
         );
       },
       Math.max(0, Math.min(...expiries) - EXPIRY_GRACE_MS - Date.now()),
@@ -458,7 +462,7 @@ export function ProjectSourceDropzone({
                   </span>
                   <button
                     type="button"
-                    aria-label={`Remove ${entry.name}`}
+                    aria-label={uiT("ui.remove_value0", { value0: String(entry.name) })}
                     disabled={disabled}
                     onClick={() =>
                       commit(staged.filter((row) => row.id !== entry.id))

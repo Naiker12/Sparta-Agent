@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   Command,
   CommandDialog,
@@ -64,6 +65,8 @@ function formatRelative(createdAt: number): string {
 }
 
 export function ChatSearchDialog() {
+  const uiT = useUiT();
+
   const isOpen = useChatSearchStore((s) => s.isOpen);
   const setOpen = useChatSearchStore((s) => s.setOpen);
   const close = useChatSearchStore((s) => s.close);
@@ -103,7 +106,7 @@ export function ChatSearchDialog() {
             className="size-4 shrink-0 text-muted-foreground"
           />
           <CommandPrimitive.Input
-            placeholder="Search chats..."
+            placeholder={uiT("ui.search_chats")}
             onValueChange={setQuery}
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
           />
@@ -111,7 +114,7 @@ export function ChatSearchDialog() {
             type="button"
             onClick={close}
             className="flex size-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label="Close"
+            aria-label={uiT("settings.about.shutDown")}
           >
             <HugeiconsIcon
               icon={Cancel01Icon}
@@ -123,10 +126,10 @@ export function ChatSearchDialog() {
         <CommandList className="cmd-native-scrollbar hover-scrollbar max-h-[420px] p-1">
           <CommandEmpty className="py-6 text-center text-xs text-muted-foreground">
             {loading
-              ? "Loading…"
+              ? uiT("chat.projectSwitcher.loading")
               : items.length === 0
-                ? "No chats yet."
-                : "No chats match."}
+                ? uiT("ui.no_chats_yet")
+                : uiT("ui.no_chats_match")}
           </CommandEmpty>
           <CommandGroup className="p-0">
             {visibleItems.map((item) => (
@@ -161,7 +164,7 @@ export function ChatSearchDialog() {
                   className="size-4 shrink-0 text-muted-foreground"
                 />
                 <span className="min-w-0 flex-1 truncate text-ui-13 font-medium">
-                  {item.title || "Untitled chat"}
+                  {item.title || uiT("ui.untitled_chat")}
                 </span>
                 <span className="shrink-0 text-ui-11 text-muted-foreground">
                   {formatRelative(item.createdAt)}

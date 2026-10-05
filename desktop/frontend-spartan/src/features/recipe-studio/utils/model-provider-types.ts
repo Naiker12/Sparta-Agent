@@ -1,5 +1,6 @@
+import { translate as uiTranslate } from "@/i18n";
 export const MODEL_PROVIDER_TYPE_OPTIONS = [
-  { value: "openai", label: "OpenAI-compatible" },
+  { value: "openai", get label() { return uiTranslate("ui.openai_compatible"); } },
   { value: "anthropic", label: "Anthropic" },
 ] as const;
 

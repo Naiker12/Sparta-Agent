@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,6 +24,8 @@ export function ImportDialog({
   onImport,
   container,
 }: ImportDialogProps): ReactElement {
+  const uiT = useUiT();
+
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
   const payloadId = "recipe-import-payload";
@@ -53,11 +56,11 @@ export function ImportDialog({
         className="corner-squircle max-h-[650px] overflow-auto sm:max-w-2xl shadow-border"
       >
         <DialogHeader>
-          <DialogTitle>Import recipe</DialogTitle>
+          <DialogTitle>{uiT("ui.import_recipe")}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-1.5">
           <FieldLabel
-            label="Recipe JSON"
+            label={uiT("ui.recipe_json")}
             htmlFor={payloadId}
             hint="Paste JSON exported from Recipe Studio."
           />
@@ -76,8 +79,7 @@ export function ImportDialog({
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={handleImport}>
-            Import recipe
-          </Button>
+            {uiT("ui.import_recipe")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { useT } from "@/i18n";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { Tick02Icon } from "@/lib/tick-icon";
@@ -203,6 +204,8 @@ export function UpdateStudioInstructions({
   installSource?: UpdateInstallSourceState | null;
   showTitle?: boolean;
 }): ReactElement {
+  const uiT = useUiT();
+
   const t = useT();
   const [shellOverride, setShellOverride] = useState<UpdateShell | null>(null);
   const shell = shellOverride ?? defaultShell;
@@ -265,7 +268,7 @@ export function UpdateStudioInstructions({
           />
           <ShellToggleButton
             active={windows}
-            label="Windows"
+            label={uiT("settings.about.update.docsWindows")}
             onClick={() => setShellOverride("windows")}
           />
         </div>

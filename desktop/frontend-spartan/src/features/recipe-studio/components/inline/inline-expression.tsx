@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -25,6 +26,8 @@ export function InlineExpression({
   config,
   onUpdate,
 }: InlineExpressionProps): ReactElement {
+  const uiT = useUiT();
+
   const configs = useRecipeStudioStore((state) => state.configs);
   const vars = getAvailableVariableEntries(configs, config.id);
   const invalidRefs = findInvalidJinjaReferences(
@@ -35,7 +38,7 @@ export function InlineExpression({
   return (
     <div className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-[130px_1fr]">
-        <InlineField label="Output type">
+        <InlineField label={uiT("ui.output_type")}>
           <Select
             value={config.dtype}
             onValueChange={(value) =>
@@ -54,7 +57,7 @@ export function InlineExpression({
             </SelectContent>
           </Select>
         </InlineField>
-        <InlineField label="Expression">
+        <InlineField label={uiT("ui.expression")}>
           <Input
             className="nodrag h-8 w-full text-xs"
             aria-invalid={invalidRefs.length > 0}

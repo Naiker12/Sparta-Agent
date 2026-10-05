@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 // Condensed row actions for model rows: everything except the run-settings
 // gear collapses into one dots menu (pin, update, delete) so rows don't grow
 // an icon strip. Mirrors the sidebar chat rows' MoreVertical menu pattern.
@@ -101,6 +103,8 @@ export function ModelRowMenu({
   update?: ModelRowMenuUpdate;
   del?: ModelRowMenuDelete;
 }) {
+  const uiT = useUiT();
+
   const deviceType = usePlatformStore((s) => s.deviceType);
   const revealLabel =
     deviceType === "mac" ? "Reveal in Finder" : "Reveal in Folder";
@@ -168,7 +172,7 @@ export function ModelRowMenu({
       .then(onUpdateConfirm)
       .catch((err) => {
         toast.error(
-          err instanceof Error ? err.message : "Failed to start update",
+          err instanceof Error ? err.message : uiTranslate("ui.failed_to_start_update"),
         );
       });
     setUpdateOpen(false);
@@ -182,7 +186,7 @@ export function ModelRowMenu({
     }
     revealCachedModel(cachePathRepoId, cachePathVariant).catch((err) => {
       toast.error(
-        err instanceof Error ? err.message : "Failed to open file manager",
+        err instanceof Error ? err.message : uiTranslate("hub.gguf.menu.failedToOpenFileManager"),
       );
     });
   }, [cachePathRepoId, cachePathVariant]);
@@ -230,7 +234,7 @@ export function ModelRowMenu({
                 strokeWidth={1.75}
                 className="size-icon"
               />
-              <span>Settings</span>
+              <span>{uiT("settings.dialog.title")}</span>
             </DropdownMenuItem>
           )}
           {pin && (
@@ -272,7 +276,7 @@ export function ModelRowMenu({
               }}
             >
               <RefreshCw className="size-icon" />
-              <span>Update</span>
+              <span>{uiT("update.update")}</span>
             </DropdownMenuItem>
           )}
           {del && (
@@ -291,7 +295,7 @@ export function ModelRowMenu({
                   strokeWidth={1.75}
                   className="size-icon"
                 />
-                <span>Delete</span>
+                <span>{uiT("chat.menu.delete")}</span>
               </DropdownMenuItem>
             </>
           )}

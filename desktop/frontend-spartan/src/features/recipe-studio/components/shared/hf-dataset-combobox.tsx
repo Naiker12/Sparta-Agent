@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   Combobox,
   ComboboxContent,
@@ -28,6 +29,8 @@ export function HfDatasetCombobox({
   placeholder = "Search datasets...",
   className,
 }: HfDatasetComboboxProps): ReactElement {
+  const uiT = useUiT();
+
   const [inputValue, setInputValue] = useState(value);
   const selectingRef = useRef(false);
   const anchorRef = useRef<HTMLDivElement>(null);
@@ -97,10 +100,9 @@ export function HfDatasetCombobox({
           {isLoading ? (
             <div className="flex items-center gap-2 px-2 py-3 text-xs text-muted-foreground">
               <Spinner className="size-3.5" />
-              Searching...
-            </div>
+              {uiT("ui.searching")}</div>
           ) : (
-            <ComboboxEmpty>No datasets found</ComboboxEmpty>
+            <ComboboxEmpty>{uiT("ui.no_datasets_found")}</ComboboxEmpty>
           )}
           <ComboboxList>
             {(id: string) => (

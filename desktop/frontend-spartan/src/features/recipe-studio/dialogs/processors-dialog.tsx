@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,6 +30,8 @@ export function ProcessorsDialog({
   onProcessorsChange,
   container,
 }: ProcessorsDialogProps): ReactElement {
+  const uiT = useUiT();
+
   const schemaIndex = useMemo(
     () =>
       processors.findIndex(
@@ -78,15 +81,14 @@ export function ProcessorsDialog({
         className="corner-squircle max-h-[650px] overflow-auto sm:max-w-2xl shadow-border"
       >
         <VisuallyHidden.Root>
-          <DialogTitle>Processors</DialogTitle>
+          <DialogTitle>{uiT("ui.processors")}</DialogTitle>
         </VisuallyHidden.Root>
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-3 corner-squircle rounded-2xl border border-border/60 px-3 py-2">
             <div>
-              <p className="text-sm font-semibold">Schema transform</p>
+              <p className="text-sm font-semibold">{uiT("ui.schema_transform")}</p>
               <p className="text-xs text-muted-foreground">
-                Transform final rows to target schema (post-batch).
-              </p>
+                {uiT("ui.transform_final_rows_to_target_schema_post_batch")}</p>
             </div>
             <Switch
               checked={Boolean(schemaProcessor)}
@@ -99,7 +101,7 @@ export function ProcessorsDialog({
               <AvailableVariables configId="" />
               <div className="grid gap-1.5">
                 <FieldLabel
-                  label="Name"
+                  label={uiT("projectsPage.colName")}
                   htmlFor={nameId}
                   hint="Processor name shown in graph and payload."
                 />
@@ -114,7 +116,7 @@ export function ProcessorsDialog({
               </div>
               <div className="grid gap-1.5">
                 <FieldLabel
-                  label="Template (JSON)"
+                  label={uiT("ui.template_json")}
                   htmlFor={templateId}
                   hint="Target output schema template using Jinja references."
                 />
@@ -127,8 +129,7 @@ export function ProcessorsDialog({
                   }
                 />
                 <p className="text-xs text-muted-foreground">
-                  Use Jinja refs like {"{{ customer_review }}"} in values.
-                </p>
+                  {uiT("ui.use_jinja_refs_like")}{" "}{"{{ customer_review }}"} {" "}{uiT("ui.in_values")}</p>
               </div>
             </div>
           )}
@@ -139,8 +140,7 @@ export function ProcessorsDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
           >
-            Done
-          </Button>
+            {uiT("tour.done")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

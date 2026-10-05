@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Spinner } from "@/components/ui/spinner";
 import type { HubFailure } from "@/features/hub/lib/network";
 import {
@@ -65,20 +66,21 @@ export function InventoryWarningRow({
   isDataset: boolean;
   onRetry: () => void;
 }) {
+  const uiT = useUiT();
+
   return (
     <div className="mx-5 mt-2 rounded-[8px] border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-ui-12p5 text-muted-foreground">
       <div className="flex items-center justify-between gap-3">
         <span>
-          Some on-device sources couldn't be scanned. Showing available{" "}
-          {isDataset ? "datasets" : "models"}.
+          {uiT("ui.some_on_device_sources_couldn_t_be_scanned_showing_available")}{" "}
+          {isDataset ? uiT("studio.datasetPicker.noun") : uiT("studio.modelPicker.noun")}.
         </span>
         <button
           type="button"
           className="shrink-0 text-ui-12 font-medium text-foreground transition-colors hover:text-primary"
           onClick={onRetry}
         >
-          Retry
-        </button>
+          {uiT("chat.actions.retry")}</button>
       </div>
     </div>
   );
@@ -302,6 +304,8 @@ export function DownloadedList({
   onInventoryChange?: () => void;
   onOpenModelSettings?: (row: CachedInventoryRow | LocalInventoryRow) => void;
 }) {
+  const uiT = useUiT();
+
   // Pinned repos surface first regardless of the active sort, which still orders within groups.
   const pinnedIds = usePinnedModelsStore((s) => s.pinned);
   const movePinned = usePinnedModelsStore((s) => s.movePinned);
@@ -416,8 +420,7 @@ export function DownloadedList({
     return (
       <div className="flex min-h-[240px] items-center justify-center gap-3 text-ui-13 text-muted-foreground">
         <Spinner className="size-4" />
-        Loading local inventory...
-      </div>
+        {uiT("ui.loading_local_inventory")}</div>
     );
   }
 
@@ -435,7 +438,7 @@ export function DownloadedList({
       return (
         <EmptyState
           icon={Search01Icon}
-          title="No matching models on device"
+          title={uiT("ui.no_matching_models_on_device")}
           body="No downloaded or local model matches the selected type filter."
           action={
             onClearFilters && (
@@ -444,8 +447,7 @@ export function DownloadedList({
                 onClick={onClearFilters}
                 className="inline-flex h-8 items-center gap-1.5 rounded-full bg-transparent px-3 text-ui-12 font-medium text-foreground transition-colors hover:bg-foreground/[0.04] dark:hover:bg-white/[0.05]"
               >
-                Show all types
-              </button>
+                {uiT("ui.show_all_types")}</button>
             )
           }
         />
@@ -454,7 +456,7 @@ export function DownloadedList({
     return (
       <EmptyState
         icon={query.trim() ? Search01Icon : DownloadCircle02Icon}
-        title={query.trim() ? "No matches on device" : "Nothing on device yet"}
+        title={query.trim() ? uiT("ui.no_matches_on_device") : uiT("ui.nothing_on_device_yet")}
         body={
           query.trim()
             ? `Clear the search or try a different query. No cached or local ${isDataset ? "dataset" : "model"} matches it.`
@@ -476,8 +478,7 @@ export function DownloadedList({
               strokeWidth={1.75}
               className="size-3.5"
             />
-            Pinned
-          </div>
+            {uiT("picker.pinned")}</div>
           {/* Pinned rows are few, so render them as a plain grid matching the
               virtualized list's lane count and row spacing. */}
           <div
@@ -563,7 +564,7 @@ export function DownloadedList({
           </div>
           {unpinnedItems.length > 0 && (
             <div className="px-1 pb-2 pt-2 text-ui-11 font-semibold uppercase tracking-wider text-muted-foreground">
-              All {isDataset ? "datasets" : "models"}
+              {uiT("studio.charts.all")}{" "}{isDataset ? uiT("studio.datasetPicker.noun") : uiT("studio.modelPicker.noun")}
             </div>
           )}
         </>

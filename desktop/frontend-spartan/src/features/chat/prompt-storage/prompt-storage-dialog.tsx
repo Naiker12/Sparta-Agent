@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -34,7 +36,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { toolResultModelText } from "../api/chat-adapter";
 import {
   type PromptEntry,
@@ -490,7 +492,7 @@ export async function exportConversationShareGPT(
   }
 
   if (conversations.length === 0) {
-    toast.info("No exportable content.");
+    toast.info(uiTranslate("ui.no_exportable_content"));
     return;
   }
   await downloadBlob(
@@ -512,7 +514,7 @@ export async function exportConversationRawJsonl(
 
   const oaiMsgs: OAIMessage[] = messages.flatMap((msg) => messageToOpenAI(msg));
   if (oaiMsgs.length === 0) {
-    toast.info("No exportable content.");
+    toast.info(uiTranslate("ui.no_exportable_content"));
     return;
   }
   await downloadBlob(
@@ -538,7 +540,7 @@ export async function exportConversationCsv(threadId: string): Promise<void> {
   }
 
   if (rows.length <= 1) {
-    toast.info("No exportable content.");
+    toast.info(uiTranslate("ui.no_exportable_content"));
     return;
   }
   await downloadBlob(
@@ -553,7 +555,7 @@ export const exportConversationMarkdown = createConversationMarkdownExporter({
   renderMessage: messageToMarkdown,
   download: downloadBlob,
   exportTimestamp: exportTs,
-  notifyNoContent: () => toast.info("No exportable content."),
+  notifyNoContent: () => toast.info(uiTranslate("ui.no_exportable_content")),
 });
 
 // "skipped" is an empty conversation, which has already said so and must not
@@ -580,7 +582,7 @@ async function saveConversationAsProjectSource(
     })),
   );
   if (!markdown) {
-    toast.info("No content to save.");
+    toast.info(uiTranslate("chat.actions.noContentToSave"));
     return "skipped";
   }
   const saved = await saveMarkdownAsProjectSource(projectId, markdown, title, {
@@ -615,7 +617,7 @@ export async function saveChatItemAsProjectSource(
   }
   // One toast per click, not one per thread in the pair.
   if (saved === 1) {
-    toast.success("Saved to project sources.");
+    toast.success(uiTranslate("ui.saved_to_project_sources"));
   } else if (saved > 1) {
     toast.success(`Saved ${saved} chats to project sources.`);
   }
@@ -701,7 +703,7 @@ export async function exportBulkConversationsMerged(
   basename: string,
 ): Promise<void> {
   if (threadIds.length === 0) {
-    toast.info("No conversations to export.");
+    toast.info(uiTranslate("ui.no_conversations_to_export"));
     return;
   }
 
@@ -716,7 +718,7 @@ export async function exportBulkConversationsMerged(
   }
 
   if (parts.length === 0) {
-    toast.info("No exportable content.");
+    toast.info(uiTranslate("ui.no_exportable_content"));
     return;
   }
 
@@ -735,7 +737,7 @@ export async function exportBulkConversationsSeparate(
   basename: string,
 ): Promise<void> {
   if (threadIds.length === 0) {
-    toast.info("No conversations to export.");
+    toast.info(uiTranslate("ui.no_conversations_to_export"));
     return;
   }
 
@@ -754,7 +756,7 @@ export async function exportBulkConversationsSeparate(
   }
 
   if (Object.keys(files).length === 0) {
-    toast.info("No exportable content.");
+    toast.info(uiTranslate("ui.no_exportable_content"));
     return;
   }
 
@@ -777,7 +779,7 @@ export async function bulkExportConversationsByScope(
     });
     const ids = [...new Set(threads.map((t) => t.id))];
     if (ids.length === 0) {
-      toast.info("No conversations to export.");
+      toast.info(uiTranslate("ui.no_conversations_to_export"));
       return;
     }
     const ts = new Date().toISOString().slice(0, 10);
@@ -789,7 +791,7 @@ export async function bulkExportConversationsByScope(
     }
   } catch (error) {
     if (!isDownloadCancelled(error)) {
-      toast.error("Export failed.");
+      toast.error(uiTranslate("chat.menu.exportFailed"));
     }
   }
 }
@@ -1023,7 +1025,7 @@ export async function exportFineTuneJsonl(
 ): Promise<number> {
   const { lines, conversations, skipped } = await buildFineTuneJsonl(format);
   if (conversations === 0) {
-    toast.info("No chats with a user and assistant exchange to export.");
+    toast.info(uiTranslate("ui.no_chats_with_a_user_and_assistant_exchange_to_export"));
     return 0;
   }
   const suffix = format === "openai" ? "" : `-${format}`;
@@ -1304,6 +1306,8 @@ function ExportModal({
   ctx: ExportModalCtx;
   onClose: () => void;
 }): ReactElement {
+  const uiT = useUiT();
+
   const [scope, setScope] = useState<ExportScope>("single");
   const [format, setFormat] = useState<ExportFormat>("jsonl");
 
@@ -1338,20 +1342,20 @@ function ExportModal({
         if (scope === "training") {
           if (tab === "prompts") {
             if (prompts.length === 0) {
-              toast.info("No prompts to export");
+              toast.info(uiTranslate("ui.no_prompts_to_export"));
               return;
             }
             await exportPromptsTrainingJsonl(prompts);
           } else {
             if (lists.length === 0) {
-              toast.info("No prompt lists to export");
+              toast.info(uiTranslate("ui.no_prompt_lists_to_export"));
               return;
             }
             await exportListsTrainingJsonl(lists);
           }
         } else if (tab === "prompts") {
           if (prompts.length === 0) {
-            toast.info("No prompts to export");
+            toast.info(uiTranslate("ui.no_prompts_to_export"));
             return;
           }
           if (format === "csv") {
@@ -1361,7 +1365,7 @@ function ExportModal({
           }
         } else {
           if (lists.length === 0) {
-            toast.info("No prompt lists to export");
+            toast.info(uiTranslate("ui.no_prompt_lists_to_export"));
             return;
           }
           if (format === "csv") {
@@ -1374,7 +1378,7 @@ function ExportModal({
       onClose();
     } catch (error) {
       if (!isDownloadCancelled(error)) {
-        toast.error("Could not save export.", {
+        toast.error(uiTranslate("ui.could_not_save_export"), {
           description: error instanceof Error ? error.message : String(error),
         });
       }
@@ -1406,17 +1410,14 @@ function ExportModal({
         <div className="flex flex-col gap-5 p-6">
           {/* */}
           <DialogTitle className="text-base font-semibold tracking-tight">
-            Export
-          </DialogTitle>
+            {uiT("tour.export.ctaTitle")}</DialogTitle>
           <DialogDescription className="sr-only">
-            Choose export type and format.
-          </DialogDescription>
+            {uiT("ui.choose_export_type_and_format")}</DialogDescription>
 
           {/* */}
           <div className="flex flex-col gap-2">
             <p className="text-ui-11 font-semibold uppercase tracking-wider text-muted-foreground/60">
-              Export as
-            </p>
+              {uiT("ui.export_as")}</p>
             <div className="flex flex-col gap-2">
               {/* */}
               <label
@@ -1464,11 +1465,9 @@ function ExportModal({
                 />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold leading-none">
-                    Training Style
-                  </p>
+                    {uiT("ui.training_style")}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    ShareGPT format for Unsloth fine-tuning
-                  </p>
+                    {uiT("ui.legacy_sharegpt_format_for_unsloth_fine_tuning")}</p>
                   <code className="mt-2 block w-full truncate rounded-md bg-muted px-2 py-1 font-mono text-ui-10 text-muted-foreground/60">
                     {`{"conversations":[{"from":"human","value":"..."},{"from":"gpt","value":""}]}`}
                   </code>
@@ -1480,8 +1479,7 @@ function ExportModal({
           {/* */}
           <div className="flex flex-col gap-2">
             <p className="text-ui-11 font-semibold uppercase tracking-wider text-muted-foreground/60">
-              Format
-            </p>
+              {uiT("ui.format")}</p>
             <div className="flex items-center gap-1 self-start rounded-lg bg-muted/60 p-1">
               {(["jsonl", "csv"] as ExportFormat[]).map((f) => {
                 const disabled = f === "csv" && !csvAvailable;
@@ -1519,8 +1517,7 @@ function ExportModal({
             </div>
             {!csvAvailable && (
               <p className="text-xs text-muted-foreground/60">
-                CSV is not available for this export type
-              </p>
+                {uiT("ui.csv_is_not_available_for_this_export_type")}</p>
             )}
           </div>
         </div>
@@ -1528,12 +1525,10 @@ function ExportModal({
         {/* */}
         <div className="flex items-center justify-end gap-2 border-t border-border/50 px-6 py-4">
           <Button variant="ghost" size="sm" onClick={onClose}>
-            Cancel
-          </Button>
+            {uiT("chat.workspace.cancel")}</Button>
           <Button size="sm" onClick={handleExport}>
             <DownloadIcon className="mr-1.5 size-3.5" />
-            Download
-          </Button>
+            {uiT("chat.files.download")}</Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -1551,6 +1546,8 @@ function PromptCard({
   onExport: (entry: PromptEntry) => void;
   onRefresh: () => void;
 }): ReactElement {
+  const uiT = useUiT();
+
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(entry.name);
   const [text, setText] = useState(entry.text);
@@ -1585,14 +1582,14 @@ function PromptCard({
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Prompt name..."
+          placeholder={uiT("ui.prompt_name")}
           className="w-full rounded-lg border-0 bg-background/80 px-3 py-2 text-sm ring-1 ring-border/60 outline-none focus:ring-ring transition-shadow"
         />
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={4}
-          placeholder="Prompt text..."
+          placeholder={uiT("ui.prompt_text")}
           className="w-full resize-y rounded-lg border-0 bg-background/80 px-3 py-2 text-sm ring-1 ring-border/60 outline-none focus:ring-ring transition-shadow leading-relaxed"
         />
         <div className="flex gap-2 justify-end">
@@ -1606,16 +1603,14 @@ function PromptCard({
             }}
           >
             <XIcon className="size-3.5 mr-1" />
-            Cancel
-          </Button>
+            {uiT("chat.workspace.cancel")}</Button>
           <Button size="sm" onClick={handleSave}>
             <HugeiconsIcon
               icon={Tick02Icon}
               strokeWidth={2}
               className="size-3.5 mr-1"
             />
-            Save
-          </Button>
+            {uiT("chat.actions.save")}</Button>
         </div>
       </div>
     );
@@ -1635,11 +1630,10 @@ function PromptCard({
             type="button"
             onClick={() => onUse(entry.text)}
             className="flex items-center gap-1.5 rounded-lg bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors"
-            title="Load into composer"
+            title={uiT("ui.load_into_composer")}
           >
             <PlayIcon className="size-3" />
-            Use
-          </button>
+            {uiT("ui.use")}</button>
           <div className="mx-1 h-4 w-px bg-border/60" />
           <button
             type="button"
@@ -1650,7 +1644,7 @@ function PromptCard({
                 ? "text-primary hover:bg-primary/10"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
-            title={isPinned ? "Unpin from + menu" : "Pin to + menu"}
+            title={isPinned ? uiT("ui.unpin_from_menu") : uiT("ui.pin_to_menu")}
           >
             <BookmarkIcon
               className={cn("size-3.5", isPinned && "fill-primary")}
@@ -1660,7 +1654,7 @@ function PromptCard({
             type="button"
             onClick={() => onExport(entry)}
             className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            title="Export"
+            title={uiT("tour.export.ctaTitle")}
           >
             <DownloadIcon className="size-3.5" />
           </button>
@@ -1668,7 +1662,7 @@ function PromptCard({
             type="button"
             onClick={() => setEditing(true)}
             className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            title="Edit"
+            title={uiT("chat.actions.edit")}
           >
             <PencilIcon className="size-3.5" />
           </button>
@@ -1676,7 +1670,7 @@ function PromptCard({
             type="button"
             onClick={handleDelete}
             className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-            title="Delete"
+            title={uiT("chat.menu.delete")}
           >
             <Trash2Icon className="size-3.5" />
           </button>
@@ -1693,6 +1687,8 @@ function NewPromptForm({
   onClose,
   onRefresh,
 }: { onClose: () => void; onRefresh: () => void }): ReactElement {
+  const uiT = useUiT();
+
   const [name, setName] = useState("");
   const [text, setText] = useState("");
 
@@ -1715,33 +1711,31 @@ function NewPromptForm({
 
   return (
     <div className="rounded-xl border border-border/50 bg-muted/30 p-4 flex flex-col gap-3">
-      <p className="text-xs font-semibold text-muted-foreground">New Prompt</p>
+      <p className="text-xs font-semibold text-muted-foreground">{uiT("ui.new_prompt")}</p>
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Prompt name (optional)..."
+        placeholder={uiT("ui.prompt_name_optional")}
         className="w-full rounded-lg border-0 bg-background/80 px-3 py-2 text-sm ring-1 ring-border/60 outline-none focus:ring-ring transition-shadow"
       />
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
         rows={4}
-        placeholder="Write your prompt here..."
+        placeholder={uiT("ui.write_your_prompt_here")}
         className="w-full resize-y rounded-lg border-0 bg-background/80 px-3 py-2 text-sm ring-1 ring-border/60 outline-none focus:ring-ring transition-shadow leading-relaxed"
       />
       <div className="flex gap-2 justify-end">
         <Button size="sm" variant="ghost" onClick={onClose}>
           <XIcon className="size-3.5 mr-1" />
-          Cancel
-        </Button>
+          {uiT("chat.workspace.cancel")}</Button>
         <Button size="sm" onClick={handleSave} disabled={!text.trim()}>
           <HugeiconsIcon
             icon={Tick02Icon}
             strokeWidth={2}
             className="size-3.5 mr-1"
           />
-          Save Prompt
-        </Button>
+          {uiT("ui.save_prompt")}</Button>
       </div>
     </div>
   );
@@ -1758,6 +1752,8 @@ function PromptListCard({
   onExport: (entry: PromptListEntry) => void;
   onRefresh: () => void;
 }): ReactElement {
+  const uiT = useUiT();
+
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(entry.name);
   const [items, setItems] = useState<string[]>(entry.items);
@@ -1799,12 +1795,11 @@ function PromptListCard({
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="List name..."
+          placeholder={uiT("ui.list_name")}
           className="w-full rounded-lg border-0 bg-background/80 px-3 py-2 text-sm ring-1 ring-border/60 outline-none focus:ring-ring transition-shadow"
         />
         <p className="text-xs font-semibold text-muted-foreground">
-          Prompts (sent in order)
-        </p>
+          {uiT("ui.prompts_sent_in_order")}</p>
         <div className="flex flex-col gap-2">
           {items.map((item, i) => (
             <div key={i} className="flex items-start gap-2">
@@ -1816,14 +1811,14 @@ function PromptListCard({
                 value={item}
                 onChange={(e) => updateItem(i, e.target.value)}
                 rows={2}
-                placeholder={`Prompt ${i + 1}...`}
+                placeholder={uiT("ui.prompt_value0", { value0: String(i + 1) })}
                 className="flex-1 resize-y rounded-lg border-0 bg-background/80 px-3 py-2 text-sm ring-1 ring-border/60 outline-none focus:ring-ring transition-shadow leading-relaxed"
               />
               <button
                 type="button"
                 onClick={() => removeItem(i)}
                 className="flex h-7 w-7 mt-1 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors shrink-0"
-                title="Remove"
+                title={uiT("settings.appearance.custom.importFont.remove")}
               >
                 <XIcon className="size-3.5" />
               </button>
@@ -1836,8 +1831,7 @@ function PromptListCard({
           className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
         >
           <PlusIcon className="size-3.5" />
-          Add prompt
-        </button>
+          {uiT("ui.add_prompt")}</button>
         <div className="flex gap-2 justify-end">
           <Button
             size="sm"
@@ -1849,8 +1843,7 @@ function PromptListCard({
             }}
           >
             <XIcon className="size-3.5 mr-1" />
-            Cancel
-          </Button>
+            {uiT("chat.workspace.cancel")}</Button>
           <Button
             size="sm"
             onClick={handleSave}
@@ -1861,8 +1854,7 @@ function PromptListCard({
               strokeWidth={2}
               className="size-3.5 mr-1"
             />
-            Save List
-          </Button>
+            {uiT("ui.save_list")}</Button>
         </div>
       </div>
     );
@@ -1883,18 +1875,17 @@ function PromptListCard({
               type="button"
               onClick={() => onRunList(entry.items)}
               className="flex h-7 items-center gap-1.5 rounded-lg px-2.5 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
-              title="Run list"
+              title={uiT("ui.run_list")}
             >
               <PlayIcon className="size-3" />
-              Run
-            </button>
+              {uiT("settings.data.fineTuneRunAction")}</button>
           )}
           <div className="mx-1 h-4 w-px bg-border/60" />
           <button
             type="button"
             onClick={() => onExport(entry)}
             className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            title="Export"
+            title={uiT("tour.export.ctaTitle")}
           >
             <DownloadIcon className="size-3.5" />
           </button>
@@ -1902,7 +1893,7 @@ function PromptListCard({
             type="button"
             onClick={() => setEditing(true)}
             className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            title="Edit"
+            title={uiT("chat.actions.edit")}
           >
             <PencilIcon className="size-3.5" />
           </button>
@@ -1910,7 +1901,7 @@ function PromptListCard({
             type="button"
             onClick={handleDelete}
             className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-            title="Delete"
+            title={uiT("chat.menu.delete")}
           >
             <Trash2Icon className="size-3.5" />
           </button>
@@ -1930,8 +1921,7 @@ function PromptListCard({
         ))}
         {entry.items.length > 3 && (
           <p className="text-ui-11 text-muted-foreground/50 ml-5">
-            +{entry.items.length - 3} more
-          </p>
+            +{entry.items.length - 3} {" "}{uiT("ui.more")}</p>
         )}
       </div>
     </div>
@@ -1942,6 +1932,8 @@ function NewPromptListForm({
   onClose,
   onRefresh,
 }: { onClose: () => void; onRefresh: () => void }): ReactElement {
+  const uiT = useUiT();
+
   const [name, setName] = useState("");
   const [items, setItems] = useState<string[]>(["", ""]);
 
@@ -1976,17 +1968,15 @@ function NewPromptListForm({
   return (
     <div className="rounded-xl border border-border/50 bg-muted/30 p-4 flex flex-col gap-3">
       <p className="text-xs font-semibold text-muted-foreground">
-        New Prompt List
-      </p>
+        {uiT("ui.new_prompt_list")}</p>
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="List name..."
+        placeholder={uiT("ui.list_name")}
         className="w-full rounded-lg border-0 bg-background/80 px-3 py-2 text-sm ring-1 ring-border/60 outline-none focus:ring-ring transition-shadow"
       />
       <p className="text-xs font-semibold text-muted-foreground">
-        Prompts — loaded into the composer one at a time
-      </p>
+        {uiT("ui.prompts_loaded_into_the_composer_one_at_a_time")}</p>
       <div className="flex flex-col gap-2">
         {items.map((item, i) => (
           <div key={i} className="flex items-start gap-2">
@@ -1997,7 +1987,7 @@ function NewPromptListForm({
               value={item}
               onChange={(e) => updateItem(i, e.target.value)}
               rows={2}
-              placeholder={`Prompt ${i + 1}...`}
+              placeholder={uiT("ui.prompt_value0", { value0: String(i + 1) })}
               className="flex-1 resize-y rounded-lg border-0 bg-background/80 px-3 py-2 text-sm ring-1 ring-border/60 outline-none focus:ring-ring transition-shadow leading-relaxed"
             />
             <button
@@ -2005,7 +1995,7 @@ function NewPromptListForm({
               onClick={() => removeItem(i)}
               disabled={items.length <= 1}
               className="flex h-7 w-7 mt-1 items-center justify-center rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors shrink-0 disabled:opacity-30 disabled:cursor-not-allowed"
-              title="Remove"
+              title={uiT("settings.appearance.custom.importFont.remove")}
             >
               <XIcon className="size-3.5" />
             </button>
@@ -2018,13 +2008,11 @@ function NewPromptListForm({
         className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
       >
         <PlusIcon className="size-3.5" />
-        Add another prompt
-      </button>
+        {uiT("ui.add_another_prompt")}</button>
       <div className="flex gap-2 justify-end">
         <Button size="sm" variant="ghost" onClick={onClose}>
           <XIcon className="size-3.5 mr-1" />
-          Cancel
-        </Button>
+          {uiT("chat.workspace.cancel")}</Button>
         <Button
           size="sm"
           onClick={handleSave}
@@ -2035,8 +2023,7 @@ function NewPromptListForm({
             strokeWidth={2}
             className="size-3.5 mr-1"
           />
-          Save Prompt List
-        </Button>
+          {uiT("ui.save_prompt_list")}</Button>
       </div>
     </div>
   );
@@ -2055,6 +2042,8 @@ export function PromptStorageDialog({
   onUse: (text: string) => void;
   onRunList?: (items: string[]) => void;
 }): ReactElement {
+  const uiT = useUiT();
+
   const [activeTab, setActiveTab] = useState<Tab>("prompts");
   const [showNewPrompt, setShowNewPrompt] = useState(false);
   const [showNewList, setShowNewList] = useState(false);
@@ -2161,9 +2150,8 @@ export function PromptStorageDialog({
                     },
                   );
                 } else {
-                  toast.warning("No items imported", {
-                    description:
-                      "The file may be empty or in an unsupported format.",
+                  toast.warning(uiTranslate("ui.no_items_imported"), {
+                    get description() { return uiTranslate("ui.the_file_may_be_empty_or_in_an_unsupported_format"); },
                   });
                 }
                 e.target.value = "";
@@ -2192,7 +2180,7 @@ export function PromptStorageDialog({
                 : undefined,
           });
         } else {
-          toast.warning("No items imported", {
+          toast.warning(uiTranslate("ui.no_items_imported"), {
             description:
               skipped > 0
                 ? `${skipped} line${skipped !== 1 ? "s" : ""} could not be parsed.`
@@ -2200,8 +2188,8 @@ export function PromptStorageDialog({
           });
         }
       } catch {
-        toast.error("Import failed", {
-          description: "Could not parse the file.",
+        toast.error(uiTranslate("ui.import_failed"), {
+          get description() { return uiTranslate("ui.could_not_parse_the_file"); },
         });
       }
       e.target.value = "";
@@ -2235,11 +2223,9 @@ export function PromptStorageDialog({
             <div className="flex items-center gap-3">
               <div className="flex-1 min-w-0">
                 <DialogTitle className="text-base font-semibold tracking-tight">
-                  Prompt Storage
-                </DialogTitle>
+                  {uiT("ui.prompt_storage")}</DialogTitle>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Save and reuse prompts across conversations
-                </p>
+                  {uiT("ui.save_and_reuse_prompts_across_conversations")}</p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <input
@@ -2254,11 +2240,10 @@ export function PromptStorageDialog({
                   size="sm"
                   onClick={() => importRef.current?.click()}
                   className="h-8 gap-1.5 text-xs"
-                  title="Import from JSONL, CSV, or collection JSONL"
+                  title={uiT("ui.import_from_jsonl_csv_or_collection_jsonl")}
                 >
                   <UploadIcon className="size-3.5" />
-                  Import
-                </Button>
+                  {uiT("settings.chat.importChatsAction")}</Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -2267,20 +2252,18 @@ export function PromptStorageDialog({
                   className="h-8 gap-1.5 text-xs"
                 >
                   <DownloadIcon className="size-3.5" />
-                  Export
-                </Button>
+                  {uiT("tour.export.ctaTitle")}</Button>
                 <div className="ml-1 h-5 w-px bg-border/60 shrink-0" />
                 <DialogClose asChild={true}>
                   <Button variant="ghost" size="icon-sm">
                     <XIcon className="size-4" />
-                    <span className="sr-only">Close</span>
+                    <span className="sr-only">{uiT("settings.about.shutDown")}</span>
                   </Button>
                 </DialogClose>
               </div>
             </div>
             <DialogDescription className="sr-only">
-              Save and manage reusable prompts and prompt lists.
-            </DialogDescription>
+              {uiT("ui.save_and_manage_reusable_prompts_and_prompt_lists")}</DialogDescription>
           </DialogHeader>
 
           {/* */}
@@ -2299,7 +2282,7 @@ export function PromptStorageDialog({
                       : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  {tab === "prompts" ? "Saved Prompts" : "Prompt Lists"}
+                  {tab === "prompts" ? uiT("ui.saved_prompts") : uiT("ui.prompt_lists")}
                 </button>
               ))}
             </div>
@@ -2316,7 +2299,7 @@ export function PromptStorageDialog({
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-                placeholder={`Search ${activeTab === "prompts" ? "prompts by name or text" : "prompt lists by name"}…`}
+                placeholder={uiT("ui.search_value0", { value0: String(activeTab === "prompts" ? "prompts by name or text" : "prompt lists by name") })}
                 className="w-full rounded-lg border-0 bg-muted/50 pl-9 pr-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/60 transition-shadow"
               />
               {showSuggestions &&
@@ -2363,8 +2346,7 @@ export function PromptStorageDialog({
                     className="flex items-center gap-2.5 rounded-xl border-2 border-dashed border-border/40 px-4 py-3 text-sm font-medium text-muted-foreground hover:border-border hover:text-foreground hover:bg-muted/50 transition-all"
                   >
                     <PlusIcon className="size-4" />
-                    New Prompt
-                  </button>
+                    {uiT("ui.new_prompt")}</button>
                 )}
 
                 {filteredPrompts.length > 0
@@ -2392,15 +2374,14 @@ export function PromptStorageDialog({
                             </div>
                             <div className="flex flex-col gap-1">
                               <p className="text-sm font-medium text-muted-foreground">
-                                No prompts match &ldquo;{searchQuery}&rdquo;
+                                {uiT("ui.no_prompts_match_ldquo")}{searchQuery}&rdquo;
                               </p>
                               <button
                                 type="button"
                                 onClick={() => setSearchQuery("")}
                                 className="text-xs text-primary hover:underline"
                               >
-                                Clear search
-                              </button>
+                                {uiT("hub.clearSearch")}</button>
                             </div>
                           </>
                         ) : (
@@ -2410,11 +2391,9 @@ export function PromptStorageDialog({
                             </div>
                             <div className="flex flex-col gap-1">
                               <p className="text-sm font-medium text-muted-foreground">
-                                No saved prompts yet
-                              </p>
+                                {uiT("ui.no_saved_prompts_yet")}</p>
                               <p className="text-xs text-muted-foreground/60">
-                                Save prompts you use often for quick reuse
-                              </p>
+                                {uiT("ui.save_prompts_you_use_often_for_quick_reuse")}</p>
                             </div>
                           </>
                         )}
@@ -2437,8 +2416,7 @@ export function PromptStorageDialog({
                     className="flex items-center gap-2.5 rounded-xl border-2 border-dashed border-border/40 px-4 py-3 text-sm font-medium text-muted-foreground hover:border-border hover:text-foreground hover:bg-muted/50 transition-all"
                   >
                     <PlusIcon className="size-4" />
-                    New Prompt List
-                  </button>
+                    {uiT("ui.new_prompt_list")}</button>
                 )}
 
                 {filteredLists.length > 0
@@ -2466,7 +2444,7 @@ export function PromptStorageDialog({
                             </div>
                             <div className="flex flex-col gap-1">
                               <p className="text-sm font-medium text-muted-foreground">
-                                No prompt lists match &ldquo;{searchQuery}
+                                {uiT("ui.no_prompt_lists_match_ldquo")}{searchQuery}
                                 &rdquo;
                               </p>
                               <button
@@ -2474,8 +2452,7 @@ export function PromptStorageDialog({
                                 onClick={() => setSearchQuery("")}
                                 className="text-xs text-primary hover:underline"
                               >
-                                Clear search
-                              </button>
+                                {uiT("hub.clearSearch")}</button>
                             </div>
                           </>
                         ) : (
@@ -2485,12 +2462,9 @@ export function PromptStorageDialog({
                             </div>
                             <div className="flex flex-col gap-1">
                               <p className="text-sm font-medium text-muted-foreground">
-                                No prompt lists yet
-                              </p>
+                                {uiT("ui.no_prompt_lists_yet")}</p>
                               <p className="text-xs text-muted-foreground/60">
-                                A prompt list queues a sequence of prompts for
-                                quick reuse
-                              </p>
+                                {uiT("ui.a_prompt_list_queues_a_sequence_of_prompts_for_quick_reuse")}</p>
                             </div>
                           </>
                         )}

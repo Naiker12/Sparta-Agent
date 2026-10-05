@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { useNativeFileDrop } from "@/features/native-intents";
 import type { NativeIntent } from "@/features/native-intents";
@@ -19,6 +20,8 @@ import type { RagUploadItem } from "./use-rag-documents";
 /** Project "Sources" tab: documents indexed for retrieval in every chat that
  * belongs to the project. */
 export function ProjectSourcesPanel({ projectId }: { projectId: string }) {
+  const uiT = useUiT();
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const lister = useCallback(
     () => listProjectDocuments(projectId),
@@ -130,12 +133,9 @@ export function ProjectSourcesPanel({ projectId }: { projectId: string }) {
           </span>
           <div className="space-y-1">
             <p className="text-ui-15 font-semibold text-foreground">
-              Give this project context
-            </p>
+              {uiT("ui.give_this_project_context")}</p>
             <p className="max-w-sm text-sm text-muted-foreground">
-              Upload PDFs, docs, or text. Every chat in this project can use
-              them.
-            </p>
+              {uiT("ui.upload_pdfs_docs_or_text_every_chat_in_this_project_can_use_them")}</p>
           </div>
           <Button
             type="button"
@@ -144,9 +144,8 @@ export function ProjectSourcesPanel({ projectId }: { projectId: string }) {
             disabled={uploading || loading}
             onClick={() => fileInputRef.current?.click()}
           >
-            Add sources
-          </Button>
-          <p className="text-ui-11 text-muted-foreground">Or drop files here</p>
+            {uiT("projectsPage.addSources")}</Button>
+          <p className="text-ui-11 text-muted-foreground">{uiT("ui.or_drop_files_here")}</p>
         </div>
       ) : (
         <div
@@ -158,7 +157,7 @@ export function ProjectSourcesPanel({ projectId }: { projectId: string }) {
           <div className="flex items-center justify-between gap-3">
             <p className="text-sm text-muted-foreground">
               {documents.length === 1
-                ? "1 source"
+                ? uiT("ui.1_source")
                 : `${documents.length} sources`}
             </p>
             <Button
@@ -169,8 +168,7 @@ export function ProjectSourcesPanel({ projectId }: { projectId: string }) {
               disabled={uploading}
               onClick={() => fileInputRef.current?.click()}
             >
-              Add sources
-            </Button>
+              {uiT("projectsPage.addSources")}</Button>
           </div>
           <div className="flex flex-row flex-wrap items-center gap-1.5">
             {documents.map((doc) => (

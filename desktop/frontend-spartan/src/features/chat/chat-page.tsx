@@ -1,3 +1,6 @@
+import { translate as uiTranslate } from "@/i18n";
+import { isDefaultChatTitle } from "./utils/chat-title";
+import { useT as useUiT } from "@/i18n";
 import { ChatComposerModelSelectorProvider } from "@/components/assistant-ui/thread";
 import { Button } from "@/components/ui/button";
 import { CopyableErrorChip } from "@/components/ui/copyable-error-chip";
@@ -36,10 +39,7 @@ import { useT } from "@/i18n";
 import { isTauri } from "@/lib/api-base";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
-import {
-  PencilEdit02Icon,
-  Telescope02Icon,
-} from "@hugeicons/core-free-icons";
+import { PencilEdit02Icon, Telescope02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { Tooltip as TooltipPrimitive } from "radix-ui";
@@ -87,7 +87,10 @@ import {
 } from "./external-providers";
 import { useChatModelRuntime } from "./hooks/use-chat-model-runtime";
 import type { SelectedModelInput } from "./hooks/use-chat-model-runtime";
-import { ensureFolderProject, useChatProjects } from "./hooks/use-chat-projects";
+import {
+  ensureFolderProject,
+  useChatProjects,
+} from "./hooks/use-chat-projects";
 import { getPendingWorkspace } from "./utils/pending-workspace";
 import { resetNewChatWorkspace } from "./utils/reset-new-chat-workspace";
 import { useChatSidebarItems } from "./hooks/use-chat-sidebar-items";
@@ -135,6 +138,8 @@ export function ChatPage({
   search,
   active,
 }: { search: ChatSearch; active: boolean }): ReactElement {
+  const uiT = useUiT();
+
   const navigate = useNavigate();
   const t = useT();
 
@@ -188,8 +193,12 @@ export function ChatPage({
           return;
         }
         useChatRuntimeStore.getState().setActiveThreadId(null);
-        toast.info("Chat not found", {
-          description: "That thread no longer exists, so we opened a new chat.",
+        toast.info(uiTranslate("ui.chat_not_found"), {
+          get description() {
+            return uiTranslate(
+              "ui.that_thread_no_longer_exists_so_we_opened_a_new_chat",
+            );
+          },
         });
         navigate({
           to: "/chat",
@@ -337,8 +346,10 @@ export function ChatPage({
       resetArtifacts();
       clearCheckpoint();
       if (turnedOff) {
-        toast.info("Connections disabled", {
-          description: "Switched away from the hosted model.",
+        toast.info(uiTranslate("ui.connections_disabled_"), {
+          get description() {
+            return uiTranslate("ui.switched_away_from_the_hosted_model");
+          },
         });
       }
     }
@@ -617,14 +628,19 @@ export function ChatPage({
       }
 
       const pending = getPendingWorkspace();
-      const project = pending && !useChatRuntimeStore.getState().incognito
-        ? await ensureFolderProject(pending.folder).catch(() => {
-          if (!canceled && currentResolution === resolution) {
-            toast.error("No se pudo restaurar el proyecto de la carpeta. Vuelve a conectar la carpeta para reintentar.");
-          }
-          return null;
-        })
-        : null;
+      const project =
+        pending && !useChatRuntimeStore.getState().incognito
+          ? await ensureFolderProject(pending.folder).catch(() => {
+              if (!canceled && currentResolution === resolution) {
+                toast.error(
+                  uiTranslate(
+                    "ui.could_not_restore_the_folder_project_reconnect_the_folder_to_try_",
+                  ),
+                );
+              }
+              return null;
+            })
+          : null;
       if (!canceled && currentResolution === resolution) {
         setCurrentProjectId(project?.id ?? null);
         useChatRuntimeStore.getState().setActiveProjectId(project?.id ?? null);
@@ -636,9 +652,18 @@ export function ChatPage({
     window.addEventListener("sparta:workspace-changed", onWorkspaceChanged);
     return () => {
       canceled = true;
-      window.removeEventListener("sparta:workspace-changed", onWorkspaceChanged);
+      window.removeEventListener(
+        "sparta:workspace-changed",
+        onWorkspaceChanged,
+      );
     };
-  }, [search.compare, search.project, search.review, search.thread, search.new]);
+  }, [
+    search.compare,
+    search.project,
+    search.review,
+    search.thread,
+    search.new,
+  ]);
 
   // Derive view from URL search params
   const view = useMemo<ChatView>(() => {
@@ -762,8 +787,12 @@ export function ChatPage({
           (loadingModel.ggufVariant ?? null) ===
             (selection.ggufVariant ?? null);
         if (isLoadingThisPick) {
-          toast.info("This model is already loading", {
-            description: "It's downloading as part of the load in progress.",
+          toast.info(uiTranslate("ui.this_model_is_already_loading"), {
+            get description() {
+              return uiTranslate(
+                "ui.it_s_downloading_as_part_of_the_load_in_progress",
+              );
+            },
           });
         } else if (wantBackgroundDownload) {
           const outcome = await downloadManager.requestStart({
@@ -773,24 +802,35 @@ export function ChatPage({
             expectedBytes: selection.expectedBytes ?? 0,
           });
           if (outcome === "started") {
-            toast.info("Downloading in the background", {
-              description:
-                "It'll be ready to load once the current model finishes.",
+            toast.info(uiTranslate("ui.downloading_in_the_background"), {
+              get description() {
+                return uiTranslate(
+                  "ui.it_ll_be_ready_to_load_once_the_current_model_finishes",
+                );
+              },
             });
           } else if (outcome === "conflict") {
-            toast.info("Resume this download from Models", {
-              description:
-                "An earlier partial download used a different transport. Open the Model hub tab to resume or restart it.",
+            toast.info(uiTranslate("ui.resume_this_download_from_models"), {
+              get description() {
+                return uiTranslate(
+                  "ui.an_earlier_partial_download_used_a_different_transport_open_the_m",
+                );
+              },
             });
           } else if (outcome === "busy") {
-            toast.info("Download already in progress", {
-              description:
-                "Another download for this model is still running. Reselect it once that finishes to load it.",
+            toast.info(uiTranslate("ui.download_already_in_progress"), {
+              get description() {
+                return uiTranslate(
+                  "ui.another_download_for_this_model_is_still_running_reselect_it_once",
+                );
+              },
             });
           }
         } else {
-          toast.info("Another model is already loading", {
-            description: "Wait for it to finish or cancel it first.",
+          toast.info(uiTranslate("ui.another_model_is_already_loading"), {
+            get description() {
+              return uiTranslate("ui.wait_for_it_to_finish_or_cancel_it_first");
+            },
           });
         }
         return;
@@ -891,8 +931,12 @@ export function ChatPage({
         return;
       }
       if (outcome === "started") {
-        toast.info("Downloading model", {
-          description: "It'll load automatically once the download finishes.",
+        toast.info(uiTranslate("studio.progress.phase.downloadingModel"), {
+          get description() {
+            return uiTranslate(
+              "ui.it_ll_load_automatically_once_the_download_finishes",
+            );
+          },
         });
         return;
       }
@@ -901,16 +945,22 @@ export function ChatPage({
         // the conflict just recorded by requestStart (which the toast points the
         // user to); resolving it from the Hub completes the download and this
         // surface's onComplete auto-loads, mirroring the "started" branch.
-        toast.info("Resume this download from Models", {
-          description:
-            "An earlier partial download used a different transport. Open the Model hub tab to resume or restart it.",
+        toast.info(uiTranslate("ui.resume_this_download_from_models"), {
+          get description() {
+            return uiTranslate(
+              "ui.an_earlier_partial_download_used_a_different_transport_open_the_m",
+            );
+          },
         });
         return;
       }
       if (outcome === "busy") {
-        toast.info("Download already in progress", {
-          description:
-            "Another download for this model is still running. Reselect it once that finishes to load it.",
+        toast.info(uiTranslate("ui.download_already_in_progress"), {
+          get description() {
+            return uiTranslate(
+              "ui.another_download_for_this_model_is_still_running_reselect_it_once",
+            );
+          },
         });
       }
       setPendingHubAutoLoad((current) =>
@@ -1195,11 +1245,17 @@ export function ChatPage({
         }
 
         if (showImageCompatibilityWarning) {
-          toast.warning("Selected model may not handle earlier images", {
-            description:
-              "This chat already includes images. Text-only models can ignore them or fail on follow-up replies.",
-            duration: 6000,
-          });
+          toast.warning(
+            uiTranslate("ui.selected_model_may_not_handle_earlier_images"),
+            {
+              get description() {
+                return uiTranslate(
+                  "ui.this_chat_already_includes_images_text_only_models_can_ignore_the",
+                );
+              },
+              duration: 6000,
+            },
+          );
         }
         const selection = {
           id: value,
@@ -1477,12 +1533,7 @@ export function ChatPage({
         enterCompare,
         exitCompare,
       }),
-    [
-      t,
-      canCompare,
-      enterCompare,
-      exitCompare,
-    ],
+    [t, canCompare, enterCompare, exitCompare],
   );
 
   const tour = useGuidedTourController({
@@ -1526,7 +1577,15 @@ export function ChatPage({
             />
           )}
           <div
-            style={!isMobile && view.mode === "single" ? {right: workspacePanelOpen ? `calc(min(${workspacePanelWidth}px, 60vw) + 3rem)` : "3rem"} : undefined}
+            style={
+              !isMobile && view.mode === "single"
+                ? {
+                    right: workspacePanelOpen
+                      ? `calc(min(${workspacePanelWidth}px, 60vw) + 3rem)`
+                      : "3rem",
+                  }
+                : undefined
+            }
             className={cn(
               "pointer-events-none absolute top-[var(--studio-content-top-inset,0px)] left-0 z-40 flex h-[var(--studio-chat-header-height,48px)] shrink-0 items-start bg-background pt-[var(--studio-chat-header-padding-top,11px)] pr-3 md:pr-4",
               isMobile || view.mode !== "single"
@@ -1551,8 +1610,12 @@ export function ChatPage({
                   type="button"
                   variant="ghost"
                   size="icon-sm"
-                  title="New chat"
-                  aria-label="New chat"
+                  title={uiT(
+                    "settings.keyboardShortcuts.actions.newChat.label",
+                  )}
+                  aria-label={uiT(
+                    "settings.keyboardShortcuts.actions.newChat.label",
+                  )}
                   onClick={handleDesktopNewChat}
                   className="!size-[30px] rounded-[10px] text-muted-foreground"
                 >
@@ -1565,7 +1628,7 @@ export function ChatPage({
               )}
               {view.mode !== "compare" && currentProjectId && (
                 <nav
-                  aria-label="Project location"
+                  aria-label={uiT("ui.project_location")}
                   className="flex h-[var(--studio-chat-control-height,34px)] min-w-0 items-center gap-1.5 self-center text-ui-13p5 tracking-nav text-muted-foreground"
                 >
                   <ProjectSwitcher
@@ -1581,7 +1644,11 @@ export function ChatPage({
                         /
                       </span>
                       <span className="min-w-0 truncate">
-                        {currentChatTitle ?? "New chat"}
+                        {isDefaultChatTitle(currentChatTitle)
+                          ? uiT(
+                              "settings.keyboardShortcuts.actions.newChat.label",
+                            )
+                          : currentChatTitle}
                       </span>
                     </>
                   ) : null}
@@ -1722,7 +1789,9 @@ export function ChatPage({
             <ProjectLanding
               key={view.projectId}
               projectId={view.projectId}
-              projectName={currentProject?.name ?? "Project"}
+              projectName={
+                currentProject?.name ?? uiT("chat.projectSwitcher.project")
+              }
               items={currentProjectItems}
             />
           ) : view.mode === "single" ? (
@@ -1780,7 +1849,6 @@ export function ChatPage({
             />
           ) : null}
         </div>
-
       </div>
     </ChatActiveContext.Provider>
   );

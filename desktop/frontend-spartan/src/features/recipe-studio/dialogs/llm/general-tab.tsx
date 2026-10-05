@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   Collapsible,
   CollapsibleContent,
@@ -78,6 +79,8 @@ export function LlmGeneralTab({
   modelAliasAnchorRef,
   onUpdate,
 }: LlmGeneralTabProps): ReactElement {
+  const uiT = useUiT();
+
   const configs = useRecipeStudioStore((state) => state.configs);
   const modelAliasId = `${config.id}-model-alias`;
   const toolAliasId = `${config.id}-tool-alias`;
@@ -178,8 +181,7 @@ export function LlmGeneralTab({
       {needsSetupHelp ? (
         <div className="rounded-2xl border border-border/60 bg-muted/10 px-4 py-3 text-xs text-muted-foreground">
           <p className="text-sm font-semibold text-foreground">
-            Set up the model once, then come back here
-          </p>
+            {uiT("ui.set_up_the_model_once_then_come_back_here")}</p>
           <div className="mt-2 space-y-1.5">
             {!hasModelProviders && (
               <p className="flex items-start gap-2">
@@ -188,8 +190,7 @@ export function LlmGeneralTab({
                   className="mt-0.5 size-3.5 shrink-0 text-primary"
                 />
                 <span>
-                  Add a Provider connection step in AI generation → Setup.
-                </span>
+                  {uiT("ui.add_a_provider_connection_step_in_ai_generation_setup")}</span>
               </p>
             )}
             {!hasModelConfigs && (
@@ -199,8 +200,7 @@ export function LlmGeneralTab({
                   className="mt-0.5 size-3.5 shrink-0 text-primary"
                 />
                 <span>
-                  Add a Model preset step, connect it, then choose it below.
-                </span>
+                  {uiT("ui.add_a_model_preset_step_connect_it_then_choose_it_below")}</span>
               </p>
             )}
           </div>
@@ -208,17 +208,14 @@ export function LlmGeneralTab({
       ) : needsModelChoice ? (
         <div className="rounded-2xl border border-border/60 bg-muted/10 px-4 py-3 text-xs text-muted-foreground">
           <p className="text-sm font-semibold text-foreground">
-            Start by choosing a model preset
-          </p>
+            {uiT("ui.start_by_choosing_a_model_preset")}</p>
           <p className="mt-1">
-            Once that is in place, write the prompt and add optional tool access
-            if this step needs tools.
-          </p>
+            {uiT("ui.once_that_is_in_place_write_the_prompt_and_add_optional_tool_acce")}</p>
         </div>
       ) : null}
       <div className="grid gap-1.5">
         <FieldLabel
-          label="Model preset"
+          label={uiT("ui.model_preset")}
           htmlFor={modelAliasId}
           hint="Choose the reusable model setup for this step."
         />
@@ -235,7 +232,7 @@ export function LlmGeneralTab({
             <ComboboxInput
               id={modelAliasId}
               className="nodrag w-full"
-              placeholder="Choose a model preset"
+              placeholder={uiT("ui.choose_a_model_preset")}
               onBlur={(event) => {
                 const inputValue = event.target.value;
                 if (inputValue !== config.model_alias) {
@@ -244,7 +241,7 @@ export function LlmGeneralTab({
               }}
             />
             <ComboboxContent anchor={modelAliasAnchorRef}>
-              <ComboboxEmpty>No model configs found</ComboboxEmpty>
+              <ComboboxEmpty>{uiT("ui.no_model_configs_found")}</ComboboxEmpty>
               <ComboboxList>
                 {(alias: string) => (
                   <ComboboxItem key={alias} value={alias}>
@@ -258,14 +255,12 @@ export function LlmGeneralTab({
       </div>
       {!hasToolProfiles && (
         <p className="text-xs text-muted-foreground">
-          Need tools for this step? Add a Tool access step in AI generation →
-          Setup.
-        </p>
+          {uiT("ui.need_tools_for_this_step_add_a_tool_access_step_in_ai_generation_")}</p>
       )}
       {(hasToolProfiles || Boolean(config.tool_alias?.trim())) && (
         <div className="grid gap-1.5">
           <FieldLabel
-            label="Tool access (optional)"
+            label={uiT("ui.tool_access_optional")}
             htmlFor={toolAliasId}
             hint="Choose saved tool access for this step. Leave empty if this step should not use tools."
           />
@@ -282,7 +277,7 @@ export function LlmGeneralTab({
               <ComboboxInput
                 id={toolAliasId}
                 className="nodrag w-full"
-                placeholder="Choose tool access"
+                placeholder={uiT("ui.choose_tool_access")}
                 onBlur={(event) => {
                   const inputValue = event.target.value;
                   if (inputValue !== (config.tool_alias ?? "")) {
@@ -291,7 +286,7 @@ export function LlmGeneralTab({
                 }}
               />
               <ComboboxContent anchor={toolAliasAnchorRef}>
-                <ComboboxEmpty>No tool access found</ComboboxEmpty>
+                <ComboboxEmpty>{uiT("ui.no_tool_access_found")}</ComboboxEmpty>
                 <ComboboxList>
                   {(alias: string) => (
                     <ComboboxItem key={alias} value={alias}>
@@ -307,7 +302,7 @@ export function LlmGeneralTab({
       {config.llm_type === "code" && (
         <div className="grid gap-1.5">
           <FieldLabel
-            label="Code language"
+            label={uiT("ui.code_language")}
             htmlFor={codeLangId}
             hint="Choose the language this AI step should generate."
           />
@@ -316,7 +311,7 @@ export function LlmGeneralTab({
             onValueChange={(value) => onUpdate({ code_lang: value })}
           >
             <SelectTrigger className="nodrag w-full" id={codeLangId}>
-              <SelectValue placeholder="Select language" />
+              <SelectValue placeholder={uiT("ui.select_language")} />
             </SelectTrigger>
             <SelectContent>
               {CODE_LANG_OPTIONS.map((lang) => (
@@ -330,7 +325,7 @@ export function LlmGeneralTab({
       )}
       <div className="grid gap-1.5">
         <FieldLabel
-          label="Prompt"
+          label={uiT("chat.timing.prompt")}
           htmlFor={promptId}
           hint="Write the prompt for this step. Insert other fields with {{ field_name }}."
         />
@@ -343,7 +338,7 @@ export function LlmGeneralTab({
         />
         {invalidPromptRefs.length > 0 && (
           <p className="text-xs text-destructive">
-            Unknown field: {invalidPromptText}
+            {uiT("ui.unknown_field")}{" "}{invalidPromptText}
             {invalidPromptRefs.length > 3
               ? ` +${invalidPromptRefs.length - 3} more`
               : ""}
@@ -355,7 +350,7 @@ export function LlmGeneralTab({
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-3">
             <FieldLabel
-              label="Use image context"
+              label={uiT("ui.use_image_context")}
               htmlFor={imageContextToggleId}
               hint="Attach one image field from your source data to this AI step."
             />
@@ -380,7 +375,7 @@ export function LlmGeneralTab({
           {imageContext.enabled && (
             <div className="grid gap-1.5">
               <FieldLabel
-                label="Image field"
+                label={uiT("ui.image_field")}
                 htmlFor={imageContextColumnId}
                 hint="Choose the source-data field that contains the image."
               />
@@ -400,7 +395,7 @@ export function LlmGeneralTab({
                   className="nodrag w-full"
                   id={imageContextColumnId}
                 >
-                  <SelectValue placeholder="Select image column" />
+                  <SelectValue placeholder={uiT("ui.select_image_column")} />
                 </SelectTrigger>
                 <SelectContent>
                   {imageContextColumnOptions.map((columnName) => (
@@ -417,7 +412,7 @@ export function LlmGeneralTab({
       {config.llm_type === "structured" && (
         <div className="grid gap-1.5">
           <FieldLabel
-            label="Response format"
+            label={uiT("ui.response_format")}
             htmlFor={outputFormatId}
             hint="Describe the JSON shape you want back."
           />
@@ -437,14 +432,14 @@ export function LlmGeneralTab({
       >
         <CollapsibleTrigger asChild={true}>
           <CollapsibleSectionTriggerButton
-            label="Trace and extra controls"
+            label={uiT("ui.trace_and_extra_controls")}
             open={advancedOpen}
           />
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-3 space-y-4">
           <div className="grid gap-1.5">
             <FieldLabel
-              label="Instructions (optional)"
+              label={uiT("ui.instructions_optional")}
               htmlFor={systemPromptId}
               hint="Add extra guidance that should apply before the prompt."
             />
@@ -459,7 +454,7 @@ export function LlmGeneralTab({
             />
             {invalidSystemRefs.length > 0 && (
               <p className="text-xs text-destructive">
-                Unknown field: {invalidSystemText}
+                {uiT("ui.unknown_field")}{" "}{invalidSystemText}
                 {invalidSystemRefs.length > 3
                   ? ` +${invalidSystemRefs.length - 3} more`
                   : ""}
@@ -468,7 +463,7 @@ export function LlmGeneralTab({
           </div>
           <div className="grid gap-1.5">
             <FieldLabel
-              label="Save trace details"
+              label={uiT("ui.save_trace_details")}
               htmlFor={traceModeId}
               hint="Adds a trace field you can inspect later."
             />
@@ -482,7 +477,7 @@ export function LlmGeneralTab({
               }
             >
               <SelectTrigger className="nodrag w-full" id={traceModeId}>
-                <SelectValue placeholder="Select trace mode" />
+                <SelectValue placeholder={uiT("ui.select_trace_mode")} />
               </SelectTrigger>
               <SelectContent>
                 {TRACE_MODE_OPTIONS.map((traceMode) => (
@@ -495,7 +490,7 @@ export function LlmGeneralTab({
           </div>
           <div className="flex items-center justify-between gap-3">
             <FieldLabel
-              label="Save reasoning text"
+              label={uiT("ui.save_reasoning_text")}
               htmlFor={reasoningToggleId}
               hint="Adds a reasoning field when the model returns one."
             />

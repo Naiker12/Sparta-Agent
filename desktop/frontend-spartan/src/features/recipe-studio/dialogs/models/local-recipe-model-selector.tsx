@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -114,6 +115,8 @@ function LocalGgufVariantList({
   selectedVariant?: string | null;
   onSelect: (variant: string) => void;
 }): ReactElement {
+  const uiT = useUiT();
+
   const [variants, setVariants] = useState<GgufVariantDetail[] | null>(null);
   const [defaultVariant, setDefaultVariant] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -169,8 +172,7 @@ function LocalGgufVariantList({
     return (
       <div className="flex items-center gap-2 px-4 py-2 text-xs text-muted-foreground">
         <Spinner className="size-3" />
-        Loading quantizations...
-      </div>
+        {uiT("settings.agents.loadingQuantizations")}</div>
     );
   }
 
@@ -181,16 +183,14 @@ function LocalGgufVariantList({
   if (!sortedVariants || sortedVariants.length === 0) {
     return (
       <div className="px-4 py-2 text-xs text-muted-foreground">
-        No GGUF quantizations found for this model.
-      </div>
+        {uiT("ui.no_gguf_quantizations_found_for_this_model")}</div>
     );
   }
 
   return (
     <div className="ml-6 mt-1 rounded-lg bg-muted/25 p-1.5">
       <div className="mb-1 px-2 text-ui-10 font-medium uppercase tracking-wide text-muted-foreground">
-        Quantization
-      </div>
+        {uiT("settings.agents.quantization")}</div>
       <div className="space-y-0.5">
         {sortedVariants.map((variant) => {
           const selected = selectedVariant === variant.quant;
@@ -212,13 +212,11 @@ function LocalGgufVariantList({
               </span>
               {variant.quant === defaultVariant ? (
                 <Badge variant="secondary" className="h-4 px-1.5 text-ui-10">
-                  recommended
-                </Badge>
+                  {uiT("ui.recommended")}</Badge>
               ) : null}
               {variant.downloaded ? (
                 <Badge variant="outline" className="h-4 px-1.5 text-ui-10">
-                  ready
-                </Badge>
+                  {uiT("ui.ready")}</Badge>
               ) : null}
             </button>
           );
@@ -252,6 +250,8 @@ const SelectorTrigger = forwardRef<HTMLButtonElement, SelectorTriggerProps>(
     },
     ref,
   ): ReactElement {
+  const uiT = useUiT();
+
     const selected = getSelectedModelSummary(value, selectedModel, ggufVariant);
 
     return (
@@ -274,14 +274,14 @@ const SelectorTrigger = forwardRef<HTMLButtonElement, SelectorTriggerProps>(
               !selected.label && "text-muted-foreground",
             )}
           >
-            {selected.label || "Choose a local model"}
+            {selected.label || uiT("ui.choose_a_local_model")}
           </span>
           {compact ? null : (
             <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-ui-11 text-muted-foreground">
               <span className="truncate">
                 {selected.label
                   ? selected.source
-                  : "Select from local and cached models"}
+                  : uiT("ui.select_from_local_and_cached_models")}
               </span>
               {selected.isGguf ? <span>GGUF</span> : null}
               {ggufVariant ? (
@@ -400,12 +400,13 @@ function LocalModelResults({
   onSelectModel: (model: LocalModelInfo) => void;
   onSelectVariant: (modelId: string, variant: string) => void;
 }): ReactElement {
+  const uiT = useUiT();
+
   if (loading) {
     return (
       <div className="flex items-center gap-2 px-3 py-3 text-xs text-muted-foreground">
         <Spinner className="size-3" />
-        Scanning local models...
-      </div>
+        {uiT("ui.scanning_local_models")}</div>
     );
   }
 
@@ -414,8 +415,7 @@ function LocalModelResults({
       <div className="space-y-2 px-3 py-3 text-xs">
         <p className="text-destructive">{error}</p>
         <Button type="button" variant="outline" size="xs" onClick={onRefresh}>
-          Try again
-        </Button>
+          {uiT("update.tryAgain")}</Button>
       </div>
     );
   }
@@ -423,17 +423,14 @@ function LocalModelResults({
   if (models.length === 0) {
     return (
       <div className="space-y-2 px-3 py-3 text-xs text-muted-foreground">
-        <p className="font-medium text-foreground">No local models found.</p>
+        <p className="font-medium text-foreground">{uiT("studio.modelPicker.noLocalModels")}</p>
         <p>
-          Download a model or add a scan folder from Chat, then refresh this
-          list.
-        </p>
+          {uiT("ui.download_a_model_or_add_a_scan_folder_from_chat_then_refresh_this")}</p>
         <Link
           to="/chat"
           className="inline-flex font-medium text-primary underline-offset-4 hover:underline"
         >
-          Open Chat model picker
-        </Link>
+          {uiT("ui.open_chat_model_picker")}</Link>
       </div>
     );
   }
@@ -465,6 +462,8 @@ export function LocalRecipeModelSelector({
   compact = false,
   className,
 }: LocalRecipeModelSelectorProps): ReactElement {
+  const uiT = useUiT();
+
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [models, setModels] = useState<LocalModelInfo[]>([]);
@@ -606,7 +605,7 @@ export function LocalRecipeModelSelector({
               <Input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Filter local models"
+                placeholder={uiT("ui.filter_local_models")}
                 className="h-8 flex-1"
                 autoFocus={true}
               />
@@ -615,7 +614,7 @@ export function LocalRecipeModelSelector({
                 variant="ghost"
                 size="icon-sm"
                 onClick={requestModelRefresh}
-                aria-label="Refresh local models"
+                aria-label={uiT("ui.refresh_local_models")}
               >
                 <RefreshCwIcon className="size-3.5" />
               </Button>

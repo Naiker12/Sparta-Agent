@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   Tooltip,
   TooltipContent,
@@ -106,6 +107,8 @@ export function AccessGlyphs({
   isPrivate?: boolean;
   tooltip?: boolean;
 }) {
+  const uiT = useUiT();
+
   const gatedAccess = isGatedAccess(gated);
   if (!(gatedAccess || isPrivate)) {
     return null;
@@ -115,7 +118,7 @@ export function AccessGlyphs({
       {isPrivate && (
         <AccessGlyph
           icon={LockIcon}
-          label="Private"
+          label={uiT("ui.private")}
           tooltip={tooltip}
           className="text-muted-foreground/70"
         />
@@ -123,7 +126,7 @@ export function AccessGlyphs({
       {gatedAccess && (
         <AccessGlyph
           icon={LockKeyIcon}
-          label="Gated"
+          label={uiT("ui.gated")}
           tooltip={tooltip}
           className="text-amber-600 dark:text-amber-400"
         />

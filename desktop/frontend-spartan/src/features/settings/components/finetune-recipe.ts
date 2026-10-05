@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 // Settings Data tab glue: turn chat history into a fine-tuning JSONL, stage
 // it as a Data Recipe seed upload, and open a new recipe on that file.
 
@@ -26,7 +27,7 @@ export async function createFineTuneRecipeFromChats(
 ): Promise<string | null> {
   const { lines, conversations } = await buildFineTuneJsonl(format);
   if (conversations === 0) {
-    toast.info("No chats with a user and assistant exchange to export.");
+    toast.info(uiTranslate("ui.no_chats_with_a_user_and_assistant_exchange_to_export"));
     return null;
   }
 

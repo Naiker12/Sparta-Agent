@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 /**
  * Sparta Agent – Compare Handles
  *
@@ -137,7 +138,7 @@ export function RegisterCompareHandle({
             }
           }
           if (!thread) {
-            reject(new Error("Comparison thread is unavailable"));
+            reject(new Error(uiTranslate("ui.comparison_thread_is_unavailable")));
             return;
           }
           let wasRunning = thread.getState().isRunning;

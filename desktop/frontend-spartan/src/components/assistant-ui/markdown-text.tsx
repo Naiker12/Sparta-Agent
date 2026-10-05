@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 "use client";
 
 import { ArtifactCard, useChatRuntimeStore } from "@/features/chat";
@@ -186,12 +188,14 @@ function sanitizeSvg(source: string): string | null {
 }
 
 function SvgPreview({ source }: { source: string }) {
+  const uiT = useUiT();
+
   const dataUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(source)}`;
   return (
     <div className="mt-2 flex justify-center rounded-lg border border-border bg-white p-4 dark:bg-neutral-100">
       <img
         src={dataUri}
-        alt="SVG preview"
+        alt={uiT("ui.svg_preview")}
         style={{ maxWidth: "100%", maxHeight: 512 }}
       />
     </div>
@@ -202,7 +206,7 @@ function downloadTextFile(filename: string, text: string): void {
   void downloadFile(text, filename, "text/plain;charset=utf-8").catch(
     (error) => {
       if (!isDownloadCancelled(error)) {
-        toast.error("Could not save file.");
+        toast.error(uiTranslate("chat.tools.codeViewer.saveFailed"));
       }
     },
   );
@@ -235,13 +239,15 @@ function useCopiedState() {
 }
 
 function MermaidCopyButton({ source }: { source: string }) {
+  const uiT = useUiT();
+
   const { copied, showCopied } = useCopiedState();
 
   return (
     <button
       type="button"
       className="absolute top-3.5 right-20 z-20 cursor-pointer text-muted-foreground transition-all hover:text-foreground"
-      title="Copy Mermaid source"
+      title={uiT("ui.copy_mermaid_source")}
       onClick={async () => {
         if (!(await copyToClipboard(source))) {
           return;
@@ -267,6 +273,8 @@ function CodeBlockActions({
   language: string | null;
   source: string;
 }) {
+  const uiT = useUiT();
+
   const { copied, showCopied } = useCopiedState();
 
   return (
@@ -275,7 +283,7 @@ function CodeBlockActions({
         <button
           type="button"
           className={ACTION_BUTTON_CLASS}
-          title="Copy code"
+          title={uiT("chat.providersDialog.copyCode")}
           disabled={disabled}
           onClick={async () => {
             if (!(await copyToClipboard(source))) {
@@ -293,7 +301,7 @@ function CodeBlockActions({
         <button
           type="button"
           className={ACTION_BUTTON_CLASS}
-          title="Download file"
+          title={uiT("ui.download_file")}
           disabled={disabled}
           onClick={() => {
             downloadTextFile(getCodeFilename(language), source);
@@ -345,6 +353,8 @@ const RenderHtmlToolPresenceContext = createContext(false);
 // Collapse a full-HTML answer in place into an artifact card. Diffusion keeps the
 // raw code visible instead (the trailing MessageHtmlArtifacts appends its card).
 function StreamdownBlockContent(props: BlockProps) {
+  const uiT = useUiT();
+
   const blockProps = useAnimationFreeBlockProps(props);
   const shouldCollapseHtmlArtifacts = useChatRuntimeStore(
     (state) =>
@@ -361,8 +371,7 @@ function StreamdownBlockContent(props: BlockProps) {
   if (props.isIncomplete && hasMermaidFence) {
     return (
       <div className="my-4 flex h-48 items-center justify-center rounded-xl border border-border bg-muted/30 text-sm text-muted-foreground animate-pulse">
-        Loading diagram...
-      </div>
+        {uiT("ui.loading_diagram")}</div>
     );
   }
 
@@ -391,8 +400,7 @@ function StreamdownBlockContent(props: BlockProps) {
   ) {
     return (
       <div className="my-4 flex h-48 items-center justify-center rounded-xl border border-border bg-muted/30 text-sm text-muted-foreground animate-pulse">
-        Loading canvas preview...
-      </div>
+        {uiT("ui.loading_canvas_preview")}</div>
     );
   }
 
@@ -420,7 +428,7 @@ function StreamdownBlockContent(props: BlockProps) {
         : null;
     if (htmlSource) {
       return (
-        <ArtifactCard code={htmlSource} title="HTML preview" source="fence" />
+        <ArtifactCard code={htmlSource} title={uiT("ui.html_preview")} source="fence" />
       );
     }
 

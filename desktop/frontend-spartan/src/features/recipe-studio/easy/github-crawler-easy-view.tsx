@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GithubIcon, PlayCircleIcon } from "@hugeicons/core-free-icons";
@@ -29,6 +30,8 @@ export function GithubCrawlerEasyView({
   runErrors,
   onSwitchToAdvanced,
 }: GithubCrawlerEasyViewProps): ReactElement {
+  const uiT = useUiT();
+
   const seedConfig = useMemo(
     () =>
       Object.values(configs).find((c): c is SeedConfig => c.kind === "seed") ??
@@ -104,16 +107,14 @@ export function GithubCrawlerEasyView({
     return (
       <div className="flex h-full items-center justify-center px-6">
         <p className="text-sm text-muted-foreground">
-          This recipe has no seed node. Switch to{" "}
+          {uiT("ui.this_recipe_has_no_seed_node_switch_to")}{" "}
           <button
             type="button"
             className="underline hover:text-foreground"
             onClick={onSwitchToAdvanced}
           >
-            Advanced
-          </button>{" "}
-          to configure it.
-        </p>
+            {uiT("studio.params.mode.advanced")}</button>{" "}
+          {uiT("ui.to_configure_it")}</p>
       </div>
     );
   }
@@ -128,12 +129,10 @@ export function GithubCrawlerEasyView({
           <HugeiconsIcon icon={GithubIcon} className="size-5" />
         </div>
         <div className="flex-1 min-w-0">
-          <h2 className="text-base font-semibold">GitHub Crawler</h2>
+          <h2 className="text-base font-semibold">{uiT("ui.github_crawler")}</h2>
           <p className="text-xs text-muted-foreground">
-            Crawl real GitHub issues and PRs and turn each thread into a{" "}
-            <code>{"{User, Assistant}"}</code> training pair. Defaults use the
-            server's <code>GH_TOKEN</code> env var and the bundled local model.
-          </p>
+            {uiT("ui.crawl_real_github_issues_and_prs_and_turn_each_thread_into_a")}{" "}
+            <code>{"{User, Assistant}"}</code> {" "}{uiT("ui.training_pair_defaults_use_the_server_s")}{" "}<code>GH_TOKEN</code> {" "}{uiT("ui.env_var_and_the_bundled_local_model")}</p>
         </div>
       </div>
 
@@ -141,12 +140,11 @@ export function GithubCrawlerEasyView({
 
       <section className="space-y-3 border-t border-border/60 pt-4">
         <h3 className="text-xs font-semibold uppercase text-muted-foreground">
-          Run settings
-        </h3>
+          {uiT("runSettings.title")}</h3>
         <div className="grid gap-3 sm:grid-cols-[minmax(0,10rem)_minmax(0,1fr)]">
           <div className="grid gap-1.5">
             <FieldLabel
-              label="Rows to generate"
+              label={uiT("ui.rows_to_generate")}
               hint="How many training pairs the LLM should produce."
             />
             <Input
@@ -182,7 +180,7 @@ export function GithubCrawlerEasyView({
           </div>
           <div className="grid gap-1.5">
             <FieldLabel
-              label="Model"
+              label={uiT("studio.progress.model")}
               hint={
                 isModelLinkedToLocal
                   ? "Choose the local model this recipe should load."
@@ -211,7 +209,7 @@ export function GithubCrawlerEasyView({
 
       {runErrors.length > 0 && (
         <div className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive">
-          <p className="font-semibold">Cannot run:</p>
+          <p className="font-semibold">{uiT("ui.cannot_run")}</p>
           <ul className="mt-1 list-disc space-y-0.5 pl-4">
             {runErrors.slice(0, 4).map((err) => (
               <li key={err}>{err}</li>
@@ -226,11 +224,10 @@ export function GithubCrawlerEasyView({
           className="text-xs text-muted-foreground underline hover:text-foreground"
           onClick={onSwitchToAdvanced}
         >
-          Advanced (drag and drop canvas)
-        </button>
+          {uiT("ui.advanced_drag_and_drop_canvas")}</button>
         <Button type="button" size="lg" onClick={onRun} disabled={runLoading}>
           <HugeiconsIcon icon={PlayCircleIcon} className="size-4" />
-          {runLoading ? "Running..." : "Run"}
+          {runLoading ? uiT("ui.running_") : uiT("settings.data.fineTuneRunAction")}
         </Button>
       </div>
     </div>

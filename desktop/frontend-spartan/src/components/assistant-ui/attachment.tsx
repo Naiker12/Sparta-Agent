@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 "use client";
 
 // Avatar removed — caused circular crop on image thumbnails
@@ -92,11 +93,13 @@ type AttachmentPreviewProps = {
 };
 
 const AttachmentPreview: FC<AttachmentPreviewProps> = ({ src }) => {
+  const uiT = useUiT();
+
   const [isLoaded, setIsLoaded] = useState(false);
   return (
     <img
       src={src}
-      alt="Preview"
+      alt={uiT("chat.files.preview")}
       className={cn(
         "block h-auto max-h-[90dvh] w-auto max-w-[92vw] object-contain",
         isLoaded
@@ -109,6 +112,8 @@ const AttachmentPreview: FC<AttachmentPreviewProps> = ({ src }) => {
 };
 
 const AttachmentPreviewDialog: FC<PropsWithChildren> = ({ children }) => {
+  const uiT = useUiT();
+
   const src = useAttachmentSrc();
 
   if (!src) {
@@ -130,8 +135,7 @@ const AttachmentPreviewDialog: FC<PropsWithChildren> = ({ children }) => {
         className="aui-attachment-preview-dialog-content top-0 left-0 grid h-dvh w-screen max-h-none max-w-none translate-x-0 translate-y-0 place-items-center overflow-hidden rounded-none border-0 bg-transparent p-0 shadow-none ring-0 sm:max-w-none [&>button]:fixed [&>button]:top-4 [&>button]:right-4 [&>button]:z-20 [&>button]:size-9 [&>button]:rounded-full [&>button]:bg-transparent [&>button]:text-white [&>button]:opacity-100 [&>button]:ring-0! [&>button]:hover:bg-white/25 [&>button]:hover:text-white [&_svg]:text-white"
       >
         <DialogTitle className="aui-sr-only sr-only">
-          Image Attachment Preview
-        </DialogTitle>
+          {uiT("ui.image_attachment_preview")}</DialogTitle>
         {/* Clicking the backdrop (anywhere off the image) closes the preview. */}
         <DialogClose asChild={true}>
           <div aria-hidden="true" className="absolute inset-0" />
@@ -147,6 +151,8 @@ const AttachmentPreviewDialog: FC<PropsWithChildren> = ({ children }) => {
 };
 
 const AttachmentThumb: FC = () => {
+  const uiT = useUiT();
+
   const src = useAttachmentSrc();
   const name = useAuiState(({ attachment }) => attachment.name);
   const contentType = useAuiState(
@@ -160,7 +166,7 @@ const AttachmentThumb: FC = () => {
     return (
       <img
         src={src}
-        alt={name || "Attachment preview"}
+        alt={name || uiT("ui.attachment_preview")}
         className="h-full w-full object-cover"
       />
     );
@@ -224,6 +230,8 @@ const readPastedTextPreview = async (
 const PastedTextPreviewDialog: FC<
   PropsWithChildren<{ name: string; attachment: PastedTextAttachment }>
 > = ({ attachment, children, name }) => {
+  const uiT = useUiT();
+
   const [open, setOpen] = useState(false);
   const [preview, setPreview] = useState<{
     text: string;
@@ -259,11 +267,11 @@ const PastedTextPreviewDialog: FC<
       <DialogContent className="aui-pasted-text-dialog flex max-h-[88dvh] w-[min(68rem,94vw)] max-w-none flex-col gap-3 overflow-hidden">
         <DialogTitle className="truncate pr-8 text-sm">{name}</DialogTitle>
         <pre className="aui-pasted-text-dialog-body max-h-[72dvh] overflow-auto whitespace-pre-wrap break-words rounded-lg border bg-muted/40 p-3 text-left font-mono text-xs leading-relaxed">
-          {preview?.text ?? "Loading…"}
+          {preview?.text ?? uiT("chat.projectSwitcher.loading")}
         </pre>
         {preview && preview.remaining > 0 ? (
           <p className="text-muted-foreground text-xs">
-            {`First ${PASTED_TEXT_PREVIEW_MAX_CHARS.toLocaleString()} characters shown. ${preview.remaining.toLocaleString()} more were sent with the message.`}
+            {uiT("ui.first_value0_characters_shown_value1_more_were_sent_with_the_mess", { value0: String(PASTED_TEXT_PREVIEW_MAX_CHARS.toLocaleString()), value1: String(preview.remaining.toLocaleString()) })}
           </p>
         ) : null}
       </DialogContent>
@@ -276,6 +284,8 @@ const PastedTextAttachmentUI: FC<{
   isComposer: boolean;
   name: string;
 }> = ({ attachment, isComposer, name }) => {
+  const uiT = useUiT();
+
   const aui = useAui();
   const attachmentId = useAuiState(({ attachment: state }) => state.id);
   const [inlining, setInlining] = useState(false);
@@ -351,12 +361,11 @@ const PastedTextAttachmentUI: FC<{
         <span className="truncate text-ui-11 text-muted-foreground">
           {/* Hover swaps the size for the action. */}
           <span className={isComposer ? "group-hover:hidden" : undefined}>
-            {bytes === undefined ? "Pasted text" : formatBytes(bytes)}
+            {bytes === undefined ? uiT("ui.pasted_text") : formatBytes(bytes)}
           </span>
           {isComposer ? (
             <span className="hidden items-center gap-0.5 underline underline-offset-2 group-hover:inline-flex">
-              Show in text field
-              <ChevronRightIcon className="size-3" />
+              {uiT("ui.show_in_text_field")}<ChevronRightIcon className="size-3" />
             </span>
           ) : null}
         </span>

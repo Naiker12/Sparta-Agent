@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 "use client";
 
 import {
@@ -29,6 +30,8 @@ const RenderHtmlToolUIImpl: ToolCallMessagePartComponent = ({
   status,
   toolCallId,
 }) => {
+  const uiT = useUiT();
+
   const { propStatus } = useToolArgsStatus<RenderHtmlArgs>();
   const parsedArgs = (args as RenderHtmlArgs) ?? {};
   const code = typeof parsedArgs.code === "string" ? parsedArgs.code : "";
@@ -115,16 +118,16 @@ const RenderHtmlToolUIImpl: ToolCallMessagePartComponent = ({
         <span className="grid min-w-0 flex-1 gap-1">
           <span className="truncate text-sm font-medium leading-tight text-foreground">
             {errorText
-              ? "Canvas error"
+              ? uiT("ui.canvas_error")
               : isStaleGeneratingArtifact
-                ? "Canvas interrupted"
-                : "Canvas unavailable"}
+                ? uiT("ui.canvas_interrupted")
+                : uiT("ui.canvas_unavailable")}
           </span>
           <span className="truncate text-ui-11 leading-none text-muted-foreground">
             {errorText ??
               (isStaleGeneratingArtifact
-                ? "Refresh stopped this preview"
-                : "HTML canvas")}
+                ? uiT("ui.refresh_stopped_this_preview")
+                : uiT("ui.html_canvas"))}
           </span>
         </span>
       </div>

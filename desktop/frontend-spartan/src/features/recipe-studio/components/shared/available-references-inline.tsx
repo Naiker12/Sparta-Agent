@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Badge } from "@/components/ui/badge";
 import { type ReactElement, useLayoutEffect, useRef, useState } from "react";
 import type { AvailableVariableEntry } from "../../utils/variables";
@@ -11,6 +12,8 @@ const MAX_ROWS = 2;
 export function AvailableReferencesInline({
   entries,
 }: AvailableReferencesInlineProps): ReactElement | null {
+  const uiT = useUiT();
+
   const [expanded, setExpanded] = useState(false);
   const [collapsedCount, setCollapsedCount] = useState(entries.length);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
@@ -64,8 +67,7 @@ export function AvailableReferencesInline({
   return (
     <div className="space-y-1">
       <p className="text-ui-10 font-medium text-muted-foreground">
-        Available references
-      </p>
+        {uiT("ui.available_references")}</p>
       <div ref={wrapperRef} className="relative">
         {!expanded && (
           <div className="invisible pointer-events-none absolute inset-0 -z-10">
@@ -110,8 +112,7 @@ export function AvailableReferencesInline({
               className="corner-squircle h-4 px-1.5 text-ui-10 text-muted-foreground hover:text-foreground"
               onClick={() => setExpanded(true)}
             >
-              +{hiddenCount} more
-            </button>
+              +{hiddenCount} {" "}{uiT("ui.more")}</button>
           )}
           {expanded && collapsedCount < entries.length && (
             <button
@@ -119,8 +120,7 @@ export function AvailableReferencesInline({
               className="corner-squircle h-4 px-1.5 text-ui-10 text-muted-foreground hover:text-foreground"
               onClick={() => setExpanded(false)}
             >
-              Show less
-            </button>
+              {uiT("shell.navigation.showLess")}</button>
           )}
         </div>
       </div>

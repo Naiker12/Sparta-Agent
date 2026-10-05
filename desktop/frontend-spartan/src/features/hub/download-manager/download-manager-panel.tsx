@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   Tooltip,
   TooltipContent,
@@ -88,19 +89,21 @@ function variantSuffix(job: ManagedDownload): string {
 }
 
 function StatusLine({ job }: { job: ManagedDownload }) {
+  const uiT = useUiT();
+
   if (job.state === "complete") {
-    return <span className="text-status-success">Downloaded</span>;
+    return <span className="text-status-success">{uiT("settings.agents.downloaded")}</span>;
   }
   if (job.state === "cancelled") {
-    return <span>Cancelled. Partial files kept.</span>;
+    return <span>{uiT("ui.cancelled_partial_files_kept")}</span>;
   }
   if (job.state === "error") {
     return (
-      <span className="text-destructive">{job.error ?? "Download failed"}</span>
+      <span className="text-destructive">{job.error ?? uiT("ui.download_failed")}</span>
     );
   }
   if (job.state === "cancelling") {
-    return <span>Cancelling…</span>;
+    return <span>{uiT("settings.voice.dictation.sttCancellingDownload")}</span>;
   }
   if (job.error) {
     return <span className="text-status-warning">{job.error}</span>;
@@ -109,6 +112,8 @@ function StatusLine({ job }: { job: ManagedDownload }) {
 }
 
 function DownloadRow({ jobKey }: { jobKey: string }) {
+  const uiT = useUiT();
+
   const job = useDownloadManagerStore((state) => state.jobs[jobKey]);
   if (!job) {
     return null;
@@ -143,7 +148,7 @@ function DownloadRow({ jobKey }: { jobKey: string }) {
           <TooltipTrigger asChild={true}>
             <button
               type="button"
-              aria-label={active ? "Cancel download" : "Dismiss"}
+              aria-label={active ? uiT("ui.cancel_download") : uiT("ui.dismiss")}
               disabled={job.state === "cancelling"}
               onClick={() =>
                 active
@@ -163,7 +168,7 @@ function DownloadRow({ jobKey }: { jobKey: string }) {
             </button>
           </TooltipTrigger>
           <TooltipContent side="top" sideOffset={4}>
-            {active ? "Cancel download" : "Dismiss"}
+            {active ? uiT("ui.cancel_download") : uiT("ui.dismiss")}
           </TooltipContent>
         </Tooltip>
       </div>
@@ -189,6 +194,8 @@ function DownloadRow({ jobKey }: { jobKey: string }) {
 export function DownloadManagerPanel({
   positioned = true,
 }: { positioned?: boolean } = {}) {
+  const uiT = useUiT();
+
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const enabled = canUseDownloadManager(pathname);
   const [collapsed, setCollapsed] = useState(false);
@@ -255,7 +262,7 @@ export function DownloadManagerPanel({
             </span>
             <button
               type="button"
-              aria-label="Collapse downloads"
+              aria-label={uiT("ui.collapse_downloads")}
               onClick={() => setCollapsed(true)}
               className="inline-flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/[0.06] hover:text-foreground dark:hover:bg-white/[0.06]"
             >

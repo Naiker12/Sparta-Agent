@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 "use client";
 
 import {
@@ -376,6 +377,8 @@ export const MessageResponseDetailsSheet: FC<{
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }> = ({ open, onOpenChange }) => {
+  const uiT = useUiT();
+
   const timing = useMessageTiming();
   const {
     message,
@@ -427,13 +430,11 @@ export const MessageResponseDetailsSheet: FC<{
                 strokeWidth={1.75}
                 className="size-icon text-chat-icon-fg"
               />
-              Response details
-            </SheetTitle>
+              {uiT("ui.response_details")}</SheetTitle>
             <SheetCloseButton className="absolute top-1/2 right-0 -translate-y-1/2" />
           </div>
           <SheetDescription className="sr-only">
-            Timing, model, token, and tool details for this response.
-          </SheetDescription>
+            {uiT("ui.timing_model_token_and_tool_details_for_this_response")}</SheetDescription>
         </SheetHeader>
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
@@ -448,10 +449,10 @@ export const MessageResponseDetailsSheet: FC<{
             ) : null}
           </div>
 
-          <DetailSection title="Response">
-            <DetailRow label="Model" value={modelLabel} />
+          <DetailSection title={uiT("ui.response")}>
+            <DetailRow label={uiT("studio.progress.model")} value={modelLabel} />
             <DetailRow
-              label="Requested"
+              label={uiT("ui.requested")}
               value={
                 responseDetails?.modelId &&
                 responseDetails.modelId !== responseDetails.responseModelId
@@ -459,73 +460,73 @@ export const MessageResponseDetailsSheet: FC<{
                   : null
               }
             />
-            <DetailRow label="Provider" value={providerLabel} />
-            <DetailRow label="Message ID" value={message.id} mono={true} />
-            <DetailRow label="Created" value={formatDate(message.createdAt)} />
+            <DetailRow label={uiT("ui.provider")} value={providerLabel} />
+            <DetailRow label={uiT("ui.message_id")} value={message.id} mono={true} />
+            <DetailRow label={uiT("chat.tools.editFile.created")} value={formatDate(message.createdAt)} />
             <DetailRow
-              label="Started"
+              label={uiT("apiPage.started")}
               value={formatDate(responseDetails?.startedAt)}
             />
             <DetailRow
-              label="Finished"
+              label={uiT("ui.finished")}
               value={formatDate(responseDetails?.finishedAt)}
             />
           </DetailSection>
 
-          <DetailSection title="Tokens">
+          <DetailSection title={uiT("chat.timing.tokens")}>
             <DetailRow
-              label="Prompt"
+              label={uiT("chat.timing.prompt")}
               value={formatNumber(promptTokens)}
               mono={true}
             />
             <DetailRow
-              label="Output"
+              label={uiT("chat.timing.output")}
               value={formatNumber(completionTokens)}
               mono={true}
             />
             <DetailRow
-              label="Total"
+              label={uiT("chat.timing.total")}
               value={formatNumber(totalTokens)}
               mono={true}
             />
             <DetailRow
-              label="Cache hits"
+              label={uiT("chat.timing.cacheHits")}
               value={formatNumber(
                 usage?.cachedTokens ?? asNumber(serverTimings?.cache_n),
               )}
               mono={true}
             />
             <DetailRow
-              label="Cache writes"
+              label={uiT("chat.timing.cacheWrites")}
               value={formatNumber(usage?.cacheWriteTokens)}
               mono={true}
             />
           </DetailSection>
 
-          <DetailSection title="Timing">
-            <DetailRow label="Total" value={formatMs(totalTime)} mono={true} />
+          <DetailSection title={uiT("ui.timing")}>
+            <DetailRow label={uiT("chat.timing.total")} value={formatMs(totalTime)} mono={true} />
             <DetailRow
-              label="First token"
+              label={uiT("chat.timing.firstToken")}
               value={formatMs(timing?.firstTokenTime)}
               mono={true}
             />
             <DetailRow
-              label="Prompt eval"
+              label={uiT("chat.timing.promptEval")}
               value={formatMs(asNumber(serverTimings?.prompt_ms))}
               mono={true}
             />
             <DetailRow
-              label="Prompt speed"
+              label={uiT("chat.timing.promptSpeed")}
               value={formatRate(promptSpeed)}
               mono={true}
             />
             <DetailRow
-              label="Generation"
+              label={uiT("chat.timing.generation")}
               value={formatMs(asNumber(serverTimings?.predicted_ms))}
               mono={true}
             />
             <DetailRow
-              label="Speed"
+              label={uiT("chat.timing.speed")}
               value={formatRate(
                 asNumber(serverTimings?.predicted_per_second) ??
                   timing?.tokensPerSecond,
@@ -533,28 +534,28 @@ export const MessageResponseDetailsSheet: FC<{
               mono={true}
             />
             <DetailRow
-              label="Chunks"
+              label={uiT("chat.timing.chunks")}
               value={formatNumber(timing?.totalChunks)}
               mono={true}
             />
             <DetailRow
-              label="Tool calls"
+              label={uiT("settings.profile.stats.toolCalls")}
               value={formatNumber(timing?.toolCallCount)}
               mono={true}
             />
           </DetailSection>
 
-          <DetailSection title="Tools">
+          <DetailSection title={uiT("settings.apiKeys.usageTools")}>
             <DetailRow
-              label="Enabled"
+              label={uiT("ui.enabled")}
               value={enabledTools(responseDetails?.tools, toolCalls)}
             />
             <DetailRow
-              label="Called"
+              label={uiT("ui.called")}
               value={calledTools(toolCalls, mcpServers)}
             />
             <DetailRow
-              label="Confirmation"
+              label={uiT("ui.confirmation")}
               value={
                 responseDetails?.tools?.confirmToolCalls === true
                   ? "On"
@@ -564,7 +565,7 @@ export const MessageResponseDetailsSheet: FC<{
               }
             />
             <DetailRow
-              label="Bypass"
+              label={uiT("ui.bypass")}
               value={
                 responseDetails?.tools?.bypassPermissions === true
                   ? "On"
@@ -574,12 +575,12 @@ export const MessageResponseDetailsSheet: FC<{
               }
             />
             <DetailRow
-              label="Session"
+              label={uiT("ui.session")}
               value={responseDetails?.sessionId}
               mono={true}
             />
             <DetailRow
-              label="Run ID"
+              label={uiT("ui.run_id")}
               value={responseDetails?.cancelId}
               mono={true}
             />

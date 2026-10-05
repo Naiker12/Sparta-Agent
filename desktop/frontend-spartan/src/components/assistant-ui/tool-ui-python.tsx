@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 "use client";
 
 import { Spinner } from "@/components/ui/spinner";
@@ -141,6 +142,8 @@ const PythonToolUIImpl: ToolCallMessagePartComponent = ({
   result,
   status,
 }) => {
+  const uiT = useUiT();
+
   const t = useT();
   const code = (args as { code?: string })?.code ?? "";
   const firstLine = code.split("\n")[0]?.slice(0, 60) ?? "";
@@ -221,7 +224,7 @@ const PythonToolUIImpl: ToolCallMessagePartComponent = ({
       {code && (
         <div className="mt-1 pl-5">
           <ToolCodeCell
-            label="script"
+            label={uiT("ui.script")}
             code={code}
             language="python"
             downloadName="script.py"
