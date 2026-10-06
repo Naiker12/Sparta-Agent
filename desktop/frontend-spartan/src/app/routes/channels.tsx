@@ -5,6 +5,7 @@ import { Route as rootRoute } from "./__root";
 export const Route = createRoute({
   getParentRoute: () => rootRoute,
   path: "/channels",
+  staticData: { titleKey: "channels.title" },
   beforeLoad: () => requireAuth(),
   component: lazyRouteComponent(
     () => import("@/features/channels"),

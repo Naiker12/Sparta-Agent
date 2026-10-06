@@ -164,6 +164,8 @@ const CHAT_ONLY_ALLOWED = new Set([
   // neither train nor generate media, so chat-only machines must keep access.
   "/memory",
   "/tasks",
+  // Messaging channels use API providers and do not require a local GPU.
+  "/channels",
 ]);
 
 // /studio renders its own "still checking" state and self-gates once the verdict lands.

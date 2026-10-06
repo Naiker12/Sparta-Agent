@@ -6,6 +6,8 @@ Trabajo aislado en la rama `canales`, creada desde `main`. No requiere cambios d
 
 La ruta `/channels` forma parte del router de Spartan y la fila Canales de la barra lateral abre esa ruta. El módulo usa los mismos componentes, colores e idiomas de la aplicación. No requiere un HTML independiente ni sustituye respuestas del backend.
 
+Canales está permitido por el filtro de equipos sin GPU: utiliza proveedores API, así que ese filtro no debe redirigirlo al chat. El título de la ventana también utiliza la traducción de Canales.
+
 La navegación interna distingue Telegram disponible de Discord, WhatsApp y Slack próximos. Seleccionar una integración próxima muestra su estado, sin ofrecer una conexión ficticia. Telegram muestra las conexiones existentes o una guía inicial. El asistente de configuración tiene tres pasos: bot, proveedor/modelo y acceso. Guarda pausado; conectar requiere una acción posterior del usuario.
 
 ## Responsabilidades
