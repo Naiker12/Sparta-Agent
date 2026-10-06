@@ -226,3 +226,133 @@ def test_executor_rejects_provider_tool_calls(monkeypatch):
     monkeypatch.setattr(core.inference.task_scheduler, 'make_client', lambda *_: Client())
     with pytest.raises(ValueError, match='tools_blocked'):
         asyncio.run(respond({'provider_id': 'p', 'model': 'm', 'locale': 'es'}, 'run shell'))
+
+
+def completed_turn(saved, user, update_id, text='question', response='answer'):
+    from storage.channels import history
+    repo.ingest(saved['id'], [update(user=user, text=text, update_id=update_id)],
+                lambda item: normalize_private_message(item, [str(user)]))
+    claimed = repo.claim(saved['id'])
+    history.complete(saved['id'], claimed[0], claimed[1], response)
+
+
+def test_history_isolated_by_bot_and_user_and_reset():
+    from storage.channels import history
+    first, second = account(), account(bot='2')
+    completed_turn(first, 123, 1, 'first user')
+    completed_turn(first, 456, 2, 'second user')
+    completed_turn(second, 123, 1, 'second bot')
+    assert history.messages(first['id'], '123')[0]['content'] == 'first user'
+    assert history.messages(first['id'], '456')[0]['content'] == 'second user'
+    assert history.messages(second['id'], '123')[0]['content'] == 'second bot'
+    history.reset(first['id'], '123')
+    assert history.messages(first['id'], '123') == []
+    assert len(history.messages(first['id'], '456')) == 2
+    assert len(history.messages(second['id'], '123')) == 2
+    assert repo.delete_account(first['id'], 'wrong owner') is False
+    assert len(history.messages(first['id'], '456')) == 2
+    repo.delete_account(first['id'], 'owner')
+    assert history.messages(first['id'], '456') == []
+
+
+def test_history_excludes_failed_or_recovered_deliveries_and_duplicates():
+    from storage.channels import history
+    saved = account()
+    repo.ingest(saved['id'], [update()], lambda item: normalize_private_message(item, ['123']))
+    claimed = repo.claim(saved['id'])
+    repo.recover(saved['id'])
+    history.complete(saved['id'], claimed[0], claimed[1], 'ambiguous reply')
+    assert history.messages(saved['id'], '123') == []
+    completed_turn(saved, 123, 2, 'received', 'delivered')
+    history.complete(saved['id'], 2, {'user_id': '123', 'text': 'duplicate'}, 'duplicate')
+    assert history.messages(saved['id'], '123') == [
+        {'role': 'user', 'content': 'received'},
+        {'role': 'assistant', 'content': 'delivered'},
+    ]
+
+
+def test_history_retention_turn_and_context_limits(monkeypatch):
+    from storage.channels import history
+    saved = account()
+    for number in range(1, 9):
+        completed_turn(saved, 123, number, str(number))
+    messages = history.messages(saved['id'], '123')
+    assert len(messages) == 12
+    assert messages[0]['content'] == '3'
+    assert messages[-2]['content'] == '8'
+    with repo.connection() as db:
+        assert db.execute('SELECT COUNT(*) FROM channel_history').fetchone()[0] == 6
+        db.execute('UPDATE channel_history SET created_at=0')
+    assert history.messages(saved['id'], '123') == []
+    completed_turn(saved, 123, 9, 'x' * 23000, 'y' * 2000)
+    assert history.messages(saved['id'], '123') == []
+
+
+def test_executor_uses_recent_context_between_system_and_current_question(monkeypatch):
+    from core.channels.executor import respond
+    import core.inference.task_scheduler
+    context = [{'role': 'user', 'content': 'old question'}, {'role': 'assistant', 'content': 'old answer'}]
+    class Client:
+        async def stream_chat_completion(self, **kwargs):
+            assert kwargs['messages'][0]['role'] == 'system'
+            assert kwargs['messages'][1:-1] == context
+            assert kwargs['messages'][-1] == {'role': 'user', 'content': 'new question'}
+            assert kwargs['tools'] == [] and kwargs['tool_choice'] == 'none'
+            yield 'data: ' + json.dumps({'choices': [{'delta': {'content': 'new answer'}}]})
+    monkeypatch.setattr(core.inference.task_scheduler, 'make_client', lambda *_: Client())
+    assert asyncio.run(respond({'provider_id': 'p', 'model': 'm', 'locale': 'en'}, 'new question', history=context)) == 'new answer'
+
+
+def test_worker_reset_never_calls_provider_and_preserves_other_users(monkeypatch):
+    from storage.channels import history
+    saved = account()
+    completed_turn(saved, 123, 1)
+    completed_turn(saved, 456, 2)
+    transport = AsyncMock()
+    queued = iter([(3, {'user_id': '123', 'chat_id': 123, 'text': '/reset', 'media': None})])
+    def claim(_):
+        try:
+            return next(queued)
+        except StopIteration:
+            raise asyncio.CancelledError()
+    monkeypatch.setattr(runtime, 'Telegram', lambda _: transport)
+    monkeypatch.setattr(runtime, 'get_secret', lambda *_: 'secret')
+    monkeypatch.setattr(runtime.repo, 'claim', claim)
+    provider = AsyncMock()
+    monkeypatch.setattr(runtime, 'respond', provider)
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(runtime._worker(saved))
+    assert history.messages(saved['id'], '123') == []
+    assert len(history.messages(saved['id'], '456')) == 2
+    provider.assert_not_called()
+    transport.send.assert_awaited_once()
+
+
+@pytest.mark.parametrize('delivery_fails', [False, True])
+def test_worker_history_only_commits_after_acknowledged_delivery(monkeypatch, delivery_fails):
+    from storage.channels import history
+    saved = account()
+    completed_turn(saved, 123, 1, 'previous question', 'previous answer')
+    repo.ingest(saved['id'], [update(text='follow-up', update_id=2)],
+                lambda item: normalize_private_message(item, ['123']))
+    transport = AsyncMock()
+    async def call(method, **kwargs):
+        if method == 'getUpdates':
+            raise asyncio.CancelledError()
+        return True
+    transport.call.side_effect = call
+    if delivery_fails:
+        transport.send.side_effect = RuntimeError('delivery failed')
+    monkeypatch.setattr(runtime, 'Telegram', lambda _: transport)
+    monkeypatch.setattr(runtime, 'get_secret', lambda *_: 'secret')
+    provider = AsyncMock(return_value='follow-up answer')
+    monkeypatch.setattr(runtime, 'respond', provider)
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(runtime._worker(saved))
+    provider.assert_awaited_once_with(saved, 'follow-up', history=[
+        {'role': 'user', 'content': 'previous question'},
+        {'role': 'assistant', 'content': 'previous answer'},
+    ])
+    turns = history.messages(saved['id'], '123')
+    assert len(turns) == (2 if delivery_fails else 4)
+    assert turns[-1]['content'] == ('previous answer' if delivery_fails else 'follow-up answer')

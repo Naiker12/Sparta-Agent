@@ -25,7 +25,15 @@ export function ChannelCapabilities({
         <CardContent>
           <dl className="flex flex-col gap-4">
             {(
-              ["help", "status", "provider", "tools", "skills", "mcp"] as const
+              [
+                "help",
+                "status",
+                "provider",
+                "tools",
+                "skills",
+                "mcp",
+                "reset",
+              ] as const
             ).map((command) => (
               <div key={command} className="flex items-start gap-4 text-sm">
                 <dt className="bg-muted w-24 shrink-0 rounded-md px-2 py-1 font-mono">
@@ -50,6 +58,7 @@ export function ChannelCapabilities({
           <dl className="flex flex-col gap-4 text-sm">
             {[
               [t("channels.textChat"), t("channels.available")],
+              [t("channels.conversationContext"), t("channels.available")],
               [
                 t("channels.inventory"),
                 `${inventory.skills.length} skills · ${inventory.mcp.length} MCP`,
@@ -69,6 +78,9 @@ export function ChannelCapabilities({
             ))}
           </dl>
           <p className="text-muted-foreground mt-6 text-xs leading-relaxed">
+            {t("channels.contextHelp")}
+          </p>
+          <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
             {t("channels.capabilityNote")}
           </p>
         </CardContent>

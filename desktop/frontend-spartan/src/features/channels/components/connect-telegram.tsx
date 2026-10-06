@@ -337,6 +337,9 @@ export function ConnectTelegram({
                   <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
                     {t("channels.savePausedHelp")}
                   </p>
+                  <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
+                    {t("channels.contextHelp")}
+                  </p>
                 </div>
               </>
             )}

@@ -1,6 +1,6 @@
 # Canales
 
-Trabajo aislado en la rama `canales`, creada desde `main`. No requiere cambios de las ramas `traducciones-es-en` o `memoria-grafo`. No añade dependencias de producción.
+Trabajo aislado en la rama `canales`, creada desde `main`. Integra los cambios de memoria e idiomas que ya se fusionaron en `main`. No añade dependencias de producción.
 
 ## Interfaz real
 
@@ -29,8 +29,8 @@ El frontend consume únicamente `/api/channels`. El transporte no recibe un JWT 
 - Una conexión se guarda pausada y puede conectarse, pausarse o eliminarse desde Spartan.
 - Recepción por long polling mientras el backend está abierto; cierre de clientes y cancelación al salir.
 - Solo conversaciones privadas, con IDs numéricos autorizados. Grupos, bots y remitentes no autorizados no acceden al proveedor ni al inventario.
-- Comandos `/help`, `/status`, `/provider`, `/tools`, `/skills`, `/mcp`, registrados en el menú de Telegram. El inventario omite secretos, cabeceras MCP, rutas e instrucciones de skills.
-- Respuestas de texto mediante un proveedor API y modelo configurados, sin herramientas, archivos locales ni memoria de escritorio. Cada solicitud es independiente: no hay historial conversacional compartido todavía.
+- Comandos `/help`, `/status`, `/provider`, `/tools`, `/skills`, `/mcp`, `/reset`, registrados en el menú de Telegram. El inventario omite secretos, cabeceras MCP, rutas e instrucciones de skills.
+- Respuestas de texto mediante un proveedor API y modelo configurados, sin herramientas, archivos locales ni memoria de escritorio. El contexto reciente está aislado por bot y usuario: hasta seis intercambios completados, 24000 caracteres de contexto y siete días. Solo se guardan respuestas confirmadas por Telegram; /reset borra el contexto de ese usuario.
 - Límite de 30 consultas al proveedor por hora y conexión, 90 segundos por solicitud, 1500 tokens de salida y 12000 caracteres de respuesta. Los intentos fallidos cuentan.
 - Cursor y mensajes aceptados guardados en una transacción antes de avanzar el offset. IDs repetidos no duplican ejecución.
 - Las operaciones interrumpidas o cuyo envío resulte ambiguo se marcan fallidas y no se reejecutan automáticamente. No se garantiza entrega exactamente una vez.
@@ -40,14 +40,14 @@ El frontend consume únicamente `/api/channels`. El transporte no recibe un JWT 
 
 1. Validar un bot real con el usuario: usuarios autorizados y denegados, comandos, modelo, reconexión, pausa y cierre.
 2. Facilitar vinculación mediante solicitudes con códigos de un solo uso y aprobación en Spartan. Actualmente se requieren IDs conocidos.
-3. Añadir historial aislado por conexión y remitente; no mezclar conversaciones de escritorio o proyectos sin consentimiento explícito.
+3. Contexto reciente implementado por bot y remitente; validar continuidad y /reset con un bot real. Los chats de escritorio, proyectos y memoria del grafo permanecen separados.
 4. Audios: límites de tamaño/duración, transcripción con proveedor configurado y eliminación de temporales. Documentos: descarga limitada, detección real de formato, extracción reutilizando ingestión y prevención de rutas externas. En esta entrega se informa que no están habilitados y no se descargan.
 5. Ejecución web, skills y MCP mediante un contrato común con políticas por conexión, confirmaciones persistentes, caducidad y cancelación. Consultar inventario no autoriza ejecución. No sustituir el modo de confirmación por acceso completo.
 6. Discord: adaptador separado, permisos mínimos, restricciones por usuario/servidor/canal, comandos nativos y límites de la plataforma. WhatsApp y Slack después.
 
 ## Validación
 
-`desktop/backend-spartan/.venv/Scripts/python.exe -m pytest --noconftest tests/test_channels.py -q` desde el backend: 20 pruebas, almacenamiento temporal, transporte simulado, ninguna credencial real ni mensaje externo.
+`desktop/backend-spartan/.venv/Scripts/python.exe -m pytest --noconftest tests/test_channels.py -q` desde el backend: 27 pruebas de Canales, almacenamiento temporal, transporte simulado, ninguna credencial real ni mensaje externo.
 
 Se usa `--noconftest` porque la configuración general de pruebas de `main` importa `core.inference.diffusion_prequant`, ausente en este checkout. La suite de Canales define su propio aislamiento y no modifica esa configuración general.
 
@@ -66,3 +66,5 @@ Se revisó visualmente el formulario, sus tres pasos, el selector de modelos y l
 Las APIs de esas aplicaciones son referencias arquitectónicas; Spartan no utiliza sus credenciales, clientes ni sesiones.
 
 La guía muestra el enlace oficial de BotFather antes de abrir el asistente. Los indicadores SVG cubren carga, actualización, verificación y cambios de conexión. La consulta tiene un límite de 15 segundos, evita consultas simultáneas y ofrece reintento sin dejar un esqueleto permanente cuando falla. Los textos nuevos están disponibles en español e inglés. El último ajuste visual requiere revisión en la aplicación abierta.
+
+La rama `canales` incorpora `main` después de fusionar memoria y traducciones. El contexto local de Telegram no se expone en el inventario ni en la actividad. /reset borra el contexto para futuras respuestas; el registro durable de recepción mantiene su política de retención independiente. La caducidad del contexto se aplica al leer o guardar intercambios.

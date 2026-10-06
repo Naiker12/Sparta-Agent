@@ -3,6 +3,7 @@ import asyncio
 import time
 
 from storage.channels import repository as repo
+from storage.channels import history
 from storage.credential_secrets import get_secret
 from .catalog import COMMANDS, command_reply
 from .executor import respond
@@ -45,7 +46,11 @@ async def _worker(account):
                     continue
                 update_id, message = pending
                 try:
-                    if time.monotonic() - last_request.get(message['user_id'], -100) < 3:
+                    conversation_reply = False
+                    if message['text'].split() and message['text'].split()[0].split('@')[0].lower() == '/reset':
+                        history.reset(account_id, message['user_id'])
+                        output = 'Conversación reiniciada. El contexto de este chat se ha borrado.' if account['locale'] == 'es' else 'Conversation reset. The context for this chat has been cleared.'
+                    elif time.monotonic() - last_request.get(message['user_id'], -100) < 3:
                         output = 'Espera unos segundos antes de enviar otra solicitud.' if account['locale'] == 'es' else 'Wait a few seconds before sending another request.'
                     elif message['media']:
                         output = 'Audios y documentos todavía no están habilitados en este canal. Envía texto por ahora.' if account['locale'] == 'es' else 'Audio and documents are not enabled for this channel yet. Send text for now.'
@@ -54,11 +59,15 @@ async def _worker(account):
                         output = command_reply(message['text'], account)
                         if output is None:
                             if repo.reserve_provider_request(account_id):
-                                output = await respond(account, message['text'])
+                                output = await respond(account, message['text'], history=history.messages(account_id, message['user_id']))
+                                conversation_reply = True
                             else:
                                 output = 'Se alcanzó el límite de 30 consultas por hora. Intenta más tarde.' if account['locale'] == 'es' else 'The 30 requests per hour limit has been reached. Try again later.'
                     await transport.send(message['chat_id'], output)
-                    repo.finish(account_id, update_id, 'completed')
+                    if conversation_reply:
+                        history.complete(account_id, update_id, message, output)
+                    else:
+                        repo.finish(account_id, update_id, 'completed')
                     repo.event(account_id, 'reply_sent')
                 except asyncio.CancelledError:
                     repo.finish(account_id, update_id, 'failed')

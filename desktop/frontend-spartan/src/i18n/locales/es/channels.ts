@@ -1,7 +1,10 @@
 export const channels = {
-  loading: "Cargando canales�",
+  conversationContext: "Contexto de conversación",
+  contextHelp:
+    "Cada bot conserva el contexto reciente por usuario, hasta 6 intercambios durante 7 días. Usa /reset para borrarlo. No se comparte con tus chats ni con la memoria de Spartan.",
+  loading: "Cargando canales…",
   retry: "Volver a intentar",
-  working: "Guardando cambios�",
+  working: "Guardando cambios…",
 
   pageDescription:
     "Elige un canal, conecta tu cuenta y empieza a hablar con Spartan.",
@@ -139,6 +142,7 @@ export const channels = {
   commandsDescription:
     "Escribe / en tu chat con el bot para ver estos comandos.",
   command: {
+    reset: "Reiniciar esta conversación",
     help: "Ver comandos y capacidades",
     status: "Consultar el estado de la conexión",
     provider: "Ver el proveedor y el modelo elegidos",

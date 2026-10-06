@@ -1,7 +1,10 @@
 export const channels = {
-  loading: "Loading channels�",
+  conversationContext: "Conversation context",
+  contextHelp:
+    "Each bot keeps recent context per user, up to 6 exchanges for 7 days. Use /reset to clear it. Your desktop chats and Spartan memory stay separate.",
+  loading: "Loading channels…",
   retry: "Try again",
-  working: "Saving changes�",
+  working: "Saving changes…",
 
   pageDescription:
     "Choose a channel, connect your account and start talking to Spartan.",
@@ -136,6 +139,7 @@ export const channels = {
   commands: "Telegram commands",
   commandsDescription: "Type / in your bot chat to see these commands.",
   command: {
+    reset: "Reset this conversation",
     help: "Show commands and capabilities",
     status: "Check connection status",
     provider: "Show the selected provider and model",
