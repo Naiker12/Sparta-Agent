@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import {
   Collapsible,
@@ -379,6 +381,8 @@ const ActivityRow = memo(function ActivityRow({
   runId: string;
   activity: ResearchActivity;
 }): ReactElement {
+  const uiT = useUiT();
+
   const storedOpen = useResearchRunStore(
     (state) => state.activityOpenByRunId[runId]?.[activity.id],
   );
@@ -409,8 +413,8 @@ const ActivityRow = memo(function ActivityRow({
           </p>
           <span className="inline-block text-xs font-medium text-sky-500 dark:text-sky-400 pl-0.5">
             {activity.action === "search" || activity.kind === "step"
-              ? "Web search"
-              : "Tool query"}
+              ? uiT("chat.composer.webSearch")
+              : uiT("ui.tool_query")}
           </span>
         </div>
       ) : null}
@@ -458,8 +462,7 @@ const ActivityRow = memo(function ActivityRow({
           ))}
           {activity.plan.steps.length > 3 ? (
             <p className="pl-5 text-ui-11 text-muted-foreground">
-              +{activity.plan.steps.length - 3} more steps
-            </p>
+              +{activity.plan.steps.length - 3} {" "}{uiT("ui.more_steps")}</p>
           ) : null}
         </div>
       ) : null}
@@ -566,6 +569,8 @@ const ActivityRow = memo(function ActivityRow({
 });
 
 function PlanReview({ runId }: { runId: string }): ReactElement | null {
+  const uiT = useUiT();
+
   const run = useResearchRunStore((state) => state.sessions[runId]?.run);
   const review = useResearchRunStore((state) => state.planReviewByRunId[runId]);
   const setOpen = useResearchRunStore((state) => state.setPlanReviewOpen);
@@ -601,7 +606,7 @@ function PlanReview({ runId }: { runId: string }): ReactElement | null {
       );
       ingestResearchUpdate(approved);
     } catch (error) {
-      toast.error("Could not start research", {
+      toast.error(uiTranslate("ui.could_not_start_research"), {
         description: error instanceof Error ? error.message : undefined,
       });
     } finally {
@@ -625,7 +630,7 @@ function PlanReview({ runId }: { runId: string }): ReactElement | null {
   return (
     <>
       <section className="mx-4 mt-3 rounded-2xl border border-primary/20 bg-primary/[0.045] p-3">
-        <p className="font-heading text-sm font-medium">Research plan ready</p>
+        <p className="font-heading text-sm font-medium">{uiT("ui.research_plan_ready")}</p>
         <p className="mt-1 line-clamp-2 break-words text-xs text-muted-foreground">
           {run.plan.title}
         </p>
@@ -634,23 +639,20 @@ function PlanReview({ runId }: { runId: string }): ReactElement | null {
           size="sm"
           onClick={() => setOpen(runId, true)}
         >
-          Review plan
-        </Button>
+          {uiT("ui.review_plan")}</Button>
       </section>
       <Dialog open={open} onOpenChange={(nextOpen) => setOpen(runId, nextOpen)}>
         <DialogContent className="max-h-[min(680px,calc(100dvh-6rem))] grid-rows-[auto_minmax(0,1fr)_auto] gap-0 overflow-hidden p-0 sm:max-w-3xl [&>[data-slot=dialog-close]]:right-6 [&>[data-slot=dialog-close]]:top-6">
           <DialogHeader className="border-b border-border/70 px-7 pb-4 pt-6 pr-16">
-            <DialogTitle>Review the research plan</DialogTitle>
+            <DialogTitle>{uiT("ui.review_the_research_plan")}</DialogTitle>
             <DialogDescription className="max-w-2xl leading-relaxed">
-              Research starts only after your approval. Check the scope and
-              search approach before continuing.
-            </DialogDescription>
+              {uiT("ui.research_starts_only_after_your_approval_check_the_scope_and_sear")}</DialogDescription>
           </DialogHeader>
           <div className="min-h-0 overflow-y-scroll px-7 py-5 [scrollbar-gutter:stable]">
             {editing ? (
               <div className="space-y-3">
                 <Textarea
-                  aria-label="Plan title"
+                  aria-label={uiT("ui.plan_title")}
                   value={draft.title}
                   maxLength={200}
                   className="min-h-10 py-2 font-medium"
@@ -676,14 +678,14 @@ function PlanReview({ runId }: { runId: string }): ReactElement | null {
                   >
                     <div className="mb-2 flex items-center gap-1">
                       <span className="mr-auto text-ui-11 font-medium text-muted-foreground">
-                        Step {index + 1}
+                        {uiT("ui.step")}{" "}{index + 1}
                       </span>
                       <Button
                         variant="ghost"
                         size="icon-xs"
                         onClick={() => move(index, -1)}
                         disabled={index === 0}
-                        aria-label={`Move step ${index + 1} up`}
+                        aria-label={uiT("ui.move_step_value0_up", { value0: String(index + 1) })}
                       >
                         <ArrowUp />
                       </Button>
@@ -692,7 +694,7 @@ function PlanReview({ runId }: { runId: string }): ReactElement | null {
                         size="icon-xs"
                         onClick={() => move(index, 1)}
                         disabled={index === draft.steps.length - 1}
-                        aria-label={`Move step ${index + 1} down`}
+                        aria-label={uiT("ui.move_step_value0_down", { value0: String(index + 1) })}
                       >
                         <ArrowDown />
                       </Button>
@@ -711,13 +713,13 @@ function PlanReview({ runId }: { runId: string }): ReactElement | null {
                             ),
                           });
                         }}
-                        aria-label={`Remove step ${index + 1}`}
+                        aria-label={uiT("ui.remove_step_value0", { value0: String(index + 1) })}
                       >
                         <Trash2 />
                       </Button>
                     </div>
                     <Textarea
-                      aria-label={`Step ${index + 1} title`}
+                      aria-label={uiT("ui.step_value0_title", { value0: String(index + 1) })}
                       value={step.title}
                       maxLength={200}
                       className="mb-2 min-h-9 py-2"
@@ -728,7 +730,7 @@ function PlanReview({ runId }: { runId: string }): ReactElement | null {
                       }}
                     />
                     <Textarea
-                      aria-label={`Step ${index + 1} query`}
+                      aria-label={uiT("ui.step_value0_query", { value0: String(index + 1) })}
                       value={step.query}
                       maxLength={500}
                       className="min-h-9 py-2 text-xs"
@@ -755,13 +757,12 @@ function PlanReview({ runId }: { runId: string }): ReactElement | null {
                       ...draft,
                       steps: [
                         ...draft.steps,
-                        { title: "New research step", query: "" },
+                        { get title() { return uiTranslate("ui.new_research_step"); }, query: "" },
                       ],
                     });
                   }}
                 >
-                  <Plus /> Add step
-                </Button>
+                  <Plus /> {" "}{uiT("ui.add_step")}</Button>
               </div>
             ) : (
               <div className="space-y-3">
@@ -770,8 +771,7 @@ function PlanReview({ runId }: { runId: string }): ReactElement | null {
                     {draft.title}
                   </p>
                   <span className="shrink-0 rounded-full bg-muted px-2.5 py-1 text-ui-11 font-medium text-muted-foreground">
-                    {draft.steps.length} steps
-                  </span>
+                    {draft.steps.length} {" "}{uiT("ui.steps")}</span>
                 </div>
                 {draft.steps.map((step, index) => (
                   <div
@@ -799,12 +799,11 @@ function PlanReview({ runId }: { runId: string }): ReactElement | null {
               variant="outline"
               onClick={() => setEditing(runId, !editing)}
             >
-              <Pencil /> {editing ? "Preview plan" : "Edit plan"}
+              <Pencil /> {editing ? uiT("ui.preview_plan") : uiT("ui.edit_plan")}
             </Button>
             <div className="flex flex-col-reverse gap-2 sm:flex-row">
               <Button variant="ghost" onClick={() => setOpen(runId, false)}>
-                Review later
-              </Button>
+                {uiT("ui.review_later")}</Button>
               <Button
                 disabled={
                   pending ||
@@ -820,7 +819,7 @@ function PlanReview({ runId }: { runId: string }): ReactElement | null {
                 ) : (
                   <HugeiconsIcon icon={Telescope02Icon} />
                 )}
-                {editing ? "Save and start" : "Start research"}
+                {editing ? uiT("ui.save_and_start") : uiT("ui.start_research")}
               </Button>
             </div>
           </DialogFooter>
@@ -831,6 +830,8 @@ function PlanReview({ runId }: { runId: string }): ReactElement | null {
 }
 
 function ResearchActions({ runId }: { runId: string }): ReactElement | null {
+  const uiT = useUiT();
+
   const run = useResearchRunStore((state) => state.sessions[runId]?.run);
   const [pending, setPending] = useState(false);
   if (!run) {
@@ -848,7 +849,7 @@ function ResearchActions({ runId }: { runId: string }): ReactElement | null {
       useResearchRunStore.getState().setConnectionError(retried.id, null);
       ensureResearchRunFollowed(retried.id, retried);
     } catch (error) {
-      toast.error("Could not retry research", {
+      toast.error(uiTranslate("ui.could_not_retry_research"), {
         description: error instanceof Error ? error.message : undefined,
       });
     } finally {
@@ -863,8 +864,7 @@ function ResearchActions({ runId }: { runId: string }): ReactElement | null {
         disabled={pending}
         onClick={() => void retry()}
       >
-        {pending ? <Spinner /> : <RotateCcw />} Retry research
-      </Button>
+        {pending ? <Spinner /> : <RotateCcw />} {" "}{uiT("ui.retry_research")}</Button>
     </div>
   );
 }
@@ -878,6 +878,8 @@ export function ResearchActivityPanel({
   onClose: () => void;
   variant?: "panel" | "sheet";
 }): ReactElement {
+  const uiT = useUiT();
+
   const session = useResearchRunStore((state) => state.sessions[runId]);
   const [elapsedNow, setElapsedNow] = useState<number | null>(null);
   const { viewportRef, isAtBottom, scrollToLatest } =
@@ -928,7 +930,7 @@ export function ResearchActivityPanel({
 
   return (
     <aside
-      aria-label="Research activity"
+      aria-label={uiT("chat.toolbar.researchActivity")}
       className={cn(
         "relative flex min-h-0 flex-col bg-background text-foreground",
         variant === "sheet" && "h-full",
@@ -958,8 +960,7 @@ export function ResearchActivityPanel({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <h2 className="font-heading text-ui-15 font-semibold tracking-tight text-foreground">
-                Deep research
-              </h2>
+                {uiT("chat.composer.deepResearch")}</h2>
               <span
                 className={cn(
                   "rounded-full bg-muted/80 px-2.5 py-0.5 text-ui-10p5 font-medium text-muted-foreground",
@@ -973,7 +974,7 @@ export function ResearchActivityPanel({
               </span>
             </div>
             <p className="mt-0.5 line-clamp-2 break-words text-xs leading-relaxed text-muted-foreground">
-              {run.plan?.title ?? "Investigating your question"}
+              {run.plan?.title ?? uiT("ui.investigating_your_question")}
             </p>
             {websiteLimitLabel ? (
               <p
@@ -995,7 +996,7 @@ export function ResearchActivityPanel({
             variant="ghost"
             size="icon-sm"
             onClick={onClose}
-            aria-label="Close research activity"
+            aria-label={uiT("ui.close_research_activity")}
             className="rounded-full hover:bg-muted/80 text-muted-foreground hover:text-foreground"
           >
             <X className="size-4" />
@@ -1006,15 +1007,14 @@ export function ResearchActivityPanel({
             role="status"
             className="mt-2 flex items-center gap-2 text-ui-11 text-amber-700 dark:text-amber-300"
           >
-            <Spinner className="size-3" /> Reconnecting to research activity…
-          </div>
+            <Spinner className="size-3" /> {" "}{uiT("ui.reconnecting_to_research_activity")}</div>
         ) : session.connection === "disconnected" &&
           !isSettledResearchRun(run, session.lastAppliedSeq) ? (
           <div
             role="status"
             className="mt-2 flex items-center justify-between gap-2 text-ui-11 text-destructive"
           >
-            <span>Research activity is unavailable.</span>
+            <span>{uiT("ui.research_activity_is_unavailable")}</span>
             <Button
               size="sm"
               variant="ghost"
@@ -1024,8 +1024,7 @@ export function ResearchActivityPanel({
                 ensureResearchRunFollowed(runId, run);
               }}
             >
-              Reconnect
-            </Button>
+              {uiT("ui.reconnect")}</Button>
           </div>
         ) : null}
       </header>
@@ -1037,21 +1036,19 @@ export function ResearchActivityPanel({
         ref={viewportRef}
         role="log"
         aria-live="off"
-        aria-label="Research activity timeline"
+        aria-label={uiT("ui.research_activity_timeline")}
         className="min-h-0 flex-1 overflow-y-auto px-4 py-3 [overflow-anchor:none] focus-visible:outline-none"
       >
         {hydrating ? (
           <div className="flex items-center gap-2 py-3 text-sm text-muted-foreground">
-            <Spinner /> Restoring research activity…
-          </div>
+            <Spinner /> {" "}{uiT("ui.restoring_research_activity")}</div>
         ) : activities.length > 0 ? (
           activities.map((activity) => (
             <ActivityRow key={activity.id} runId={runId} activity={activity} />
           ))
         ) : (
           <div className="flex items-center gap-2 py-3 text-sm text-muted-foreground">
-            <Spinner /> Loading research activity…
-          </div>
+            <Spinner /> {" "}{uiT("ui.loading_research_activity")}</div>
         )}
       </div>
       {isAtBottom ? null : (
@@ -1061,8 +1058,7 @@ export function ResearchActivityPanel({
           className="absolute bottom-16 left-1/2 z-10 -translate-x-1/2 bg-background"
           onClick={scrollToLatest}
         >
-          <ArrowDown /> Latest
-        </Button>
+          <ArrowDown /> {" "}{uiT("ui.latest")}</Button>
       )}
       <ResearchActions runId={runId} />
     </aside>
@@ -1078,6 +1074,8 @@ export function ResearchActivitySheet({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }): ReactElement {
+  const uiT = useUiT();
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -1086,8 +1084,8 @@ export function ResearchActivitySheet({
         showCloseButton={false}
       >
         <SheetHeader className="sr-only">
-          <SheetTitle>Deep research</SheetTitle>
-          <SheetDescription>Chronological research activity</SheetDescription>
+          <SheetTitle>{uiT("chat.composer.deepResearch")}</SheetTitle>
+          <SheetDescription>{uiT("ui.chronological_research_activity")}</SheetDescription>
         </SheetHeader>
         <ResearchActivityPanel
           key={runId}

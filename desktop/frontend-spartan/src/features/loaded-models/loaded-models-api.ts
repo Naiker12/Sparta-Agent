@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 // Reads and ejects for the indicator. Reads are best-effort and independent: a
 // chat-only host has no video runtime, and that must not blank the other rows.
 // images/video/api-monitor are reached directly, as api-monitor-page.tsx does:
@@ -267,7 +268,7 @@ export async function ejectLoadedModel(
       // Unreadable status: say so rather than unload blind or claim success.
       if (!before) {
         throw new Error(
-          "Could not read dictation status, so nothing was ejected.",
+          uiTranslate("ui.could_not_read_dictation_status_so_nothing_was_ejected"),
         );
       }
       const resident = sttEngineStatus(before, engine);

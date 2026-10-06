@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 //
 // Portions adapted from assistant-ui packages/ui/src/components/assistant-ui/image.tsx
 // MIT License, Copyright (c) 2025 AgentbaseAI Inc.
@@ -70,7 +72,7 @@ export const downloadImagePart = (
   const filename = part.filename ?? `image.${ext}`;
   void downloadUrl(part.image, filename).catch((error) => {
     if (!isDownloadCancelled(error)) {
-      toast.error("Could not save image.");
+      toast.error(uiTranslate("ui.could_not_save_image"));
     }
   });
 };
@@ -83,7 +85,7 @@ export const copyImagePart = async (
     !navigator.clipboard ||
     typeof ClipboardItem === "undefined"
   ) {
-    throw new Error("Clipboard API is not available in this environment.");
+    throw new Error(uiTranslate("ui.clipboard_api_is_not_available_in_this_environment"));
   }
   const blob = await urlToBlob(part.image);
   const mime = mimeFromImage(part.image) || blob.type || "image/png";
@@ -253,6 +255,8 @@ type ImageZoomProps = PropsWithChildren<{
 }>;
 
 function ImageZoom({ src, alt = "Image preview", children }: ImageZoomProps) {
+  const uiT = useUiT();
+
   const [isOpen, setIsOpen] = useState(false);
 
   const handleOpen = () => setIsOpen(true);
@@ -288,7 +292,7 @@ function ImageZoom({ src, alt = "Image preview", children }: ImageZoomProps) {
         type="button"
         onClick={handleOpen}
         className="aui-image-zoom-trigger w-full cursor-zoom-in border-0 bg-transparent p-0 text-left"
-        aria-label="Click to zoom image"
+        aria-label={uiT("ui.click_to_zoom_image")}
       >
         {children}
       </button>
@@ -300,7 +304,7 @@ function ImageZoom({ src, alt = "Image preview", children }: ImageZoomProps) {
             data-slot="image-zoom-overlay"
             className="aui-image-zoom-overlay fade-in fixed inset-0 z-50 flex animate-in items-center justify-center border-0 bg-black/80 p-0 duration-200"
             onClick={handleClose}
-            aria-label="Close zoomed image"
+            aria-label={uiT("ui.close_zoomed_image")}
           >
             <img
               data-slot="image-zoom-content"
@@ -316,6 +320,8 @@ function ImageZoom({ src, alt = "Image preview", children }: ImageZoomProps) {
 }
 
 function ImageGenerating({ className }: { className?: string }) {
+  const uiT = useUiT();
+
   return (
     <div
       data-slot="image-generating"
@@ -325,7 +331,7 @@ function ImageGenerating({ className }: { className?: string }) {
       )}
     >
       <Spinner className="size-8 text-muted-foreground" />
-      <span className="sr-only">Generating image…</span>
+      <span className="sr-only">{uiT("ui.generating_image")}</span>
     </div>
   );
 }
@@ -337,6 +343,8 @@ function ImageContentFilterError({
   className?: string;
   reason?: string;
 }) {
+  const uiT = useUiT();
+
   return (
     <div
       data-slot="image-content-filter-error"
@@ -346,7 +354,7 @@ function ImageContentFilterError({
       )}
     >
       <ShieldAlertIcon className="size-8 text-muted-foreground" />
-      <p className="font-medium text-sm">Image could not be generated</p>
+      <p className="font-medium text-sm">{uiT("ui.image_could_not_be_generated")}</p>
       {reason && <p className="text-muted-foreground text-xs">{reason}</p>}
     </div>
   );
@@ -364,6 +372,8 @@ function RegenerateButton({
 }: {
   onRegenerate: () => void | Promise<void>;
 }) {
+  const uiT = useUiT();
+
   const [isRegenerating, setIsRegenerating] = useState(false);
   return (
     <button
@@ -378,7 +388,7 @@ function RegenerateButton({
       }}
       disabled={isRegenerating}
       data-slot="image-regenerate"
-      aria-label="Regenerate image"
+      aria-label={uiT("ui.regenerate_image")}
       className="inline-flex size-7 items-center justify-center rounded hover:bg-muted disabled:opacity-50"
     >
       <RefreshCwIcon
@@ -389,6 +399,8 @@ function RegenerateButton({
 }
 
 function ImageActions({ part, onRegenerate, className }: ImageActionsProps) {
+  const uiT = useUiT();
+
   return (
     <div
       data-slot="image-actions"
@@ -398,7 +410,7 @@ function ImageActions({ part, onRegenerate, className }: ImageActionsProps) {
         type="button"
         onClick={() => downloadImagePart(part)}
         data-slot="image-download"
-        aria-label="Download image"
+        aria-label={uiT("ui.download_image")}
         className="inline-flex size-7 items-center justify-center rounded hover:bg-muted"
       >
         <HugeiconsIcon icon={Download01Icon} className="size-4" />
@@ -411,7 +423,7 @@ function ImageActions({ part, onRegenerate, className }: ImageActionsProps) {
           });
         }}
         data-slot="image-copy"
-        aria-label="Copy image"
+        aria-label={uiT("ui.copy_image")}
         className="inline-flex size-7 items-center justify-center rounded hover:bg-muted"
       >
         <CopyIcon className="size-4" />

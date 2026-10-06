@@ -1,3 +1,4 @@
+import { UiText } from "@/i18n/ui-text";
 import { Component, type ErrorInfo, type ReactNode, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -60,18 +61,15 @@ class GlobalErrorBoundary extends Component<
     }
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-6 text-center text-foreground">
-        <h1 className="text-xl font-semibold">Something went wrong</h1>
+        <h1 className="text-xl font-semibold"><UiText messageKey="shell.startup.somethingWrong" /></h1>
         <p className="max-w-md text-sm text-muted-foreground">
-          Reload Sparta Agent to recover. If this persists, check the
-          application logs.
-        </p>
+          <UiText messageKey="ui.reload_sparta_agent_to_recover_if_this_persists_check_the_applica" /></p>
         <button
           className="rounded-md bg-primary px-4 py-2 text-primary-foreground"
           type="button"
           onClick={() => window.location.reload()}
         >
-          Reload
-        </button>
+          <UiText messageKey="settings.dialog.panelReload" /></button>
       </main>
     );
   }

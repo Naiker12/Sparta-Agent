@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import {
   pickNativeDocumentFolder,
   useNativePathLeasesSupported,
@@ -133,7 +134,7 @@ export function useLinkedFolders(
         releaseController();
         notifySourcesChanged(job);
         if (job.status === "failed") {
-          toast.error("Folder sync failed", {
+          toast.error(uiTranslate("ui.folder_sync_failed"), {
             description: job.error ?? "The folder could not be indexed.",
           });
         }
@@ -250,7 +251,7 @@ export function useLinkedFolders(
           return sourcesChanged;
         } catch (error) {
           if (isCurrent() && !options?.quiet) {
-            toast.error("Failed to load linked folders", {
+            toast.error(uiTranslate("ui.failed_to_load_linked_folders"), {
               description:
                 error instanceof Error ? error.message : String(error),
             });
@@ -324,7 +325,7 @@ export function useLinkedFolders(
       trackJob(result.job);
       onSourcesChanged?.();
     } catch (error) {
-      toast.error("Could not link folder", {
+      toast.error(uiTranslate("ui.could_not_link_folder"), {
         description: error instanceof Error ? error.message : String(error),
       });
     } finally {
@@ -418,7 +419,7 @@ export function useLinkedFolders(
         } else {
           void refresh({ quiet: true });
         }
-        toast.error("Could not unlink folder", {
+        toast.error(uiTranslate("ui.could_not_unlink_folder"), {
           description: error instanceof Error ? error.message : String(error),
         });
       }

@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useSidebarPin } from "@/hooks/use-sidebar-pin";
 import { useSidebarWidth } from "@/hooks/use-sidebar-width";
@@ -110,6 +111,8 @@ export function DesktopTitlebarNavigation({
   /** Off in mobile, where Navbar's SidebarTrigger owns the slot; a spacer holds it open. */
   showSidebarToggle?: boolean;
 }): ReactElement {
+  const uiT = useUiT();
+
   const stopTitlebarDrag = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation();
   };
@@ -123,13 +126,13 @@ export function DesktopTitlebarNavigation({
         className,
       )}
       role="toolbar"
-      aria-label="Sidebar and page navigation"
+      aria-label={uiT("ui.sidebar_and_page_navigation")}
     >
       {showSidebarToggle ? (
         <button
           type="button"
-          title={expanded ? "Collapse sidebar" : "Expand sidebar"}
-          aria-label={expanded ? "Collapse sidebar" : "Expand sidebar"}
+          title={expanded ? uiT("ui.collapse_sidebar") : uiT("ui.expand_sidebar")}
+          aria-label={expanded ? uiT("ui.collapse_sidebar") : uiT("ui.expand_sidebar")}
           onMouseDown={stopTitlebarDrag}
           onDoubleClick={stopTitlebarDrag}
           onClick={(event) => {
@@ -149,8 +152,8 @@ export function DesktopTitlebarNavigation({
       )}
       <button
         type="button"
-        title="Go back"
-        aria-label="Go back"
+        title={uiT("ui.go_back")}
+        aria-label={uiT("ui.go_back")}
         onMouseDown={stopTitlebarDrag}
         onDoubleClick={stopTitlebarDrag}
         onClick={(event) => {
@@ -167,8 +170,8 @@ export function DesktopTitlebarNavigation({
       </button>
       <button
         type="button"
-        title="Go forward"
-        aria-label="Go forward"
+        title={uiT("ui.go_forward")}
+        aria-label={uiT("ui.go_forward")}
         onMouseDown={stopTitlebarDrag}
         onDoubleClick={stopTitlebarDrag}
         onClick={(event) => {
@@ -192,6 +195,8 @@ export function WindowTitlebar({
 }: {
   showSidebarSurface?: boolean;
 }): ReactElement | null {
+  const uiT = useUiT();
+
   const [enabled] = useState(shouldUseCustomWindowTitlebar);
   const [maximized, setMaximized] = useState(false);
   const { pinned, togglePinned } = useSidebarPin();
@@ -360,7 +365,7 @@ export function WindowTitlebar({
         className={cn(
           "pointer-events-none absolute inset-x-0 top-0 z-[70] h-[var(--studio-custom-titlebar-height)] select-none border-b border-border/60 bg-background text-foreground",
         )}
-        aria-label="Window titlebar"
+        aria-label={uiT("ui.window_titlebar")}
       >
         {showSidebarSurface && (
           <div
@@ -393,16 +398,16 @@ export function WindowTitlebar({
         <div
           className="pointer-events-auto absolute right-1 top-0 flex h-full items-center gap-0.5 px-1"
           role="toolbar"
-          aria-label="Window controls"
+          aria-label={uiT("ui.window_controls")}
         >
           <WindowControlButton
-            label="Minimize window"
+            label={uiT("ui.minimize_window")}
             onClick={() => runWindowAction((appWindow) => appWindow.minimize())}
           >
             <Minus aria-hidden="true" strokeWidth={1.75} className="w-[18px]" />
           </WindowControlButton>
           <WindowControlButton
-            label={maximized ? "Restore window" : "Maximize window"}
+            label={maximized ? uiT("ui.restore_window") : uiT("ui.maximize_window")}
             onClick={() =>
               runWindowAction((appWindow) => appWindow.toggleMaximize())
             }
@@ -422,7 +427,7 @@ export function WindowTitlebar({
             )}
           </WindowControlButton>
           <WindowControlButton
-            label="Close window"
+            label={uiT("ui.close_window")}
             // No optimistic overlay here. Rust raises it only once the quit confirmations
             // have passed, and one of those can be a dialog asking whether to keep
 

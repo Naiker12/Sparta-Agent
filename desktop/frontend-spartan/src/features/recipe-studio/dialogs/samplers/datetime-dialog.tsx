@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -30,6 +31,8 @@ export function DatetimeDialog({
   config,
   onUpdate,
 }: DatetimeDialogProps): ReactElement {
+  const uiT = useUiT();
+
   const startId = `${config.id}-datetime-start`;
   const endId = `${config.id}-datetime-end`;
   const unitId = `${config.id}-datetime-unit`;
@@ -49,7 +52,7 @@ export function DatetimeDialog({
         <div className="grid gap-2 sm:grid-cols-2">
           <div className="grid gap-1.5">
             <FieldLabel
-              label="Start"
+              label={uiT("ui.start")}
               htmlFor={startId}
               hint="Earliest datetime allowed."
             />
@@ -65,7 +68,7 @@ export function DatetimeDialog({
           </div>
           <div className="grid gap-1.5">
             <FieldLabel
-              label="End"
+              label={uiT("studio.dataset.endPlaceholder")}
               htmlFor={endId}
               hint="Latest datetime allowed."
             />
@@ -82,7 +85,7 @@ export function DatetimeDialog({
         </div>
         <div className="grid gap-1.5">
           <FieldLabel
-            label="Unit"
+            label={uiT("ui.unit")}
             htmlFor={unitId}
             hint="Sampling granularity for generated timestamps."
           />
@@ -91,7 +94,7 @@ export function DatetimeDialog({
             onValueChange={(value) => updateField("datetime_unit", value)}
           >
             <SelectTrigger className="nodrag w-full" id={unitId}>
-              <SelectValue placeholder="Select unit" />
+              <SelectValue placeholder={uiT("ui.select_unit")} />
             </SelectTrigger>
             <SelectContent>
               {DATETIME_UNITS.map((unit) => (

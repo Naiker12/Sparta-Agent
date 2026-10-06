@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Badge } from "@/components/assistant-ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 import { getAttachmentIcon } from "@/lib/attachment-file-kind";
@@ -24,6 +25,8 @@ export function DocumentStatusChip({
    * glyph for a folder so the two scopes are told apart at a glance. */
   shared?: boolean;
 }) {
+  const uiT = useUiT();
+
   const processing = status === "pending" || status === "running";
   return (
     <Badge
@@ -59,7 +62,7 @@ export function DocumentStatusChip({
         <button
           type="button"
           onClick={onRemove}
-          aria-label={`Remove ${filename}`}
+          aria-label={uiT("ui.remove_value0", { value0: String(filename) })}
           className="shrink-0 rounded-full text-muted-foreground hover:text-foreground"
         >
           <XIcon className="size-3" />

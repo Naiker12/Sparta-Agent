@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +26,8 @@ function modelDisplayName(modelName: string | null): string {
 /** Root-mounted consent dialog for models needing a newer transformers;
  *  Install runs the sidecar install and resumes the paused load on success. */
 export function TransformersUpgradeDialog() {
+  const uiT = useUiT();
+
   const open = useTransformersUpgradeDialogStore((s) => s.open);
   const modelName = useTransformersUpgradeDialogStore((s) => s.modelName);
   const upgrade = useTransformersUpgradeDialogStore((s) => s.upgrade);
@@ -65,45 +68,32 @@ export function TransformersUpgradeDialog() {
             </div>
             <div className="min-w-0 flex-1 space-y-3">
               <div className="space-y-1">
-                <AlertDialogTitle>New model architecture</AlertDialogTitle>
+                <AlertDialogTitle>{uiT("ui.new_model_architecture")}</AlertDialogTitle>
                 <AlertDialogDescription>
                   <span className="font-medium text-foreground">
                     {displayName}
                   </span>{" "}
-                  uses the{" "}
+                  {uiT("ui.uses_the")}{" "}
                   <span className="font-mono text-foreground">{modelType}</span>{" "}
-                  architecture, which your installed transformers does not
-                  support yet.{" "}
+                  {uiT("ui.architecture_which_your_installed_transformers_does_not_support_y")}{" "}
                   {installable ? (
                     <>
-                      Install transformers{" "}
+                      {uiT("ui.install_transformers")}{" "}
                       <span className="font-medium text-foreground">
                         {version}
                       </span>{" "}
-                      from PyPI to load it. The install runs once and can take a
-                      minute; loading continues automatically afterwards.
-                    </>
+                      {uiT("ui.from_pypi_to_load_it_the_install_runs_once_and_can_take_a_minute_")}</>
                   ) : devOnly ? (
                     <>
-                      Even the latest transformers release on PyPI does not
-                      support it yet: the architecture is only available on the
-                      transformers development branch (main), and Unsloth does
-                      not install development builds. Support arrives with the
-                      next transformers release on PyPI.
-                    </>
+                      {uiT("ui.legacy_even_the_latest_transformers_release_on_pypi_does_not_support_it_")}</>
                   ) : (
                     <>
-                      No released transformers version supports it yet, so it
-                      cannot be loaded.
-                    </>
+                      {uiT("ui.no_released_transformers_version_supports_it_yet_so_it_cannot_be_")}</>
                   )}
                   {customCode ? (
                     <>
                       {" "}
-                      This model also ships its own modeling code; you can
-                      continue and review enabling that custom code instead,
-                      which loads it on the transformers you already have.
-                    </>
+                      {uiT("ui.this_model_also_ships_its_own_modeling_code_you_can_continue_and_")}</>
                   ) : null}
                 </AlertDialogDescription>
               </div>
@@ -117,15 +107,14 @@ export function TransformersUpgradeDialog() {
               {installing ? (
                 <p className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Spinner className="size-3.5" />
-                  Installing transformers {version}... This can take a minute.
-                </p>
+                  {uiT("ui.installing_transformers")}{" "}{version}{uiT("ui.this_can_take_a_minute")}</p>
               ) : null}
             </div>
           </div>
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={installing}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={installing}>{uiT("chat.workspace.cancel")}</AlertDialogCancel>
           {installable ? (
             <>
               {customCode ? (
@@ -137,8 +126,7 @@ export function TransformersUpgradeDialog() {
                   className="bg-transparent text-foreground hover:bg-accent"
                   onClick={() => resolve(true)}
                 >
-                  Continue with custom code
-                </AlertDialogAction>
+                  {uiT("ui.continue_with_custom_code")}</AlertDialogAction>
               ) : null}
               <AlertDialogAction
                 disabled={installing}
@@ -152,10 +140,9 @@ export function TransformersUpgradeDialog() {
                 {installing ? (
                   <>
                     <Spinner className="size-4" />
-                    Installing...
-                  </>
+                    {uiT("settings.resources.llamaBackend.applying")}</>
                 ) : phase === "error" ? (
-                  "Retry install"
+                  uiT("ui.retry_install")
                 ) : (
                   `Install transformers ${version}`
                 )}
@@ -165,8 +152,7 @@ export function TransformersUpgradeDialog() {
             // No installable release but the model ships custom code: continue
             // into the caller's trust_remote_code gate as the last resort.
             <AlertDialogAction onClick={() => resolve(true)}>
-              Continue with custom code
-            </AlertDialogAction>
+              {uiT("ui.continue_with_custom_code")}</AlertDialogAction>
           ) : null}
         </AlertDialogFooter>
       </AlertDialogContent>

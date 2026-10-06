@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -20,6 +21,8 @@ export function GaussianDialog({
   config,
   onUpdate,
 }: GaussianDialogProps): ReactElement {
+  const uiT = useUiT();
+
   const meanId = `${config.id}-gaussian-mean`;
   const stdId = `${config.id}-gaussian-std`;
   const convertId = `${config.id}-gaussian-convert`;
@@ -32,7 +35,7 @@ export function GaussianDialog({
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="grid gap-1.5">
           <FieldLabel
-            label="Mean"
+            label={uiT("ui.mean")}
             htmlFor={meanId}
             hint="Center of the normal distribution."
           />
@@ -46,7 +49,7 @@ export function GaussianDialog({
         </div>
         <div className="grid gap-1.5">
           <FieldLabel
-            label="Std"
+            label={uiT("ui.std")}
             htmlFor={stdId}
             hint="Standard deviation. must be > 0."
           />
@@ -61,7 +64,7 @@ export function GaussianDialog({
       </div>
       <div className="grid gap-1.5">
         <FieldLabel
-          label="Convert to"
+          label={uiT("ui.convert_to")}
           htmlFor={convertId}
           hint="Optionally cast sampled values before output."
         />
@@ -78,10 +81,10 @@ export function GaussianDialog({
           }
         >
           <SelectTrigger className="nodrag w-full" id={convertId}>
-            <SelectValue placeholder="No conversion" />
+            <SelectValue placeholder={uiT("ui.no_conversion")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">None</SelectItem>
+            <SelectItem value="none">{uiT("studio.params.none")}</SelectItem>
             <SelectItem value="int">int</SelectItem>
             <SelectItem value="float">float</SelectItem>
             <SelectItem value="str">str</SelectItem>

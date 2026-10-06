@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -20,6 +21,8 @@ export function PersonDialog({
   config,
   onUpdate,
 }: PersonDialogProps): ReactElement {
+  const uiT = useUiT();
+
   const localeId = `${config.id}-person-locale`;
   const sexId = `${config.id}-person-sex`;
   const ageRangeId = `${config.id}-person-age-range`;
@@ -50,14 +53,13 @@ export function PersonDialog({
       <div className="grid gap-3">
         <div className="rounded-2xl border border-border/60 px-3 py-2">
           <p className="text-xs font-semibold uppercase text-muted-foreground">
-            Source
-          </p>
+            {uiT("chat.preview.source")}</p>
           <p className="text-sm text-foreground">Faker</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="grid gap-1.5">
             <FieldLabel
-              label="Locale"
+              label={uiT("ui.locale")}
               htmlFor={localeId}
               hint="Faker locale e.g. en_US."
             />
@@ -72,7 +74,7 @@ export function PersonDialog({
           </div>
           <div className="grid gap-1.5">
             <FieldLabel
-              label="Sex"
+              label={uiT("ui.sex")}
               htmlFor={sexId}
               hint="Optional demographic filter."
             />
@@ -83,18 +85,18 @@ export function PersonDialog({
               }
             >
               <SelectTrigger className="nodrag w-full" id={sexId}>
-                <SelectValue placeholder="Any" />
+                <SelectValue placeholder={uiT("ui.any")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="any">Any</SelectItem>
-                <SelectItem value="Male">Male</SelectItem>
-                <SelectItem value="Female">Female</SelectItem>
+                <SelectItem value="any">{uiT("ui.any")}</SelectItem>
+                <SelectItem value="Male">{uiT("ui.male")}</SelectItem>
+                <SelectItem value="Female">{uiT("ui.female")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="grid gap-1.5">
             <FieldLabel
-              label="Age range"
+              label={uiT("ui.age_range")}
               htmlFor={ageRangeId}
               hint="Range format: min-max, e.g. 18-70."
             />
@@ -110,7 +112,7 @@ export function PersonDialog({
           </div>
           <div className="grid gap-1.5">
             <FieldLabel
-              label="City"
+              label={uiT("ui.city")}
               htmlFor={cityId}
               hint="Optional city bias for faker generation."
             />

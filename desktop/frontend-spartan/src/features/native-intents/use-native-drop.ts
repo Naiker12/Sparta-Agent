@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { isTauri } from "@/lib/api-base";
 import { toast } from "@/lib/toast";
 import { useEffect, useRef, useState } from "react";
@@ -334,26 +335,26 @@ export function useNativeModelDrop(
               dropped.kind === "video" ||
               (dropped.kind === "attach" && dropped.video.length > 0);
             if (needsDocs && !canAttachDocs(currentOptions)) {
-              toast.error("Attaching files needs the desktop backend", {
-                description: "Retry once Studio has finished starting up.",
+              toast.error(uiTranslate("ui.attaching_files_needs_the_desktop_backend"), {
+                get description() { return uiTranslate("ui.retry_once_studio_has_finished_starting_up"); },
               });
               return;
             }
             if (needsImages && !canAttachImages(currentOptions)) {
-              toast.error("Attaching images is unavailable right now", {
-                description: "Retry once this chat is ready for attachments.",
+              toast.error(uiTranslate("ui.attaching_images_is_unavailable_right_now"), {
+                get description() { return uiTranslate("ui.retry_once_this_chat_is_ready_for_attachments"); },
               });
               return;
             }
             if (needsAudio && !canAttachAudio(currentOptions)) {
-              toast.error("Attaching audio is unavailable right now", {
-                description: "Retry once this chat is ready for attachments.",
+              toast.error(uiTranslate("ui.attaching_audio_is_unavailable_right_now"), {
+                get description() { return uiTranslate("ui.retry_once_this_chat_is_ready_for_attachments"); },
               });
               return;
             }
             if (needsVideo && !canAttachVideo(currentOptions)) {
-              toast.error("Attaching video is unavailable right now", {
-                description: "Retry once this chat is ready for attachments.",
+              toast.error(uiTranslate("ui.attaching_video_is_unavailable_right_now"), {
+                get description() { return uiTranslate("ui.retry_once_this_chat_is_ready_for_attachments"); },
               });
               return;
             }
@@ -422,7 +423,7 @@ export function useNativeModelDrop(
                   registered.videoFailed >
                 0
               ) {
-                toast.error("Could not attach dropped files", {
+                toast.error(uiTranslate("ui.could_not_attach_dropped_files"), {
                   description:
                     registered.error?.message ?? "Some files were skipped.",
                 });
@@ -438,7 +439,7 @@ export function useNativeModelDrop(
               if (needsVideo && failureKey) {
                 store.failVideoDropRegistration(failureKey);
               }
-              toast.error("Could not attach dropped files", {
+              toast.error(uiTranslate("ui.could_not_attach_dropped_files"), {
                 description:
                   error instanceof Error ? error.message : String(error),
               });
@@ -468,13 +469,13 @@ export function useNativeModelDrop(
               await currentOptions.onAutoLoad?.(intent);
             } catch (error) {
               addIntent(intent);
-              toast.error("Could not load dropped model", {
+              toast.error(uiTranslate("ui.could_not_load_dropped_model"), {
                 description:
                   error instanceof Error ? error.message : String(error),
               });
             }
           } catch (error) {
-            toast.error("Could not use dropped model", {
+            toast.error(uiTranslate("ui.could_not_use_dropped_model"), {
               description:
                 error instanceof Error ? error.message : String(error),
             });

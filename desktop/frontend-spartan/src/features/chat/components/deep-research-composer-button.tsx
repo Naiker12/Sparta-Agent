@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -61,6 +63,8 @@ function DomainList({
   values: string[];
   onChange: (values: string[]) => void;
 }) {
+  const uiT = useUiT();
+
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
 
@@ -70,11 +74,11 @@ function DomainList({
     }
     const domain = normalizeDomain(draft);
     if (!domain) {
-      setError("Enter a domain without a port, such as arxiv.org.");
+      setError(uiTranslate("ui.enter_a_domain_without_a_port_such_as_arxiv_org"));
       return;
     }
     if (values.length >= 100 && !values.includes(domain)) {
-      setError("You can add up to 100 domains to each list.");
+      setError(uiTranslate("ui.you_can_add_up_to_100_domains_to_each_list"));
       return;
     }
     if (!values.includes(domain)) {
@@ -116,7 +120,7 @@ function DomainList({
             <button
               type="button"
               className="text-muted-foreground transition-colors hover:text-foreground"
-              aria-label={`Remove ${domain}`}
+              aria-label={uiT("ui.remove_value0", { value0: String(domain) })}
               onClick={() =>
                 onChange(values.filter((value) => value !== domain))
               }
@@ -133,7 +137,7 @@ function DomainList({
           }}
           onBlur={addDraft}
           onKeyDown={handleKeyDown}
-          placeholder={values.length > 0 ? "Add another domain" : "example.com"}
+          placeholder={values.length > 0 ? uiT("ui.add_another_domain") : "example.com"}
           aria-invalid={Boolean(error)}
           className="h-7 min-w-36 flex-1 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
         />
@@ -148,6 +152,8 @@ export function DeepResearchComposerButton({
 }: {
   onConfigure: () => void;
 }) {
+  const uiT = useUiT();
+
   const enabled = useChatRuntimeStore((state) => state.deepResearchEnabled);
   const setEnabled = useChatRuntimeStore(
     (state) => state.setDeepResearchEnabled,
@@ -164,12 +170,12 @@ export function DeepResearchComposerButton({
       className="composer-pill-btn"
       data-pill-label="Deep research"
       data-active="true"
-      aria-label="Configure Deep Research website access"
-      title="Configure website access"
+      aria-label={uiT("ui.configure_deep_research_website_access")}
+      title={uiT("ui.configure_website_access")}
     >
       <span
         role="button"
-        aria-label="Disable deep research"
+        aria-label={uiT("ui.disable_deep_research")}
         tabIndex={-1}
         onPointerDown={(event) => event.stopPropagation()}
         onClick={(event) => {
@@ -181,7 +187,7 @@ export function DeepResearchComposerButton({
         <HugeiconsIcon icon={Telescope02Icon} className="size-[15px]" />
         <XIcon className="composer-pill-x" />
       </span>
-      <span>Deep research</span>
+      <span>{uiT("chat.composer.deepResearch")}</span>
       {/* Same caret as the other composer pills, so the arrows match. */}
       <HugeiconsIcon
         icon={ChevronDownStandardIcon}
@@ -238,6 +244,8 @@ function DeepResearchWebsiteAccessContent({
   setModelTimeoutSeconds: (seconds: number) => void;
   onClose: () => void;
 }) {
+  const uiT = useUiT();
+
   const [draft, setDraft] = useState<ResearchWebsitePolicy>(policy);
   const [unlimited, setUnlimited] = useState(modelTimeoutSeconds === 0);
   // Unlimited has no minutes of its own, so turning the limit back on offers the default.
@@ -255,21 +263,19 @@ function DeepResearchWebsiteAccessContent({
   return (
     <DialogContent className="sm:max-w-lg">
       <DialogHeader>
-        <DialogTitle>Deep research</DialogTitle>
+        <DialogTitle>{uiT("chat.composer.deepResearch")}</DialogTitle>
         <DialogDescription>
-          Control website access and model request time for the next Deep
-          Research run.
-        </DialogDescription>
+          {uiT("ui.control_website_access_and_model_request_time_for_the_next_deep_r")}</DialogDescription>
       </DialogHeader>
       <div className="space-y-6">
         <div className="space-y-2">
           <div>
             {/* A run makes many model requests, so this bounds each one, not the run. */}
-            <div className="text-sm font-medium">Time per model request</div>
+            <div className="text-sm font-medium">{uiT("ui.time_per_model_request")}</div>
             <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
               {unlimited
-                ? "No limit on a single model request. Slow models can continue while they keep producing output."
-                : "Maximum time for each model request, so a run of many requests can take longer. Output stall safeguards stay active."}
+                ? uiT("ui.no_limit_on_a_single_model_request_slow_models_can_continue_while")
+                : uiT("ui.maximum_time_for_each_model_request_so_a_run_of_many_requests_can")}
             </p>
           </div>
           <div className="flex gap-2">
@@ -284,12 +290,11 @@ function DeepResearchWebsiteAccessContent({
                 setTimeoutEdited(true);
                 setTimeoutMinutes(event.target.value);
               }}
-              aria-label="Deep Research time per model request in minutes"
+              aria-label={uiT("ui.deep_research_time_per_model_request_in_minutes")}
               className="w-28"
             />
             <span className="self-center text-sm text-muted-foreground">
-              minutes
-            </span>
+              {uiT("ui.minutes")}</span>
             <Button
               type="button"
               variant="outline"
@@ -298,27 +303,26 @@ function DeepResearchWebsiteAccessContent({
                 setUnlimited((value) => !value);
               }}
             >
-              {unlimited ? "Use a limit" : "No limit"}
+              {unlimited ? uiT("ui.use_a_limit") : uiT("ui.no_limit")}
             </Button>
           </div>
         </div>
         <DomainList
-          label="Allow only"
-          description="When set, research can access only these domains and their subdomains."
+          label={uiT("ui.allow_only")}
+          description={uiT("ui.when_set_research_can_access_only_these_domains_and_their_subdoma")}
           values={draft.allowedDomains}
           onChange={(allowedDomains) => setDraft({ ...draft, allowedDomains })}
         />
         <DomainList
-          label="Always block"
-          description="These domains and their subdomains stay blocked. Blocking takes precedence."
+          label={uiT("ui.always_block")}
+          description={uiT("ui.these_domains_and_their_subdomains_stay_blocked_blocking_takes_pr")}
           values={draft.blockedDomains}
           onChange={(blockedDomains) => setDraft({ ...draft, blockedDomains })}
         />
       </div>
       <DialogFooter>
         <Button variant="ghost" onClick={onClose}>
-          Cancel
-        </Button>
+          {uiT("chat.workspace.cancel")}</Button>
         <Button
           onClick={() => {
             setPolicy(draft);
@@ -337,8 +341,7 @@ function DeepResearchWebsiteAccessContent({
             onClose();
           }}
         >
-          Save limits
-        </Button>
+          {uiT("ui.save_limits")}</Button>
       </DialogFooter>
     </DialogContent>
   );

@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { resolveNavRowState } from "@/components/nav-row-state";
 import { useThreadFileScope } from "@/features/chat/hooks/use-thread-file-scope";
 import { useWorkspaceStore } from "@/features/chat/stores/use-workspace-store";
@@ -151,6 +153,8 @@ import { useSidebarDragAndDrop } from "./sidebar/use-sidebar-drag-and-drop";
 import { useSidebarSelection } from "./sidebar/use-sidebar-selection";
 
 export function AppSidebar() {
+  const uiT = useUiT();
+
   const t = useT();
   const { isDark, toggleTheme, anchorRef } = useAnimatedThemeToggle();
   const sidebarMenu = useAppearanceCustomStore(
@@ -988,7 +992,7 @@ export function AppSidebar() {
       children: (
         <button
           type="button"
-          aria-label="New project"
+          aria-label={uiT("chat.composer.newProject")}
           onClick={(e) => {
             e.stopPropagation();
             // NewProjectDialog owns its own name field, so opening it is just the move target plus the open flag.
@@ -1048,7 +1052,7 @@ export function AppSidebar() {
     },
     tasks: {
       icon: Message01Icon,
-      label: "Trabajo",
+      get label() { return uiTranslate("ui.work"); },
       active: pathname === "/tasks" || pathname.startsWith("/tasks/"),
       onClick: () => {
         navigate({ to: "/tasks" });
@@ -1580,7 +1584,7 @@ export function AppSidebar() {
               />
               <NavItem
                 icon={BubbleChatIcon}
-                label="Chat temporal"
+                label={uiT("chat.toolbar.temporaryChatActive")}
                 active={incognito && isChatRoute}
                 onClick={() => {
                   clearNewChatDraft();
@@ -1595,7 +1599,7 @@ export function AppSidebar() {
               {connectedScope && incognito && (
                 <NavItem
                   icon={Folder01Icon}
-                  label={connectedScope.connectedFolderPath.split(/[\\/]/).filter(Boolean).pop() ?? "Carpeta conectada"}
+                  label={connectedScope.connectedFolderPath.split(/[\\/]/).filter(Boolean).pop() ?? uiT("projectsPage.folderConnected")}
                   active={false}
                   onClick={() => {
                     navigate({ to: "/chat" });
@@ -1823,8 +1827,7 @@ export function AppSidebar() {
                     )}
                   >
                     <CollapsibleTrigger className="cursor-pointer flex min-w-0 flex-1 items-center gap-1 group/sb-collap">
-                      Pinned
-                      <ChevronDown className="size-3.5 opacity-0 transition-[transform,opacity] duration-200 group-hover/sb-collap:opacity-100 group-focus-visible/sb-collap:opacity-100 data-[state=open]:rotate-0 [[data-state=closed]_&]:rotate-[-90deg] [[data-state=closed]_&]:opacity-100" />
+                      {uiT("picker.pinned")}<ChevronDown className="size-3.5 opacity-0 transition-[transform,opacity] duration-200 group-hover/sb-collap:opacity-100 group-focus-visible/sb-collap:opacity-100 data-[state=open]:rotate-0 [[data-state=closed]_&]:rotate-[-90deg] [[data-state=closed]_&]:opacity-100" />
                     </CollapsibleTrigger>
                     {/* Pinning is the grouping, so no organize half and no "+". */}
                     {
@@ -1894,7 +1897,7 @@ export function AppSidebar() {
                     }
                     <button
                       type="button"
-                      aria-label="New project"
+                      aria-label={uiT("chat.composer.newProject")}
                       onClick={() => {
                         setProjectCreateMoveTarget(null);
                         setCreatingProject(true);
@@ -1911,9 +1914,9 @@ export function AppSidebar() {
                   <CollapsibleContent>
                     <SidebarGroupContent className={scrollRowPadding}>
                       <SidebarMenu>
-                        {projectsLoading && <SidebarMenuItem><span className="block px-3 py-2 text-sm text-muted-foreground" role="status">Cargando proyectos…</span></SidebarMenuItem>}
-                        {projectsError && <SidebarMenuItem><SidebarMenuButton onClick={retryProjects} title={projectsError}>No se pudieron cargar. Reintentar</SidebarMenuButton></SidebarMenuItem>}
-                        {!projectsLoading && !projectsError && sidebarProjectRecords.length === 0 && <SidebarMenuItem><span className="block px-3 py-2 text-sm text-muted-foreground">Conecta una carpeta para empezar.</span></SidebarMenuItem>}
+                        {projectsLoading && <SidebarMenuItem><span className="block px-3 py-2 text-sm text-muted-foreground" role="status">{uiT("ui.loading_projects")}</span></SidebarMenuItem>}
+                        {projectsError && <SidebarMenuItem><SidebarMenuButton onClick={retryProjects} title={projectsError}>{uiT("ui.could_not_load_projects_retry")}</SidebarMenuButton></SidebarMenuItem>}
+                        {!projectsLoading && !projectsError && sidebarProjectRecords.length === 0 && <SidebarMenuItem><span className="block px-3 py-2 text-sm text-muted-foreground">{uiT("ui.connect_a_folder_to_get_started")}</span></SidebarMenuItem>}
                         {visibleProjectRecords.map((project, projectIndex) => {
                           const projectChats =
                             sortedChatsByProjectId.get(project.id) ?? [];
@@ -2039,7 +2042,7 @@ export function AppSidebar() {
                                         <DropdownMenuGroup>
                                         <DropdownMenuLabel>
                                           <span className="block truncate">{project.name}</span>
-                                          <span className="block text-xs text-muted-foreground">{projectChats.length} chats · {projectChats.filter(chat => getSidebarItemThreadIds(chat).some(id => runningByThreadId[id])).length} activos</span>
+                                          <span className="block text-xs text-muted-foreground">{projectChats.length} {" "}{uiT("ui.chats")}{" "}{projectChats.filter(chat => getSidebarItemThreadIds(chat).some(id => runningByThreadId[id])).length} {" "}{uiT("ui.active")}</span>
                                         </DropdownMenuLabel>
                                         <DropdownMenuSeparator />
                                         {project.connectedFolderPath && <DropdownMenuItem onSelect={() => {openProject(project.id); useWorkspaceStore.getState().openTab("files");}} title={project.connectedFolderPath}>
@@ -2126,8 +2129,8 @@ export function AppSidebar() {
                                         </DropdownMenuItem>
                                         <DropdownMenuSeparator />
                                         {project.connectedFolderPath && <DropdownMenuItem onSelect={() => {
-                                          void disconnectChatProjectWorkspace(project.id).catch(error => toast.error("No se pudo desconectar la carpeta", {description: error instanceof Error ? error.message : undefined}));
-                                        }}>Desconectar carpeta del proyecto</DropdownMenuItem>}
+                                          void disconnectChatProjectWorkspace(project.id).catch(error => toast.error(uiTranslate("ui.could_not_disconnect_the_folder"), {description: error instanceof Error ? error.message : undefined}));
+                                        }}>{uiT("ui.disconnect_project_folder")}</DropdownMenuItem>}
                                         <DropdownMenuItem
                                           variant="destructive"
                                           onSelect={() => {

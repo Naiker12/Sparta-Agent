@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 const MAX_EDGE = 256;
 // Smallest edge we shrink a transparent image to before giving up on WebP.
 const MIN_EDGE = 96;
@@ -19,7 +20,7 @@ function loadImage(file: File): Promise<HTMLImageElement> {
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error("Could not load image"));
+      reject(new Error(uiTranslate("ui.could_not_load_image")));
     };
     img.src = url;
   });
@@ -88,7 +89,7 @@ function drawScaled(
   canvas.height = ch;
   const ctx = canvas.getContext("2d");
   if (!ctx) {
-    throw new Error("Canvas not available");
+    throw new Error(uiTranslate("ui.canvas_not_available"));
   }
   ctx.drawImage(img, 0, 0, cw, ch);
   return { canvas, ctx, cw, ch };
@@ -100,7 +101,7 @@ export async function resizeImageFileToDataUrl(file: File): Promise<string> {
   const w = img.naturalWidth;
   const h = img.naturalHeight;
   if (!(w && h)) {
-    throw new Error("Invalid image dimensions");
+    throw new Error(uiTranslate("ui.invalid_image_dimensions"));
   }
 
   const base = drawScaled(img, w, h, MAX_EDGE);
@@ -126,7 +127,7 @@ export async function resizeImageFileToDataUrl(file: File): Promise<string> {
       }
     }
     throw new Error(
-      "Image is still too large after compression. Try a smaller file.",
+      uiTranslate("ui.image_is_still_too_large_after_compression_try_a_smaller_file"),
     );
   }
 
@@ -140,6 +141,6 @@ export async function resizeImageFileToDataUrl(file: File): Promise<string> {
   }
 
   throw new Error(
-    "Image is still too large after compression. Try a smaller file.",
+    uiTranslate("ui.image_is_still_too_large_after_compression_try_a_smaller_file"),
   );
 }

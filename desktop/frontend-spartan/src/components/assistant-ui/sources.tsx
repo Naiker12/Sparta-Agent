@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 "use client";
 
 import {
@@ -200,6 +201,8 @@ const SourcesGroup: FC<{
   sources?: SourceData[];
   allowRemoteIcons?: boolean;
 }> = ({ sources: suppliedSources, allowRemoteIcons = true }) => {
+  const uiT = useUiT();
+
   const message = useMessage();
   const containerRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState<number | null>(null);
@@ -338,8 +341,7 @@ const SourcesGroup: FC<{
               "rounded-full cursor-pointer text-muted-foreground hover:bg-chat-icon-bg-hover! hover:text-chat-icon-fg-hover!",
             )}
           >
-            +{hiddenCount} more
-          </button>
+            +{hiddenCount} {" "}{uiT("ui.more")}</button>
         )}
         {shouldCollapse && expanded && (
           <button
@@ -350,8 +352,7 @@ const SourcesGroup: FC<{
               "rounded-full cursor-pointer text-muted-foreground hover:bg-chat-icon-bg-hover! hover:text-chat-icon-fg-hover!",
             )}
           >
-            Show less
-          </button>
+            {uiT("shell.navigation.showLess")}</button>
         )}
       </div>
     </div>

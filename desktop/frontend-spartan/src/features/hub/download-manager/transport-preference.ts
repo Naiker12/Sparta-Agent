@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { toast } from "@/lib/toast";
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -68,7 +69,7 @@ export function useTransportMode(): [
     try {
       window.localStorage.setItem(STORAGE_KEY, next);
     } catch {
-      toast.error("Couldn't save the download transport preference.");
+      toast.error(uiTranslate("ui.couldn_t_save_the_download_transport_preference"));
       return;
     }
     setMode(next);

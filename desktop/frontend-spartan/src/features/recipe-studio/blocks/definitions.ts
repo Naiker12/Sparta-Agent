@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import {
   BalanceScaleIcon,
   Clock01Icon,
@@ -108,39 +109,38 @@ export type BlockDefinition = {
 export const BLOCK_GROUPS: BlockGroup[] = [
   {
     kind: "sampler",
-    title: "Generated fields",
-    description: "Create fields from lists, ranges, and reusable patterns.",
+    get title() { return uiTranslate("ui.generated_fields"); },
+    get description() { return uiTranslate("ui.create_fields_from_lists_ranges_and_reusable_patterns"); },
     icon: DiceFaces03Icon,
   },
   {
     kind: "seed",
-    title: "Source data",
-    description: "Start from an existing dataset or file.",
+    get title() { return uiTranslate("ui.source_data"); },
+    get description() { return uiTranslate("ui.start_from_an_existing_dataset_or_file"); },
     icon: Plant01Icon,
   },
   {
     kind: "llm",
-    title: "AI generation",
-    description: "Generate content, connect models, and manage tools.",
+    get title() { return uiTranslate("ui.ai_generation"); },
+    get description() { return uiTranslate("ui.generate_content_connect_models_and_manage_tools"); },
     icon: PencilEdit02Icon,
   },
   {
     kind: "validator",
-    title: "Checks",
-    description:
-      "Lint or filter generated code as it moves through the recipe.",
+    get title() { return uiTranslate("ui.checks"); },
+    get description() { return uiTranslate("ui.lint_or_filter_generated_code_as_it_moves_through_the_recipe"); },
     icon: Shield02Icon,
   },
   {
     kind: "expression",
-    title: "Formulas",
-    description: "Build a field from other fields.",
+    get title() { return uiTranslate("ui.formulas"); },
+    get description() { return uiTranslate("ui.build_a_field_from_other_fields"); },
     icon: FunctionIcon,
   },
   {
     kind: "note",
-    title: "Notes",
-    description: "Add markdown notes to document your flow.",
+    get title() { return uiTranslate("ui.notes"); },
+    get description() { return uiTranslate("ui.add_markdown_notes_to_document_your_flow"); },
     icon: PencilEdit02Icon,
   },
 ];
@@ -149,8 +149,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "seed",
     type: "seed_hf",
-    title: "Hugging Face dataset",
-    description: "Use rows from a Hugging Face dataset as source data.",
+    get title() { return uiTranslate("ui.hugging_face_dataset"); },
+    get description() { return uiTranslate("ui.use_rows_from_a_hugging_face_dataset_as_source_data"); },
     icon: Plant01Icon,
     dialogKey: "seed",
     createConfig: (id, existing) => makeSeedConfig(id, existing, "hf"),
@@ -158,8 +158,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "seed",
     type: "seed_local",
-    title: "CSV or JSON file",
-    description: "Upload CSV, JSON, or JSONL and use its rows as source data.",
+    get title() { return uiTranslate("ui.csv_or_json_file"); },
+    get description() { return uiTranslate("ui.upload_csv_json_or_jsonl_and_use_its_rows_as_source_data"); },
     icon: DocumentCodeIcon,
     dialogKey: "seed",
     createConfig: (id, existing) => makeSeedConfig(id, existing, "local"),
@@ -167,8 +167,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "seed",
     type: "seed_unstructured",
-    title: "Document file",
-    description: "Upload PDF, DOCX, or TXT and turn it into source rows.",
+    get title() { return uiTranslate("ui.document_file"); },
+    get description() { return uiTranslate("ui.upload_pdf_docx_or_txt_and_turn_it_into_source_rows"); },
     icon: DocumentAttachmentIcon,
     dialogKey: "seed",
     createConfig: (id, existing) =>
@@ -177,9 +177,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "seed",
     type: "seed_github",
-    title: "GitHub repositories",
-    description:
-      "Crawl issues, pull requests, and commits from one or more GitHub repos.",
+    get title() { return uiTranslate("ui.github_repositories"); },
+    get description() { return uiTranslate("ui.crawl_issues_pull_requests_and_commits_from_one_or_more_github_re"); },
     icon: GithubIcon,
     dialogKey: "seed",
     createConfig: (id, existing) => makeSeedConfig(id, existing, "github_repo"),
@@ -187,9 +186,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "sampler",
     type: "category",
-    title: "Category",
-    description:
-      "Generate values from a list you define, with optional weights or rules.",
+    get title() { return uiTranslate("ui.category"); },
+    get description() { return uiTranslate("ui.generate_values_from_a_list_you_define_with_optional_weights_or_r"); },
     icon: Tag01Icon,
     dialogKey: "category",
     createConfig: (id, existing) => makeSamplerConfig(id, "category", existing),
@@ -197,8 +195,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "sampler",
     type: "subcategory",
-    title: "Subcategory",
-    description: "Generate values from groups you define for each category.",
+    get title() { return uiTranslate("ui.subcategory"); },
+    get description() { return uiTranslate("ui.generate_values_from_groups_you_define_for_each_category"); },
     icon: TagsIcon,
     dialogKey: "subcategory",
     createConfig: (id, existing) =>
@@ -207,8 +205,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "sampler",
     type: "uniform",
-    title: "Random number",
-    description: "Generate a number anywhere between a minimum and maximum.",
+    get title() { return uiTranslate("ui.random_number"); },
+    get description() { return uiTranslate("ui.generate_a_number_anywhere_between_a_minimum_and_maximum"); },
     icon: EqualSignIcon,
     dialogKey: "uniform",
     createConfig: (id, existing) => makeSamplerConfig(id, "uniform", existing),
@@ -216,8 +214,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "sampler",
     type: "gaussian",
-    title: "Bell-curve number",
-    description: "Generate numbers around an average value.",
+    get title() { return uiTranslate("ui.bell_curve_number"); },
+    get description() { return uiTranslate("ui.generate_numbers_around_an_average_value"); },
     icon: Parabola02Icon,
     dialogKey: "gaussian",
     createConfig: (id, existing) => makeSamplerConfig(id, "gaussian", existing),
@@ -225,8 +223,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "sampler",
     type: "bernoulli",
-    title: "Yes/no value",
-    description: "Generate a binary result from a probability.",
+    get title() { return uiTranslate("ui.yes_no_value"); },
+    get description() { return uiTranslate("ui.generate_a_binary_result_from_a_probability"); },
     icon: EqualSignIcon,
     dialogKey: "bernoulli",
     createConfig: (id, existing) =>
@@ -235,8 +233,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "sampler",
     type: "datetime",
-    title: "Date and time",
-    description: "Generate timestamps inside a date range.",
+    get title() { return uiTranslate("ui.date_and_time"); },
+    get description() { return uiTranslate("ui.generate_timestamps_inside_a_date_range"); },
     icon: Clock01Icon,
     dialogKey: "datetime",
     createConfig: (id, existing) => makeSamplerConfig(id, "datetime", existing),
@@ -244,8 +242,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "sampler",
     type: "timedelta",
-    title: "Time offset",
-    description: "Generate a time difference from another date field.",
+    get title() { return uiTranslate("ui.time_offset"); },
+    get description() { return uiTranslate("ui.generate_a_time_difference_from_another_date_field"); },
     icon: Clock01Icon,
     dialogKey: "timedelta",
     createConfig: (id, existing) =>
@@ -254,8 +252,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "sampler",
     type: "uuid",
-    title: "Unique ID",
-    description: "Generate unique identifiers.",
+    get title() { return uiTranslate("ui.unique_id"); },
+    get description() { return uiTranslate("ui.generate_unique_identifiers"); },
     icon: FingerPrintIcon,
     dialogKey: "uuid",
     createConfig: (id, existing) => makeSamplerConfig(id, "uuid", existing),
@@ -263,8 +261,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "sampler",
     type: "person",
-    title: "Synthetic person",
-    description: "Generate realistic person details.",
+    get title() { return uiTranslate("ui.synthetic_person"); },
+    get description() { return uiTranslate("ui.generate_realistic_person_details"); },
     icon: UserAccountIcon,
     dialogKey: "person",
     createConfig: (id, existing) => makeSamplerConfig(id, "person", existing),
@@ -272,8 +270,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "llm",
     type: "text",
-    title: "AI text",
-    description: "Generate text from your prompt.",
+    get title() { return uiTranslate("ui.ai_text"); },
+    get description() { return uiTranslate("ui.generate_text_from_your_prompt"); },
     icon: PencilEdit02Icon,
     dialogKey: "llm",
     createConfig: (id, existing) => makeLlmConfig(id, "text", existing),
@@ -281,8 +279,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "llm",
     type: "structured",
-    title: "AI structured data",
-    description: "Generate JSON that follows a response format.",
+    get title() { return uiTranslate("ui.ai_structured_data"); },
+    get description() { return uiTranslate("ui.generate_json_that_follows_a_response_format"); },
     icon: CodeIcon,
     dialogKey: "llm",
     createConfig: (id, existing) => makeLlmConfig(id, "structured", existing),
@@ -290,8 +288,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "llm",
     type: "code",
-    title: "AI code",
-    description: "Generate code in the language you choose.",
+    get title() { return uiTranslate("ui.ai_code"); },
+    get description() { return uiTranslate("ui.generate_code_in_the_language_you_choose"); },
     icon: CodeSimpleIcon,
     dialogKey: "llm",
     createConfig: (id, existing) => makeLlmConfig(id, "code", existing),
@@ -299,8 +297,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "llm",
     type: "judge",
-    title: "AI scorer",
-    description: "Score outputs against your criteria.",
+    get title() { return uiTranslate("ui.ai_scorer"); },
+    get description() { return uiTranslate("ui.score_outputs_against_your_criteria"); },
     icon: BalanceScaleIcon,
     dialogKey: "llm",
     createConfig: (id, existing) => makeLlmConfig(id, "judge", existing),
@@ -308,8 +306,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "llm",
     type: "model_provider",
-    title: "Provider connection",
-    description: "Choose where model requests go and how to sign in.",
+    get title() { return uiTranslate("ui.provider_connection"); },
+    get description() { return uiTranslate("ui.choose_where_model_requests_go_and_how_to_sign_in"); },
     icon: Shield02Icon,
     dialogKey: "model_provider",
     createConfig: (id, existing) => makeModelProviderConfig(id, existing),
@@ -317,8 +315,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "llm",
     type: "model_config",
-    title: "Model preset",
-    description: "Pick a model and save reusable generation settings.",
+    get title() { return uiTranslate("ui.model_preset"); },
+    get description() { return uiTranslate("ui.pick_a_model_and_save_reusable_generation_settings"); },
     icon: Plant01Icon,
     dialogKey: "model_config",
     createConfig: (id, existing) => makeModelConfig(id, existing),
@@ -326,8 +324,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "llm",
     type: "tool_config",
-    title: "Tool access",
-    description: "Choose which tools an AI step can use.",
+    get title() { return uiTranslate("ui.tool_access"); },
+    get description() { return uiTranslate("ui.choose_which_tools_an_ai_step_can_use"); },
     icon: Plug01Icon,
     dialogKey: "tool_config",
     createConfig: (id, existing) => makeToolProfileConfig(id, existing),
@@ -335,8 +333,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "validator",
     type: "validator_python",
-    title: "Python check",
-    description: "Lint generated Python and filter out rows that fail.",
+    get title() { return uiTranslate("ui.python_check"); },
+    get description() { return uiTranslate("ui.lint_generated_python_and_filter_out_rows_that_fail"); },
     icon: Shield02Icon,
     dialogKey: "validator",
     createConfig: (id, existing) =>
@@ -345,8 +343,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "validator",
     type: "validator_sql",
-    title: "SQL check",
-    description: "Lint generated SQL and filter out rows that fail.",
+    get title() { return uiTranslate("ui.sql_check"); },
+    get description() { return uiTranslate("ui.lint_generated_sql_and_filter_out_rows_that_fail"); },
     icon: Shield02Icon,
     dialogKey: "validator",
     createConfig: (id, existing) =>
@@ -355,9 +353,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "validator",
     type: "validator_oxc",
-    title: "JS/TS check",
-    description:
-      "Lint generated JavaScript or TypeScript and filter out rows that fail.",
+    get title() { return uiTranslate("ui.js_ts_check"); },
+    get description() { return uiTranslate("ui.lint_generated_javascript_or_typescript_and_filter_out_rows_that_"); },
     icon: Shield02Icon,
     dialogKey: "validator",
     createConfig: (id, existing) =>
@@ -366,8 +363,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "expression",
     type: "expression",
-    title: "Formula",
-    description: "Build or transform a field using other fields.",
+    get title() { return uiTranslate("ui.formula"); },
+    get description() { return uiTranslate("ui.build_or_transform_a_field_using_other_fields"); },
     icon: FunctionIcon,
     dialogKey: "expression",
     createConfig: (id, existing) => makeExpressionConfig(id, existing),
@@ -375,8 +372,8 @@ const BLOCK_DEFINITIONS: BlockDefinition[] = [
   {
     kind: "note",
     type: "markdown_note",
-    title: "Note",
-    description: "Add a note to the canvas. Notes do not affect the run.",
+    get title() { return uiTranslate("ui.note"); },
+    get description() { return uiTranslate("ui.add_a_note_to_the_canvas_notes_do_not_affect_the_run"); },
     icon: PencilEdit02Icon,
     dialogKey: "markdown_note",
     createConfig: (id, existing) => makeMarkdownNoteConfig(id, existing),

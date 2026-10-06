@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 "use client";
 
 import {
@@ -44,6 +45,8 @@ export const MessageTiming: FC<{
   className?: string;
   side?: "top" | "right" | "bottom" | "left";
 }> = ({ className, side = "right" }) => {
+  const uiT = useUiT();
+
   const timing = useMessageTiming();
   const message = useMessage();
   const t = useT();
@@ -169,8 +172,7 @@ export const MessageTiming: FC<{
                       {t("chat.timing.denoising")}
                     </span>
                     <span className="font-mono tabular-nums">
-                      {formatNumber(st.diffusion_steps)} steps
-                      {st?.diffusion_blocks != null
+                      {formatNumber(st.diffusion_steps)} {" "}{uiT("ui.steps")}{st?.diffusion_blocks != null
                         ? `, ${formatNumber(st.diffusion_blocks)} blocks`
                         : ""}
                     </span>

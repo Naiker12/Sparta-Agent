@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 type PresentableGgufVariant = {
   filename: string;
   quant: string;
@@ -121,15 +122,14 @@ export function groupGgufVariantsForPicker<T extends PresentableGgufVariant>(
   return [
     {
       key: "text-frames",
-      title: "Text / first and last frames",
-      description:
-        "Generate from a prompt, optionally using first and last frame images.",
+      get title() { return uiTranslate("ui.text_first_and_last_frames"); },
+      get description() { return uiTranslate("ui.generate_from_a_prompt_optionally_using_first_and_last_frame_imag"); },
       variants: textFrames,
     },
     {
       key: "reference-media",
-      title: "Reference media",
-      description: "Generate using reference images, video, or audio.",
+      get title() { return uiTranslate("ui.reference_media"); },
+      get description() { return uiTranslate("ui.generate_using_reference_images_video_or_audio"); },
       variants: referenceMedia,
     },
   ].filter((group) => group.variants.length > 0);

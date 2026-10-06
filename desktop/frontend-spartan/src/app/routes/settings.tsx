@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { getPostAuthRoute } from "@/features/auth";
 import { useSettingsDialogStore } from "@/features/settings";
 import { createRoute, redirect } from "@tanstack/react-router";
@@ -11,7 +12,7 @@ import { Route as rootRoute } from "./__root";
 export const Route = createRoute({
   getParentRoute: () => rootRoute,
   path: "/settings",
-  staticData: { title: "Settings" },
+  staticData: { get title() { return uiTranslate("settings.dialog.title"); } },
   beforeLoad: async () => {
     await requireAuth();
     useSettingsDialogStore.getState().openDialog();

@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { type RecipePayload, RecipeStudioPage } from "@/features/recipe-studio";
 import { useNavigate } from "@tanstack/react-router";
@@ -29,6 +30,8 @@ function RecipeLoadState({
   description: string;
   onBack: () => void;
 }): ReactElement {
+  const uiT = useUiT();
+
   return (
     <div className="min-h-[calc(100dvh-var(--studio-titlebar-height,0px))] bg-background">
       <main className="mx-auto flex min-h-[70dvh] w-full max-w-4xl items-center justify-center px-6 py-8">
@@ -41,8 +44,7 @@ function RecipeLoadState({
             className="mt-5"
             onClick={onBack}
           >
-            Back to Recipes
-          </Button>
+            {uiT("ui.back_to_recipes")}</Button>
         </div>
       </main>
     </div>
@@ -52,6 +54,8 @@ function RecipeLoadState({
 export function EditRecipePage({
   recipeId,
 }: EditRecipePageProps): ReactElement {
+  const uiT = useUiT();
+
   const navigate = useNavigate();
   const [loadState, setLoadState] = useState<LoadState>(() => {
     const cachedRecipe = getCachedRecipe(recipeId);
@@ -106,8 +110,8 @@ export function EditRecipePage({
   if (loadState.status === "loading") {
     return (
       <RecipeLoadState
-        title="Loading recipe..."
-        description="Please wait while we load your recipe."
+        title={uiT("ui.loading_recipe")}
+        description={uiT("ui.please_wait_while_we_load_your_recipe")}
         onBack={() => void navigate({ to: "/data-recipes" })}
       />
     );
@@ -116,8 +120,8 @@ export function EditRecipePage({
   if (loadState.status === "missing") {
     return (
       <RecipeLoadState
-        title="Recipe not found"
-        description="This recipe may have been deleted."
+        title={uiT("ui.recipe_not_found")}
+        description={uiT("ui.this_recipe_may_have_been_deleted")}
         onBack={() => void navigate({ to: "/data-recipes" })}
       />
     );

@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { authFetch } from "@/features/auth";
 import { prepareHfTokenForUse } from "@/features/hf-auth";
 import { hubTokenHeader } from "@/features/hub/lib/hub-token-header";
@@ -147,7 +148,7 @@ export async function loadModel(
 ): Promise<LoadModelResponse> {
   const preparedToken = await prepareHfTokenForUse(payload.hf_token);
   if (!preparedToken.proceed) {
-    throw Object.assign(new Error("Model load cancelled."), {
+    throw Object.assign(new Error(uiTranslate("ui.model_load_cancelled")), {
       unslothUserCancelled: true,
     });
   }
@@ -176,7 +177,7 @@ export async function validateModel(
 ): Promise<ValidateModelResponse> {
   const preparedToken = await prepareHfTokenForUse(payload.hf_token);
   if (!preparedToken.proceed) {
-    throw Object.assign(new Error("Model load cancelled."), {
+    throw Object.assign(new Error(uiTranslate("ui.model_load_cancelled")), {
       unslothUserCancelled: true,
     });
   }

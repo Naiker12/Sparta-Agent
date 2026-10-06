@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import type { WorkspaceChangedFile } from "@/features/chat/stores/use-workspace-store";
 import { cn } from "@/lib/utils";
 import { FolderIcon } from "lucide-react";
@@ -59,13 +60,14 @@ function getDiffChunksForFile(file: WorkspaceChangedFile): DiffChunk[] {
 }
 
 export function DiffViewer({ file }: { file: WorkspaceChangedFile }) {
+  const uiT = useUiT();
+
   const chunks = getDiffChunksForFile(file);
 
   if (chunks.length === 0) {
     return (
       <p className="rounded-xl border border-border/60 p-4 text-xs text-muted-foreground">
-        No hay diferencias de texto disponibles para este archivo.
-      </p>
+        {uiT("ui.no_text_differences_available_for_this_file")}</p>
     );
   }
 

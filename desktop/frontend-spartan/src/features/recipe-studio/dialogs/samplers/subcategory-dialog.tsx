@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   Select,
   SelectContent,
@@ -22,6 +23,8 @@ export function SubcategoryDialog({
   categoryOptions,
   onUpdate,
 }: SubcategoryDialogProps): ReactElement {
+  const uiT = useUiT();
+
   const parentSelectId = `${config.id}-parent-category`;
   const updateField = useCallback(
     <K extends keyof SamplerConfig>(key: K, value: SamplerConfig[K]) => {
@@ -73,7 +76,7 @@ export function SubcategoryDialog({
       <div className="space-y-3">
         <div className="grid gap-1.5">
           <FieldLabel
-            label="Parent category column"
+            label={uiT("ui.parent_category_column")}
             htmlFor={parentSelectId}
             hint="Category column this block maps from."
           />
@@ -87,7 +90,7 @@ export function SubcategoryDialog({
             }}
           >
             <SelectTrigger className="nodrag w-full" id={parentSelectId}>
-              <SelectValue placeholder="Select category column" />
+              <SelectValue placeholder={uiT("ui.select_category_column")} />
             </SelectTrigger>
             <SelectContent>
               {categoryOptions.map((option) => (
@@ -98,8 +101,7 @@ export function SubcategoryDialog({
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground">
-            Map each parent category value to its subcategory options below.
-          </p>
+            {uiT("ui.map_each_parent_category_value_to_its_subcategory_options_below")}</p>
         </div>
         {categoryValues.length > 0 && (
           <div className="grid gap-4">
@@ -110,8 +112,7 @@ export function SubcategoryDialog({
                     {value}
                   </p>
                   <span className="text-xs text-muted-foreground">
-                    {mapping[value]?.length ?? 0} subvalues
-                  </span>
+                    {mapping[value]?.length ?? 0} {" "}{uiT("ui.subvalues")}</span>
                 </div>
                 <ChipInput
                   values={mapping[value] ?? []}
@@ -129,12 +130,11 @@ export function SubcategoryDialog({
                     next[value] = list;
                     updateField("subcategory_mapping", next);
                   }}
-                  placeholder="Type subcategory and press Enter"
+                  placeholder={uiT("ui.type_subcategory_and_press_enter")}
                 />
                 {(mapping[value] ?? []).length === 0 && (
                   <p className="mt-2 text-xs text-rose-500">
-                    Add at least 1 subcategory.
-                  </p>
+                    {uiT("ui.add_at_least_1_subcategory")}</p>
                 )}
               </div>
             ))}

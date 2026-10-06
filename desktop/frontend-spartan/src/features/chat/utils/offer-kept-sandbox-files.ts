@@ -1,5 +1,5 @@
 import { translate } from "@/i18n";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { deleteStoredChatThreads } from "./chat-history-storage";
 
 /**

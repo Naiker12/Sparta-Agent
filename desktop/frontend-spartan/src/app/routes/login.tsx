@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { createRoute } from "@tanstack/react-router";
 import { lazy } from "react";
 import { requireGuest } from "../auth-guards";
@@ -10,7 +11,7 @@ const LoginPage = lazy(() =>
 export const Route = createRoute({
   getParentRoute: () => rootRoute,
   path: "/login",
-  staticData: { title: "Login", isAuthFlow: true },
+  staticData: { get title() { return uiTranslate("ui.login"); }, isAuthFlow: true },
   beforeLoad: () => requireGuest(),
   component: LoginPage,
 });

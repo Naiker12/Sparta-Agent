@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   Archive02Icon,
   ArchiveRestoreIcon,
@@ -51,6 +52,8 @@ export function GalleryItemMenu({
   active?: boolean;
   className?: string;
 }) {
+  const uiT = useUiT();
+
   // Controlled like RecipePopover: DropdownMenuContent portals to body, so the inert page wrapper
   // cannot contain it when the tab goes away.
   const [open, setOpen] = useState(false);
@@ -70,7 +73,7 @@ export function GalleryItemMenu({
         <Button
           size={overlay ? "icon-xs" : "sm"}
           variant="ghost"
-          aria-label={`More actions for this ${noun}`}
+          aria-label={uiT("ui.more_actions_for_this_value0", { value0: String(noun) })}
           className={cn(
             // Reads over any thumbnail, whatever its colours.
             overlay &&
@@ -87,17 +90,16 @@ export function GalleryItemMenu({
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={onTogglePin}>
           <HugeiconsIcon icon={pinned ? PinOffIcon : PinIcon} />
-          {pinned ? "Unpin" : "Pin to front"}
+          {pinned ? uiT("hub.gguf.menu.unpin") : uiT("ui.pin_to_front")}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onToggleArchive}>
           <HugeiconsIcon icon={archived ? ArchiveRestoreIcon : Archive02Icon} />
-          {archived ? "Restore from archive" : "Archive"}
+          {archived ? uiT("ui.restore_from_archive") : uiT("chat.menu.archive")}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onClick={onDelete}>
           <HugeiconsIcon icon={Delete02Icon} />
-          Delete
-        </DropdownMenuItem>
+          {uiT("chat.menu.delete")}</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

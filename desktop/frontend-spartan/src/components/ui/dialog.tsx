@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 
 "use client";
 
@@ -86,6 +87,8 @@ const DialogContent = React.forwardRef<
     },
     ref,
   ) => {
+  const uiT = useUiT();
+
     const resolvedContainer = container ?? null;
     return (
       <DialogPortalContainerContext.Provider value={resolvedContainer}>
@@ -119,7 +122,7 @@ const DialogContent = React.forwardRef<
                   size="icon-sm"
                 >
                   <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} />
-                  <span className="sr-only">Close</span>
+                  <span className="sr-only">{uiT("settings.about.shutDown")}</span>
                 </Button>
               </DialogPrimitive.Close>
             )}
@@ -149,6 +152,8 @@ function DialogFooter({
 }: React.ComponentProps<"div"> & {
   showCloseButton?: boolean;
 }) {
+  const uiT = useUiT();
+
   return (
     <div
       data-slot="dialog-footer"
@@ -161,7 +166,7 @@ function DialogFooter({
       {children}
       {showCloseButton && (
         <DialogPrimitive.Close asChild>
-          <Button variant="outline">Close</Button>
+          <Button variant="outline">{uiT("settings.about.shutDown")}</Button>
         </DialogPrimitive.Close>
       )}
     </div>

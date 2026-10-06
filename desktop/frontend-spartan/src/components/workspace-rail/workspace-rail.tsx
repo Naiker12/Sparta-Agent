@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import {
   type WorkspaceTab,
   useWorkspaceStore,
@@ -36,6 +38,8 @@ interface RailTabItem {
 }
 
 export function WorkspaceRail() {
+  const uiT = useUiT();
+
   const activeTab = useWorkspaceStore((state) => state.activeTab);
   const isOpen = useWorkspaceStore((state) => state.isOpen);
   const capabilities = useWorkspaceStore((state) => state.capabilities);
@@ -45,13 +49,13 @@ export function WorkspaceRail() {
   const tabs: RailTabItem[] = [
     {
       id: "files",
-      label: "Explorador de archivos",
+      get label() { return uiTranslate("ui.file_explorer"); },
       icon: FolderIcon,
       enabled: true,
     },
     {
       id: "changes",
-      label: "Cambios de archivos",
+      get label() { return uiTranslate("ui.file_changes"); },
       icon: GitBranchIcon,
       enabled: capabilities.hasGit,
     },
@@ -63,13 +67,13 @@ export function WorkspaceRail() {
     },
     {
       id: "agents",
-      label: "Subagentes",
+      get label() { return uiTranslate("ui.subagents"); },
       icon: BotIcon,
       enabled: capabilities.hasAgents,
     },
     {
       id: "browser",
-      label: "Vista previa web",
+      get label() { return uiTranslate("ui.web_preview"); },
       icon: GlobeIcon,
       enabled: capabilities.hasBrowser,
     },
@@ -88,7 +92,7 @@ export function WorkspaceRail() {
   return (
     <aside
       className="flex w-12 shrink-0 flex-col items-center border-l border-border/40 bg-background px-2 py-2 select-none"
-      aria-label="Workspace navigation"
+      aria-label={uiT("ui.workspace_navigation")}
     >
       <div className="flex w-full flex-col items-center gap-1">
         {tabs.map((tab) => {

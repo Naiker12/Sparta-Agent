@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { authFetch } from "@/features/auth";
 import { withRunErrorStatus } from "./utils/run-error-status";
 import {
@@ -31,7 +32,7 @@ import {
   useMemo,
   useRef,
 } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { StudioDictationAdapter } from "./adapters/studio-dictation-adapter";
 import { StudioSpeechSynthesisAdapter } from "./adapters/studio-speech-synthesis-adapter";
 import {
@@ -235,7 +236,7 @@ class VisionImageAdapter implements AttachmentAdapter {
 
     const maxSize = 20 * 1024 * 1024;
     if (file.size > maxSize) {
-      throw new Error("Image size exceeds 20MB limit");
+      throw new Error(uiTranslate("ui.image_size_exceeds_20mb_limit"));
     }
 
     return {
@@ -272,7 +273,7 @@ class VisionImageAdapter implements AttachmentAdapter {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
-      reader.onerror = () => reject(new Error("Failed to read image file"));
+      reader.onerror = () => reject(new Error(uiTranslate("ui.failed_to_read_image_file")));
       reader.readAsDataURL(file);
     });
   }
@@ -284,8 +285,8 @@ class PDFAttachmentAdapter implements AttachmentAdapter {
   add({ file }: { file: File }): Promise<PendingAttachment> {
     const maxSize = 50 * 1024 * 1024; // 50MB limit
     if (file.size > maxSize) {
-      toast.error("PDF exceeds 50MB limit");
-      throw new Error("PDF size exceeds 50MB limit");
+      toast.error(uiTranslate("ui.pdf_exceeds_50mb_limit"));
+      throw new Error(uiTranslate("ui.pdf_size_exceeds_50mb_limit"));
     }
     return Promise.resolve({
       id: crypto.randomUUID(),
@@ -1996,9 +1997,8 @@ function ThreadScopedSettingsSync({
         // showing, and say so once rather than failing silently.
         applyThreadScopedSettings(null, null);
         releaseHeldThreadScopedEdits();
-        toast.error("Could not load this chat's settings", {
-          description:
-            "It is using the default settings. Reopen the chat to try again.",
+        toast.error(uiTranslate("ui.could_not_load_this_chat_s_settings"), {
+          get description() { return uiTranslate("ui.it_is_using_the_default_settings_reopen_the_chat_to_try_again"); },
         });
         return;
       }

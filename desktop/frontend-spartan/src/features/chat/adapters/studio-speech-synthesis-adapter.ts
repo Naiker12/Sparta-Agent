@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { authFetch } from "@/features/auth";
 import { useVoiceSettingsStore } from "@/features/settings/stores/voice-settings-store";
 import { toast } from "@/lib/toast";
@@ -274,14 +275,14 @@ export async function generateStudioTtsAudio(
     const detail = body?.detail ?? `HTTP ${response.status}`;
     if (/no model loaded|not an audio model/i.test(detail)) {
       throw new Error(
-        "No TTS model is loaded. Load an audio model (e.g. Orpheus TTS) from the model selector, then try again.",
+        uiTranslate("ui.no_tts_model_is_loaded_load_an_audio_model_e_g_orpheus_tts_from_t"),
       );
     }
     throw new Error(detail);
   }
   const data = (await response.json()) as { audio?: { data?: string } };
   if (!data.audio?.data) {
-    throw new Error("The TTS model returned no audio.");
+    throw new Error(uiTranslate("ui.the_tts_model_returned_no_audio"));
   }
   return `data:audio/wav;base64,${data.audio.data}`;
 }
@@ -333,7 +334,7 @@ function speakWithStudioModel(
           return;
         }
         cleanup();
-        handleEnd("error", new Error("Audio playback failed."));
+        handleEnd("error", new Error(uiTranslate("ui.audio_playback_failed")));
       });
       markRunning();
       await audio.play();

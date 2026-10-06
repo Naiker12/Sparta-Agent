@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Panel, useReactFlow, useUpdateNodeInternals } from "@xyflow/react";
 import { type ReactElement, useCallback } from "react";
@@ -14,6 +15,8 @@ export function LayoutControls({
   onLayout,
   onToggleDirection,
 }: LayoutControlsProps): ReactElement {
+  const uiT = useUiT();
+
   const { fitView, getNodes } = useReactFlow();
   const updateNodeInternals = useUpdateNodeInternals();
 
@@ -55,8 +58,7 @@ export function LayoutControls({
         variant="secondary"
         onClick={handleLayout}
       >
-        Auto layout
-      </Button>
+        {uiT("ui.auto_layout")}</Button>
       <Button
         size="sm"
         className="corner-squircle"

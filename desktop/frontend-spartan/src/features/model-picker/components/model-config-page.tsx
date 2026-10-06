@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { InfoHint } from "@/components/ui/info-hint";
@@ -268,6 +270,8 @@ function ChatTemplateSetting({
   onEditTemplate: () => void;
   readOnly?: boolean;
 }) {
+  const uiT = useUiT();
+
   const t = useT();
   return (
     <div className={ROW_CLASS}>
@@ -275,7 +279,7 @@ function ChatTemplateSetting({
         <span className={LABEL_CLASS}>{t("runSettings.chatTemplate")}</span>
         <InfoHint>
           {readOnly
-            ? "Preview the model's chat template. This model's backend cannot take a custom one."
+            ? uiT("ui.preview_the_model_s_chat_template_this_model_s_backend_cannot_tak")
             : t("runSettings.chatTemplateHint")}
         </InfoHint>
       </div>
@@ -419,6 +423,8 @@ function AdvancedGpuSlider({
 // it to, and the label says so. Driven in whole percent so a dragged value
 // round-trips exactly; the fraction is rebuilt at the API boundary.
 function VramBudgetRow() {
+  const uiT = useUiT();
+
   const t = useT();
   // The caller already gates on a discrete GPU and non-Manual mode. macOS is gated
   // here too: it reports no discrete GPUs, so the Metal path sizes itself from
@@ -584,28 +590,19 @@ function VramBudgetRow() {
         info={
           <div className="flex flex-col gap-1.5">
             <div>
-              Share of each GPU Unsloth will claim when it sizes the model and
-              context. The rest is left for memory fragmentation, the per-device
-              CUDA context on a multi-GPU split, and MoE routing.
-            </div>
+              {uiT("ui.legacy_share_of_each_gpu_unsloth_will_claim_when_it_sizes_the_model_and_")}</div>
             <div>
-              Applies to every model, not just this one, and takes effect on the
-              next load. Default {defaultPercent}%. Even at 100% a load leaves a
-              margin on each card, up to the 512 MiB llama.cpp keeps for its own
-              fitter, and never more than the default would have reserved.
-            </div>
+              {uiT("ui.applies_to_every_model_not_just_this_one_and_takes_effect_on_the_")}{" "}{defaultPercent}{uiT("ui.even_at_100_a_load_leaves_a_margin_on_each_card_up_to_the_512_mib")}</div>
             <div>
-              Reset clears the stored value, so UNSLOTH_VRAM_FRACTION applies
-              again if it is set.
-            </div>
+              {uiT("ui.reset_clears_the_stored_value_so_unsloth_vram_fraction_applies_ag")}</div>
           </div>
         }
       />
       {percent !== defaultPercent && (
         <p id={adviceId} className="text-ui-11 text-amber-500">
           {percent > defaultPercent
-            ? "Above the default fits more context but leaves less slack, so a load can run out of memory. llama.cpp treats that as a hard failure rather than falling back."
-            : "Below the default is safer on a shared GPU, but a tight fit may push layers onto the CPU and generate slowly."}
+            ? uiT("ui.above_the_default_fits_more_context_but_leaves_less_slack_so_a_lo")
+            : uiT("ui.below_the_default_is_safer_on_a_shared_gpu_but_a_tight_fit_may_pu")}
         </p>
       )}
       {settings.isStored && (
@@ -615,14 +612,11 @@ function VramBudgetRow() {
           onClick={resetBudget}
           className="text-ui-11 text-muted-foreground underline underline-offset-2 hover:text-nav-fg"
         >
-          Reset to the server default
-        </button>
+          {uiT("ui.reset_to_the_server_default")}</button>
       )}
       {settings.reloadRequired && (
         <p className="text-ui-11 text-muted-foreground">
-          The loaded model was sized with a different budget. Reload it to apply
-          this one.
-        </p>
+          {uiT("ui.the_loaded_model_was_sized_with_a_different_budget_reload_it_to_a")}</p>
       )}
     </div>
   );
@@ -649,6 +643,8 @@ function GpuMemorySettings({
   gpuLayersInputRef?: Ref<NumericValueInputHandle>;
   moeLayersInputRef?: Ref<NumericValueInputHandle>;
 }) {
+  const uiT = useUiT();
+
   const t = useT();
   const mode = config.gpuMemoryMode ?? "auto";
   const isManual = mode === "manual";
@@ -694,15 +690,12 @@ function GpuMemorySettings({
                 <span className="font-medium">
                   {t("runSettings.gpuMemoryDefault")}:
                 </span>{" "}
-                Unsloth fits the model and context to your GPUs.
-              </div>
+                {uiT("ui.legacy_unsloth_fits_the_model_and_context_to_your_gpus")}</div>
               <div>
                 <span className="font-medium">
                   {t("runSettings.gpuMemoryManual")}:
                 </span>{" "}
-                set GPU Layers yourself. Leave it on Auto to let llama.cpp size
-                the context and offload overflow (including MoE experts) to RAM.
-              </div>
+                {uiT("ui.set_gpu_layers_yourself_leave_it_on_auto_to_let_llama_cpp_size_th")}</div>
             </div>
           </InfoHint>
         </div>
@@ -760,10 +753,7 @@ function GpuMemorySettings({
             displayValue={autoLayers ? "Auto" : undefined}
             info={
               <>
-                Layers to keep on the GPU (--gpu-layers); the rest run on CPU.
-                Auto lets llama.cpp size the split (and the context) to fit
-                VRAM. At the maximum, the whole model is on the GPU.
-              </>
+                {uiT("ui.layers_to_keep_on_the_gpu_gpu_layers_the_rest_run_on_cpu_auto_let")}</>
             }
           />
           {showMoeSlider && (
@@ -776,10 +766,7 @@ function GpuMemorySettings({
               onChange={(v) => update({ nCpuMoe: v })}
               info={
                 <>
-                  Keep the experts of this many MoE layers on the CPU
-                  (--n-cpu-moe) to save VRAM. 0 = all experts on the GPU; at the
-                  maximum, all are on the CPU.
-                </>
+                  {uiT("ui.keep_the_experts_of_this_many_moe_layers_on_the_cpu_n_cpu_moe_to_")}</>
               }
             />
           )}
@@ -802,7 +789,7 @@ function GpuMemorySettings({
                 className="flex items-center justify-between gap-3"
               >
                 <span className="min-w-0 truncate text-ui-12 text-nav-fg/80">
-                  GPU {d.index}: {d.name}
+                  {uiT("settings.about.gpu")}{" "}{d.index}: {d.name}
                   {d.memoryTotalGb
                     ? ` · ${Math.round(d.memoryTotalGb)} GB`
                     : ""}
@@ -831,6 +818,8 @@ function AdvancedSettingsToggle({
   checked: boolean;
   onCheckedChange: (next: boolean) => void;
 }) {
+  const uiT = useUiT();
+
   const t = useT();
   return (
     <div className={ROW_CLASS}>
@@ -839,8 +828,7 @@ function AdvancedSettingsToggle({
           {t("runSettings.advancedSettings")}
         </span>
         <InfoHint>
-          Extra options for how the model loads. Most setups don't need these.
-        </InfoHint>
+          {uiT("ui.extra_options_for_how_the_model_loads_most_setups_don_t_need_thes")}</InfoHint>
       </div>
       <Switch
         className="panel-switch shrink-0"
@@ -870,6 +858,8 @@ function MlxAdvancedSettings({
   /** Why the loaded model could not take the override it was given. */
   templateOutcome: string | null;
 }) {
+  const uiT = useUiT();
+
   const t = useT();
   return (
     <div className="flex flex-col gap-1">
@@ -881,10 +871,7 @@ function MlxAdvancedSettings({
                 {t("runSettings.kvCacheDtype")}
               </span>
               <InfoHint>
-                Lower KV cache precision to save memory at the cost of some
-                quality. Auto keeps full precision; 8-bit is the safest
-                reduction, and lower widths save more memory.
-              </InfoHint>
+                {uiT("ui.lower_kv_cache_precision_to_save_memory_at_the_cost_of_some_quali")}</InfoHint>
             </div>
             <Select
               value={
@@ -903,11 +890,10 @@ function MlxAdvancedSettings({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="menu-soft-surface ring-0 border-0 rounded-lg">
-                <SelectItem value={MLX_KV_BITS_AUTO}>Auto</SelectItem>
+                <SelectItem value={MLX_KV_BITS_AUTO}>{uiT("studio.dataset.auto")}</SelectItem>
                 {MLX_KV_BITS.map((bits) => (
                   <SelectItem key={bits} value={String(bits)}>
-                    {bits}-bit
-                  </SelectItem>
+                    {bits}{uiT("ui.bit")}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -961,6 +947,8 @@ function GgufAdvancedSettings({
   /** Which stored entries the extra-arguments row reads, most specific first. */
   onExtraArgsLoadableChange: (loadable: boolean) => void;
 }) {
+  const uiT = useUiT();
+
   const t = useT();
   const batchAdviceId = useId();
   const ubatchAdviceId = useId();
@@ -990,10 +978,7 @@ function GgufAdvancedSettings({
         <div className="flex min-w-0 items-center gap-1.5">
           <span className={LABEL_CLASS}>{t("runSettings.kvCacheDtype")}</span>
           <InfoHint>
-            Lower KV cache precision to save VRAM at the cost of some quality.
-            f16 is the default; bf16 and f32 are full precision; q8_0 through
-            iq4_nl are quantized.
-          </InfoHint>
+            {uiT("ui.lower_kv_cache_precision_to_save_vram_at_the_cost_of_some_quality")}</InfoHint>
         </div>
         <Select
           value={config.kvCacheDtype ?? KV_CACHE_DTYPE_DEFAULT}
@@ -1028,14 +1013,7 @@ function GgufAdvancedSettings({
             {t("runSettings.speculativeDecoding")}
           </span>
           <InfoHint>
-            Faster generation. Auto picks the best strategy for the model and
-            platform: DSpark or DFlash when the model ships a drafter sidecar,
-            otherwise MTP / ngram. Pick a strategy to force it, or Off to
-            disable. DSpark downloads a sidecar of about 11 GB and DFlash one of
-            about 1.5 GB, both trading VRAM for speed; on quantized targets
-            their greedy output can differ from a non speculative run. MTP and
-            ngram do not change output.
-          </InfoHint>
+            {uiT("ui.faster_generation_auto_picks_the_best_strategy_for_the_model_and_")}</InfoHint>
         </div>
         <Select
           value={config.speculativeType ?? speculativeFallback}
@@ -1071,9 +1049,7 @@ function GgufAdvancedSettings({
           <div className="flex min-w-0 items-center gap-1.5">
             <span className={LABEL_CLASS}>{t("runSettings.draftTokens")}</span>
             <InfoHint>
-              Max draft tokens per step. Leave blank for the default (MTP and
-              DFlash: 2 on GPU, 3 on CPU/Mac; DSpark: 3).
-            </InfoHint>
+              {uiT("ui.max_draft_tokens_per_step_leave_blank_for_the_default_mtp_and_dfl")}</InfoHint>
           </div>
           <input
             type="number"
@@ -1093,7 +1069,7 @@ function GgufAdvancedSettings({
                 update({ specDraftNMax: Math.max(1, Math.min(16, parsed)) });
               }
             }}
-            aria-label="Speculative decoding draft tokens"
+            aria-label={uiT("ui.speculative_decoding_draft_tokens")}
             className={NUMBER_INPUT_CLASS}
           />
         </div>
@@ -1103,11 +1079,7 @@ function GgufAdvancedSettings({
         <div className="flex min-w-0 items-center gap-1.5">
           <span className={LABEL_CLASS}>{t("runSettings.parallelSlots")}</span>
           <InfoHint>
-            llama-server decode slots (--parallel) for concurrent requests.
-            Leave blank for the server default. More slots share the context
-            pool and use more VRAM; if they don't fit on GPU, fewer slots are
-            launched.
-          </InfoHint>
+            {uiT("ui.llama_server_decode_slots_parallel_for_concurrent_requests_leave_")}</InfoHint>
         </div>
         <input
           type="number"
@@ -1132,7 +1104,7 @@ function GgufAdvancedSettings({
               });
             }
           }}
-          aria-label="Parallel decode slots"
+          aria-label={uiT("ui.parallel_decode_slots")}
           className={NUMBER_INPUT_CLASS}
         />
       </div>
@@ -1143,10 +1115,7 @@ function GgufAdvancedSettings({
             <div className="flex min-w-0 items-center gap-1.5">
               <span className={LABEL_CLASS}>{t("runSettings.batchSize")}</span>
               <InfoHint>
-                Logical prompt batch size (--batch-size). Leave blank for the
-                llama.cpp default (2048). Rarely needs changing; the micro-batch
-                below is what usually matters.
-              </InfoHint>
+                {uiT("ui.logical_prompt_batch_size_batch_size_leave_blank_for_the_llama_cp")}</InfoHint>
             </div>
             <input
               type="number"
@@ -1171,18 +1140,18 @@ function GgufAdvancedSettings({
                   });
                 }
               }}
-              aria-label="Prompt batch size"
+              aria-label={uiT("ui.prompt_batch_size")}
               aria-describedby={batchBelowFloor ? batchAdviceId : undefined}
               className={NUMBER_INPUT_CLASS}
             />
           </div>
           {batchBelowFloor && (
             <p id={batchAdviceId} className="text-ui-12 text-muted-foreground">
-              Too small for llama-server, so the load will raise it to{" "}
+              {uiT("ui.too_small_for_llama_server_so_the_load_will_raise_it_to")}{" "}
               {batchFloor}.
               {config.nParallel != null && config.nParallel > 2
-                ? " It needs one output slot per parallel slot."
-                : " It cannot run a batch below 2."}
+                ? uiT("ui.it_needs_one_output_slot_per_parallel_slot")
+                : uiT("ui.it_cannot_run_a_batch_below_2")}
             </p>
           )}
         </div>
@@ -1194,11 +1163,7 @@ function GgufAdvancedSettings({
             <div className="flex min-w-0 items-center gap-1.5">
               <span className={LABEL_CLASS}>{t("runSettings.uBatchSize")}</span>
               <InfoHint>
-                Physical prompt micro-batch size (--ubatch-size). Leave blank
-                for the llama.cpp default (512). Larger values speed up prompt
-                processing but use more VRAM for the compute buffer; capped at
-                the batch size.
-              </InfoHint>
+                {uiT("ui.physical_prompt_micro_batch_size_ubatch_size_leave_blank_for_the_")}</InfoHint>
             </div>
             <input
               type="number"
@@ -1223,15 +1188,14 @@ function GgufAdvancedSettings({
                   });
                 }
               }}
-              aria-label="Prompt micro-batch size"
+              aria-label={uiT("ui.prompt_micro_batch_size")}
               aria-describedby={ubatchExceedsBatch ? ubatchAdviceId : undefined}
               className={NUMBER_INPUT_CLASS}
             />
           </div>
           {ubatchExceedsBatch && (
             <p id={ubatchAdviceId} className="text-ui-12 text-muted-foreground">
-              Micro-batch is larger than the batch size, so llama.cpp will run
-              at {effectiveBatch}. Raise the batch size to use {config.nUbatch}.
+              {uiT("ui.micro_batch_is_larger_than_the_batch_size_so_llama_cpp_will_run_a")}{" "}{effectiveBatch}{uiT("ui.raise_the_batch_size_to_use")}{" "}{config.nUbatch}.
             </p>
           )}
         </div>
@@ -1243,9 +1207,7 @@ function GgufAdvancedSettings({
             {t("runSettings.tensorParallelism")}
           </span>
           <InfoHint>
-            No effect on a single GPU. On multi-GPU setups, improves tokens/sec
-            for dense models. MoE models don't benefit.
-          </InfoHint>
+            {uiT("ui.no_effect_on_a_single_gpu_on_multi_gpu_setups_improves_tokens_sec")}</InfoHint>
         </div>
         <Switch
           className="panel-switch shrink-0"
@@ -1299,6 +1261,8 @@ function ExtraArgsRow({
   update: (patch: Partial<PerModelConfig>) => void;
   onLoadableChange: (loadable: boolean) => void;
 }) {
+  const uiT = useUiT();
+
   const t = useT();
   const [catalog, setCatalog] = useState<LlamaFlagCatalog | null>(null);
   // What is typed, which is not what is stored: the stored value is argv tokens, so
@@ -1414,15 +1378,9 @@ function ExtraArgsRow({
         <InfoHint>
           <div className="flex flex-col gap-1.5">
             <div>
-              Passed straight to llama-server for this model, after the settings
-              above, so anything set in both is taken from here.
-            </div>
+              {uiT("ui.passed_straight_to_llama_server_for_this_model_after_the_settings")}</div>
             <div>
-              Quote a value containing spaces or backslashes, including a
-              Windows path. Nothing runs a shell, so $HOME, ; and | are ordinary
-              characters. Flags Unsloth owns, like the model, the port and the
-              API key, are refused.
-            </div>
+              {uiT("ui.legacy_quote_a_value_containing_spaces_or_backslashes_including_a_window")}</div>
           </div>
         </InfoHint>
       </div>
@@ -1432,7 +1390,7 @@ function ExtraArgsRow({
           onChange={(event) => commit(event.target.value)}
           spellCheck={false}
           placeholder="--rope-scaling yarn --yarn-orig-ctx 32768"
-          aria-label="Extra llama-server arguments"
+          aria-label={uiT("ui.extra_llama_server_arguments")}
           aria-describedby={diagnostics.length > 0 ? adviceId : undefined}
           className="block size-full resize-none bg-transparent px-3.5 py-2.5 text-left font-mono text-ui-12 leading-relaxed text-nav-fg outline-none placeholder:text-muted-foreground"
         />
@@ -1441,7 +1399,7 @@ function ExtraArgsRow({
         <div id={adviceId} className="space-y-1">
           {tokenCount > 0 && (
             <p className="text-ui-11 text-muted-foreground">
-              {tokenCount === 1 ? "1 argument" : `${tokenCount} arguments`}
+              {tokenCount === 1 ? uiT("ui.1_argument") : `${tokenCount} arguments`}
             </p>
           )}
           {diagnostics.map((diagnostic) => (
@@ -1490,6 +1448,8 @@ export function ModelConfigPage({
   variant = "page",
   showHeader = true,
 }: ModelConfigPageProps) {
+  const uiT = useUiT();
+
   const t = useT();
   const rememberId = useId();
   const platformDeviceType = usePlatformStore((s) => s.deviceType);
@@ -2235,7 +2195,7 @@ export function ModelConfigPage({
     }
     if (effectivePersistenceOnly) {
       if (saveFailed) {
-        toast.error("Couldn't save settings for this model.");
+        toast.error(uiTranslate("ui.couldn_t_save_settings_for_this_model"));
         return;
       }
       const nextRemember = remember && !defaultConfig;
@@ -2251,7 +2211,7 @@ export function ModelConfigPage({
       return;
     }
     if (saveFailed) {
-      toast.error("Couldn't save these settings, loading with them anyway.");
+      toast.error(uiTranslate("ui.couldn_t_save_these_settings_loading_with_them_anyway"));
     }
     const effectiveLoadConfig = target.isGguf
       ? effectiveRuntimeConfig
@@ -2308,7 +2268,7 @@ export function ModelConfigPage({
               type="button"
               onClick={onBack}
               className="nav-icon-btn shrink-0 text-nav-icon-idle hover:bg-panel-surface-hover hover:text-black dark:hover:text-white"
-              aria-label="Back to model list"
+              aria-label={uiT("ui.back_to_model_list")}
             >
               <HugeiconsIcon
                 icon={ArrowLeft01Icon}
@@ -2338,8 +2298,7 @@ export function ModelConfigPage({
                     {t("runSettings.contextLength")}
                   </span>
                   <InfoHint>
-                    Tokens of context to allocate. Higher uses more VRAM.
-                    {nativeContextLength != null
+                    {uiT("ui.tokens_of_context_to_allocate_higher_uses_more_vram")}{nativeContextLength != null
                       ? ` This model's native context is ${nativeContextLength.toLocaleString()} tokens.`
                       : ""}
                   </InfoHint>
@@ -2375,26 +2334,17 @@ export function ModelConfigPage({
                 />
               ) : null}
               <p className="text-ui-11 leading-relaxed text-muted-foreground">
-                Unsloth automatically fits the context to your device, using the
-                full context when memory allows.
-              </p>
+                {uiT("runSettings.autoFitNote")}</p>
               {isActiveModel &&
                 loadedMaxContextLength != null &&
                 contextValue > loadedMaxContextLength && (
                   <p className="text-ui-11 text-amber-500">
                     {isUnifiedMemory ? (
                       <>
-                        Exceeds what fits in unified memory (
-                        {loadedMaxContextLength.toLocaleString()} tokens). The
-                        GPU and the rest of the system share one pool here, so
-                        there is nothing to offload to.
-                      </>
+                        {uiT("ui.exceeds_what_fits_in_unified_memory")}{loadedMaxContextLength.toLocaleString()} {" "}{uiT("ui.tokens_the_gpu_and_the_rest_of_the_system_share_one_pool_here_so_")}</>
                     ) : (
                       <>
-                        Exceeds estimated VRAM capacity (
-                        {loadedMaxContextLength.toLocaleString()} tokens). The
-                        model may use system RAM.
-                      </>
+                        {uiT("ui.exceeds_estimated_vram_capacity")}{loadedMaxContextLength.toLocaleString()} {" "}{uiT("ui.tokens_the_model_may_use_system_ram")}</>
                     )}
                   </p>
                 )}

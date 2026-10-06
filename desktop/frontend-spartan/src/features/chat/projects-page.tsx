@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -169,12 +170,12 @@ export function ProjectsPage() {
         },
       );
       if (imported === 0 && failed === 0) {
-        toast.info("No conversations found in file.", { id: toastId });
+        toast.info(uiTranslate("settings.chat.importNoConversations"), { id: toastId });
         return;
       }
       if (imported === 0) {
         // Nothing was created, so however the count is phrased this is a failure.
-        toast.error("Import failed.", {
+        toast.error(uiTranslate("settings.chat.importFailed"), {
           id: toastId,
           description: `${failed} conversation${failed === 1 ? "" : "s"} could not be saved.`,
         });
@@ -190,7 +191,7 @@ export function ProjectsPage() {
         { id: toastId },
       );
     } catch (error) {
-      toast.error("Import failed.", {
+      toast.error(uiTranslate("settings.chat.importFailed"), {
         id: toastId,
         description: error instanceof Error ? error.message : undefined,
       });
@@ -215,7 +216,7 @@ export function ProjectsPage() {
       setImportTargetId(projects[0]?.id ?? null);
       setImportFile(nativeImportSource(selected));
     } catch (error) {
-      toast.error("Import failed.", {
+      toast.error(uiTranslate("settings.chat.importFailed"), {
         description: error instanceof Error ? error.message : String(error),
       });
     }
@@ -236,7 +237,7 @@ export function ProjectsPage() {
       }
       await handleImport(nativeImportSource(selected), projectId);
     } catch (error) {
-      toast.error("Import failed.", {
+      toast.error(uiTranslate("settings.chat.importFailed"), {
         description: error instanceof Error ? error.message : String(error),
       });
     }
@@ -265,7 +266,7 @@ export function ProjectsPage() {
       await exportProjectConversations(ids, fmt, project.name);
     } catch (error) {
       if (!isDownloadCancelled(error)) {
-        toast.error("Export failed.");
+        toast.error(uiTranslate("chat.menu.exportFailed"));
       }
     }
   }
@@ -293,7 +294,7 @@ export function ProjectsPage() {
       }
       const ids = [...new Set(threads.map((t) => t.id))];
       if (ids.length === 0) {
-        toast.info("No conversations to export.");
+        toast.info(uiTranslate("ui.no_conversations_to_export"));
         return;
       }
       const ts = new Date().toISOString().slice(0, 10);
@@ -305,7 +306,7 @@ export function ProjectsPage() {
       }
     } catch (error) {
       if (!isDownloadCancelled(error)) {
-        toast.error("Export failed.");
+        toast.error(uiTranslate("chat.menu.exportFailed"));
       }
     }
   }
@@ -396,7 +397,7 @@ export function ProjectsPage() {
     try {
       await renameChatProject(target.id, trimmed);
     } catch (err) {
-      toast.error("Failed to rename project", {
+      toast.error(uiTranslate("shell.toast.failedToRenameProject"), {
         description: err instanceof Error ? err.message : undefined,
       });
     }
@@ -411,7 +412,7 @@ export function ProjectsPage() {
     try {
       await deleteChatProject(target.id);
     } catch (err) {
-      toast.error("Failed to delete project", {
+      toast.error(uiTranslate("shell.toast.failedToDeleteProject"), {
         description: err instanceof Error ? err.message : undefined,
       });
     }

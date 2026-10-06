@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import type { HfSortKey } from "@/features/hub/hooks/use-hub-model-search";
 import {
   NewReleasesIcon,
@@ -51,9 +52,9 @@ export const CHANNEL_PRESETS: readonly ChannelPreset[] = [
   },
   {
     id: "unsloth-safetensors",
-    label: "Fine-tune ready",
+    get label() { return uiTranslate("ui.fine_tune_ready"); },
     icon: SlidersHorizontalIcon,
-    hint: "Checkpoints ready to fine-tune.",
+    get hint() { return uiTranslate("ui.checkpoints_ready_to_fine_tune"); },
     owner: "unsloth",
     format: "checkpoint",
     sort: "lastModified",

@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 /**
  * Sparta Agent - ProjectLanding Component
  * Vista de aterrizaje para proyectos de chat (Landing con pestañas de chats y fuentes).
@@ -123,6 +125,8 @@ export function ProjectLanding({
   projectName: string;
   items: SidebarItem[];
 }): ReactElement {
+  const uiT = useUiT();
+
   const t = useT();
   const navigate = useNavigate();
   const { projects: projectRecords } = useChatProjects();
@@ -185,7 +189,7 @@ export function ProjectLanding({
       }
     } catch (error) {
       if (!isDownloadCancelled(error)) {
-        toast.error("Export failed.");
+        toast.error(uiTranslate("chat.menu.exportFailed"));
       }
     }
   }
@@ -199,7 +203,7 @@ export function ProjectLanding({
     try {
       await renameChatProject(projectId, name);
     } catch (err) {
-      toast.error("Failed to rename project", {
+      toast.error(uiTranslate("shell.toast.failedToRenameProject"), {
         description: err instanceof Error ? err.message : undefined,
       });
     }
@@ -215,7 +219,7 @@ export function ProjectLanding({
       useChatRuntimeStore.getState().setActiveProjectId(null);
       navigate({ to: "/chat", search: { new: createThreadNonce() } });
     } catch (err) {
-      toast.error("Failed to delete project", {
+      toast.error(uiTranslate("shell.toast.failedToDeleteProject"), {
         description: err instanceof Error ? err.message : undefined,
       });
     }
@@ -260,7 +264,7 @@ export function ProjectLanding({
         await renameChatItem(item, trimmed);
       } catch (err) {
         setPendingRename(null);
-        toast.error("Failed to rename chat", {
+        toast.error(uiTranslate("shell.toast.failedToRenameChat"), {
           description: err instanceof Error ? err.message : undefined,
         });
       }
@@ -298,7 +302,7 @@ export function ProjectLanding({
       try {
         await archiveChatItem(item, activeThreadId ?? undefined, noopView);
       } catch (err) {
-        toast.error("Failed to archive chat", {
+        toast.error(uiTranslate("shell.toast.failedToArchiveChat"), {
           description: err instanceof Error ? err.message : undefined,
         });
       }
@@ -313,7 +317,7 @@ export function ProjectLanding({
           deleteFiles,
         });
       } catch (err) {
-        toast.error("Failed to delete chat", {
+        toast.error(uiTranslate("shell.toast.failedToDeleteChat"), {
           description: err instanceof Error ? err.message : undefined,
         });
       }
@@ -339,7 +343,7 @@ export function ProjectLanding({
       try {
         await moveChatItemToProject(item, targetId);
       } catch (err) {
-        toast.error("Failed to move chat", {
+        toast.error(uiTranslate("shell.toast.failedToMoveChat"), {
           description: err instanceof Error ? err.message : undefined,
         });
       }
@@ -353,7 +357,7 @@ export function ProjectLanding({
         await exportProjectChatItem(item, format);
       } catch (error) {
         if (!isDownloadCancelled(error)) {
-          toast.error("Export failed.");
+          toast.error(uiTranslate("chat.menu.exportFailed"));
         }
       }
     },
@@ -365,7 +369,7 @@ export function ProjectLanding({
       try {
         await saveProjectChatItemAsSource(item, projectId);
       } catch {
-        toast.error("Failed to save to project sources.");
+        toast.error(uiTranslate("chat.menu.saveToProjectSourcesFailed"));
       }
     },
     [projectId],
@@ -592,7 +596,7 @@ export function ProjectLanding({
 
             <ProjectComposer
               disabled={Boolean(pendingNewThreadId)}
-              placeholder={`New chat in ${projectName}`}
+              placeholder={uiT("ui.new_chat_in_value0", { value0: String(projectName) })}
             />
 
             <div className="mt-9 flex items-center gap-2">
@@ -618,8 +622,7 @@ export function ProjectLanding({
               <Suspense
                 fallback={
                   <div className="mt-8 rounded-[26px] bg-muted/30 px-6 py-10 text-center text-sm text-muted-foreground">
-                    Loading sources…
-                  </div>
+                    {uiT("ui.loading_sources")}</div>
                 }
               >
                 <ProjectSourcesPanel projectId={projectId} />
@@ -675,7 +678,7 @@ export function ProjectLanding({
                             }}
                             onFocus={(event) => event.currentTarget.select()}
                             maxLength={120}
-                            aria-label="Rename chat"
+                            aria-label={uiT("shell.dialog.renameChat.title")}
                             className="w-full border-0 bg-transparent text-ui-15 font-semibold leading-5 text-foreground outline-none"
                           />
                         </div>
@@ -715,7 +718,7 @@ export function ProjectLanding({
                           <button
                             type="button"
                             onClick={(event) => event.stopPropagation()}
-                            aria-label="Chat options"
+                            aria-label={uiT("chat.menu.options")}
                             className="absolute right-3 top-1/2 inline-flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-muted-foreground outline-none transition-opacity hover:bg-foreground/10 md:pointer-fine:opacity-0 md:pointer-fine:pointer-events-none focus-visible:opacity-100 focus-visible:pointer-events-auto group-hover:opacity-100 group-hover:pointer-events-auto data-[state=open]:opacity-100 data-[state=open]:pointer-events-auto"
                           >
                             <HugeiconsIcon
@@ -737,7 +740,7 @@ export function ProjectLanding({
                               strokeWidth={1.75}
                               className="size-icon"
                             />
-                            <span>Rename</span>
+                            <span>{uiT("chat.menu.rename")}</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onSelect={() => togglePinnedChat(item.id)}
@@ -753,8 +756,8 @@ export function ProjectLanding({
                             />
                             <span>
                               {pinnedChatIdSet.has(item.id)
-                                ? "Unpin chat"
-                                : "Pin chat"}
+                                ? uiT("chat.menu.unpin")
+                                : uiT("chat.menu.pin")}
                             </span>
                           </DropdownMenuItem>
                           <DropdownMenuSub>
@@ -764,7 +767,7 @@ export function ProjectLanding({
                                 strokeWidth={1.75}
                                 className="size-icon"
                               />
-                              <span>Move to project</span>
+                              <span>{uiT("chat.menu.moveToProject")}</span>
                             </DropdownMenuSubTrigger>
                             <DropdownMenuSubContent className="unsloth-plus-menu w-52">
                               <DropdownMenuItem
@@ -773,7 +776,7 @@ export function ProjectLanding({
                                   void handleMoveToProject(item, null)
                                 }
                               >
-                                <span>Recents</span>
+                                <span>{uiT("chat.composer.recents")}</span>
                               </DropdownMenuItem>
                               {projects.map((p) => (
                                 <DropdownMenuItem
@@ -800,7 +803,7 @@ export function ProjectLanding({
                                 strokeWidth={1.75}
                                 className="size-icon"
                               />
-                              <span>Export</span>
+                              <span>{uiT("tour.export.ctaTitle")}</span>
                             </DropdownMenuSubTrigger>
                             <DropdownMenuSubContent className="unsloth-plus-menu w-52">
                               {PROJECT_CHAT_EXPORT_OPTIONS.map(
@@ -869,11 +872,9 @@ export function ProjectLanding({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete chat</AlertDialogTitle>
+            <AlertDialogTitle>{uiT("shell.dialog.deleteChat.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              This permanently deletes "{confirmingDelete?.title}". This cannot
-              be undone.
-            </AlertDialogDescription>
+              {uiT("ui.this_permanently_deletes")}{confirmingDelete?.title}{uiT("ui.this_cannot_be_undone")}</AlertDialogDescription>
           </AlertDialogHeader>
           <DeleteChatFilesSwitch
             id="chat-landing-delete-files"
@@ -881,7 +882,7 @@ export function ProjectLanding({
             onCheckedChange={setDeleteFilesOnDelete}
           />
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{uiT("chat.workspace.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 const target = confirmingDelete;
@@ -892,8 +893,7 @@ export function ProjectLanding({
                 }
               }}
             >
-              Delete
-            </AlertDialogAction>
+              {uiT("chat.menu.delete")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -930,8 +930,7 @@ export function ProjectLanding({
               variant="ghost"
               onClick={() => setRenamingProject(false)}
             >
-              Cancel
-            </Button>
+              {uiT("chat.workspace.cancel")}</Button>
             <Button
               type="button"
               onClick={() => void commitProjectRename()}
@@ -940,8 +939,7 @@ export function ProjectLanding({
                 projectNameDraft.trim() === projectName
               }
             >
-              Save
-            </Button>
+              {uiT("chat.actions.save")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -961,10 +959,9 @@ export function ProjectLanding({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{uiT("chat.workspace.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={() => void commitProjectDelete()}>
-              Delete
-            </AlertDialogAction>
+              {uiT("chat.menu.delete")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

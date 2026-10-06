@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { ChevronDown, CircleAlert, Hand, ShieldCheck } from "lucide-react";
 import type { ComponentType } from "react";
 import { useState } from "react";
@@ -44,28 +46,26 @@ export const PERMISSION_MODE_OPTIONS: readonly {
 }[] = [
   {
     value: "ask",
-    label: "Ask for approval",
-    description: "Always ask before tool calls edit files or use the internet",
+    get label() { return uiTranslate("chat.composer.permissions.ask.label"); },
+    get description() { return uiTranslate("chat.composer.permissions.ask.description"); },
     icon: Hand,
   },
   {
     value: "auto",
-    label: "Approve for me",
-    description:
-      "Run tool calls, but ask before high-risk actions like credential access, privilege escalation, or destructive commands",
+    get label() { return uiTranslate("chat.composer.permissions.auto.label"); },
+    get description() { return uiTranslate("chat.composer.permissions.auto.description"); },
     icon: ShieldCheck,
   },
   {
     value: "off",
-    label: "Run automatically",
-    description: "Run tool calls without approval prompts inside the sandbox",
+    get label() { return uiTranslate("chat.composer.permissions.off.label"); },
+    get description() { return uiTranslate("chat.composer.permissions.off.description"); },
     icon: SparklesGlyph,
   },
   {
     value: "full",
-    label: "Full access",
-    description:
-      "Unrestricted: no approval prompts and the code sandbox is disabled",
+    get label() { return uiTranslate("chat.composer.permissions.full.label"); },
+    get description() { return uiTranslate("chat.composer.permissions.full.description"); },
     icon: CircleAlert,
   },
 ] as const;
@@ -223,6 +223,8 @@ export function PermissionModeDropdown({
   align?: "start" | "end";
   triggerClassName?: string;
 } = {}) {
+  const uiT = useUiT();
+
   const t = useT();
   const permissionMode = useChatRuntimeStore((s) => s.permissionMode);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -244,7 +246,7 @@ export function PermissionModeDropdown({
               permissionMode === "full" &&
                 "text-bypass hover:text-bypass border-bypass/50",
             )}
-            aria-label="Permission level for tool calls"
+            aria-label={uiT("ui.permission_level_for_tool_calls")}
           >
             <ActiveIcon className="size-3.5 shrink-0" strokeWidth={2} />
             <span className="min-w-0 flex-1 truncate text-left">
@@ -290,6 +292,8 @@ export function PermissionModeComposerPill({
 }: {
   side?: "top" | "bottom";
 } = {}) {
+  const uiT = useUiT();
+
   const t = useT();
   const permissionMode = useChatRuntimeStore((s) => s.permissionMode);
   const setBypassConfirmOpen = useChatRuntimeStore(
@@ -310,7 +314,7 @@ export function PermissionModeComposerPill({
           data-pill-label={active.label}
           data-active={fullAccess ? "true" : "false"}
           data-variant={fullAccess ? "danger" : undefined}
-          aria-label="Permission level for tool calls"
+          aria-label={uiT("ui.permission_level_for_tool_calls")}
           title={`${active.label}: ${active.description}`}
         >
           <span className="composer-pill-glyph">

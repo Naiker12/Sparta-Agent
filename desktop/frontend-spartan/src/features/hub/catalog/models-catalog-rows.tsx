@@ -1,3 +1,5 @@
+import { UiText } from "@/i18n/ui-text";
+import { useT as useUiT } from "@/i18n";
 import {
   Tooltip,
   TooltipContent,
@@ -380,30 +382,26 @@ export function buildRowStatusTooltip({
   if (isGguf) {
     lines.push(
       <TooltipLegendRow key="gguf" toneClass="bg-format-gguf">
-        GGUF format.
-      </TooltipLegendRow>,
+        <UiText messageKey="ui.gguf_format" /></TooltipLegendRow>,
     );
   }
   if (isAdapter) {
     lines.push(
       <TooltipLegendRow key="adapter" toneClass="bg-format-adapter">
-        Adapter format.
-      </TooltipLegendRow>,
+        <UiText messageKey="ui.adapter_format" /></TooltipLegendRow>,
     );
   }
 
   if (partialRepoId) {
     lines.push(
       <TooltipLegendRow key="partial" toneClass="bg-status-warning">
-        Partial download of <span className="font-medium">{partialRepoId}</span>
-        . Open it to finish the download.
-      </TooltipLegendRow>,
+        <UiText messageKey="ui.partial_download_of" /><span className="font-medium">{partialRepoId}</span>
+        <UiText messageKey="ui.open_it_to_finish_the_download" /></TooltipLegendRow>,
     );
   } else if (isAvailableOnDevice) {
     lines.push(
       <TooltipLegendRow key="success" toneClass="bg-status-success">
-        On device. Ready to use locally.
-      </TooltipLegendRow>,
+        <UiText messageKey="ui.on_device_ready_to_use_locally" /></TooltipLegendRow>,
     );
   }
 
@@ -411,16 +409,14 @@ export function buildRowStatusTooltip({
     lines.push(
       <TooltipLegendRow key="danger" toneClass="bg-status-danger">
         <span className="block">
-          This {resourceLabel} may not be supported yet.
-        </span>
+          <UiText messageKey="ui.this" />{resourceLabel} <UiText messageKey="ui.may_not_be_supported_yet" /></span>
         {unsupportedReason && (
           <span className="mt-0.5 block text-white/75">
             {unsupportedReason}
           </span>
         )}
         <span className="mt-0.5 block text-white/75">
-          Still downloadable to your Hugging Face cache.
-        </span>
+          <UiText messageKey="ui.still_downloadable_to_your_hugging_face_cache" /></span>
       </TooltipLegendRow>,
     );
   }
@@ -446,6 +442,8 @@ export const DiscoverModelRow = memo(function DiscoverModelRow({
   isDataset: boolean;
   onSelect: (id: string) => void;
 }) {
+  const uiT = useUiT();
+
   const support = useMemo(
     () =>
       isDataset
@@ -510,13 +508,13 @@ export const DiscoverModelRow = memo(function DiscoverModelRow({
                 />
               )}
               {unsupported && (
-                <StatusDot tone="danger" label="May not be supported yet" />
+                <StatusDot tone="danger" label={uiT("ui.may_not_be_supported_yet_")} />
               )}
               {row.isAvailableOnDevice && row.isPartialOnDevice && (
-                <StatusDot tone="warning" label="Partial download" />
+                <StatusDot tone="warning" label={uiT("ui.partial_download")} />
               )}
               {row.isAvailableOnDevice && !row.isPartialOnDevice && (
-                <StatusDot tone="success" label="On device" />
+                <StatusDot tone="success" label={uiT("hub.gguf.status.onDevice")} />
               )}
             </div>
             <div className="flex shrink-0 items-center gap-2.5">
@@ -535,7 +533,7 @@ export const DiscoverModelRow = memo(function DiscoverModelRow({
               <span className="truncate">{row.owner}</span>
               {row.owner.toLowerCase() === "unsloth" && (
                 <span
-                  aria-label="Verified Unsloth"
+                  aria-label={uiT("ui.legacy_verified_unsloth")}
                   className="hub-verified-badge size-3.5 shrink-0 text-verified"
                 />
               )}
@@ -605,6 +603,8 @@ export const InventoryRow = memo(function InventoryRow({
   /** Open this model's settings page. Omitted for datasets. */
   onOpenSettings?: (row: CachedInventoryRow | LocalInventoryRow) => void;
 }) {
+  const uiT = useUiT();
+
   const rowModelId =
     row.kind === "cache"
       ? row.repoId
@@ -709,17 +709,17 @@ export const InventoryRow = memo(function InventoryRow({
       {row.modelFormat === "adapter" && (
         <span
           role="img"
-          aria-label="Adapter"
+          aria-label={uiT("ui.adapter")}
           className="inline-block size-[5px] shrink-0 rounded-full bg-format-adapter"
         />
       )}
       {partialRepoId ? (
-        <StatusDot tone="warning" label="Partial download" />
+        <StatusDot tone="warning" label={uiT("ui.partial_download")} />
       ) : (
-        <StatusDot tone="success" label="On device" />
+        <StatusDot tone="success" label={uiT("hub.gguf.status.onDevice")} />
       )}
       {unsupported && (
-        <StatusDot tone="danger" label="May not be supported yet" />
+        <StatusDot tone="danger" label={uiT("ui.may_not_be_supported_yet_")} />
       )}
     </>
   );
@@ -729,9 +729,9 @@ export const InventoryRow = memo(function InventoryRow({
   const compactMarkers =
     partialRepoId || unsupported ? (
       <span className="flex shrink-0 items-center gap-1">
-        {partialRepoId && <StatusDot tone="warning" label="Partial download" />}
+        {partialRepoId && <StatusDot tone="warning" label={uiT("ui.partial_download")} />}
         {unsupported && (
-          <StatusDot tone="danger" label="May not be supported yet" />
+          <StatusDot tone="danger" label={uiT("ui.may_not_be_supported_yet_")} />
         )}
       </span>
     ) : null;
@@ -741,7 +741,7 @@ export const InventoryRow = memo(function InventoryRow({
       <span className="truncate">{subLabel}</span>
       {subLabel.toLowerCase() === "unsloth" && (
         <span
-          aria-label="Verified Unsloth"
+          aria-label={uiT("ui.legacy_verified_unsloth")}
           className="hub-verified-badge size-3.5 shrink-0 text-verified"
         />
       )}
@@ -792,18 +792,17 @@ export const InventoryRow = memo(function InventoryRow({
                 impact: isDataset ? undefined : { repoId: deletableRepoId },
                 description: (
                   <>
-                    This will remove{" "}
+                    {uiT("ui.this_will_remove")}{" "}
                     <span className="font-medium text-foreground">
                       {deletableRepoId}
                     </span>{" "}
                     {isDataset
-                      ? "and its downloaded files"
+                      ? uiT("ui.and_its_downloaded_files")
                       : row.isGguf
-                        ? "and all of its downloaded quantizations"
-                        : "and all of its downloaded files"}
+                        ? uiT("ui.and_all_of_its_downloaded_quantizations")
+                        : uiT("ui.and_all_of_its_downloaded_files")}
                     {row.kind === "cache" ? ` (${formatBytes(row.bytes)})` : ""}{" "}
-                    from disk. You can re-download it later.
-                  </>
+                    {uiT("ui.from_disk_you_can_re_download_it_later")}</>
                 ),
                 successMessage: `Deleted ${deletableRepoId}`,
                 onConfirm: async () => {
@@ -884,7 +883,7 @@ export const InventoryRow = memo(function InventoryRow({
                 <span className="truncate">{subLabel}</span>
                 {subLabel.toLowerCase() === "unsloth" && (
                   <span
-                    aria-label="Verified Unsloth"
+                    aria-label={uiT("ui.legacy_verified_unsloth")}
                     className="hub-verified-badge size-3 shrink-0 text-verified"
                   />
                 )}

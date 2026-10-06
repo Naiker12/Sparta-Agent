@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   Tooltip,
   TooltipContent,
@@ -16,6 +17,8 @@ export function ModelLoadSettingsAction({
   onConfigure: () => void;
   className?: string;
 }) {
+  const uiT = useUiT();
+
   return (
     <Tooltip delayDuration={0}>
       <TooltipTrigger asChild={true}>
@@ -42,8 +45,7 @@ export function ModelLoadSettingsAction({
         </button>
       </TooltipTrigger>
       <TooltipContent side="top" className="tooltip-compact">
-        Configure run settings before loading model
-      </TooltipContent>
+        {uiT("ui.configure_run_settings_before_loading_model")}</TooltipContent>
     </Tooltip>
   );
 }

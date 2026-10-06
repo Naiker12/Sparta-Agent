@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -73,6 +75,8 @@ export function OnDeviceFoldersDialog({
   onOpenChange: (open: boolean) => void;
   onInventoryChange?: () => void;
 }) {
+  const uiT = useUiT();
+
   const [folders, setFolders] = useState<ScanFolderInfo[]>([]);
   const [path, setPath] = useState("");
   const [browserOpen, setBrowserOpen] = useState(false);
@@ -167,11 +171,11 @@ export function OnDeviceFoldersDialog({
     try {
       const settings = await updateHuggingFaceCacheSettings(nextPath);
       setDownloadCache(settings);
-      toast.success("Download location updated", {
+      toast.success(uiTranslate("ui.download_location_updated"), {
         description: settings.cacheHome,
       });
     } catch (err) {
-      toast.error("Couldn't update the download location", {
+      toast.error(uiTranslate("ui.couldn_t_update_the_download_location"), {
         description: formatError(err),
       });
     } finally {
@@ -190,7 +194,7 @@ export function OnDeviceFoldersDialog({
         await saveDownloadLocation(picked);
       }
     } catch (err) {
-      toast.error("Couldn't open the folder picker", {
+      toast.error(uiTranslate("settings.resources.storage.cachePickerError"), {
         description: formatError(err),
       });
     }
@@ -214,14 +218,14 @@ export function OnDeviceFoldersDialog({
           );
           return [...withoutDuplicate, folder];
         });
-        toast.success("Location added", {
+        toast.success(uiTranslate("ui.location_added"), {
           description: pathTail(folder.path),
         });
         handleInventoryChanged();
       } catch (err) {
         const message = formatError(err);
         setError(message);
-        toast.error("Couldn't add location", { description: message });
+        toast.error(uiTranslate("ui.couldn_t_add_location"), { description: message });
       } finally {
         setPending(null);
       }
@@ -235,7 +239,7 @@ export function OnDeviceFoldersDialog({
     try {
       await openModelsDir(folder.path);
     } catch (err) {
-      toast.error("Couldn't open location", { description: formatError(err) });
+      toast.error(uiTranslate("ui.couldn_t_open_location"), { description: formatError(err) });
     }
   }, []);
 
@@ -251,14 +255,14 @@ export function OnDeviceFoldersDialog({
         await removeScanFolder(folder.id);
         mutationVersionRef.current += 1;
         setFolders((current) => current.filter((row) => row.id !== folder.id));
-        toast.success("Location removed", {
+        toast.success(uiTranslate("ui.location_removed"), {
           description: pathTail(folder.path),
         });
         handleInventoryChanged();
       } catch (err) {
         const message = formatError(err);
         setError(message);
-        toast.error("Couldn't remove location", { description: message });
+        toast.error(uiTranslate("ui.couldn_t_remove_location"), { description: message });
       } finally {
         setPending(null);
       }
@@ -275,12 +279,9 @@ export function OnDeviceFoldersDialog({
         >
           <DialogHeader className="shrink-0 border-b border-border/60 px-5 py-4">
             <DialogTitle className="text-ui-15">
-              On-device locations
-            </DialogTitle>
+              {uiT("ui.on_device_locations")}</DialogTitle>
             <DialogDescription className="sr-only">
-              Hugging Face model folders, GGUF files, and adapters are indexed
-              here.
-            </DialogDescription>
+              {uiT("ui.hugging_face_model_folders_gguf_files_and_adapters_are_indexed_he")}</DialogDescription>
           </DialogHeader>
 
           <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
@@ -291,13 +292,12 @@ export function OnDeviceFoldersDialog({
                   strokeWidth={1.75}
                   className="size-3.5 text-muted-foreground"
                 />
-                Download location
-              </div>
+                {uiT("ui.download_location")}</div>
 
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <Input
                   readOnly={true}
-                  aria-label="Model download location"
+                  aria-label={uiT("ui.model_download_location")}
                   value={
                     downloadCache?.cacheHome ??
                     (downloadCacheLoaded ? "Unknown" : "Loading...")
@@ -324,8 +324,7 @@ export function OnDeviceFoldersDialog({
                         className="size-3.5"
                       />
                     )}
-                    Change
-                  </Button>
+                    {uiT("settings.resources.storage.changeAction")}</Button>
                   {downloadCache?.isCustom ? (
                     <Button
                       type="button"
@@ -335,8 +334,7 @@ export function OnDeviceFoldersDialog({
                       disabled={downloadSaving}
                       className="h-9 rounded-full px-3 text-ui-12p5 text-muted-foreground"
                     >
-                      Use default
-                    </Button>
+                      {uiT("settings.resources.storage.resetAction")}</Button>
                   ) : null}
                 </div>
               </div>
@@ -362,8 +360,7 @@ export function OnDeviceFoldersDialog({
                   strokeWidth={1.75}
                   className="size-3.5 text-muted-foreground"
                 />
-                Add location
-              </div>
+                {uiT("ui.add_location")}</div>
 
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div className="relative min-w-0 flex-1">
@@ -382,7 +379,7 @@ export function OnDeviceFoldersDialog({
                       event.preventDefault();
                       void handleAdd(path);
                     }}
-                    placeholder="Paste model folder or file path"
+                    placeholder={uiT("ui.paste_model_folder_or_file_path")}
                     className="field-soft h-9 rounded-full pl-9 pr-3 font-mono text-ui-12 placeholder:font-sans"
                   />
                 </div>
@@ -394,7 +391,7 @@ export function OnDeviceFoldersDialog({
                         variant="outline"
                         size="icon-sm"
                         onClick={() => setBrowserOpen(true)}
-                        aria-label="Browse locations"
+                        aria-label={uiT("ui.browse_locations")}
                         className="size-9 rounded-full"
                       >
                         <HugeiconsIcon
@@ -405,8 +402,7 @@ export function OnDeviceFoldersDialog({
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="tooltip-compact">
-                      Browse
-                    </TooltipContent>
+                      {uiT("studio.wizard.sourceBrowse")}</TooltipContent>
                   </Tooltip>
                   <Button
                     type="button"
@@ -425,8 +421,7 @@ export function OnDeviceFoldersDialog({
                         className="size-3.5"
                       />
                     )}
-                    Add
-                  </Button>
+                    {uiT("ui.add")}</Button>
                 </div>
               </div>
             </div>
@@ -440,13 +435,12 @@ export function OnDeviceFoldersDialog({
             <div className="overflow-hidden rounded-[14px] border border-border/70">
               <div className="flex h-10 items-center justify-between border-b border-border/60 px-3">
                 <span className="text-ui-12 font-medium text-foreground">
-                  Indexed locations
-                </span>
+                  {uiT("ui.indexed_locations")}</span>
                 <Tooltip>
                   <TooltipTrigger asChild={true}>
                     <button
                       type="button"
-                      aria-label="Refresh locations"
+                      aria-label={uiT("ui.refresh_locations")}
                       onClick={refreshFolders}
                       disabled={loading}
                       className="inline-flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
@@ -459,8 +453,7 @@ export function OnDeviceFoldersDialog({
                     </button>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="tooltip-compact">
-                    Refresh
-                  </TooltipContent>
+                    {uiT("chat.actions.refresh")}</TooltipContent>
                 </Tooltip>
               </div>
 
@@ -468,8 +461,7 @@ export function OnDeviceFoldersDialog({
                 {loading ? (
                   <div className="flex h-24 items-center justify-center gap-2 text-ui-12 text-muted-foreground">
                     <Spinner className="size-3.5" />
-                    Loading locations...
-                  </div>
+                    {uiT("ui.loading_locations")}</div>
                 ) : sortedFolders.length === 0 ? (
                   <div className="flex h-28 flex-col items-center justify-center gap-2 px-4 text-center text-ui-12 text-muted-foreground">
                     <HugeiconsIcon
@@ -477,8 +469,7 @@ export function OnDeviceFoldersDialog({
                       strokeWidth={1.75}
                       className="size-5 text-muted-foreground/60"
                     />
-                    No custom locations
-                  </div>
+                    {uiT("ui.no_custom_locations")}</div>
                 ) : (
                   sortedFolders.map((folder) => {
                     const removing = pending === `remove:${folder.id}`;
@@ -534,7 +525,7 @@ export function OnDeviceFoldersDialog({
                             <TooltipTrigger asChild={true}>
                               <button
                                 type="button"
-                                aria-label={`Open ${folder.path}`}
+                                aria-label={uiT("ui.open_value0", { value0: String(folder.path) })}
                                 onClick={() => void handleOpen(folder)}
                                 className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                               >
@@ -549,15 +540,14 @@ export function OnDeviceFoldersDialog({
                               side="left"
                               className="tooltip-compact"
                             >
-                              Open in file manager
-                            </TooltipContent>
+                              {uiT("ui.open_in_file_manager")}</TooltipContent>
                           </Tooltip>
                         ) : null}
                         <Tooltip>
                           <TooltipTrigger asChild={true}>
                             <button
                               type="button"
-                              aria-label={`Remove ${folder.path}`}
+                              aria-label={uiT("ui.remove_value0", { value0: String(folder.path) })}
                               onClick={() => void handleRemove(folder)}
                               disabled={pending !== null}
                               className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
@@ -577,8 +567,7 @@ export function OnDeviceFoldersDialog({
                             side="left"
                             className="tooltip-compact"
                           >
-                            Remove from list
-                          </TooltipContent>
+                            {uiT("ui.remove_from_list")}</TooltipContent>
                         </Tooltip>
                       </div>
                     );
@@ -601,7 +590,7 @@ export function OnDeviceFoldersDialog({
         onOpenChange={setDownloadBrowserOpen}
         onSelect={(selectedPath) => void saveDownloadLocation(selectedPath)}
         initialPath={downloadCache?.cacheHome}
-        title="Choose model download location"
+        title={uiT("settings.resources.storage.chooseTitle")}
         confirmLabel="Use for future downloads"
         showModelHints={false}
       />

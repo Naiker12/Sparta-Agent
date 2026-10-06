@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -102,6 +104,8 @@ function McpServerCard({
   ) => void;
   onRemoveProviderEnv: (index: number, envIndex: number) => void;
 }): ReactElement {
+  const uiT = useUiT();
+
   const args = provider.args && provider.args.length > 0 ? provider.args : [""];
   const envVars =
     provider.env && provider.env.length > 0
@@ -177,7 +181,7 @@ function McpServerCard({
 
           <div className="grid gap-1.5">
             <FieldLabel
-              label="Server name"
+              label={uiT("ui.server_name")}
               hint="Name shown in this tool access setup."
             />
             <Input
@@ -200,8 +204,8 @@ function McpServerCard({
             }
           >
             <TabsList className="w-full">
-              <TabsTrigger value="stdio">Local command</TabsTrigger>
-              <TabsTrigger value="streamable_http">HTTP endpoint</TabsTrigger>
+              <TabsTrigger value="stdio">{uiT("ui.local_command")}</TabsTrigger>
+              <TabsTrigger value="streamable_http">{uiT("ui.http_endpoint")}</TabsTrigger>
             </TabsList>
           </Tabs>
 
@@ -209,7 +213,7 @@ function McpServerCard({
             <div className="space-y-4">
               <div className="grid gap-1.5">
                 <FieldLabel
-                  label="Command"
+                  label={uiT("ui.command_")}
                   hint="Command used to start the tool server."
                 />
                 <Input
@@ -225,7 +229,7 @@ function McpServerCard({
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <FieldLabel
-                    label="Arguments"
+                    label={uiT("ui.arguments")}
                     hint="Optional command arguments."
                   />
                   <Button
@@ -235,8 +239,7 @@ function McpServerCard({
                     onClick={() => onAddProviderArg(index)}
                   >
                     <HugeiconsIcon icon={PlusSignIcon} className="size-3.5" />
-                    Add arg
-                  </Button>
+                    {uiT("ui.add_arg")}</Button>
                 </div>
                 {args.map((arg, argIndex) => (
                   <div
@@ -246,7 +249,7 @@ function McpServerCard({
                     <Input
                       className="nodrag"
                       value={arg}
-                      placeholder={argIndex === 0 ? "-y" : "argument"}
+                      placeholder={argIndex === 0 ? "-y" : uiT("ui.argument")}
                       onChange={(event) =>
                         onUpdateProviderArg(index, argIndex, event.target.value)
                       }
@@ -266,7 +269,7 @@ function McpServerCard({
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-3">
                   <FieldLabel
-                    label="Environment variables"
+                    label={uiT("ui.environment_variables")}
                     hint="Optional values passed to the tool server."
                   />
                   <Button
@@ -276,8 +279,7 @@ function McpServerCard({
                     onClick={() => onAddProviderEnv(index)}
                   >
                     <HugeiconsIcon icon={PlusSignIcon} className="size-3.5" />
-                    Add env
-                  </Button>
+                    {uiT("ui.add_env")}</Button>
                 </div>
                 {envVars.map((item, envIndex) => (
                   <div
@@ -297,7 +299,7 @@ function McpServerCard({
                     <Input
                       className="nodrag"
                       value={item.value}
-                      placeholder="value"
+                      placeholder={uiT("ui.value_")}
                       onChange={(event) =>
                         onUpdateProviderEnv(index, envIndex, {
                           value: event.target.value,
@@ -319,7 +321,7 @@ function McpServerCard({
           ) : (
             <div className="space-y-4">
               <div className="grid gap-1.5">
-                <FieldLabel label="Endpoint" hint="URL for the tool server." />
+                <FieldLabel label={uiT("ui.endpoint")} hint="URL for the tool server." />
                 <Input
                   className="nodrag"
                   value={provider.endpoint ?? ""}
@@ -332,7 +334,7 @@ function McpServerCard({
               <div className="grid gap-2 sm:grid-cols-2">
                 <div className="grid gap-1.5">
                   <FieldLabel
-                    label="API key environment variable"
+                    label={uiT("ui.api_key_environment_variable")}
                     hint="Optional environment variable that stores the API key."
                   />
                   <Input
@@ -348,7 +350,7 @@ function McpServerCard({
                   />
                 </div>
                 <div className="grid gap-1.5">
-                  <FieldLabel label="API key" hint="Optional API key." />
+                  <FieldLabel label={uiT("chat.providersDialog.apiKey")} hint="Optional API key." />
                   <Input
                     className="nodrag"
                     value={provider.api_key ?? ""}
@@ -374,6 +376,8 @@ export function ToolProfileDialog({
   config,
   onUpdate,
 }: ToolProfileDialogProps): ReactElement {
+  const uiT = useUiT();
+
   const providers = config.mcp_providers;
   const [activeTab, setActiveTab] = useState<"profile" | "servers">(
     providers.length > 0 ? "profile" : "servers",
@@ -568,7 +572,7 @@ export function ToolProfileDialog({
     const readyProviders = providers.filter(isProviderReadyForToolFetch);
     if (readyProviders.length === 0) {
       toastError(
-        "No tool servers are ready",
+        uiTranslate("ui.no_tool_servers_are_ready"),
         "Add a server name plus a command or endpoint first.",
       );
       return;
@@ -610,7 +614,7 @@ export function ToolProfileDialog({
       setDuplicateTools(response.duplicate_tools ?? {});
     } catch (error) {
       toastError(
-        "Couldn't load tools",
+        uiTranslate("ui.couldn_t_load_tools"),
         error instanceof Error
           ? error.message
           : "We couldn't load the tools for these servers.",
@@ -650,13 +654,13 @@ export function ToolProfileDialog({
       className="w-full"
     >
       <TabsList className="w-full">
-        <TabsTrigger value="servers">1. Add servers</TabsTrigger>
-        <TabsTrigger value="profile">2. Choose tools</TabsTrigger>
+        <TabsTrigger value="servers">{uiT("ui.1_add_servers")}</TabsTrigger>
+        <TabsTrigger value="profile">{uiT("ui.2_choose_tools")}</TabsTrigger>
       </TabsList>
 
       <TabsContent value="profile" className="space-y-4 pt-3">
         <NameField
-          label="Tool access name"
+          label={uiT("ui.tool_access_name")}
           value={config.name}
           onChange={(value) => onUpdate({ name: value })}
         />
@@ -665,23 +669,17 @@ export function ToolProfileDialog({
           <>
             <div className="rounded-2xl border border-border/60 bg-muted/10 px-4 py-3">
               <p className="text-sm font-semibold text-foreground">
-                Pick which tools this setup may use
-              </p>
+                {uiT("ui.pick_which_tools_this_setup_may_use")}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                1. Load tool names from your servers. 2. Leave the list empty to
-                allow all tools, or add only the ones this step should use.
-              </p>
+                {uiT("ui.1_load_tool_names_from_your_servers_2_leave_the_list_empty_to_all")}</p>
             </div>
             <div className="space-y-3 rounded-2xl border border-border/60 bg-muted/10 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-semibold text-foreground">
-                    Available tools
-                  </p>
+                    {uiT("ui.available_tools")}</p>
                   <p className="text-xs text-muted-foreground">
-                    Load tool names so you can pick from a list instead of
-                    guessing.
-                  </p>
+                    {uiT("ui.load_tool_names_so_you_can_pick_from_a_list_instead_of_guessing")}</p>
                 </div>
                 <Button
                   type="button"
@@ -692,15 +690,14 @@ export function ToolProfileDialog({
                     void loadTools();
                   }}
                 >
-                  {loadingTools ? "Loading..." : "Load tools"}
+                  {loadingTools ? uiT("studio.history.loading") : uiT("ui.load_tools")}
                 </Button>
               </div>
 
               {Object.keys(toolsByProvider).length === 0 &&
                 Object.keys(providerErrors).length === 0 && (
                   <p className="text-xs text-muted-foreground">
-                    Load tools to browse what's available.
-                  </p>
+                    {uiT("ui.load_tools_to_browse_what_s_available")}</p>
                 )}
 
               {Object.entries(toolsByProvider).map(
@@ -733,7 +730,7 @@ export function ToolProfileDialog({
 
               {Object.entries(duplicateTools).length > 0 && (
                 <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
-                  Some tool names appear on more than one server:{" "}
+                  {uiT("ui.some_tool_names_appear_on_more_than_one_server")}{" "}
                   {Object.entries(duplicateTools)
                     .map(
                       ([toolName, providerList]) =>
@@ -746,7 +743,7 @@ export function ToolProfileDialog({
 
             <div className="grid gap-1.5">
               <FieldLabel
-                label="Tools this setup may use"
+                label={uiT("ui.tools_this_setup_may_use")}
                 hint="Leave this empty to allow every tool from these servers."
               />
               <ChipInput
@@ -766,14 +763,14 @@ export function ToolProfileDialog({
                     ),
                   })
                 }
-                placeholder="Type tool name and press Enter"
+                placeholder={uiT("ui.type_tool_name_and_press_enter")}
               />
             </div>
 
             <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
               <CollapsibleTrigger asChild={true}>
                 <CollapsibleSectionTriggerButton
-                  label="Tool-call limits"
+                  label={uiT("ui.tool_call_limits")}
                   open={advancedOpen}
                 />
               </CollapsibleTrigger>
@@ -781,7 +778,7 @@ export function ToolProfileDialog({
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="grid gap-1.5">
                     <FieldLabel
-                      label="Max tool-use turns"
+                      label={uiT("ui.max_tool_use_turns")}
                       hint="How many back-and-forth tool calls an AI step can make."
                     />
                     <Input
@@ -797,7 +794,7 @@ export function ToolProfileDialog({
                   </div>
                   <div className="grid gap-1.5">
                     <FieldLabel
-                      label="Timeout (seconds)"
+                      label={uiT("ui.timeout_seconds")}
                       hint="How long to wait when loading or calling tools."
                     />
                     <Input
@@ -818,16 +815,15 @@ export function ToolProfileDialog({
         ) : (
           <div className="space-y-3">
             <EmptyState
-              title="Add a server to start choosing tools"
-              description="Set up a server first, then come back here to choose which tools this step can use."
+              title={uiT("ui.add_a_server_to_start_choosing_tools")}
+              description={uiT("ui.set_up_a_server_first_then_come_back_here_to_choose_which_tools_t")}
             />
             <Button
               type="button"
               variant="outline"
               onClick={() => setActiveTab("servers")}
             >
-              Add servers first
-            </Button>
+              {uiT("ui.add_servers_first")}</Button>
           </div>
         )}
       </TabsContent>
@@ -835,16 +831,13 @@ export function ToolProfileDialog({
       <TabsContent value="servers" className="space-y-4 pt-3">
         <div className="rounded-2xl border border-border/60 bg-muted/10 px-4 py-3">
           <p className="text-sm font-semibold text-foreground">
-            Add one or more tool servers
-          </p>
+            {uiT("ui.add_one_or_more_tool_servers")}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            After your servers are ready, switch to Choose tools to load names
-            and decide which ones this setup should allow.
-          </p>
+            {uiT("ui.after_your_servers_are_ready_switch_to_choose_tools_to_load_names")}</p>
         </div>
         <div className="flex items-center justify-between gap-3">
           <FieldLabel
-            label="Tool servers"
+            label={uiT("ui.tool_servers")}
             hint="These servers belong to this tool access setup and can be reused by linked AI steps."
           />
           <Button
@@ -854,8 +847,7 @@ export function ToolProfileDialog({
             onClick={addProvider}
           >
             <HugeiconsIcon icon={PlusSignIcon} className="size-3.5" />
-            Add server
-          </Button>
+            {uiT("ui.add_server")}</Button>
         </div>
 
         {hasProviders ? (
@@ -897,8 +889,8 @@ export function ToolProfileDialog({
           </div>
         ) : (
           <EmptyState
-            title="No tool servers yet"
-            description="Add one or more servers here, then go back to Access to load and choose tools."
+            title={uiT("ui.no_tool_servers_yet")}
+            description={uiT("ui.add_one_or_more_servers_here_then_go_back_to_access_to_load_and_c")}
           />
         )}
       </TabsContent>

@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { authFetch } from "@/features/auth";
 import { hubTokenHeader } from "@/features/hub/lib/hub-token-header";
 import { useSettingsDialogStore } from "@/features/settings/stores/settings-dialog-store";
@@ -12,7 +13,7 @@ import {
 } from "@/features/settings/stores/voice-settings-store";
 import { withModelLoadNotice } from "@/lib/model-lifecycle-events";
 import type { DictationAdapter } from "@assistant-ui/react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { startDictationLevelMeter } from "./dictation-level";
 import { SttModelNotDownloadedError, sttRequestError } from "./stt-errors";
 // Re-exported so the one public entry point for dictation is unchanged.
@@ -117,7 +118,7 @@ export async function transcribeAudioBlob(
     const detail = body?.detail ?? `HTTP ${response.status}`;
     if (response.status === 501) {
       throw new Error(
-        "Speech-to-text is not available on this server. Run `unsloth studio update` to install it.",
+        uiTranslate("ui.speech_to_text_is_not_available_on_this_server_run_unsloth_studio"),
       );
     }
     throw sttRequestError(response.status, detail);
@@ -359,7 +360,7 @@ export class StudioModelDictationAdapter implements DictationAdapter {
 
   listen(): DictationAdapter.Session {
     if (!StudioModelDictationAdapter.isSupported()) {
-      throw new Error("Recording is not supported in this browser.");
+      throw new Error(uiTranslate("ui.recording_is_not_supported_in_this_browser"));
     }
     beginDictationSession();
 
@@ -444,7 +445,7 @@ export class StudioModelDictationAdapter implements DictationAdapter {
           : "A recorded segment could not be transcribed.";
       toast.error(message, {
         action: {
-          label: "Open Voice settings",
+          get label() { return uiTranslate("settings.voice.dictation.sttOpenVoiceSettings"); },
           onClick: () => useSettingsDialogStore.getState().openDialog("voice"),
         },
       });

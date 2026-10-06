@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -36,6 +38,8 @@ export function ChatTemplateEditorDialog({
   onSave,
   readOnly = false,
 }: ChatTemplateEditorDialogProps) {
+  const uiT = useUiT();
+
   const [draft, setDraft] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [validating, setValidating] = useState(false);
@@ -64,7 +68,7 @@ export function ChatTemplateEditorDialog({
       return;
     }
     if (overLimit) {
-      setError("Template exceeds the size limit.");
+      setError(uiTranslate("ui.template_exceeds_the_size_limit"));
       return;
     }
     setValidating(true);
@@ -84,7 +88,7 @@ export function ChatTemplateEditorDialog({
       handleClose();
     } catch {
       if (token === validationToken.current) {
-        setError("Could not validate the template.");
+        setError(uiTranslate("ui.could_not_validate_the_template"));
       }
     } finally {
       if (token === validationToken.current) {
@@ -107,12 +111,12 @@ export function ChatTemplateEditorDialog({
       <DialogContent className="corner-squircle dialog-soft-surface sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>
-            {readOnly ? "Chat Template" : "Edit Chat Template"}
+            {readOnly ? uiT("runSettings.chatTemplate") : uiT("ui.edit_chat_template")}
           </DialogTitle>
           <DialogDescription>
             {readOnly
-              ? "This is the model's chat template. This model's backend cannot take a custom one, so it is view only."
-              : "Override the model's chat template with custom Jinja. The change applies when the model loads. Saving an empty template or one that matches the default clears the override."}
+              ? uiT("ui.this_is_the_model_s_chat_template_this_model_s_backend_cannot_tak")
+              : uiT("ui.override_the_model_s_chat_template_with_custom_jinja_the_change_a")}
           </DialogDescription>
         </DialogHeader>
         <Textarea
@@ -128,7 +132,7 @@ export function ChatTemplateEditorDialog({
           className="min-h-[20rem] max-h-[50dvh] overflow-y-auto border-0 font-mono text-xs leading-5 corner-squircle focus-visible:ring-0"
           rows={14}
           spellCheck={false}
-          placeholder={defaultLoading ? "Loading model default..." : ""}
+          placeholder={defaultLoading ? uiT("ui.loading_model_default") : ""}
         />
         {readOnly ? null : (
           <div className="flex items-center justify-between gap-3 px-0.5 text-ui-11">
@@ -149,8 +153,7 @@ export function ChatTemplateEditorDialog({
           {readOnly ? (
             <div className="flex w-full justify-end">
               <Button type="button" onClick={handleClose}>
-                Close
-              </Button>
+                {uiT("settings.about.shutDown")}</Button>
             </div>
           ) : (
             <>
@@ -166,19 +169,18 @@ export function ChatTemplateEditorDialog({
                 {defaultLoading ? (
                   <Spinner className="size-3.5" />
                 ) : (
-                  "Reset to default"
+                  uiT("settings.general.rag.resetAction")
                 )}
               </Button>
               <div className="flex gap-2">
                 <Button type="button" variant="ghost" onClick={handleClose}>
-                  Cancel
-                </Button>
+                  {uiT("chat.workspace.cancel")}</Button>
                 <Button
                   type="button"
                   onClick={handleSave}
                   disabled={validating || overLimit}
                 >
-                  {validating ? "Validating..." : "Save"}
+                  {validating ? uiT("ui.validating") : uiT("chat.actions.save")}
                 </Button>
               </div>
             </>

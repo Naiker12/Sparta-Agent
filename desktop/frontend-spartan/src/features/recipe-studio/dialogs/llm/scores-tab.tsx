@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -21,6 +22,8 @@ export function LlmScoresTab({
   config,
   onUpdate,
 }: LlmScoresTabProps): ReactElement {
+  const uiT = useUiT();
+
   const scores = config.scores ?? [];
 
   function updateScores(nextScores: Score[]): void {
@@ -95,27 +98,24 @@ export function LlmScoresTab({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <FieldLabel
-          label="Scorers"
+          label={uiT("ui.scorers")}
           hint="Rubrics used by LLM Judge to score each generated row."
         />
         {scores.length > 0 && (
           <Button type="button" size="xs" variant="outline" onClick={addScore}>
-            Add scorer
-          </Button>
+            {uiT("ui.add_scorer")}</Button>
         )}
       </div>
       {scores.length === 0 && (
         <Empty className="rounded-xl border border-dashed border-border/70 p-5">
           <EmptyHeader>
-            <EmptyTitle className="text-sm">No scorers yet</EmptyTitle>
+            <EmptyTitle className="text-sm">{uiT("ui.no_scorers_yet")}</EmptyTitle>
             <EmptyDescription className="text-xs">
-              Add a scorer rubric before running judge generation.
-            </EmptyDescription>
+              {uiT("ui.add_a_scorer_rubric_before_running_judge_generation")}</EmptyDescription>
           </EmptyHeader>
           <EmptyContent className="max-w-none">
             <Button type="button" size="sm" onClick={addScore}>
-              Add first scorer
-            </Button>
+              {uiT("ui.add_first_scorer")}</Button>
           </EmptyContent>
         </Empty>
       )}
@@ -134,12 +134,11 @@ export function LlmScoresTab({
               variant="ghost"
               onClick={() => removeScore(index)}
             >
-              Remove
-            </Button>
+              {uiT("settings.appearance.custom.importFont.remove")}</Button>
           </div>
           <Input
             className="nodrag h-8 text-xs"
-            placeholder="Score name"
+            placeholder={uiT("ui.score_name")}
             value={score.name}
             onChange={(event) =>
               updateScore(index, { name: event.target.value })
@@ -147,7 +146,7 @@ export function LlmScoresTab({
           />
           <Textarea
             className="corner-squircle nodrag min-h-[56px] text-xs"
-            placeholder="Score description"
+            placeholder={uiT("ui.score_description")}
             value={score.description}
             onChange={(event) =>
               updateScore(index, { description: event.target.value })
@@ -161,7 +160,7 @@ export function LlmScoresTab({
               >
                 <Input
                   className="nodrag h-7 text-xs"
-                  placeholder="Value"
+                  placeholder={uiT("ui.value")}
                   value={option.value}
                   onChange={(event) =>
                     updateOption(index, optionIndex, {
@@ -171,7 +170,7 @@ export function LlmScoresTab({
                 />
                 <Input
                   className="nodrag h-7 text-xs"
-                  placeholder="Description"
+                  placeholder={uiT("ui.description")}
                   value={option.description}
                   onChange={(event) =>
                     updateOption(index, optionIndex, {
@@ -195,8 +194,7 @@ export function LlmScoresTab({
               variant="outline"
               onClick={() => addOption(index)}
             >
-              Add option
-            </Button>
+              {uiT("ui.add_option")}</Button>
           </div>
         </div>
       ))}

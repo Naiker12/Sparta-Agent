@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Input } from "@/components/ui/input";
 import type { ReactElement } from "react";
 import type { SamplerConfig } from "../../types";
@@ -13,6 +14,8 @@ export function UuidDialog({
   config,
   onUpdate,
 }: UuidDialogProps): ReactElement {
+  const uiT = useUiT();
+
   const uuidId = `${config.id}-uuid-format`;
   const updateField = <K extends keyof SamplerConfig>(
     key: K,
@@ -28,7 +31,7 @@ export function UuidDialog({
       />
       <div className="grid gap-1.5">
         <FieldLabel
-          label="UUID format (optional)"
+          label={uiT("ui.uuid_format_optional")}
           htmlFor={uuidId}
           hint="Optional formatter e.g. prefix:, short, uppercase."
         />

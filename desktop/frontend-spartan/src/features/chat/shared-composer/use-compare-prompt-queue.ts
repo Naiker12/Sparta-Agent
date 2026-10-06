@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 /**
  * Sparta Agent – Compare Prompt Queue Hook
  *
@@ -52,7 +53,7 @@ export function useComparePromptQueue({
     const nextIndex = queueIndexRef.current + 1;
     if (nextIndex >= queueRef.current.length) {
       resetPromptQueue();
-      toast.success("Prompt queue complete");
+      toast.success(uiTranslate("ui.prompt_queue_complete"));
       return;
     }
     queueIndexRef.current = nextIndex;
@@ -105,8 +106,8 @@ export function useComparePromptQueue({
     }
     if (!compareStepSucceededRef.current) {
       resetPromptQueue();
-      toast.error("Prompt queue stopped", {
-        description: "A compare step failed; remaining prompts were not sent.",
+      toast.error(uiTranslate("ui.prompt_queue_stopped"), {
+        get description() { return uiTranslate("ui.a_compare_step_failed_remaining_prompts_were_not_sent"); },
       });
       return;
     }

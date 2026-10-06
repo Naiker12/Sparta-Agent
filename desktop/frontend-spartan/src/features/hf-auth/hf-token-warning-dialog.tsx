@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,6 +14,8 @@ import { AlertTriangle } from "lucide-react";
 import { useHfTokenWarningStore } from "./store";
 
 export function HfTokenWarningDialog() {
+  const uiT = useUiT();
+
   const open = useHfTokenWarningStore((state) => state.open);
   const allowAnonymous = useHfTokenWarningStore(
     (state) => state.allowAnonymous,
@@ -35,28 +38,25 @@ export function HfTokenWarningDialog() {
               <AlertTriangle className="size-5" />
             </div>
             <div className="space-y-1 text-left">
-              <AlertDialogTitle>Hugging Face token is invalid</AlertDialogTitle>
+              <AlertDialogTitle>{uiT("ui.hugging_face_token_is_invalid")}</AlertDialogTitle>
               <AlertDialogDescription>
                 {allowAnonymous
-                  ? "Hugging Face rejected the saved token. Replace it to access private or gated repositories, or continue without it for public and fully downloaded models."
-                  : "Hugging Face rejected the saved token. Replace it before uploading to the Hub."}
+                  ? uiT("ui.hugging_face_rejected_the_saved_token_replace_it_to_access_privat")
+                  : uiT("ui.hugging_face_rejected_the_saved_token_replace_it_before_uploading")}
               </AlertDialogDescription>
             </div>
           </div>
         </AlertDialogHeader>
         <AlertDialogFooter className="sm:justify-between">
           <AlertDialogCancel onClick={() => resolve("cancel")}>
-            Cancel
-          </AlertDialogCancel>
+            {uiT("chat.workspace.cancel")}</AlertDialogCancel>
           <div className="flex flex-col-reverse gap-2 sm:flex-row">
             {allowAnonymous ? (
               <Button variant="outline" onClick={() => resolve("anonymous")}>
-                Continue without token
-              </Button>
+                {uiT("ui.continue_without_token")}</Button>
             ) : null}
             <AlertDialogAction onClick={() => resolve("replace")}>
-              Replace token
-            </AlertDialogAction>
+              {uiT("ui.replace_token")}</AlertDialogAction>
           </div>
         </AlertDialogFooter>
       </AlertDialogContent>

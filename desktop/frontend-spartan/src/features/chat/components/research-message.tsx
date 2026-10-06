@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import type { Citation } from "@/components/assistant-ui/citation-utils";
 import { DocumentSourcesGroup } from "@/components/assistant-ui/rag-sources";
 import {
@@ -22,6 +23,8 @@ import {
 import type { ResearchMessageMetadata } from "../types/research";
 
 export function ResearchMessage(): ReactElement {
+  const uiT = useUiT();
+
   const metadata = useAuiState(
     ({ message }) =>
       (message.metadata as { custom?: ResearchMessageMetadata } | undefined)
@@ -62,8 +65,7 @@ export function ResearchMessage(): ReactElement {
     }
     return (
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Spinner /> Loading research…
-      </div>
+        <Spinner /> {" "}{uiT("ui.loading_research")}</div>
     );
   }
 
@@ -99,8 +101,8 @@ export function ResearchMessage(): ReactElement {
           <span className="flex size-5 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Check className="size-3" />
           </span>
-          <span>Deep research completed · {sourceCount} sources</span>
-          <span className="text-primary">View activity</span>
+          <span>{uiT("ui.deep_research_completed")}{" "}{sourceCount} {" "}{uiT("ui.sources")}</span>
+          <span className="text-primary">{uiT("ui.view_activity")}</span>
         </button>
         <MarkdownPreview
           markdown={run.report}
@@ -147,12 +149,12 @@ export function ResearchMessage(): ReactElement {
         <div className="min-w-0 flex-1">
           <p className="font-heading text-sm font-semibold tracking-tight text-foreground">
             {failed
-              ? "Research could not be completed"
+              ? uiT("ui.research_could_not_be_completed")
               : cancelled
-                ? "Research stopped"
+                ? uiT("ui.research_stopped")
                 : needsApproval
-                  ? "Your research plan is ready"
-                  : "Researching"}
+                  ? uiT("ui.your_research_plan_is_ready")
+                  : uiT("ui.researching")}
           </p>
           <p className="mt-0.5 text-ui-13 leading-relaxed text-muted-foreground">
             {session?.error
@@ -160,9 +162,9 @@ export function ResearchMessage(): ReactElement {
               : failed
                 ? run.error
                 : needsApproval
-                  ? "Review the approach before the agent starts gathering evidence."
+                  ? uiT("ui.review_the_approach_before_the_agent_starts_gathering_evidence")
                   : cancelled
-                    ? "The activity gathered so far is still available."
+                    ? uiT("ui.the_activity_gathered_so_far_is_still_available")
                     : liveDetail}
           </p>
           <Button
@@ -175,7 +177,7 @@ export function ResearchMessage(): ReactElement {
             )}
             onClick={() => openPanel(run.id)}
           >
-            {needsApproval ? "Review plan" : "View activity"}
+            {needsApproval ? uiT("ui.review_plan") : uiT("ui.view_activity")}
           </Button>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { apiUrl, getApiBase, getBackendError, isElectron, isTauri } from "@/lib/api-base";
 import {
   clearAuthTokens,
@@ -127,7 +128,7 @@ function asTransportFailure(err: unknown): unknown {
   ) {
     return Object.assign(
       new Error(
-        "Parece que no tienes conexión a internet. Verifica tu red e intenta de nuevo.",
+        uiTranslate("ui.you_appear_to_be_offline_check_your_network_and_try_again"),
       ),
       { unslothTransportFailure: true },
     );

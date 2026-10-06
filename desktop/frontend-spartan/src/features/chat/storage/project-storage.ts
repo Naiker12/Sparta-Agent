@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import {
   deleteChatProject,
   getChatProject,
@@ -25,7 +26,7 @@ export async function createStoredChatProject(
 ): Promise<ProjectRecord> {
   const trimmed = name.trim();
   if (!trimmed) {
-    throw new Error("Project name is required.");
+    throw new Error(uiTranslate("ui.project_name_is_required"));
   }
   const now = Date.now();
   return saveChatProject({

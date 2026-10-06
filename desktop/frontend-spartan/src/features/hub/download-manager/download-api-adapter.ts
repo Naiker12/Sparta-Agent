@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { toast } from "@/lib/toast";
 import {
   type PollSignal,
@@ -207,7 +208,7 @@ export async function effectiveTransportMode(
     capabilities.xet.reason ?? "Unsloth will use HTTP downloads instead.";
   if (lastXetUnavailableWarningReason !== reason) {
     lastXetUnavailableWarningReason = reason;
-    toast.warning("Xet download transport unavailable", {
+    toast.warning(uiTranslate("ui.xet_download_transport_unavailable"), {
       description: reason,
     });
   }

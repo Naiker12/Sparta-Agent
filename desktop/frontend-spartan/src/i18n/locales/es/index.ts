@@ -1,3 +1,4 @@
+import { ui } from "./ui.ts";
 import type { DeepPartialMessageTree } from "../../types.ts";
 import type { en } from "../en/index.ts";
 import { apiPage } from "./api-page.ts";
@@ -19,6 +20,7 @@ import { update } from "./update.ts";
 
 export const es = {
   channels,
+  ui,
   audioPage,
   exportPage,
   hub,

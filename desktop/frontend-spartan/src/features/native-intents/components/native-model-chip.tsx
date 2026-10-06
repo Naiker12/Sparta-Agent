@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { toast } from "@/lib/toast";
 import { XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -23,6 +25,8 @@ export function NativeModelChip({
   nativeReadsDisabled,
   onLoad,
 }: NativeModelChipProps) {
+  const uiT = useUiT();
+
   const clearModelIntent = useNativeIntentStore(
     (state) => state.clearModelIntent,
   );
@@ -67,7 +71,7 @@ export function NativeModelChip({
     try {
       await revealPathToken(intent.path.token);
     } catch (error) {
-      toast.error("Could not reveal model", {
+      toast.error(uiTranslate("ui.could_not_reveal_model"), {
         description: error instanceof Error ? error.message : String(error),
       });
     }
@@ -76,8 +80,7 @@ export function NativeModelChip({
   return (
     <div className="flex min-w-0 max-w-[34rem] items-center gap-2 rounded-lg border border-border/70 bg-muted/70 px-2.5 py-1.5 text-xs">
       <span className="shrink-0 font-medium text-muted-foreground">
-        Local GGUF
-      </span>
+        {uiT("ui.local_gguf")}</span>
       <span className="min-w-0 flex-1 truncate" title={label}>
         {label}
       </span>
@@ -86,32 +89,31 @@ export function NativeModelChip({
         onClick={handleReveal}
         disabled={expired}
         title={
-          expired ? "Selection expired, pick or drop the file again" : undefined
+          expired ? uiT("ui.selection_expired_pick_or_drop_the_file_again") : undefined
         }
         className="rounded-md px-2 py-1 text-muted-foreground transition-colors hover:bg-background hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
       >
-        Reveal
-      </button>
+        {uiT("ui.reveal")}</button>
       <button
         type="button"
         onClick={handleLoad}
         disabled={nativeReadsDisabled || expired || loading}
         title={
           nativeReadsDisabled
-            ? "Managed desktop backend required"
+            ? uiT("ui.managed_desktop_backend_required")
             : expired
-              ? "Selection expired, pick or drop the file again"
+              ? uiT("ui.selection_expired_pick_or_drop_the_file_again")
               : undefined
         }
         className="rounded-md bg-foreground px-2 py-1 text-background transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {expired ? "Expired" : loading ? "Loading…" : "Load model"}
+        {expired ? uiT("ui.expired") : loading ? uiT("chat.projectSwitcher.loading") : uiT("runSettings.loadModel")}
       </button>
       <button
         type="button"
         onClick={() => clearModelIntent(intent.id)}
         className="flex size-5 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive hover:text-destructive-foreground"
-        aria-label="Dismiss local model"
+        aria-label={uiT("ui.dismiss_local_model")}
       >
         <XIcon className="size-3" />
       </button>

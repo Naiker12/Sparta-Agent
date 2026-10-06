@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -80,6 +81,8 @@ export function ExecutionOverviewTab({
   canPublish,
   onOpenPublish,
 }: ExecutionOverviewTabProps): ReactElement {
+  const uiT = useUiT();
+
   const sourceProgress = execution.source_progress;
 
   return (
@@ -89,11 +92,9 @@ export function ExecutionOverviewTab({
           {canPublish && (
             <div className="flex flex-col gap-3 rounded-xl border border-border/60 bg-card/55 p-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="space-y-1">
-                <p className="text-sm font-medium text-foreground">Next step</p>
+                <p className="text-sm font-medium text-foreground">{uiT("ui.next_step")}</p>
                 <p className="text-xs text-muted-foreground">
-                  This run is complete. Publish the generated dataset to Hugging
-                  Face.
-                </p>
+                  {uiT("ui.this_run_is_complete_publish_the_generated_dataset_to_hugging_fac")}</p>
               </div>
               <Button
                 type="button"
@@ -101,14 +102,13 @@ export function ExecutionOverviewTab({
                 size="sm"
                 onClick={onOpenPublish}
               >
-                Publish to Hugging Face
-              </Button>
+                {uiT("ui.publish_to_hugging_face")}</Button>
             </div>
           )}
           <div className="grid gap-3 md:grid-cols-2">
             <div className="h-full rounded-xl border border-border/60 bg-card/55 p-3">
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">Run summary</p>
+                <p className="text-xs text-muted-foreground">{uiT("ui.run_summary")}</p>
                 <HugeiconsIcon
                   icon={Database01Icon}
                   className="size-4 text-muted-foreground"
@@ -116,26 +116,25 @@ export function ExecutionOverviewTab({
               </div>
               <div className="space-y-1.5 text-xs">
                 <p className="flex items-center justify-between gap-3">
-                  <span className="text-muted-foreground">Records</span>
+                  <span className="text-muted-foreground">{uiT("ui.records")}</span>
                   <span className="font-semibold">
                     {formatMetricValue(recordsMetric)} /{" "}
                     {formatMetricValue(totalMetric)}
                   </span>
                 </p>
                 <p className="flex items-center justify-between gap-3">
-                  <span className="text-muted-foreground">Duration</span>
+                  <span className="text-muted-foreground">{uiT("apiPage.duration")}</span>
                   <span className="font-semibold">{runDuration}</span>
                 </p>
                 <p className="flex items-center justify-between gap-3">
                   <span className="text-muted-foreground">
-                    Columns analyzed
-                  </span>
+                    {uiT("ui.columns_analyzed")}</span>
                   <span className="font-semibold">
                     {formatMetricValue(columnCount)}
                   </span>
                 </p>
                 <p className="flex items-center justify-between gap-3">
-                  <span className="text-muted-foreground">Final stage</span>
+                  <span className="text-muted-foreground">{uiT("ui.final_stage")}</span>
                   <span className="truncate font-semibold">
                     {execution.stage ?? "--"}
                   </span>
@@ -144,7 +143,7 @@ export function ExecutionOverviewTab({
             </div>
             <div className="h-full rounded-xl border border-border/60 bg-card/55 p-3">
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">Insights</p>
+                <p className="text-xs text-muted-foreground">{uiT("ui.insights")}</p>
                 <HugeiconsIcon
                   icon={Database02Icon}
                   className="size-4 text-muted-foreground"
@@ -153,22 +152,21 @@ export function ExecutionOverviewTab({
               <div className="space-y-1.5 text-xs">
                 {llmColumnCount > 0 && (
                   <p className="flex items-center justify-between gap-3">
-                    <span className="text-muted-foreground">LLM columns</span>
+                    <span className="text-muted-foreground">{uiT("ui.llm_columns")}</span>
                     <span className="font-semibold">
                       {formatMetricValue(llmColumnCount)}
                     </span>
                   </p>
                 )}
                 <p className="flex items-center justify-between gap-3">
-                  <span className="text-muted-foreground">Null rate</span>
+                  <span className="text-muted-foreground">{uiT("ui.null_rate")}</span>
                   <span className="font-semibold">
                     {nullRate?.toFixed(1) ?? "--"}%
                   </span>
                 </p>
                 <p className="flex items-center justify-between gap-3">
                   <span className="text-muted-foreground">
-                    Side-effect columns
-                  </span>
+                    {uiT("ui.side_effect_columns")}</span>
                   <span className="font-semibold">
                     {formatMetricValue(sideEffects.length)}
                   </span>
@@ -186,8 +184,7 @@ export function ExecutionOverviewTab({
                 )}
                 <p className="flex items-center justify-between gap-3">
                   <span className="text-muted-foreground">
-                    Low uniqueness flags
-                  </span>
+                    {uiT("ui.low_uniqueness_flags")}</span>
                   <span className="font-semibold">
                     {formatMetricValue(lowUniquenessColumns.length)}
                   </span>
@@ -202,8 +199,7 @@ export function ExecutionOverviewTab({
                       ))}
                       {lowUniquenessColumns.length > 3 && (
                         <Badge variant="outline">
-                          +{lowUniquenessColumns.length - 3} more
-                        </Badge>
+                          +{lowUniquenessColumns.length - 3} {" "}{uiT("ui.more")}</Badge>
                       )}
                     </div>
                   </div>
@@ -214,7 +210,7 @@ export function ExecutionOverviewTab({
           {(llmColumnCount > 0 || modelUsageRows.length > 0) && (
             <div className="rounded-xl border border-border/60 bg-card/55 p-3">
               <div className="mb-2 flex items-center justify-between">
-                <p className="text-xs text-muted-foreground">Model usage</p>
+                <p className="text-xs text-muted-foreground">{uiT("ui.model_usage")}</p>
                 <HugeiconsIcon
                   icon={Flag02Icon}
                   className="size-4 text-muted-foreground"
@@ -222,16 +218,15 @@ export function ExecutionOverviewTab({
               </div>
               {modelUsageRows.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
-                  No model usage yet.
-                </p>
+                  {uiT("ui.no_model_usage_yet")}</p>
               ) : (
                 <div className="overflow-hidden rounded-lg border border-border/60 bg-card/50">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Model</TableHead>
-                        <TableHead className="text-right">Input</TableHead>
-                        <TableHead className="text-right">Output</TableHead>
+                        <TableHead>{uiT("studio.progress.model")}</TableHead>
+                        <TableHead className="text-right">{uiT("ui.input")}</TableHead>
+                        <TableHead className="text-right">{uiT("chat.timing.output")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -259,7 +254,7 @@ export function ExecutionOverviewTab({
       {sourceProgress?.source === "github" && (
         <div className="rounded-xl border border-border/60 bg-card/55 p-3">
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">Source data</p>
+            <p className="text-xs text-muted-foreground">{uiT("ui.source_data")}</p>
             <HugeiconsIcon
               icon={GithubIcon}
               className="size-4 text-muted-foreground"
@@ -267,21 +262,21 @@ export function ExecutionOverviewTab({
           </div>
           <p className="text-sm font-medium text-foreground">
             {sourceProgress.status === "completed"
-              ? "GitHub source complete"
-              : "Crawling GitHub source"}
+              ? uiT("ui.github_source_complete")
+              : uiT("ui.crawling_github_source")}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             {formatSourceMessage(execution)}
           </p>
           <div className="mt-2 grid gap-1.5 text-xs sm:grid-cols-2 lg:grid-cols-4">
             <p className="flex items-center justify-between gap-3">
-              <span className="text-muted-foreground">Repo</span>
+              <span className="text-muted-foreground">{uiT("ui.repo")}</span>
               <span className="truncate font-semibold">
                 {sourceProgress.repo ?? "--"}
               </span>
             </p>
             <p className="flex items-center justify-between gap-3">
-              <span className="text-muted-foreground">Resource</span>
+              <span className="text-muted-foreground">{uiT("ui.resource")}</span>
               <span className="font-semibold">
                 {formatSourceResource(sourceProgress.resource)}
                 {typeof sourceProgress.page === "number"
@@ -290,13 +285,13 @@ export function ExecutionOverviewTab({
               </span>
             </p>
             <p className="flex items-center justify-between gap-3">
-              <span className="text-muted-foreground">Fetched</span>
+              <span className="text-muted-foreground">{uiT("ui.fetched")}</span>
               <span className="font-semibold">
                 {formatMetricValue(sourceProgress.fetched_items)}
               </span>
             </p>
             <p className="flex items-center justify-between gap-3">
-              <span className="text-muted-foreground">Rate remaining</span>
+              <span className="text-muted-foreground">{uiT("ui.rate_remaining")}</span>
               <span className="font-semibold">
                 {formatMetricValue(sourceProgress.rate_remaining)}
               </span>
@@ -306,10 +301,9 @@ export function ExecutionOverviewTab({
       )}
       <div className="overflow-hidden rounded-xl corner-squircle border">
         <div className="flex items-center justify-between border-b px-3 py-2">
-          <p className="text-sm font-semibold">Terminal output</p>
+          <p className="text-sm font-semibold">{uiT("ui.terminal_output")}</p>
           <p className="text-xs text-muted-foreground">
-            {terminalLines.length} lines
-          </p>
+            {terminalLines.length} {" "}{uiT("ui.lines")}</p>
         </div>
         <div
           ref={terminalRef}
@@ -319,8 +313,8 @@ export function ExecutionOverviewTab({
           {terminalLines.length === 0 ? (
             <p className="text-zinc-400">
               {isExecutionInProgress(execution.status)
-                ? "Waiting for logs..."
-                : "No logs captured."}
+                ? uiT("ui.waiting_for_logs")
+                : uiT("ui.no_logs_captured")}
             </p>
           ) : (
             terminalLines.map((line, index) => (

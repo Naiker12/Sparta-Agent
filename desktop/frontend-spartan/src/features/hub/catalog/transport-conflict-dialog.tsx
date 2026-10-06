@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,26 +26,20 @@ export function TransportConflictDialog({
   onKeepTransport: () => void;
   onSwitchTransport: () => void;
 }) {
+  const uiT = useUiT();
+
   const previousLabel = conflict?.previous.toUpperCase() ?? "";
   const nextLabel = conflict?.next.toUpperCase() ?? "";
   const description = conflict?.resumable ? (
     <>
-      You started this download with{" "}
-      <span className="font-medium text-foreground">{previousLabel}</span>, but
-      your current setting is{" "}
-      <span className="font-medium text-foreground">{nextLabel}</span>. Resume
-      with {previousLabel} to keep the progress you already have, or restart
-      with {nextLabel} to begin from scratch.
-    </>
+      {uiT("ui.you_started_this_download_with")}{" "}
+      <span className="font-medium text-foreground">{previousLabel}</span>{uiT("ui.but_your_current_setting_is")}{" "}
+      <span className="font-medium text-foreground">{nextLabel}</span>{uiT("ui.resume_with")}{" "}{previousLabel} {" "}{uiT("ui.to_keep_the_progress_you_already_have_or_restart_with")}{" "}{nextLabel} {" "}{uiT("ui.to_begin_from_scratch")}</>
   ) : (
     <>
-      Your previous download used{" "}
-      <span className="font-medium text-foreground">{previousLabel}</span>,
-      which can't resume its partial files, so the existing partial will be
-      discarded and this download will start from the beginning either way.
-      Restart with {previousLabel} to keep it usually faster, or restart with{" "}
-      {nextLabel} so future cancels can resume.
-    </>
+      {uiT("ui.your_previous_download_used")}{" "}
+      <span className="font-medium text-foreground">{previousLabel}</span>{uiT("ui.which_can_t_resume_its_partial_files_so_the_existing_partial_will")}{" "}{previousLabel} {" "}{uiT("ui.to_keep_it_usually_faster_or_restart_with")}{" "}
+      {nextLabel} {" "}{uiT("ui.so_future_cancels_can_resume")}</>
   );
   const primaryLabel = conflict?.resumable
     ? `Resume with ${previousLabel}`
@@ -61,7 +56,7 @@ export function TransportConflictDialog({
     >
       <AlertDialogContent className="sm:!max-w-[22rem]">
         <AlertDialogHeader>
-          <AlertDialogTitle>Different transport mode</AlertDialogTitle>
+          <AlertDialogTitle>{uiT("ui.different_transport_mode")}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter className="!flex !flex-col gap-2 sm:!flex-col sm:!justify-stretch">
@@ -85,8 +80,7 @@ export function TransportConflictDialog({
             {secondaryLabel}
           </AlertDialogAction>
           <AlertDialogCancel className="w-full !bg-transparent hover:!bg-transparent">
-            Cancel
-          </AlertDialogCancel>
+            {uiT("chat.workspace.cancel")}</AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

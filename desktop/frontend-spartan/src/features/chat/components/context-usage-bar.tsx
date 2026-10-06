@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 "use client";
 
 import {
@@ -37,6 +38,8 @@ export const ContextUsageBar: FC<
   completionTokens,
   className,
 }) => {
+  const uiT = useUiT();
+
   const state = deriveContextUsageBar({
     used,
     total,
@@ -86,7 +89,7 @@ export const ContextUsageBar: FC<
         <div className="grid min-w-44 gap-1.5 text-xs">
           {percent !== null ? (
             <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Context usage</span>
+              <span className="text-muted-foreground">{uiT("ui.context_usage")}</span>
               <span
                 className={cn(
                   "font-mono tabular-nums font-medium",
@@ -99,7 +102,7 @@ export const ContextUsageBar: FC<
           ) : null}
           {promptTokens !== undefined && (
             <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Prompt tokens</span>
+              <span className="text-muted-foreground">{uiT("apiPage.promptTokens")}</span>
               <span className="font-mono tabular-nums">
                 {formatTokenCountFull(promptTokens)}
               </span>
@@ -107,7 +110,7 @@ export const ContextUsageBar: FC<
           )}
           {completionTokens !== undefined && (
             <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Completion</span>
+              <span className="text-muted-foreground">{uiT("ui.completion")}</span>
               <span className="font-mono tabular-nums">
                 {formatTokenCountFull(completionTokens)}
               </span>
@@ -115,7 +118,7 @@ export const ContextUsageBar: FC<
           )}
           {cached !== undefined && cached > 0 && (
             <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Cache hits</span>
+              <span className="text-muted-foreground">{uiT("chat.timing.cacheHits")}</span>
               <span className="font-mono tabular-nums">
                 {formatTokenCountFull(cached)}
               </span>
@@ -123,7 +126,7 @@ export const ContextUsageBar: FC<
           )}
           {cacheWrites !== undefined && cacheWrites > 0 && (
             <div className="flex items-center justify-between gap-4">
-              <span className="text-muted-foreground">Cache writes</span>
+              <span className="text-muted-foreground">{uiT("chat.timing.cacheWrites")}</span>
               <span className="font-mono tabular-nums">
                 {formatTokenCountFull(cacheWrites)}
               </span>
@@ -140,10 +143,8 @@ export const ContextUsageBar: FC<
           </div>
           {percent !== null && percent > 85 ? (
             <div className="mt-1 max-w-64 text-ui-11 leading-snug text-muted-foreground/90">
-              Close to the context limit. Generation will stop at 100%. Increase{" "}
-              <span className="font-medium">Context Length</span> in the chat
-              Settings panel to keep going.
-            </div>
+              {uiT("ui.close_to_the_context_limit_generation_will_stop_at_100_increase")}{" "}
+              <span className="font-medium">{uiT("studio.params.contextLength")}</span> {" "}{uiT("ui.in_the_chat_settings_panel_to_keep_going")}</div>
           ) : null}
         </div>
       </TooltipContent>

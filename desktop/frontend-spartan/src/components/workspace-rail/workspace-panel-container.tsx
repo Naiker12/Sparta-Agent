@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { useChatProjects } from "@/features/chat/hooks/use-chat-projects";
 import { useThreadFileScope } from "@/features/chat/hooks/use-thread-file-scope";
 import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
@@ -14,6 +15,8 @@ import { FilesPanel } from "./files-panel";
 import { WorkspaceRail } from "./workspace-rail";
 
 function GitHubPanel() {
+  const uiT = useUiT();
+
   return (
     <div className="flex flex-col h-full bg-background overflow-hidden">
       <div className="px-5 pt-5 pb-3 border-b border-border/30">
@@ -21,7 +24,7 @@ function GitHubPanel() {
           GitHub
         </h2>
         <p className="text-xs text-muted-foreground">
-          Repositorio sincronizado con{" "}
+          {uiT("ui.repository_synced_with")}{" "}
           <span className="font-mono font-medium text-foreground">
             origin/main
           </span>
@@ -33,18 +36,15 @@ function GitHubPanel() {
           <CheckCircle2Icon className="w-4 h-4 text-emerald-500 shrink-0" />
           <div className="flex flex-col">
             <span className="font-medium text-foreground">
-              Rama principal al día
-            </span>
+              {uiT("ui.main_branch_up_to_date")}</span>
             <span className="text-[11px] text-muted-foreground">
-              Todos los cambios locales y remotos sincronizados
-            </span>
+              {uiT("ui.all_local_and_remote_changes_synced")}</span>
           </div>
         </div>
 
         <div className="space-y-2">
           <h3 className="text-xs font-semibold text-muted-foreground tracking-wide uppercase">
-            Últimos commits
-          </h3>
+            {uiT("ui.latest_commits")}</h3>
           <div className="flex flex-col gap-2">
             {[
               {
@@ -95,15 +95,15 @@ function GitHubPanel() {
 }
 
 function AgentsPanel() {
+  const uiT = useUiT();
+
   return (
     <div className="flex flex-col h-full bg-background overflow-hidden">
       <div className="px-5 pt-5 pb-3 border-b border-border/30">
         <h2 className="font-serif text-2xl font-bold tracking-tight text-foreground/90 mb-1">
-          Subagentes
-        </h2>
+          {uiT("ui.subagents")}</h2>
         <p className="text-xs text-muted-foreground">
-          Gestión de agentes especializados y tareas autónomas
-        </p>
+          {uiT("ui.manage_specialized_agents_and_autonomous_tasks")}</p>
       </div>
 
       <div className="flex-1 overflow-y-auto p-5 space-y-4">
@@ -166,6 +166,8 @@ function AgentsPanel() {
 export function WorkspacePanelContainer({
   projectId,
 }: { projectId?: string | null }) {
+  const uiT = useUiT();
+
   const isOpen = useWorkspaceStore((state) => state.isOpen);
   const panelWidth = useWorkspaceStore((state) => state.panelWidth);
   const setPanelWidth = useWorkspaceStore((state) => state.setPanelWidth);
@@ -203,7 +205,7 @@ export function WorkspacePanelContainer({
       {/* Dynamic Pane content (collapsible) */}
       {isOpen && (
         <div style={{width: `min(${panelWidth}px, 60vw)`}} className="relative flex h-full min-w-0 shrink-0 flex-col border-l border-border/40 animate-in fade-in">
-          <div role="separator" aria-label="Redimensionar panel de archivos" aria-orientation="vertical" tabIndex={0} aria-valuemin={280} aria-valuemax={900} aria-valuenow={panelWidth}
+          <div role="separator" aria-label={uiT("ui.resize_file_panel")} aria-orientation="vertical" tabIndex={0} aria-valuemin={280} aria-valuemax={900} aria-valuenow={panelWidth}
             className="absolute -left-1 top-0 z-30 h-full w-2 cursor-col-resize touch-none hover:bg-primary/20 focus-visible:bg-primary/20"
             onKeyDown={e => {if(e.key === "ArrowLeft") setPanelWidth(panelWidth+24); if(e.key === "ArrowRight") setPanelWidth(panelWidth-24);}}
             onPointerDown={e => e.currentTarget.setPointerCapture(e.pointerId)}
@@ -211,19 +213,19 @@ export function WorkspacePanelContainer({
             onPointerUp={e => {if(e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId);}} />
           <div className="flex h-12 shrink-0 items-center justify-between gap-2 border-b border-border/40 px-3">
             <span className="truncate text-xs font-medium text-foreground">
-              {activeTab === "files" ? "Archivos" : activeTab === "changes" ? "Cambios" : activeTab === "github" ? "GitHub" : activeTab === "agents" ? "Subagentes" : "Vista previa"}
+              {activeTab === "files" ? uiT("chat.composer.mentions.files") : activeTab === "changes" ? uiT("projectsPage.gitChanges") : activeTab === "github" ? "GitHub" : activeTab === "agents" ? uiT("ui.subagents") : uiT("chat.files.preview")}
             </span>
           <button
             type="button"
             onClick={() => setOpen(false)}
-            title="Ocultar panel"
-            aria-label="Ocultar panel lateral"
+            title={uiT("ui.hide_panel")}
+            aria-label={uiT("ui.hide_side_panel")}
             className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <PanelRightCloseIcon className="h-4 w-4" />
           </button>
           </div>
-          <div className="min-h-0 flex-1 overflow-hidden">{scopeLoading ? <p role="status" className="p-4 text-sm text-muted-foreground">Preparando carpeta…</p> : scopeError ? <p role="alert" className="p-4 text-sm text-destructive">{scopeError}</p> : renderActiveTabContent()}</div>
+          <div className="min-h-0 flex-1 overflow-hidden">{scopeLoading ? <p role="status" className="p-4 text-sm text-muted-foreground">{uiT("chat.workspace.loading")}</p> : scopeError ? <p role="alert" className="p-4 text-sm text-destructive">{scopeError}</p> : renderActiveTabContent()}</div>
         </div>
       )}
 

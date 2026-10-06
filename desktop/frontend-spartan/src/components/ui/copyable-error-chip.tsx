@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 
 "use client";
 
@@ -22,6 +23,8 @@ export function CopyableErrorChip({
   message,
   className,
 }: CopyableErrorChipProps) {
+  const uiT = useUiT();
+
   const [copied, setCopied] = useState(false);
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -64,11 +67,11 @@ export function CopyableErrorChip({
         className="w-[min(36rem,calc(100vw-1rem))] gap-2"
       >
         <div className="flex items-start justify-between gap-2">
-          <span className="text-xs font-medium text-destructive">Error</span>
+          <span className="text-xs font-medium text-destructive">{uiT("studio.progress.phase.error")}</span>
           <button
             type="button"
             onClick={handleCopy}
-            aria-label={copied ? "Copied" : "Copy error message"}
+            aria-label={copied ? uiT("chat.actions.copied") : uiT("ui.copy_error_message")}
             className={cn(
               "inline-flex items-center gap-1 rounded-md border border-border/60 px-2 py-1 text-ui-11 text-muted-foreground transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
               copied && "border-emerald-500/40 text-emerald-600 dark:text-emerald-500",
@@ -78,7 +81,7 @@ export function CopyableErrorChip({
               icon={copied ? Tick02Icon : Copy01Icon}
               className="size-3.5"
             />
-            {copied ? "Copied" : "Copy"}
+            {copied ? uiT("chat.actions.copied") : uiT("chat.actions.copy")}
           </button>
         </div>
         <p className="max-h-64 overflow-y-auto select-text whitespace-pre-wrap break-words text-xs text-destructive">

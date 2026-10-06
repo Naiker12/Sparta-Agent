@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 "use client";
 
 import { CodeToggleIcon } from "@/components/assistant-ui/code-toggle-icon";
@@ -41,6 +42,8 @@ export function ArtifactCard({
   autoOpen?: boolean;
   isStreaming?: boolean;
 }) {
+  const uiT = useUiT();
+
   const activeThreadId = useChatRuntimeStore((state) => state.activeThreadId);
   // Canvas mode collapses the raw code in place, so offer a Code button too.
   // Diffusion keeps its code inline, so it needs no Code button.
@@ -120,7 +123,7 @@ export function ArtifactCard({
             "border-border/80 bg-muted/20 dark:border-border/70 dark:bg-muted/15",
         )}
         onClick={() => openArtifact(artifact, { surface, view })}
-        aria-label={`Open ${artifact.title} ${isCode ? "code" : "preview"}`}
+        aria-label={uiT("ui.open_value0_value1", { value0: String(artifact.title), value1: String(isCode ? "code" : "preview") })}
       >
         {isStreaming ? (
           <span
@@ -140,16 +143,14 @@ export function ArtifactCard({
           )}
           <span className="grid min-w-0 flex-1 gap-1">
             <span className="truncate text-sm font-medium leading-tight text-foreground">
-              {isCode ? "HTML Code" : artifact.title}
+              {isCode ? uiT("ui.html_code") : artifact.title}
             </span>
             <span className="truncate text-ui-11 leading-none text-muted-foreground">
-              HTML canvas
-            </span>
+              {uiT("ui.html_canvas")}</span>
           </span>
           {isStreaming && !isCode ? (
             <span className="shimmer shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-ui-10 font-medium text-primary motion-reduce:animate-none">
-              Generating
-            </span>
+              {uiT("shell.navigation.chatGenerating")}</span>
           ) : null}
         </div>
       </button>

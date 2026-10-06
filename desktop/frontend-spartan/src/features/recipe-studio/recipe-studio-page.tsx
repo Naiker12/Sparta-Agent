@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   DocumentAttachmentIcon,
   PlusSignIcon,
@@ -113,6 +114,8 @@ export function RecipeStudioPage({
   initialSavedAt,
   onPersistRecipe,
 }: RecipeStudioPageProps): ReactElement {
+  const uiT = useUiT();
+
   const {
     nodes,
     edges,
@@ -703,15 +706,11 @@ export function RecipeStudioPage({
               </div>
               <div className="mt-4 space-y-2">
                 <p className="text-ui-11 font-semibold uppercase tracking-wide text-primary">
-                  Best place to start
-                </p>
+                  {uiT("ui.best_place_to_start")}</p>
                 <p className="text-sm font-semibold text-foreground">
-                  Start with source data
-                </p>
+                  {uiT("ui.start_with_source_data")}</p>
                 <p className="text-xs text-muted-foreground">
-                  Most synthetic-data recipes begin with a document, dataset, or
-                  file before adding generation and checks.
-                </p>
+                  {uiT("ui.most_synthetic_data_recipes_begin_with_a_document_dataset_or_file")}</p>
               </div>
               <div className="mt-5 flex flex-col justify-center gap-2 sm:flex-row">
                 <Button
@@ -723,8 +722,7 @@ export function RecipeStudioPage({
                     icon={DocumentAttachmentIcon}
                     className="size-4"
                   />
-                  Start with source data
-                </Button>
+                  {uiT("ui.start_with_source_data")}</Button>
                 <Button
                   type="button"
                   variant="outline"
@@ -732,8 +730,7 @@ export function RecipeStudioPage({
                   onClick={openRootBlockSheet}
                 >
                   <HugeiconsIcon icon={PlusSignIcon} className="size-4" />
-                  Browse all steps
-                </Button>
+                  {uiT("ui.browse_all_steps")}</Button>
               </div>
             </div>
           </div>
@@ -797,10 +794,9 @@ export function RecipeStudioPage({
     editorContent = (
       <div className="flex h-full items-center justify-center px-6">
         <div className="rounded-2xl border border-border/70 bg-background/80 px-5 py-4 text-center shadow-border backdrop-blur-[1px]">
-          <p className="text-sm font-medium text-foreground">Loading recipe</p>
+          <p className="text-sm font-medium text-foreground">{uiT("ui.loading_recipe_")}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Restoring the studio graph and saved settings.
-          </p>
+            {uiT("ui.restoring_the_studio_graph_and_saved_settings")}</p>
         </div>
       </div>
     );

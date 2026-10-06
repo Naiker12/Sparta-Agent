@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { MarkdownPreview } from "@/components/markdown/markdown-preview";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -355,6 +356,8 @@ function RecipeGraphNodeBase({
   data,
   selected,
 }: NodeProps<RecipeGraphNodeType>): ReactElement {
+  const uiT = useUiT();
+
   const meta = NODE_META[data.kind];
   const icon = resolveNodeIcon(data.kind, data.blockType);
   const layoutDirection = data.layoutDirection ?? "LR";
@@ -521,7 +524,7 @@ function RecipeGraphNodeBase({
                 setLlmAuxVisibility(id, !llmAuxVisible);
               }}
             >
-              {llmAuxVisible ? "Hide inputs" : "Show inputs"}
+              {llmAuxVisible ? uiT("ui.hide_inputs") : uiT("ui.show_inputs")}
             </Button>
           )}
           <Button
@@ -536,8 +539,7 @@ function RecipeGraphNodeBase({
               openConfig(id);
             }}
           >
-            Configure
-          </Button>
+            {uiT("studio.tabs.configure")}</Button>
         </div>
       </BaseNodeHeader>
 
@@ -554,7 +556,7 @@ function RecipeGraphNodeBase({
         <>
           <LabeledHandle
             id={HANDLE_IDS.dataIn}
-            title="Data input"
+            title={uiT("ui.data_input")}
             type="target"
             position={Position.Left}
             className="absolute inset-0 pointer-events-none"
@@ -563,7 +565,7 @@ function RecipeGraphNodeBase({
           />
           <LabeledHandle
             id={HANDLE_IDS.dataOutLeft}
-            title="Data output"
+            title={uiT("ui.data_output")}
             type="source"
             position={Position.Left}
             className="absolute inset-0 pointer-events-none opacity-0"
@@ -572,7 +574,7 @@ function RecipeGraphNodeBase({
           />
           <LabeledHandle
             id={HANDLE_IDS.dataInTop}
-            title="Data input"
+            title={uiT("ui.data_input")}
             type="target"
             position={Position.Top}
             className="absolute inset-0 pointer-events-none"
@@ -581,7 +583,7 @@ function RecipeGraphNodeBase({
           />
           <LabeledHandle
             id={HANDLE_IDS.dataOutTop}
-            title="Data output"
+            title={uiT("ui.data_output")}
             type="source"
             position={Position.Top}
             className="absolute inset-0 pointer-events-none opacity-0"
@@ -590,7 +592,7 @@ function RecipeGraphNodeBase({
           />
           <LabeledHandle
             id={HANDLE_IDS.dataOut}
-            title="Data output"
+            title={uiT("ui.data_output")}
             type="source"
             position={Position.Right}
             className="absolute inset-0 pointer-events-none"
@@ -599,7 +601,7 @@ function RecipeGraphNodeBase({
           />
           <LabeledHandle
             id={HANDLE_IDS.dataInRight}
-            title="Data input"
+            title={uiT("ui.data_input")}
             type="target"
             position={Position.Right}
             className="absolute inset-0 pointer-events-none opacity-0"
@@ -608,7 +610,7 @@ function RecipeGraphNodeBase({
           />
           <LabeledHandle
             id={HANDLE_IDS.dataOutBottom}
-            title="Data output"
+            title={uiT("ui.data_output")}
             type="source"
             position={Position.Bottom}
             className="absolute inset-0 pointer-events-none"
@@ -617,7 +619,7 @@ function RecipeGraphNodeBase({
           />
           <LabeledHandle
             id={HANDLE_IDS.dataInBottom}
-            title="Data input"
+            title={uiT("ui.data_input")}
             type="target"
             position={Position.Bottom}
             className="absolute inset-0 pointer-events-none opacity-0"
@@ -631,7 +633,7 @@ function RecipeGraphNodeBase({
         <>
           <LabeledHandle
             id={HANDLE_IDS.semanticIn}
-            title="Semantic input"
+            title={uiT("ui.semantic_input")}
             type="target"
             position={Position.Left}
             className="absolute inset-0 pointer-events-none"
@@ -640,7 +642,7 @@ function RecipeGraphNodeBase({
           />
           <LabeledHandle
             id={HANDLE_IDS.semanticInTop}
-            title="Semantic input"
+            title={uiT("ui.semantic_input")}
             type="target"
             position={Position.Top}
             className="absolute inset-0 pointer-events-none"
@@ -654,7 +656,7 @@ function RecipeGraphNodeBase({
         <>
           <LabeledHandle
             id={HANDLE_IDS.semanticOut}
-            title="Semantic output"
+            title={uiT("ui.semantic_output")}
             type="source"
             position={Position.Right}
             className="absolute inset-0 pointer-events-none"
@@ -663,7 +665,7 @@ function RecipeGraphNodeBase({
           />
           <LabeledHandle
             id={HANDLE_IDS.semanticOutBottom}
-            title="Semantic output"
+            title={uiT("ui.semantic_output")}
             type="source"
             position={Position.Bottom}
             className="absolute inset-0 pointer-events-none"

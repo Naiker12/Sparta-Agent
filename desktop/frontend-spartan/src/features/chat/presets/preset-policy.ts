@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import {
   DEFAULT_INFERENCE_PARAMS,
   type InferenceParams,
@@ -184,7 +185,7 @@ export function getPresetSaveState({
       canSubmit: false,
       isSaveReady: false,
       buttonLabel: "Save",
-      title: "Enter a preset name",
+      get title() { return uiTranslate("ui.enter_a_preset_name"); },
     };
   }
 

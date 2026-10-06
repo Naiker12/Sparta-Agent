@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 /**
  * Sparta Agent - Menú de Herramientas y Acciones del Composer (ComposerToolsMenu)
  * Provee el menú desplegable "+" para adjuntar archivos, activar Web Search, Code,
@@ -74,7 +76,7 @@ import {
   useContext,
   useState,
 } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { PromptQueueContext } from "./prompt-queue-manager";
 
 export const AUDIO_ACCEPT_TOKEN_RE =
@@ -104,6 +106,8 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
   side = "bottom",
   researchAvailable,
 }) => {
+  const uiT = useUiT();
+
   const navigate = useNavigate();
   const toolsEnabled = useChatRuntimeStore((s) => s.toolsEnabled);
   const setToolsEnabled = useChatRuntimeStore((s) => s.setToolsEnabled);
@@ -324,13 +328,12 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
               }
               exportConversationRawJsonl(activeThreadId).catch((error) => {
                 if (!isDownloadCancelled(error)) {
-                  toast.error("Export failed.");
+                  toast.error(uiTranslate("chat.menu.exportFailed"));
                 }
               });
             }}
           >
-            Raw JSONL
-          </DropdownMenuItem>
+            {uiT("ui.raw_jsonl")}</DropdownMenuItem>
           <DropdownMenuItem
             onSelect={() => {
               if (!activeThreadId) {
@@ -338,7 +341,7 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
               }
               exportConversationCsv(activeThreadId).catch((error) => {
                 if (!isDownloadCancelled(error)) {
-                  toast.error("Export failed.");
+                  toast.error(uiTranslate("chat.menu.exportFailed"));
                 }
               });
             }}
@@ -352,7 +355,7 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
               }
               exportConversationShareGPT(activeThreadId).catch((error) => {
                 if (!isDownloadCancelled(error)) {
-                  toast.error("Export failed.");
+                  toast.error(uiTranslate("chat.menu.exportFailed"));
                 }
               });
             }}
@@ -366,7 +369,7 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
               }
               exportConversationMarkdown(activeThreadId).catch((error) => {
                 if (!isDownloadCancelled(error)) {
-                  toast.error("Export failed.");
+                  toast.error(uiTranslate("chat.menu.exportFailed"));
                 }
               });
             }}
@@ -439,9 +442,8 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
         onRunList={(items) => {
           const started = startQueue(items, undefined, () => {
             setPromptStorageOpen(true);
-            toast.info("Saved list was not queued", {
-              description:
-                "The chat changed before the queue was ready. Try again.",
+            toast.info(uiTranslate("ui.saved_list_was_not_queued"), {
+              get description() { return uiTranslate("ui.the_chat_changed_before_the_queue_was_ready_try_again"); },
             });
           });
           if (started) {
@@ -459,7 +461,7 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
         <DropdownMenuTrigger asChild={true}>
           <button
             type="button"
-            aria-label="Tools and attachments"
+            aria-label={uiT("ui.tools_and_attachments")}
             className="unsloth-composer-plus"
             data-tour="chat-plus-menu"
           >
@@ -562,8 +564,7 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
               onSelect={() => setImageToolsEnabled(!imageToolsEnabled)}
             >
               <HugeiconsIcon icon={Image03Icon} strokeWidth={2} />
-              Images
-              {imageToolsEnabled && !imageDisabled ? (
+              {uiT("chat.composer.imagesPill")}{imageToolsEnabled && !imageDisabled ? (
                 <HugeiconsIcon
                   icon={Tick02Icon}
                   strokeWidth={2}

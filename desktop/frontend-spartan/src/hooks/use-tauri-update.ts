@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { isTauri } from "@/lib/api-base";
 import {
   type CopySupportDiagnosticsResult,
@@ -356,7 +357,7 @@ export function useTauriUpdate(isExternalServer = false) {
         } catch (manualError) {
           const msg = String(manualError);
           setError(msg);
-          toast.error("Could not open release page", { description: msg });
+          toast.error(uiTranslate("ui.could_not_open_release_page"), { description: msg });
         }
         return;
       }
@@ -481,9 +482,8 @@ export function useTauriUpdate(isExternalServer = false) {
           const { invoke } = await import("@tauri-apps/api/core");
           await invoke("start_server", { port: 8888 });
           retainFailure(msg, "recovered_after_shell_failure");
-          toast.error("App update failed", {
-            description:
-              "Backend was updated. Copy diagnostics from the update banner if you need support.",
+          toast.error(uiTranslate("ui.app_update_failed"), {
+            get description() { return uiTranslate("ui.backend_was_updated_copy_diagnostics_from_the_update_banner_if_yo"); },
           });
           setError(null);
           setStatus("idle");

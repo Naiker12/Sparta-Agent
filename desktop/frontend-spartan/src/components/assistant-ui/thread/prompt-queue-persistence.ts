@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 /** Data checkpoint adapter; runtime targets and timers never enter storage. */
 import { getAuthSessionEpoch } from "@/features/auth";
 import { savePromptQueue, type QueueCheckpoint } from "@/features/chat/api/prompt-queues-api";
@@ -28,7 +29,7 @@ export async function checkpointPromptQueue(run: PromptQueueRun, empty = false):
     (item) => !item.target.temporary,
   ).map((item) => {
     const settings = item.target.getDurableSettings?.();
-    if (!settings) throw new Error("La cola no tiene una configuración recuperable");
+    if (!settings) throw new Error(uiTranslate("ui.the_queue_has_no_recoverable_configuration"));
     return { id: item.id, prompt: item.prompt, dispatched: item.dispatched, settings, result: item.result };
   });
   // Clone now: a later edit or deep-research consumption cannot mutate this write.

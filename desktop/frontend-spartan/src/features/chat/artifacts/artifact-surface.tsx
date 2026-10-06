@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 "use client";
 
 import { createCodePlugin } from "@/components/assistant-ui/code-plugin";
@@ -70,6 +72,8 @@ function ArtifactLoadingLine() {
 }
 
 function ArtifactGeneratingPanel() {
+  const uiT = useUiT();
+
   return (
     <div className="flex h-full min-h-0 flex-col items-center justify-center bg-muted/10 px-6 text-center">
       <div className="max-w-[30ch] space-y-1.5">
@@ -80,11 +84,9 @@ function ArtifactGeneratingPanel() {
           className="mx-auto mb-3 size-14 object-contain opacity-80"
         />
         <p className="text-sm font-medium text-foreground">
-          Building canvas preview…
-        </p>
+          {uiT("ui.building_canvas_preview")}</p>
         <p className="text-xs leading-relaxed text-muted-foreground">
-          The preview will appear here when the HTML is ready.
-        </p>
+          {uiT("ui.the_preview_will_appear_here_when_the_html_is_ready")}</p>
       </div>
     </div>
   );
@@ -101,6 +103,8 @@ export function ArtifactSurface({
   onClose: () => void;
   onOpenFullscreen?: () => void;
 }) {
+  const uiT = useUiT();
+
   const [viewMode, setViewMode] = useState<ArtifactViewMode>("preview");
   // Follow the view the opener asked for (Preview vs Code button), per artifact.
   const requestedView = useChatArtifactsStore((state) => state.requestedView);
@@ -224,7 +228,7 @@ export function ArtifactSurface({
             }
           : undefined
       }
-      aria-label={`${artifact.title} canvas`}
+      aria-label={uiT("ui.value0_canvas", { value0: String(artifact.title) })}
     >
       <header
         className={cn(
@@ -235,7 +239,7 @@ export function ArtifactSurface({
         <div
           className="flex items-center gap-1 rounded-full bg-muted/40 p-0.5"
           role="tablist"
-          aria-label="Canvas view"
+          aria-label={uiT("ui.canvas_view")}
         >
           {(["preview", "source"] as const).map((mode) => {
             const isPreview = mode === "preview";
@@ -256,15 +260,15 @@ export function ArtifactSurface({
                     !isPreview &&
                     "cursor-not-allowed opacity-50",
                 )}
-                aria-label={isPreview ? "Preview canvas" : "View canvas source"}
+                aria-label={isPreview ? uiT("ui.preview_canvas") : uiT("ui.view_canvas_source")}
                 aria-selected={effectiveViewMode === mode}
                 aria-pressed={effectiveViewMode === mode}
                 title={
                   isPreview
-                    ? "Preview"
+                    ? uiT("chat.files.preview")
                     : isLoadingArtifact
-                      ? "Source available when generation finishes"
-                      : "Source"
+                      ? uiT("ui.source_available_when_generation_finishes")
+                      : uiT("chat.preview.source")
                 }
               >
                 <Icon className="size-4" />
@@ -288,11 +292,11 @@ export function ArtifactSurface({
                 "text/html;charset=utf-8",
               ).catch((err) => {
                 if (!isDownloadCancelled(err)) {
-                  toast.error("Failed to save canvas HTML");
+                  toast.error(uiTranslate("ui.failed_to_save_canvas_html"));
                 }
               });
             }}
-            aria-label="Download canvas HTML"
+            aria-label={uiT("ui.download_canvas_html")}
           >
             <HugeiconsIcon icon={Download01Icon} className="size-4" />
           </Button>
@@ -303,7 +307,7 @@ export function ArtifactSurface({
             className="size-8"
             disabled={isLoadingArtifact || !hasArtifactCode}
             onClick={handleCopy}
-            aria-label="Copy canvas HTML"
+            aria-label={uiT("ui.copy_canvas_html")}
           >
             {copied ? (
               <HugeiconsIcon
@@ -322,7 +326,7 @@ export function ArtifactSurface({
               size="icon"
               className="size-8"
               onClick={onOpenFullscreen}
-              aria-label="Open canvas fullscreen"
+              aria-label={uiT("ui.open_canvas_fullscreen")}
             >
               <Maximize2Icon className="size-4" />
             </Button>
@@ -333,7 +337,7 @@ export function ArtifactSurface({
             size="icon"
             className="size-8"
             onClick={onClose}
-            aria-label="Close canvas"
+            aria-label={uiT("ui.close_canvas")}
           >
             <XIcon className="size-4" />
           </Button>

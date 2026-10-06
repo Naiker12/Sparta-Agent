@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { EMBEDDING_TAGS } from "./hf-model-meta";
 
 export type CapabilityKey =
@@ -173,7 +174,7 @@ export function detectCapabilities(
       lowerId,
     )
   ) {
-    out.push({ key: "vision", label: "Vision" });
+    out.push({ key: "vision", get label() { return uiTranslate("hub.filters.vision"); } });
   }
   if (
     hasAny(AUDIO_TAGS) ||
@@ -181,10 +182,10 @@ export function detectCapabilities(
       lowerId,
     )
   ) {
-    out.push({ key: "audio", label: "Audio" });
+    out.push({ key: "audio", get label() { return uiTranslate("shell.navigation.audio"); } });
   }
   if (hasAny(TOOL_TAGS) || /tool[-_]use|function[-_]call/.test(lowerId)) {
-    out.push({ key: "tools", label: "Tool use" });
+    out.push({ key: "tools", get label() { return uiTranslate("ui.tool_use"); } });
   }
   if (
     hasAny(REASONING_TAGS) ||
@@ -192,7 +193,7 @@ export function detectCapabilities(
       lowerId,
     )
   ) {
-    out.push({ key: "reasoning", label: "Reasoning" });
+    out.push({ key: "reasoning", get label() { return uiTranslate("hub.filters.reasoning"); } });
   }
   if (
     hasAny(CODE_TAGS) ||
@@ -200,10 +201,10 @@ export function detectCapabilities(
       lowerId,
     )
   ) {
-    out.push({ key: "code", label: "Code" });
+    out.push({ key: "code", get label() { return uiTranslate("chat.composer.codePill"); } });
   }
   if (hasAny(CONVERSATIONAL_TAGS) || CONVERSATIONAL_ID_RE.test(lowerId)) {
-    out.push({ key: "conversational", label: "Conversational" });
+    out.push({ key: "conversational", get label() { return uiTranslate("ui.conversational"); } });
   }
   if (
     hasAny(EMBEDDING_TAGS) ||
@@ -211,7 +212,7 @@ export function detectCapabilities(
       lowerId,
     )
   ) {
-    out.push({ key: "embedding", label: "Embeddings" });
+    out.push({ key: "embedding", get label() { return uiTranslate("hub.filters.embeddings"); } });
   }
   if (
     hasAny(DIFFUSION_TAGS) ||
@@ -219,7 +220,7 @@ export function detectCapabilities(
       lowerId,
     )
   ) {
-    out.push({ key: "diffusion", label: "Image generation" });
+    out.push({ key: "diffusion", get label() { return uiTranslate("hub.filters.imageGeneration"); } });
   }
   const languageCodes = new Set<string>();
   for (const tag of tags ?? []) {
@@ -232,7 +233,7 @@ export function detectCapabilities(
     }
   }
   if (tagSet.has("multilingual") || languageCodes.size >= 3) {
-    out.push({ key: "multilingual", label: "Multilingual" });
+    out.push({ key: "multilingual", get label() { return uiTranslate("ui.multilingual"); } });
   }
   return out;
 }

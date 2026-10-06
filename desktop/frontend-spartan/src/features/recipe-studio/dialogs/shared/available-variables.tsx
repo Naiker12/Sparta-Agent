@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDownStandardIcon } from "@/lib/chevron-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -21,6 +22,8 @@ const USER_EXPANDED_FIELDS = [
 export function AvailableVariables({
   configId,
 }: AvailableVariablesProps): ReactElement | null {
+  const uiT = useUiT();
+
   const [showUserFields, setShowUserFields] = useState(false);
   const configs = useRecipeStudioStore((state) => state.configs);
   const vars = getAvailableVariableEntries(configs, configId);
@@ -45,8 +48,7 @@ export function AvailableVariables({
   return (
     <div className="corner-squircle rounded-2xl border border-border/60 px-3 py-2">
       <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
-        Available references
-      </p>
+        {uiT("ui.available_references")}</p>
       <div className="flex flex-wrap gap-1.5">
         {vars.map((v) => {
           const className =
@@ -74,7 +76,7 @@ export function AvailableVariables({
               className="cursor-pointer"
               aria-expanded={showUserFields}
               aria-label={
-                showUserFields ? "Hide user fields" : "Show user fields"
+                showUserFields ? uiT("ui.hide_user_fields") : uiT("ui.show_user_fields")
               }
             >
               <Badge variant="secondary" className={className}>

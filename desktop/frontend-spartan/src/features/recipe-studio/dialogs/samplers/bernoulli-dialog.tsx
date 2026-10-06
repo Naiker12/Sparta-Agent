@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Input } from "@/components/ui/input";
 import type { ReactElement } from "react";
 import type { SamplerConfig } from "../../types";
@@ -13,6 +14,8 @@ export function BernoulliDialog({
   config,
   onUpdate,
 }: BernoulliDialogProps): ReactElement {
+  const uiT = useUiT();
+
   const pId = `${config.id}-bernoulli-p`;
   return (
     <div className="space-y-4">
@@ -22,7 +25,7 @@ export function BernoulliDialog({
       />
       <div className="grid gap-1.5">
         <FieldLabel
-          label="Probability (p)"
+          label={uiT("ui.probability_p")}
           htmlFor={pId}
           hint="Success probability in [0, 1]."
         />

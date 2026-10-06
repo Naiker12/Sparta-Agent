@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 "use client";
 
 // Once an assistant message finishes, append one canvas card per fenced ```html
@@ -18,6 +19,8 @@ import { type FC, useMemo } from "react";
 const PART_SEPARATOR = "\u0000";
 
 export const MessageHtmlArtifacts: FC = () => {
+  const uiT = useUiT();
+
   // Skip while streaming; "!== running" also covers loaded historical messages.
   const isRunning = useAuiState(
     ({ message }) => message.status?.type === "running",
@@ -73,7 +76,7 @@ export const MessageHtmlArtifacts: FC = () => {
         <ArtifactCard
           key={i}
           code={fence.source}
-          title={i === 0 ? "HTML preview" : `HTML preview ${i + 1}`}
+          title={i === 0 ? uiT("ui.html_preview") : `HTML preview ${i + 1}`}
           source="fence"
         />
       ))}

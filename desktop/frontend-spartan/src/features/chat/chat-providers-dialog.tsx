@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -32,7 +34,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Eye, EyeOff } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { type WheelEvent, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { ApiProviderLogo } from "./api-provider-logo";
 
 import {
@@ -104,24 +106,20 @@ const EMPTY_CATALOG_HINTS: Record<
   { title: string; description: string }
 > = {
   ollama: {
-    title: "No local Ollama models found.",
-    description:
-      "Run `ollama pull <model>` in a terminal, then reload — or enter a model ID manually below.",
+    get title() { return uiTranslate("ui.no_local_ollama_models_found"); },
+    get description() { return uiTranslate("ui.run_ollama_pull_model_in_a_terminal_then_reload_or_enter_a_model_"); },
   },
   lmstudio: {
-    title: "No LM Studio models found.",
-    description:
-      "Ensure LM Studio local server is running on port 1234, then reload — or enter model IDs manually below.",
+    get title() { return uiTranslate("ui.no_lm_studio_models_found"); },
+    get description() { return uiTranslate("ui.ensure_lm_studio_local_server_is_running_on_port_1234_then_reload"); },
   },
   llama_cpp: {
-    title: "No llama.cpp models found.",
-    description:
-      "Ensure llama-server is running with models loaded, then reload — or enter model IDs manually below.",
+    get title() { return uiTranslate("ui.no_llama_cpp_models_found"); },
+    get description() { return uiTranslate("ui.ensure_llama_server_is_running_with_models_loaded_then_reload_or_"); },
   },
   vllm: {
-    title: "No vLLM models found.",
-    description:
-      "Ensure the vLLM server is running and models are loaded, then reload — or enter model IDs manually below.",
+    get title() { return uiTranslate("ui.no_vllm_models_found"); },
+    get description() { return uiTranslate("ui.ensure_the_vllm_server_is_running_and_models_are_loaded_then_relo"); },
   },
 };
 
@@ -131,8 +129,8 @@ function emptyCatalogHint(providerType: string): {
 } {
   return (
     EMPTY_CATALOG_HINTS[providerType] ?? {
-      title: "No models returned by this connection.",
-      description: "Enter model IDs manually below, or check the server.",
+      get title() { return uiTranslate("ui.no_models_returned_by_this_connection"); },
+      get description() { return uiTranslate("ui.enter_model_ids_manually_below_or_check_the_server"); },
     }
   );
 }
@@ -165,6 +163,8 @@ export function ChatProvidersSettings({
   providers,
   onProvidersChange,
 }: ChatProvidersSettingsProps) {
+  const uiT = useUiT();
+
   const t = useT();
   const providersRef = useRef(providers);
   const seededProviderTypeRef = useRef<string | null>(null);
@@ -619,11 +619,11 @@ export function ChatProvidersSettings({
       return null;
     }
     if (!/^\d+$/.test(trimmed)) {
-      throw new Error("Max Tokens limit must be an integer.");
+      throw new Error(uiTranslate("ui.max_tokens_limit_must_be_an_integer"));
     }
     const value = Number(trimmed);
     if (!Number.isSafeInteger(value)) {
-      throw new Error("Max Tokens limit must be a safe integer.");
+      throw new Error(uiTranslate("ui.max_tokens_limit_must_be_a_safe_integer"));
     }
     // getExternalMaxOutputTokens raises a sub-floor cap anyway, so say so instead of storing it
     const floor = Math.max(
@@ -644,12 +644,12 @@ export function ChatProvidersSettings({
       return;
     }
     if (isCustomProvider && !supportsRemoteModelCatalog(providerType)) {
-      toast.info("This connection uses manual model IDs.");
+      toast.info(uiTranslate("ui.this_connection_uses_manual_model_ids"));
       return;
     }
     if (isCuratedModelList) {
       toast.info(
-        "This connection has a very large model catalog. Use the suggestions and add model IDs manually — full list is not fetched.",
+        uiTranslate("ui.this_connection_has_a_very_large_model_catalog_use_the_suggestion"),
       );
       return;
     }
@@ -742,7 +742,7 @@ export function ChatProvidersSettings({
       return;
     }
     if (isCustomProvider && !manualTestModelId) {
-      toast.error("Add a model ID before testing this connection.");
+      toast.error(uiTranslate("chat.providersDialog.addModelIdFirst"));
       return;
     }
 
@@ -798,7 +798,7 @@ export function ChatProvidersSettings({
     const entry = registryByType.get(backendProviderType);
     if (entry?.auth_kind !== "chatgpt_oauth") {
       throw new Error(
-        "This connection does not support ChatGPT authorization.",
+        uiTranslate("ui.this_connection_does_not_support_chatgpt_authorization"),
       );
     }
 
@@ -894,7 +894,7 @@ export function ChatProvidersSettings({
     } else {
       if (availableModels.length === 0) {
         toast.error(
-          "Load available models first, then choose which to enable.",
+          uiTranslate("chat.providersDialog.loadModelsFirst"),
         );
         return;
       }
@@ -1037,7 +1037,7 @@ export function ChatProvidersSettings({
     } else {
       if (availableModels.length === 0) {
         toast.error(
-          "Load available models first, then choose which to enable.",
+          uiTranslate("chat.providersDialog.loadModelsFirst"),
         );
         return;
       }
@@ -1440,8 +1440,8 @@ export function ChatProvidersSettings({
                     </Label>
                     <p className="text-xs leading-snug text-muted-foreground">
                       {editingProviderHasSavedKey
-                        ? "Saved securely. Leave blank to keep it."
-                        : "Saved securely after you connect."}
+                        ? uiT("ui.saved_securely_leave_blank_to_keep_it")
+                        : uiT("ui.saved_securely_after_you_connect")}
                     </p>
                   </div>
                   <div className="relative min-w-0">
@@ -1457,7 +1457,7 @@ export function ChatProvidersSettings({
                       }}
                       placeholder={
                         editingProviderHasSavedKey
-                          ? "Leave blank to keep saved key"
+                          ? uiT("ui.leave_blank_to_keep_saved_key")
                           : t("chat.providersDialog.enterApiKey")
                       }
                       className="h-9 pr-9 text-sm"
@@ -1491,15 +1491,13 @@ export function ChatProvidersSettings({
                         }}
                       >
                         {clearApiKeyRequested
-                          ? "Keep saved key"
-                          : "Remove saved key"}
+                          ? uiT("ui.keep_saved_key")
+                          : uiT("ui.remove_saved_key")}
                       </Button>
                     ) : null}
                     {clearApiKeyRequested ? (
                       <p className="mt-1 text-xs text-destructive">
-                        The saved key will be removed when you save this
-                        connection.
-                      </p>
+                        {uiT("ui.the_saved_key_will_be_removed_when_you_save_this_connection")}</p>
                     ) : null}
                   </div>
                 </div>
@@ -1511,8 +1509,7 @@ export function ChatProvidersSettings({
                     htmlFor="provider-custom-name"
                     className="text-sm font-medium"
                   >
-                    Connection name
-                  </Label>
+                    {uiT("ui.connection_name")}</Label>
                   <Input
                     id="provider-custom-name"
                     type="text"
@@ -1537,8 +1534,7 @@ export function ChatProvidersSettings({
                       {t("chat.providersDialog.baseUrl")}
                     </Label>
                     <p className="text-xs leading-snug text-muted-foreground">
-                      OpenAI-compatible endpoint.
-                    </p>
+                      {uiT("ui.openai_compatible_endpoint")}</p>
                   </div>
                   <Input
                     id="provider-base-url"
@@ -1558,16 +1554,12 @@ export function ChatProvidersSettings({
                       htmlFor="provider-max-output-tokens"
                       className="text-sm font-medium"
                     >
-                      Max Tokens limit
-                    </Label>
+                      {uiT("ui.max_tokens_limit")}</Label>
                     <p
                       id="provider-max-output-tokens-help"
                       className="text-xs leading-snug text-muted-foreground"
                     >
-                      Caps Max Tokens for this connection. Never raises it past
-                      a model's documented limit. Leave blank to use that limit,
-                      or 32,768 for a model without one.
-                    </p>
+                      {uiT("ui.caps_max_tokens_for_this_connection_never_raises_it_past_a_model_")}</p>
                   </div>
                   <div className="flex min-w-0 flex-col gap-1.5">
                     {/*
@@ -1599,9 +1591,7 @@ export function ChatProvidersSettings({
                       id="provider-max-output-tokens-warning"
                       className="text-xs leading-snug text-amber-700 dark:text-amber-400"
                     >
-                      If the upstream provider does not support this value,
-                      requests may fail.
-                    </p>
+                      {uiT("ui.if_the_upstream_provider_does_not_support_this_value_requests_may")}</p>
                   </div>
                 </div>
               ) : null}
@@ -1612,8 +1602,7 @@ export function ChatProvidersSettings({
                     htmlFor="provider-is-reasoning"
                     className="text-sm font-medium"
                   >
-                    Reasoning model
-                  </Label>
+                    {uiT("ui.reasoning_model")}</Label>
                   <label
                     htmlFor="provider-is-reasoning"
                     className="flex cursor-pointer items-center gap-2 text-sm"
@@ -1625,8 +1614,7 @@ export function ChatProvidersSettings({
                         setIsReasoningModel(checked === true)
                       }
                     />
-                    This server runs a reasoning model
-                  </label>
+                    {uiT("ui.this_server_runs_a_reasoning_model")}</label>
                 </div>
               ) : null}
               {runsStudioToolsLocally ? (
@@ -1835,8 +1823,7 @@ export function ChatProvidersSettings({
                           htmlFor="provider-manual-models"
                           className="text-sm font-medium"
                         >
-                          Model IDs (one per line or comma-separated)
-                        </Label>
+                          {uiT("chat.providersDialog.modelIds")}</Label>
                         <Textarea
                           id="provider-manual-models"
                           value={manualModelIds}
@@ -2044,8 +2031,7 @@ export function ChatProvidersSettings({
               <span>{t("chat.providersDialog.addConnection")}</span>
             </span>
             <span className="shrink-0 text-xs tabular-nums text-muted-foreground/90">
-              {providers.length} connections · {totalModels} models
-            </span>
+              {providers.length} {" "}{uiT("ui.connections")}{" "}{totalModels} {" "}{uiT("studio.modelPicker.noun")}</span>
           </button>
           {providers.length === 0 ? (
             <div className="px-3 py-4">

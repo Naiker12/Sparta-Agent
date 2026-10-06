@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -75,6 +77,8 @@ type AuthFormProps = {
 const HIDDEN_LOGIN_USERNAME = "unsloth";
 
 export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
+  const uiT = useUiT();
+
   const navigate = useNavigate();
   const isLoginMode = mode === "login";
   const [showPassword, setShowPassword] = useState(false);
@@ -99,7 +103,7 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
       try {
         const response = await fetch(apiUrl("/api/auth/status"));
         if (!response.ok) {
-          throw new Error("Failed to load auth status.");
+          throw new Error(uiTranslate("ui.failed_to_load_auth_status"));
         }
         const result = (await response.json()) as AuthStatusResponse;
         if (!canceled) {
@@ -230,19 +234,19 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
         return;
       }
       if (newPassword.length < 8) {
-        setError("New password must be at least 8 characters.");
+        setError(uiTranslate("ui.new_password_must_be_at_least_8_characters"));
         return;
       }
       if (WHITESPACE_RE.test(newPassword)) {
-        setError("New password cannot contain spaces.");
+        setError(uiTranslate("settings.general.passwordDialog.newHasSpaces"));
         return;
       }
       if (newPassword !== confirmPassword) {
-        setError("Passwords do not match.");
+        setError(uiTranslate("settings.general.passwordDialog.mismatch"));
         return;
       }
       if (currentPassword === newPassword) {
-        setError("New password must be different from your current password.");
+        setError(uiTranslate("settings.general.passwordDialog.samePassword"));
         return;
       }
     }
@@ -335,7 +339,7 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
       <div className="space-y-1.5 text-center">
         <img
           src={`${import.meta.env.BASE_URL}spartan-logo.svg`}
-          alt="Sparta Agent"
+          alt={uiT("settings.about.license.studioLabel")}
           className="mx-auto mb-2 h-16 w-16 object-contain"
         />
         <h2 className="text-2xl font-semibold text-foreground">{title}</h2>
@@ -344,7 +348,7 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
       <form className="space-y-5" onSubmit={handleSubmit}>
         {isLoginMode && (
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{uiT("settings.general.password")}</Label>
             <div className="relative">
               <Input
                 id="password"
@@ -377,7 +381,7 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
           <>
             {!hasBootstrapPassword && (
               <div className="space-y-2">
-                <Label htmlFor="current-password">Current password</Label>
+                <Label htmlFor="current-password">{uiT("settings.general.passwordDialog.currentPassword")}</Label>
                 <div className="relative">
                   <Input
                     id="current-password"
@@ -406,7 +410,7 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="new-password">New password</Label>
+              <Label htmlFor="new-password">{uiT("settings.general.passwordDialog.newPassword")}</Label>
               <div className="relative">
                 <Input
                   id="new-password"
@@ -434,7 +438,7 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm password</Label>
+              <Label htmlFor="confirm-password">{uiT("ui.confirm_password")}</Label>
               <Input
                 id="confirm-password"
                 type="password"
@@ -454,10 +458,10 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
               aria-live="polite"
             >
               {showWhitespaceWarning
-                ? "New password cannot contain spaces."
+                ? uiT("settings.general.passwordDialog.newHasSpaces")
                 : showPasswordMismatchWarning
-                  ? "Please ensure passwords match."
-                  : "Must be at least 8 characters."}
+                  ? uiT("ui.please_ensure_passwords_match")
+                  : uiT("ui.must_be_at_least_8_characters")}
             </p>
           </>
         )}
@@ -482,7 +486,7 @@ export function AuthForm({ mode }: AuthFormProps): ReactElement | null {
             invalidChangePasswordForm
           }
         >
-          {loading ? "Please wait..." : submitLabel}
+          {loading ? uiT("ui.please_wait") : submitLabel}
         </Button>
       </form>
 

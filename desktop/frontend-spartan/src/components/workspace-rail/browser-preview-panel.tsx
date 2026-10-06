@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { useSelectedChatArtifact } from "@/features/chat/artifacts/store";
 import { useWorkspaceStore } from "@/features/chat/stores/use-workspace-store";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,8 @@ import type React from "react";
 import { useEffect, useState } from "react";
 
 export function BrowserPreviewPanel() {
+  const uiT = useUiT();
+
   const browserUrl = useWorkspaceStore((state) => state.browserUrl);
   const browserReloadKey = useWorkspaceStore((state) => state.browserReloadKey);
   const browserHistoryIndex = useWorkspaceStore(
@@ -64,8 +67,7 @@ export function BrowserPreviewPanel() {
       {/* Header */}
       <div className="px-5 pt-5 pb-3 border-b border-border/30">
         <h2 className="font-serif text-2xl font-bold tracking-tight text-foreground/90 mb-3">
-          Vista previa web
-        </h2>
+          {uiT("ui.web_preview")}</h2>
 
         {/* Browser Navigation Controls */}
         <div className="flex items-center gap-2">
@@ -73,7 +75,7 @@ export function BrowserPreviewPanel() {
             type="button"
             onClick={browserGoBack}
             disabled={!canGoBack}
-            title="Atrás"
+            title={uiT("tour.back")}
             className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 disabled:opacity-30 disabled:pointer-events-none transition-colors"
           >
             <ArrowLeftIcon className="w-4 h-4" />
@@ -83,7 +85,7 @@ export function BrowserPreviewPanel() {
             type="button"
             onClick={browserGoForward}
             disabled={!canGoForward}
-            title="Adelante"
+            title={uiT("ui.go_forward")}
             className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 disabled:opacity-30 disabled:pointer-events-none transition-colors"
           >
             <ArrowRightIcon className="w-4 h-4" />
@@ -92,7 +94,7 @@ export function BrowserPreviewPanel() {
           <button
             type="button"
             onClick={handleReload}
-            title="Recargar"
+            title={uiT("settings.dialog.panelReload")}
             className={cn(
               "p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors",
               isLoading && "animate-spin text-blue-500",
@@ -125,7 +127,7 @@ export function BrowserPreviewPanel() {
           <iframe
             key={browserReloadKey}
             srcDoc={selectedArtifact.code}
-            title="Artifact Preview"
+            title={uiT("ui.artifact_preview")}
             sandbox="allow-scripts allow-forms allow-same-origin"
             className="w-full h-full min-h-[500px] rounded-xl border border-border/40 shadow-xs"
           />
@@ -140,8 +142,7 @@ export function BrowserPreviewPanel() {
               </div>
               <nav className="flex items-center gap-5 text-xs text-muted-foreground font-medium">
                 <span className="hover:text-foreground cursor-pointer transition-colors">
-                  Inicio
-                </span>
+                  {uiT("settings.general.startup.sectionTitle")}</span>
                 <span className="hover:text-foreground cursor-pointer transition-colors">
                   Servicios
                 </span>

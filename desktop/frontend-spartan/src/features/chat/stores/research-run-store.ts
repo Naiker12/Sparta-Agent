@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 // eslint-disable-next-line no-restricted-imports -- Avoid the auth barrel's React login page.
 import { AUTH_SESSION_CLEARED_EVENT } from "@/features/auth/session";
 import { create } from "zustand";
@@ -107,7 +108,7 @@ function statusActivity(event: ResearchEvent): ResearchActivity | null {
   };
   switch (event.event) {
     case "run.created":
-      return { ...base, title: "Research requested", state: "complete" };
+      return { ...base, get title() { return uiTranslate("ui.research_requested"); }, state: "complete" };
     case "run.started":
       return event.data.status === "planning"
         ? null
@@ -120,11 +121,11 @@ function statusActivity(event: ResearchEvent): ResearchActivity | null {
             state: "complete",
           };
     case "run.approved":
-      return { ...base, title: "Plan approved", state: "complete" };
+      return { ...base, get title() { return uiTranslate("ui.plan_approved"); }, state: "complete" };
     case "run.cancelRequested":
-      return { ...base, title: "Stopping research safely", state: "running" };
+      return { ...base, get title() { return uiTranslate("ui.stopping_research_safely"); }, state: "running" };
     case "run.cancelled":
-      return { ...base, title: "Research cancelled", state: "cancelled" };
+      return { ...base, get title() { return uiTranslate("ui.research_cancelled"); }, state: "cancelled" };
     case "run.retried":
       return {
         ...base,
@@ -133,11 +134,11 @@ function statusActivity(event: ResearchEvent): ResearchActivity | null {
         state: "complete",
       };
     case "run.completed":
-      return { ...base, title: "Research completed", state: "complete" };
+      return { ...base, get title() { return uiTranslate("ui.research_completed"); }, state: "complete" };
     case "run.failed":
       return {
         ...base,
-        title: "Research failed",
+        get title() { return uiTranslate("ui.research_failed"); },
         detail: event.data.error ?? undefined,
         state: "failed",
       };
@@ -403,7 +404,7 @@ function reduceActivity(
       attempt,
       kind: "plan",
       createdAt: event.createdAt,
-      title: "Research plan ready",
+      get title() { return uiTranslate("ui.research_plan_ready"); },
       plan: event.data.plan ?? event.run.plan ?? undefined,
       state: "action",
     });
@@ -544,7 +545,7 @@ function reduceActivity(
         attempt,
         kind: "report",
         createdAt: event.createdAt,
-        title: "Writing the report",
+        get title() { return uiTranslate("ui.writing_the_report"); },
         state: "running",
       });
     }

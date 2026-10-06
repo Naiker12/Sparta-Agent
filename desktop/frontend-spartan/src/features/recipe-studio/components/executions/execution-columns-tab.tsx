@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   Table,
   TableBody,
@@ -16,24 +17,25 @@ type ExecutionColumnsTabProps = {
 export function ExecutionColumnsTab({
   analysisColumns,
 }: ExecutionColumnsTabProps): ReactElement {
+  const uiT = useUiT();
+
   return (
     <div className="mt-3 rounded-xl border p-3">
-      <p className="mb-2 text-sm font-semibold">Column statistics</p>
+      <p className="mb-2 text-sm font-semibold">{uiT("ui.column_statistics")}</p>
       {analysisColumns.length === 0 ? (
         <p className="text-xs text-muted-foreground">
-          No column statistics yet.
-        </p>
+          {uiT("ui.no_column_statistics_yet")}</p>
       ) : (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Column</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Data type</TableHead>
-              <TableHead>Unique</TableHead>
-              <TableHead>Nulls</TableHead>
-              <TableHead>Input tok avg</TableHead>
-              <TableHead>Output tok avg</TableHead>
+              <TableHead>{uiT("ui.column")}</TableHead>
+              <TableHead>{uiT("ui.type")}</TableHead>
+              <TableHead>{uiT("ui.data_type")}</TableHead>
+              <TableHead>{uiT("ui.unique")}</TableHead>
+              <TableHead>{uiT("ui.nulls")}</TableHead>
+              <TableHead>{uiT("ui.input_tok_avg")}</TableHead>
+              <TableHead>{uiT("ui.output_tok_avg")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

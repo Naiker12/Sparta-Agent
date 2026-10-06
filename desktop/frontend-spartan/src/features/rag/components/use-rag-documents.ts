@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { consumeNativePathToken } from "@/features/native-intents";
 import { toast } from "@/lib/toast";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -287,7 +288,7 @@ export function useRagDocuments(
             useRagAvailabilityStore.getState().isUnavailable()
           )
         ) {
-          toast.error("Failed to load documents", {
+          toast.error(uiTranslate("ui.failed_to_load_documents"), {
             description: err instanceof Error ? err.message : String(err),
           });
         }
@@ -613,8 +614,8 @@ export function useRagDocuments(
           // Materialization failed: drop the chips so they don't hang "pending".
           const tempIds = new Set(fresh.map((f) => f.tempId));
           setDocuments((rows) => rows.filter((row) => !tempIds.has(row.id)));
-          toast.error("Couldn't attach documents", {
-            description: "Could not start a chat to attach them to.",
+          toast.error(uiTranslate("ui.couldn_t_attach_documents"), {
+            get description() { return uiTranslate("ui.could_not_start_a_chat_to_attach_them_to"); },
           });
           return;
         }
@@ -663,7 +664,7 @@ export function useRagDocuments(
         if (prevSig !== undefined) {
           sigByDocId.current.set(documentId, prevSig);
         }
-        toast.error("Delete failed", {
+        toast.error(uiTranslate("ui.delete_failed"), {
           description: err instanceof Error ? err.message : String(err),
         });
       } finally {

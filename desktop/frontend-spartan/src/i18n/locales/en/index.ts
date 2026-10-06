@@ -1,3 +1,4 @@
+import { ui } from "./ui.ts";
 import { apiPage } from "./api-page.ts";
 import { audioPage } from "./audio-page.ts";
 import { chat } from "./chat.ts";
@@ -17,6 +18,7 @@ import { update } from "./update.ts";
 
 export const en = {
   channels,
+  ui,
   audioPage,
   exportPage,
   hub,

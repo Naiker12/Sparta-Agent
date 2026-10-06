@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 /**
  * Sparta Agent – Model Selector Badges & Chips
  *
@@ -50,6 +52,8 @@ export function ListLabel({
   onToggle?: () => void;
   divider?: boolean;
 }) {
+  const uiT = useUiT();
+
   return (
     <div
       className={cn(
@@ -68,7 +72,7 @@ export function ListLabel({
             <button
               type="button"
               onClick={onToggle}
-              aria-label={collapsed ? "Expand section" : "Collapse section"}
+              aria-label={collapsed ? uiT("ui.expand_section") : uiT("ui.collapse_section")}
               className="shrink-0 rounded p-1 text-muted-foreground/60 transition-colors hover:text-foreground"
             >
               {collapsed ? (
@@ -105,21 +109,21 @@ export const CAPABILITY_BADGES: {
 }[] = [
   {
     key: "videoGen",
-    title: "Generates video",
+    get title() { return uiTranslate("ui.generates_video"); },
     Glyph: (props) => (
       <HugeiconsIcon icon={FlimSlateIcon} strokeWidth={1.8} {...props} />
     ),
   },
   {
     key: "imageGen",
-    title: "Generates images",
+    get title() { return uiTranslate("ui.generates_images"); },
     Glyph: (props) => (
       <HugeiconsIcon icon={Image03Icon} strokeWidth={1.8} {...props} />
     ),
   },
   {
     key: "audio",
-    title: "Audio",
+    get title() { return uiTranslate("shell.navigation.audio"); },
     Glyph: (props) => (
       <HugeiconsIcon icon={AudioWave01Icon} strokeWidth={1.8} {...props} />
     ),
@@ -160,19 +164,20 @@ export function CapabilityIcons({ caps }: { caps: ModelCapabilities }) {
 }
 
 export function VisionBadge() {
+  const uiT = useUiT();
+
   return (
     <Tooltip delayDuration={0}>
       <TooltipTrigger asChild={true}>
         <span
-          aria-label="Vision"
+          aria-label={uiT("hub.filters.vision")}
           className="flex h-[18px] shrink-0 items-center justify-center rounded-md border border-border/60 px-1.5 text-indigo-700 dark:text-indigo-300"
         >
           <HugeiconsIcon icon={ViewIcon} className="size-3" strokeWidth={1.8} />
         </span>
       </TooltipTrigger>
       <TooltipContent side="top" className="tooltip-compact">
-        This model can process image inputs
-      </TooltipContent>
+        {uiT("ui.this_model_can_process_image_inputs")}</TooltipContent>
     </Tooltip>
   );
 }
@@ -217,10 +222,12 @@ export function FormatTag({
 }
 
 export function DownloadedBadge() {
+  const uiT = useUiT();
+
   return (
     <span
-      title="Already downloaded"
-      aria-label="Already downloaded"
+      title={uiT("ui.already_downloaded")}
+      aria-label={uiT("ui.already_downloaded")}
       className="flex h-[18px] shrink-0 items-center justify-center text-status-success"
     >
       <HugeiconsIcon
@@ -233,18 +240,18 @@ export function DownloadedBadge() {
 }
 
 export function VramBadge({ status }: { status?: VramFitStatus | null }) {
+  const uiT = useUiT();
+
   if (status === "exceeds") {
     return (
       <span className="whitespace-nowrap text-ui-9 font-medium !text-red-700 !bg-red-50 dark:!text-red-300 dark:!bg-red-500/15 px-1.5 py-0.5 rounded">
-        OOM
-      </span>
+        {uiT("studio.modelPicker.vramOomBadge")}</span>
     );
   }
   if (status === "tight") {
     return (
       <span className="whitespace-nowrap text-ui-9 font-medium !text-amber-400">
-        TIGHT
-      </span>
+        {uiT("ui.tight")}</span>
     );
   }
   return null;

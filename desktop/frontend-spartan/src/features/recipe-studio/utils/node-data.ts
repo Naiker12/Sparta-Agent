@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import type { LayoutDirection, NodeConfig, RecipeNodeData } from "../types";
 import {
   labelForExpression,
@@ -11,7 +12,7 @@ export function nodeDataFromConfig(
 ): RecipeNodeData {
   if (config.kind === "sampler") {
     return {
-      title: "Generated field",
+      get title() { return uiTranslate("ui.generated_field"); },
       kind: "sampler",
       subtype: labelForSampler(config.sampler_type),
       blockType: config.sampler_type,
@@ -21,7 +22,7 @@ export function nodeDataFromConfig(
   }
   if (config.kind === "expression") {
     return {
-      title: "Formula",
+      get title() { return uiTranslate("ui.formula"); },
       kind: "expression",
       subtype: labelForExpression(config.dtype),
       blockType: "expression",
@@ -42,7 +43,7 @@ export function nodeDataFromConfig(
       blockType = "validator_sql";
     }
     return {
-      title: "Check",
+      get title() { return uiTranslate("ui.check"); },
       kind: "validator",
       subtype,
       blockType,
@@ -52,7 +53,7 @@ export function nodeDataFromConfig(
   }
   if (config.kind === "markdown_note") {
     return {
-      title: "Note",
+      get title() { return uiTranslate("ui.note"); },
       kind: "note",
       subtype: "Markdown",
       blockType: "markdown_note",
@@ -71,7 +72,7 @@ export function nodeDataFromConfig(
             ? "GitHub repositories"
             : "Document file";
     return {
-      title: "Source data",
+      get title() { return uiTranslate("ui.source_data"); },
       kind: "seed",
       subtype: sourceLabel,
       blockType: "seed",
@@ -81,7 +82,7 @@ export function nodeDataFromConfig(
   }
   if (config.kind === "model_provider") {
     return {
-      title: "Provider connection",
+      get title() { return uiTranslate("ui.provider_connection"); },
       kind: "model_provider",
       subtype: config.provider_type || "Connection",
       blockType: "model_provider",
@@ -91,7 +92,7 @@ export function nodeDataFromConfig(
   }
   if (config.kind === "model_config") {
     return {
-      title: "Model preset",
+      get title() { return uiTranslate("ui.model_preset"); },
       kind: "model_config",
       subtype: config.model || "Model",
       blockType: "model_config",
@@ -102,7 +103,7 @@ export function nodeDataFromConfig(
   if (config.kind === "tool_config") {
     const providerCount = config.mcp_providers.length;
     return {
-      title: "Tool access",
+      get title() { return uiTranslate("ui.tool_access"); },
       kind: "tool_config",
       subtype: providerCount === 1 ? "1 server" : `${providerCount} servers`,
       blockType: "tool_config",
@@ -111,7 +112,7 @@ export function nodeDataFromConfig(
     };
   }
   return {
-    title: "AI step",
+    get title() { return uiTranslate("ui.ai_step"); },
     kind: "llm",
     subtype: labelForLlm(config.llm_type),
     blockType: config.llm_type,

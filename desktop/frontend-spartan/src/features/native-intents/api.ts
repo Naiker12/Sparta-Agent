@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { isTauri } from "@/lib/api-base";
 import type {
   NativeIntent,
@@ -11,7 +12,7 @@ async function invokeNative<T>(
 ): Promise<T> {
   if (!isTauri) {
     throw new Error(
-      "Native desktop features are only available in the Tauri app.",
+      uiTranslate("ui.native_desktop_features_are_only_available_in_the_tauri_app"),
     );
   }
   const { invoke } = await import("@tauri-apps/api/core");
@@ -27,7 +28,7 @@ export interface NativeDocumentFolderSelection {
 export async function pickNativeDocumentFolder(): Promise<NativeDocumentFolderSelection | null> {
   if (!isTauri) {
     throw new Error(
-      "Persistent local folder sync is only available in the desktop app.",
+      uiTranslate("ui.persistent_local_folder_sync_is_only_available_in_the_desktop_app"),
     );
   }
   return invokeNative<NativeDocumentFolderSelection | null>(
