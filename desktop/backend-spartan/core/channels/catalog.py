@@ -24,7 +24,7 @@ def command_reply(text: str, account: dict, *, user_id=None):
         return None
     command = text.split()[0].split('@')[0].lower()
     spanish = account['locale'] == 'es'
-    if command == '/search':
+    if command in ('/search', '/read'):
         return None
     if command in ('/start', '/help'):
         return '\n'.join('/' + name + ' — ' + description for name, description in COMMANDS[account['locale']])
@@ -54,8 +54,11 @@ def command_reply(text: str, account: dict, *, user_id=None):
         lines.append('Saldo del proveedor: no disponible. Este límite local no es tu saldo de tokens.' if spanish else 'Provider balance: unavailable. This local limit is not your token balance.')
         return '\n'.join(lines)
     if command == '/tools':
-        return ('Puedes conversar, consultar el inventario y buscar información pública con /search. La búsqueda automática depende de las herramientas que soporte el modelo. Archivos locales, ejecución de skills, MCP y comandos siguen bloqueados.' if spanish else 'You can chat, inspect inventory and search public information with /search. Automatic search depends on model tool support. Local files, skill execution, MCP and commands remain blocked.')
+        return ('Puedes conversar, consultar el inventario y buscar información pública con /search y leer páginas públicas con /read URL. La búsqueda automática depende de las herramientas que soporte el modelo. Archivos locales, ejecución de skills, MCP y comandos siguen bloqueados.' if spanish else 'You can chat, inspect inventory and search public information with /search and read public pages with /read URL. Automatic search depends on model tool support. Local files, skill execution, MCP and commands remain blocked.')
     if command in ('/skills', '/mcp'):
         items = inventory()['skills' if command == '/skills' else 'mcp']
         return '\n'.join('- ' + i['name'] for i in items) or ('No hay elementos configurados.' if spanish else 'No items configured.')
     return 'Usa /help para ver los comandos.' if spanish else 'Use /help to see commands.'
+
+COMMANDS['es'].append(('read', 'Leer una página pública: /read URL'))
+COMMANDS['en'].append(('read', 'Read a public page: /read URL'))

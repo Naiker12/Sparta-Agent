@@ -1114,3 +1114,50 @@ def test_usage_migration_preserves_existing_counts():
         db.execute('INSERT INTO channel_usage VALUES(?,1,\'123\',\'p\',\'m\',\'completed\',7,3,10,?)', (saved['id'], int(time.time())))
     value = usage.summary(saved['id'])
     assert value['total_tokens'] == 10 and value['complete_requests'] == 1
+
+
+@pytest.mark.parametrize('url', ['http://127.0.0.1/a', 'http://localhost/a', 'https://example.com/?token=secret', 'https://user:password@example.com/a', 'file:///etc/passwd', 'https://example.com:8080/a'])
+def test_page_command_rejects_private_destinations(url):
+    from core.channels.web import page_arguments
+    with pytest.raises(ValueError):
+        page_arguments(json.dumps({'url': url}))
+
+
+def test_explicit_page_read_works_without_model_tools(monkeypatch):
+    from core.channels.executor import respond
+    from core.channels import web
+    from core.inference import task_scheduler
+    saved = account()
+    class Client:
+        async def stream_chat_completion(self, **kwargs):
+            assert kwargs['tools'] == []
+            assert 'Untrusted' in kwargs['messages'][-1]['content']
+            yield 'data: ' + json.dumps({'choices': [{'delta': {'content': 'Page summary'}}]})
+    monkeypatch.setattr(task_scheduler, 'make_client', lambda *_: Client())
+    lookup = AsyncMock(return_value=[{'title': 'example.com', 'url': 'https://example.com/page', 'snippet': 'Public page text', 'kind': 'page'}])
+    monkeypatch.setattr(web, 'read_page', lookup)
+    result = asyncio.run(respond(saved, '/read https://example.com/page'))
+    assert 'https://example.com/page' in result
+    assert 'texto limitado' in result
+    lookup.assert_awaited_once_with('https://example.com/page')
+
+
+def test_public_page_reader_uses_bounded_existing_fetch(monkeypatch):
+    from core.channels import web
+    from core.inference import tools
+    def fetch(url, **kwargs):
+        assert url == 'https://example.com/page'
+        assert kwargs['max_chars'] == 10000 and kwargs['timeout'] == 15
+        assert not kwargs['cancel_event'].is_set()
+        return 'a' * 12000
+    monkeypatch.setattr(tools, '_fetch_page_text', fetch)
+    result = asyncio.run(web.read_page('https://example.com/page'))
+    assert len(result[0]['snippet']) == 10000
+
+
+@pytest.mark.parametrize('error', ['Failed to fetch URL: secret', 'Blocked: private IP', '(binary content, 20 bytes; not readable as text)', '(page returned no readable text)'])
+def test_page_reader_does_not_forward_fetch_errors(monkeypatch, error):
+    from core.channels import web
+    from core.inference import tools
+    monkeypatch.setattr(tools, '_fetch_page_text', lambda *args, **kwargs: error)
+    assert asyncio.run(web.read_page('https://example.com/page')) == []

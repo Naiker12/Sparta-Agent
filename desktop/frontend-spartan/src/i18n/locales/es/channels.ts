@@ -48,7 +48,10 @@ export const channels = {
       replyFailed: "La respuesta no pudo completarse",
       requestStarted: "Consulta iniciada",
       requestCancelled: "Consulta cancelada por su usuario",
-      webSearchStarted: "Búsqueda web iniciada",
+      webReadStarted: "Lectura de página iniciada",
+    webReadCompleted: "Texto de página obtenido",
+    webReadUnavailable: "Página no disponible",
+    webSearchStarted: "Búsqueda web iniciada",
       webSearchCompleted: "Fuentes web obtenidas",
       webSearchUnavailable: "Sin resultados web utilizables",
       credentialsError: "No se pudo autenticar el bot",
@@ -254,6 +257,7 @@ export const channels = {
   commandsDescription:
     "Escribe / en tu chat con el bot para ver estos comandos.",
   command: {
+    read: "Leer una página pública: /read seguido de su URL",
     search: "Buscar un tema público: /search seguido de tu consulta",
     usage: "Consultar tu consumo de tokens y el límite local",
     cancel: "Cancelar tu consulta en curso",
@@ -273,7 +277,7 @@ export const channels = {
   audioDocuments: "Audios y documentos",
   webTools: "Ejecución de skills y herramientas MCP",
   publicWebSearch: "Búsqueda pública con fuentes y enlaces",
-  webSearchHelp: "Usa /search seguido de un tema público. La búsqueda automática requiere un modelo con herramientas. Las fuentes son extractos de búsqueda; las imágenes y la lectura completa de páginas todavía no están disponibles.",
+  webSearchHelp: "Usa /search para buscar un tema público y /read para consultar el texto de una URL pública. La lectura tiene un límite de texto y puede fallar en páginas protegidas. La búsqueda automática requiere un modelo con herramientas. Las imágenes todavía no están disponibles.",
   available: "Disponible",
   pending: "Pendiente",
   capabilityNote:

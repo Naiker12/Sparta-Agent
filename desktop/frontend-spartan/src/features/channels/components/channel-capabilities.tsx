@@ -31,6 +31,7 @@ export function ChannelCapabilities({
                 "provider",
                 "usage",
                 "search",
+                "read",
                 "tools",
                 "skills",
                 "mcp",

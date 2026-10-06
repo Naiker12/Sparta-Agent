@@ -47,7 +47,10 @@ export const channels = {
       replyFailed: "Reply could not be completed",
       requestStarted: "Request started",
       requestCancelled: "Request cancelled by its sender",
-      webSearchStarted: "Web search started",
+      webReadStarted: "Page reading started",
+    webReadCompleted: "Page text retrieved",
+    webReadUnavailable: "Page unavailable",
+    webSearchStarted: "Web search started",
       webSearchCompleted: "Web sources obtained",
       webSearchUnavailable: "No usable web results",
       credentialsError: "Bot authentication failed",
@@ -252,6 +255,7 @@ export const channels = {
   commands: "Telegram commands",
   commandsDescription: "Type / in your bot chat to see these commands.",
   command: {
+    read: "Read a public page: /read followed by its URL",
     search: "Search a public topic: /search followed by your query",
     usage: "Check your token usage and local request limit",
     cancel: "Cancel your active request",
@@ -271,7 +275,7 @@ export const channels = {
   audioDocuments: "Audio and documents",
   webTools: "Skill and MCP tool execution",
   publicWebSearch: "Public search with sources and links",
-  webSearchHelp: "Use /search followed by a public topic. Automatic search requires a model with tool support. Sources are search snippets; images and full-page reading are not available yet.",
+  webSearchHelp: "Use /search to search a public topic and /read to consult text from a public URL. Reading is text-limited and may fail on protected pages. Automatic search requires model tool support. Images are not available yet.",
   available: "Available",
   pending: "Pending",
   capabilityNote:

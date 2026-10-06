@@ -148,3 +148,12 @@ Tercer bloque implementado: búsqueda pública por `/search` para proveedores de
 - [faster-whisper](https://github.com/SYSTRAN/faster-whisper): alternativa a evaluar solo si el motor existente no satisface las mediciones.
 
 Los límites externos se comprobarán de nuevo al implementar. La arquitectura propuesta se basa también en los módulos reales del repositorio revisados; no supone que enumerar una skill o un MCP signifique que Telegram ya puede ejecutarlo.
+
+
+## Avance de lectura de páginas públicas
+
+- `/read URL` consulta texto de una página pública incluso con modelos sin llamadas a herramientas. Los modelos compatibles también reciben `read_public_page`.
+- Reutiliza el lector existente con protección DNS/IP y redirecciones; bloquea URLs locales, credenciales, puertos no estándar y parámetros de autenticación. Límite de 10 000 caracteres y tiempo de lectura acotado.
+- El contenido externo se trata como evidencia no confiable. Cada respuesta incluye la URL consultada y declara el límite de texto; no se presenta como lectura íntegra.
+- Conserva cancelación, indicador de escritura, medición de tokens y registro de trabajo. No añade dependencias.
+- Pendiente: búsqueda y envío de imágenes de referencia, voz local, proyectos y carpetas autorizadas.
