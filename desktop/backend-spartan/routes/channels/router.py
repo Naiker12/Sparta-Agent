@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from auth.authentication import authenticated_via_api_key, get_current_credential
 from routes.provider_credentials import current_credential_write, require_ui_session
 from storage.channels import repository as repo
+from storage.channels import pairing
 from storage.credential_secrets import delete_secret, upsert_secret
 from core.channels import runtime
 from core.channels.catalog import inventory
@@ -43,7 +44,7 @@ class AccountInput(BaseModel):
     provider_id: str = Field(min_length=1, max_length=200)
     model: str = Field(min_length=1, max_length=300)
     locale: Literal['es', 'en'] = 'es'
-    allowed_user_ids: list[str] = Field(min_length=1, max_length=20)
+    allowed_user_ids: list[str] = Field(default_factory=list, max_length=20)
 
 
 class EnabledInput(BaseModel):
@@ -94,13 +95,63 @@ async def create(body: AccountInput, credential=Depends(ui_credential)):
 
 @router.patch('/{account_id}')
 async def enable(account_id: str, body: EnabledInput, credential=Depends(ui_credential)):
-    if not repo.get_account(account_id, credential[0]):
+    account = repo.get_account(account_id, credential[0])
+    if not account:
         raise HTTPException(404, 'account_not_found')
+    if body.enabled and not account['allowed_user_ids']:
+        raise HTTPException(422, 'authorized_user_required')
     # Cancel old worker before reconnecting; never start a second poll consumer.
     async with runtime.control_lock:
         await runtime.stop(account_id)
         with current_credential_write(credential):
             repo.set_enabled(account_id, credential[0], body.enabled)
+        if body.enabled:
+            runtime.states[account_id] = 'connecting'
+    return {'ok': True}
+
+
+@router.post('/{account_id}/pairings')
+async def start_pairing(account_id: str, credential=Depends(ui_credential)):
+    try:
+        async with runtime.control_lock:
+            with current_credential_write(credential):
+                result = pairing.create(account_id, credential[0])
+            worker = runtime.workers.get(account_id)
+            if worker and worker.done():
+                await runtime.stop(account_id)
+            return result
+    except ValueError as error:
+        raise HTTPException(404 if str(error) == 'account_not_found' else 422, str(error)) from None
+
+
+@router.get('/{account_id}/pairings/{session_id}')
+def pairing_status(account_id: str, session_id: str, credential=Depends(ui_credential)):
+    result = pairing.get(account_id, session_id, credential[0])
+    if not result:
+        raise HTTPException(404, 'pairing_not_found')
+    return {**result, 'transport_status': runtime.states.get(account_id, 'connecting')}
+
+
+@router.post('/{account_id}/pairings/{session_id}/approve')
+async def approve_pairing(account_id: str, session_id: str, credential=Depends(ui_credential)):
+    if not repo.get_account(account_id, credential[0]):
+        raise HTTPException(404, 'account_not_found')
+    async with runtime.control_lock:
+        try:
+            with current_credential_write(credential):
+                result = pairing.approve(account_id, session_id, credential[0])
+        except ValueError as error:
+            raise HTTPException(409, str(error)) from None
+        await runtime.stop(account_id)
+        runtime.states[account_id] = 'connecting'
+    return result
+
+
+@router.delete('/{account_id}/pairings/{session_id}')
+async def cancel_pairing(account_id: str, session_id: str, credential=Depends(ui_credential)):
+    with current_credential_write(credential):
+        if not pairing.cancel(account_id, session_id, credential[0]):
+            raise HTTPException(404, 'pairing_not_found')
     return {'ok': True}
 
 

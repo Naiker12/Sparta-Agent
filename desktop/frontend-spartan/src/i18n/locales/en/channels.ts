@@ -1,4 +1,40 @@
 export const channels = {
+  pairing: {
+    approved:
+      "Your account is already authorized. Spartan is connecting the bot.",
+    done: "Done",
+    listenerError:
+      "Spartan cannot receive messages from this bot. Check the connection, token, and whether another app is using this bot before generating another link.",
+    title: "Link my Telegram",
+    description:
+      "Open your bot and authorize your account without looking up your ID.",
+    qr: "Scan to open your bot in Telegram",
+    openHelp:
+      "Open Telegram using this button or scan the QR with your phone. In the bot chat, press Start.",
+    open: "Open my bot in Telegram",
+    expiry:
+      "This private link can be used once and expires in 10 minutes. Keep Spartan open.",
+    waiting: "Waiting for you to press Start in Telegram…",
+    detected: "Account detected",
+    accountId: "Account ID:",
+    confirmHelp:
+      "Check that this code matches the one you received in Telegram:",
+    approveHelp:
+      "If you recognize this account, authorize it to connect the bot. Otherwise, cancel and generate another link.",
+    approve: "Authorize my account and connect",
+    expired:
+      "This link is no longer available. Generate a new one to continue.",
+    renew: "Generate another link",
+    setupHelp:
+      "Link your account by opening your bot in Telegram. Spartan detects your ID automatically and asks you to approve the account.",
+    manual: "Enter IDs manually (advanced)",
+    setupSummary:
+      "We will verify the bot and open account linking. It will only reply after you authorize your account in Spartan.",
+    verifyLink: "Verify bot and link Telegram",
+    noUsers: "No accounts authorized yet",
+    linkFailed:
+      "Your bot has been saved. The link could not be generated; try again or continue from its card.",
+  },
   conversationContext: "Conversation context",
   contextHelp:
     "Each bot keeps recent context per user, up to 6 exchanges for 7 days. Use /reset to clear it. Your desktop chats and Spartan memory stay separate.",
@@ -42,7 +78,8 @@ export const channels = {
     },
   },
   startSetup: "Start setup",
-  setupTime: "You will need your bot token and Telegram ID.",
+  setupTime:
+    "You will need your bot token. Link your account directly from Telegram.",
   whatYouCanDo: "What you can do now",
   whatYouCanDoDescription:
     "Send text, talk to Spartan and check your provider, skills and MCP servers.",

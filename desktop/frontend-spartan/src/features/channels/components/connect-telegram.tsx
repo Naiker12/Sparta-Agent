@@ -32,7 +32,13 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { ChannelApiError, channelsApi } from "../api";
-import type { ChannelDraft, ChannelInventory } from "../types";
+import type {
+  ChannelAccount,
+  ChannelDraft,
+  ChannelInventory,
+  PairingLink,
+} from "../types";
+import { PairTelegram } from "./pair-telegram";
 
 export function ConnectTelegram({
   open,
@@ -50,8 +56,13 @@ export function ConnectTelegram({
   const [draft, setDraft] = useState<ChannelDraft>({
     name: "Telegram",
     token: "",
-    provider_id: "",
-    model: "",
+    provider_id:
+      inventory.providers.length === 1 ? inventory.providers[0].id : "",
+    model:
+      inventory.providers.length === 1 &&
+      inventory.providers[0].models.length === 1
+        ? inventory.providers[0].models[0]
+        : "",
     locale: locale === "es" ? "es" : "en",
     allowed_user_ids: [],
   });
@@ -59,11 +70,16 @@ export function ConnectTelegram({
   const [users, setUsers] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [savedAccount, setSavedAccount] = useState<ChannelAccount | null>(null);
+  const [pairingLink, setPairingLink] = useState<PairingLink | null>(null);
   const provider = inventory.providers.find((p) => p.id === draft.provider_id);
   const resetSecret = () => {
     setDraft((current) => ({ ...current, token: "" }));
     setError("");
     setStep(0);
+    setSavedAccount(null);
+    setPairingLink(null);
+    setUsers("");
   };
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -74,7 +90,6 @@ export function ConnectTelegram({
     }
     const ids = users.split(/[\s,]+/).filter(Boolean);
     if (
-      !ids.length ||
       ids.length > 20 ||
       ids.some(
         (id) => !/^\d+$/.test(id) || Number(id) <= 0 || Number(id) >= 2 ** 53,
@@ -84,31 +99,61 @@ export function ConnectTelegram({
       return;
     }
     setBusy(true);
+    let botSaved = Boolean(savedAccount);
     try {
-      await channelsApi.create({
-        ...draft,
-        name: draft.name.trim(),
-        allowed_user_ids: ids,
-      });
-      resetSecret();
+      const saved =
+        savedAccount ??
+        (await channelsApi.create({
+          ...draft,
+          name: draft.name.trim(),
+          allowed_user_ids: ids,
+        }));
+      setSavedAccount(saved);
+      botSaved = true;
+      setDraft((current) => ({ ...current, token: "" }));
       onSaved();
-      onOpenChange(false);
+      if (ids.length) {
+        resetSecret();
+        onOpenChange(false);
+      } else {
+        setPairingLink(await channelsApi.startPairing(saved.id));
+      }
     } catch (cause) {
       const code =
         cause instanceof ChannelApiError ? cause.code : "request_failed";
       setError(
-        code === "webhook_conflict"
-          ? t("channels.webhookConflict")
-          : code === "bot_already_configured"
-            ? t("channels.duplicateBot")
-            : code === "invalid_provider"
-              ? t("channels.invalidProvider")
-              : t("channels.saveFailed"),
+        botSaved
+          ? t("channels.pairing.linkFailed")
+          : code === "webhook_conflict"
+            ? t("channels.webhookConflict")
+            : code === "bot_already_configured"
+              ? t("channels.duplicateBot")
+              : code === "invalid_provider"
+                ? t("channels.invalidProvider")
+                : t("channels.saveFailed"),
       );
     } finally {
       setBusy(false);
     }
   }
+  if (open && savedAccount && pairingLink)
+    return (
+      <PairTelegram
+        key={savedAccount.id}
+        accountId={savedAccount.id}
+        initialSession={pairingLink}
+        onClose={() => {
+          resetSecret();
+          onSaved();
+          onOpenChange(false);
+        }}
+        onDone={() => {
+          resetSecret();
+          onSaved();
+          onOpenChange(false);
+        }}
+      />
+    );
   return (
     <Dialog
       open={open}
@@ -292,21 +337,34 @@ export function ConnectTelegram({
             )}
             {step === 2 && (
               <>
-                <Field>
-                  <FieldLabel htmlFor="channel-users">
-                    {t("channels.authorizedUsers")}
-                  </FieldLabel>
-                  <Input
-                    id="channel-users"
-                    inputMode="numeric"
-                    value={users}
-                    required
-                    disabled={busy}
-                    placeholder="123456789"
-                    onChange={(e) => setUsers(e.target.value)}
-                  />
-                  <FieldDescription>{t("channels.usersHelp")}</FieldDescription>
-                </Field>
+                <Alert>
+                  <AlertDescription>
+                    {t("channels.pairing.setupHelp")}
+                  </AlertDescription>
+                </Alert>
+                {!savedAccount && (
+                  <details>
+                    <summary className="cursor-pointer text-sm text-muted-foreground">
+                      {t("channels.pairing.manual")}
+                    </summary>
+                    <Field className="mt-3">
+                      <FieldLabel htmlFor="channel-users">
+                        {t("channels.authorizedUsers")}
+                      </FieldLabel>
+                      <Input
+                        id="channel-users"
+                        inputMode="numeric"
+                        value={users}
+                        disabled={busy}
+                        placeholder="123456789"
+                        onChange={(e) => setUsers(e.target.value)}
+                      />
+                      <FieldDescription>
+                        {t("channels.usersHelp")}
+                      </FieldDescription>
+                    </Field>
+                  </details>
+                )}
                 <Field>
                   <FieldLabel htmlFor="channel-language">
                     {t("channels.botLanguage")}
@@ -335,7 +393,11 @@ export function ConnectTelegram({
                     {provider?.name} · {draft.model}
                   </p>
                   <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
-                    {t("channels.savePausedHelp")}
+                    {t(
+                      users.trim()
+                        ? "channels.savePausedHelp"
+                        : "channels.pairing.setupSummary",
+                    )}
                   </p>
                   <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
                     {t("channels.contextHelp")}
@@ -355,7 +417,7 @@ export function ConnectTelegram({
               variant="ghost"
               disabled={busy}
               onClick={() => {
-                if (step) {
+                if (step && !savedAccount) {
                   setStep(step - 1);
                   setError("");
                 } else {
@@ -364,7 +426,7 @@ export function ConnectTelegram({
                 }
               }}
             >
-              {t(step ? "channels.back" : "channels.cancel")}
+              {t(step && !savedAccount ? "channels.back" : "channels.cancel")}
             </Button>
             <Button
               type="submit"
@@ -377,7 +439,9 @@ export function ConnectTelegram({
                 busy
                   ? "channels.saving"
                   : step === 2
-                    ? "channels.verifySave"
+                    ? users.trim()
+                      ? "channels.verifySave"
+                      : "channels.pairing.verifyLink"
                     : "channels.continue",
               )}
             </Button>

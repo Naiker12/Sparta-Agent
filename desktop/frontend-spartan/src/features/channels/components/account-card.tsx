@@ -21,7 +21,8 @@ import {
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { channelsApi } from "../api";
-import type { ChannelAccount } from "../types";
+import type { ChannelAccount, PairingLink } from "../types";
+import { PairTelegram } from "./pair-telegram";
 
 export function AccountCard({
   account,
@@ -35,6 +36,18 @@ export function AccountCard({
   const t = useT();
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState(false);
+  const [pairingLink, setPairingLink] = useState<PairingLink | null>(null);
+  async function link() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      setPairingLink(await channelsApi.startPairing(account.id));
+    } catch {
+      onError();
+    } finally {
+      setBusy(false);
+    }
+  }
   async function act(remove = false) {
     setBusy(true);
     try {
@@ -97,10 +110,21 @@ export function AccountCard({
                 {t("channels.authorizedUsers")}
               </dt>
               <dd className="mt-1 break-all font-mono text-xs">
-                {account.allowed_user_ids.join(", ")}
+                {account.allowed_user_ids.join(", ") ||
+                  t("channels.pairing.noUsers")}
               </dd>
             </div>
           </dl>
+          <Button
+            className="mt-4"
+            variant="outline"
+            size="sm"
+            disabled={busy}
+            onClick={() => void link()}
+          >
+            {busy && <Spinner label={t("channels.loading")} />}
+            {t("channels.pairing.title")}
+          </Button>
         </CardContent>
         <CardFooter className="justify-between gap-3 border-t pt-4">
           <Button
@@ -114,7 +138,9 @@ export function AccountCard({
           <Button
             variant={account.enabled ? "outline" : "default"}
             size="sm"
-            disabled={busy}
+            disabled={
+              busy || (!account.enabled && !account.allowed_user_ids.length)
+            }
             onClick={() => void act()}
           >
             {busy && <Spinner label={t("channels.working")} />}
@@ -151,6 +177,20 @@ export function AccountCard({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      {pairingLink && (
+        <PairTelegram
+          accountId={account.id}
+          initialSession={pairingLink}
+          onClose={() => {
+            setPairingLink(null);
+            onChanged();
+          }}
+          onDone={() => {
+            setPairingLink(null);
+            onChanged();
+          }}
+        />
+      )}
     </>
   );
 }

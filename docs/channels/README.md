@@ -39,7 +39,7 @@ El frontend consume únicamente `/api/channels`. El transporte no recibe un JWT 
 ## Siguientes etapas
 
 1. Validar un bot real con el usuario: usuarios autorizados y denegados, comandos, modelo, reconexión, pausa y cierre.
-2. Facilitar vinculación mediante solicitudes con códigos de un solo uso y aprobación en Spartan. Actualmente se requieren IDs conocidos.
+2. Vinculación mediante enlace y QR implementada; validar con un bot real la detección, comprobación del código y aprobación en Spartan. Los IDs manuales quedan como opción avanzada.
 3. Contexto reciente implementado por bot y remitente; validar continuidad y /reset con un bot real. Los chats de escritorio, proyectos y memoria del grafo permanecen separados.
 4. Audios: límites de tamaño/duración, transcripción con proveedor configurado y eliminación de temporales. Documentos: descarga limitada, detección real de formato, extracción reutilizando ingestión y prevención de rutas externas. En esta entrega se informa que no están habilitados y no se descargan.
 5. Ejecución web, skills y MCP mediante un contrato común con políticas por conexión, confirmaciones persistentes, caducidad y cancelación. Consultar inventario no autoriza ejecución. No sustituir el modo de confirmación por acceso completo.
@@ -47,7 +47,7 @@ El frontend consume únicamente `/api/channels`. El transporte no recibe un JWT 
 
 ## Validación
 
-`desktop/backend-spartan/.venv/Scripts/python.exe -m pytest --noconftest tests/test_channels.py -q` desde el backend: 27 pruebas de Canales, almacenamiento temporal, transporte simulado, ninguna credencial real ni mensaje externo.
+`desktop/backend-spartan/.venv/Scripts/python.exe -m pytest --noconftest tests/test_channels.py -q` desde el backend: 39 pruebas de Canales, almacenamiento temporal, transporte simulado, ninguna credencial real ni mensaje externo.
 
 Se usa `--noconftest` porque la configuración general de pruebas de `main` importa `core.inference.diffusion_prequant`, ausente en este checkout. La suite de Canales define su propio aislamiento y no modifica esa configuración general.
 
@@ -68,3 +68,17 @@ Las APIs de esas aplicaciones son referencias arquitectónicas; Spartan no utili
 La guía muestra el enlace oficial de BotFather antes de abrir el asistente. Los indicadores SVG cubren carga, actualización, verificación y cambios de conexión. La consulta tiene un límite de 15 segundos, evita consultas simultáneas y ofrece reintento sin dejar un esqueleto permanente cuando falla. Los textos nuevos están disponibles en español e inglés. El último ajuste visual requiere revisión en la aplicación abierta.
 
 La rama `canales` incorpora `main` después de fusionar memoria y traducciones. El contexto local de Telegram no se expone en el inventario ni en la actividad. /reset borra el contexto para futuras respuestas; el registro durable de recepción mantiene su política de retención independiente. La caducidad del contexto se aplica al leer o guardar intercambios.
+
+## Vinculación de Telegram
+
+El asistente verifica y guarda el bot pausado sin exigir IDs. Crea un enlace oficial `t.me/<bot>?start=link_<nonce>` y un QR SVG generado localmente con la dependencia existente `react-qr-code`. El usuario pulsa Iniciar en Telegram, compara el código de comprobación y aprueba la cuenta en Spartan. Aprobar agrega el ID detectado y activa la conexión; se pueden vincular cuentas adicionales desde su tarjeta.
+
+El nonce tiene 256 bits aleatorios, caduca a los diez minutos y solo se guarda su hash. Cada bot tiene una solicitud activa; regenerarla invalida la anterior. El primer remitente privado válido queda pendiente de revisión, sin permisos. El nombre visible no autentica: la comprobación usa el código recibido en el propio chat. La aprobación exige sesión de interfaz, propiedad de la conexión, solicitud vigente y cupo de usuarios; una API key no puede autorizarla.
+
+Un bot pausado escucha temporalmente mientras su vinculación está vigente. Solo procesa la identificación asociada al enlace: no persiste el comando con el nonce, no consulta inventarios ni ejecuta el modelo. Cancelar o caducar finaliza esta recepción en el siguiente ciclo del supervisor. No se crea un segundo consumidor de getUpdates.
+
+La interfaz cubre espera, cuenta detectada, cancelación, renovación, caducidad, errores de transporte y reintento, en español e inglés. La revisión completa con Telegram externo requiere el bot del usuario; las pruebas utilizan almacenamiento temporal y transportes simulados.
+
+Fuentes: [Deep linking de Telegram](https://core.telegram.org/bots/features#deep-linking) y [User en Bot API](https://core.telegram.org/bots/api#user).
+
+Los datos de una cuenta no aprobada se borran de la solicitud cuando se cancela o caduca; el supervisor limpia solicitudes caducadas una vez por minuto. La interfaz recupera una aprobación completada si su respuesta HTTP se perdió. Las consultas y operaciones de vinculación tienen un límite de quince segundos; la verificación inicial del bot dispone de noventa segundos.

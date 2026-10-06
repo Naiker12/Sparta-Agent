@@ -38,6 +38,13 @@ def connection():
             PRIMARY KEY(account_id, update_id));
           CREATE INDEX IF NOT EXISTS channel_history_user
             ON channel_history(account_id, user_id, update_id);
+          CREATE TABLE IF NOT EXISTS channel_pairings (
+            id TEXT PRIMARY KEY, account_id TEXT NOT NULL,
+            token_hash TEXT UNIQUE NOT NULL, expires_at INTEGER NOT NULL,
+            status TEXT NOT NULL, user_id TEXT, username TEXT, name TEXT,
+            confirmation TEXT);
+          CREATE INDEX IF NOT EXISTS channel_pairings_account
+            ON channel_pairings(account_id, expires_at);
         ''')
         yield db
         db.commit()
@@ -81,6 +88,7 @@ def delete_account(account_id: str, owner: str):
         db.execute('DELETE FROM channel_events WHERE account_id=?', (account_id,))
         db.execute('DELETE FROM channel_budget WHERE account_id=?', (account_id,))
         db.execute('DELETE FROM channel_history WHERE account_id=?', (account_id,))
+        db.execute('DELETE FROM channel_pairings WHERE account_id=?', (account_id,))
         return True
 
 

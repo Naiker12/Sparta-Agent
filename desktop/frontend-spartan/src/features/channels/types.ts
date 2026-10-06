@@ -38,3 +38,15 @@ export type ChannelDraft = Pick<
   ChannelAccount,
   "name" | "provider_id" | "model" | "locale" | "allowed_user_ids"
 > & { token: string };
+
+export type PairingSession = {
+  id: string;
+  status: "waiting" | "review" | "approved" | "expired" | "cancelled";
+  expires_at: number;
+  user_id: string | null;
+  username: string | null;
+  name: string | null;
+  confirmation: string | null;
+  transport_status?: ChannelStatus;
+};
+export type PairingLink = PairingSession & { url: string };

@@ -4,6 +4,7 @@ import time
 
 from storage.channels import repository as repo
 from storage.channels import history
+from storage.channels import pairing
 from storage.credential_secrets import get_secret
 from .catalog import COMMANDS, command_reply
 from .executor import respond
@@ -38,11 +39,20 @@ async def _worker(account):
         await transport.call('setMyCommands', language_code=account['locale'], commands=[{'command': name, 'description': description} for name, description in COMMANDS[account['locale']]])
         while True:
             try:
-                states[account_id] = 'connected'
-                pending = repo.claim(account_id)
+                account = repo.get_account(account_id)
+                if not account:
+                    return
+                # Paused discovery listens only for a valid single-use link.
+                # It cannot execute a provider or accept ordinary messages.
+                states[account_id] = 'connected' if account['enabled'] else 'paused'
+                pending = repo.claim(account_id) if account['enabled'] else None
                 if not pending:
                     updates = await transport.call('getUpdates', offset=repo.offset(account_id), timeout=25, limit=20, allowed_updates=['message'])
-                    repo.ingest(account_id, updates, lambda update: normalize_private_message(update, account['allowed_user_ids']))
+                    captures = [candidate for update in updates if (candidate := pairing.capture(account_id, update))]
+                    repo.ingest(account_id, updates, lambda update: normalize_private_message(update, account['allowed_user_ids']) if account['enabled'] and not pairing.is_link(update) else None)
+                    for candidate in captures:
+                        output = ('Vuelve a Spartan para autorizar tu cuenta. Comprueba este código: ' if account['locale'] == 'es' else 'Return to Spartan to authorize your account. Check this code: ') + candidate['confirmation']
+                        await transport.send(candidate['chat_id'], output)
                     continue
                 update_id, message = pending
                 try:
@@ -94,11 +104,15 @@ async def _worker(account):
 
 
 async def run():
+    last_cleanup = -60.0
     try:
         while True:
             try:
+                if time.monotonic() - last_cleanup >= 60:
+                    pairing.expire()
+                    last_cleanup = time.monotonic()
                 async with control_lock:
-                    enabled = {a['id']: a for a in repo.accounts() if a['enabled']}
+                    enabled = {a['id']: a for a in repo.accounts() if a['enabled'] or pairing.active(a['id'])}
                     for account_id in list(workers):
                         if account_id not in enabled:
                             await stop(account_id)

@@ -159,6 +159,8 @@ def test_catalog_never_exposes_mcp_headers_or_skill_instructions(monkeypatch):
 
 def test_worker_never_executes_media_or_commands_with_provider(monkeypatch):
     saved = account()
+    repo.set_enabled(saved['id'], 'owner', True)
+    saved['enabled'] = True
     transport = AsyncMock()
     messages = iter([(1, {'user_id': '123', 'chat_id': 123, 'text': '/provider', 'media': None}), (2, {'user_id': '123', 'chat_id': 123, 'text': '', 'media': 'voice'})])
     def claim(_):
@@ -178,7 +180,8 @@ def test_worker_never_executes_media_or_commands_with_provider(monkeypatch):
     transport.close.assert_awaited_once()
 
 
-def test_control_plane_stores_encrypted_token_and_removes_it(monkeypatch):
+@pytest.mark.parametrize('manual', [True, False])
+def test_control_plane_stores_encrypted_token_and_removes_it(monkeypatch, manual):
     from contextlib import nullcontext
     import importlib
     routes = importlib.import_module('routes.channels.router')
@@ -196,7 +199,10 @@ def test_control_plane_stores_encrypted_token_and_removes_it(monkeypatch):
     app.dependency_overrides[ui_credential] = lambda: ('owner', None)
     token = '12345:SECRET_ABCDEF01234567890123456789'
     with TestClient(app) as client:
-        response = client.post('/api/channels', json={'name': 'Bot', 'token': token, 'provider_id': 'p', 'model': 'm', 'allowed_user_ids': ['123']})
+        body = {'name': 'Bot', 'token': token, 'provider_id': 'p', 'model': 'm'}
+        if manual:
+            body['allowed_user_ids'] = ['123']
+        response = client.post('/api/channels', json=body)
         assert response.status_code == 200
         assert token not in response.text
         saved = response.json()
@@ -208,7 +214,14 @@ def test_control_plane_stores_encrypted_token_and_removes_it(monkeypatch):
             ciphertext = db.execute('SELECT ciphertext FROM credential_secrets').fetchone()[0]
             assert token not in stored
             assert token.encode() not in ciphertext
-        assert client.patch('/api/channels/' + saved['id'], json={'enabled': True}).status_code == 200
+        if manual:
+            assert client.patch('/api/channels/' + saved['id'], json={'enabled': True}).status_code == 200
+        else:
+            from storage.channels import pairing
+            assert client.patch('/api/channels/' + saved['id'], json={'enabled': True}).status_code == 422
+            link = client.post('/api/channels/' + saved['id'] + '/pairings').json()
+            pairing.capture(saved['id'], link_update(link))
+            assert client.post('/api/channels/' + saved['id'] + '/pairings/' + link['id'] + '/approve').status_code == 200
         assert repo.get_account(saved['id'], 'owner')['enabled']
         assert client.delete('/api/channels/' + saved['id']).status_code == 200
         assert get_secret(runtime.TOKEN_KIND, saved['id']) is None
@@ -306,6 +319,8 @@ def test_executor_uses_recent_context_between_system_and_current_question(monkey
 def test_worker_reset_never_calls_provider_and_preserves_other_users(monkeypatch):
     from storage.channels import history
     saved = account()
+    repo.set_enabled(saved['id'], 'owner', True)
+    saved['enabled'] = True
     completed_turn(saved, 123, 1)
     completed_turn(saved, 456, 2)
     transport = AsyncMock()
@@ -332,6 +347,8 @@ def test_worker_reset_never_calls_provider_and_preserves_other_users(monkeypatch
 def test_worker_history_only_commits_after_acknowledged_delivery(monkeypatch, delivery_fails):
     from storage.channels import history
     saved = account()
+    repo.set_enabled(saved['id'], 'owner', True)
+    saved['enabled'] = True
     completed_turn(saved, 123, 1, 'previous question', 'previous answer')
     repo.ingest(saved['id'], [update(text='follow-up', update_id=2)],
                 lambda item: normalize_private_message(item, ['123']))
@@ -356,3 +373,208 @@ def test_worker_history_only_commits_after_acknowledged_delivery(monkeypatch, de
     turns = history.messages(saved['id'], '123')
     assert len(turns) == (2 if delivery_fails else 4)
     assert turns[-1]['content'] == ('previous answer' if delivery_fails else 'follow-up answer')
+
+
+def linkable_account(owner='owner', bot='1'):
+    return repo.create_account(owner, bot, {'name': 'Bot', 'allowed_user_ids': [],
+        'locale': 'es', 'provider_id': 'p', 'model': 'm',
+        'provider_name': 'Provider', 'bot_username': 'example_bot'})
+
+
+def link_update(link, user=123, kind='private', update_id=1):
+    from urllib.parse import urlparse, parse_qs
+    payload = parse_qs(urlparse(link['url']).query)['start'][0]
+    result = update(user=user, kind=kind, text='/start ' + payload, update_id=update_id)
+    result['message']['from'].update(first_name='Test User', username='test_user')
+    return result
+
+
+def test_pairing_capture_requires_desktop_approval_and_hides_secret():
+    from storage.channels import pairing
+    saved = linkable_account()
+    link = pairing.create(saved['id'], 'owner')
+    incoming = link_update(link)
+    assert pairing.active(saved['id'])
+    candidate = pairing.capture(saved['id'], incoming)
+    assert candidate['chat_id'] == 123
+    status = pairing.get(saved['id'], link['id'], 'owner')
+    assert status['status'] == 'review'
+    assert status['confirmation'] == candidate['confirmation']
+    assert 'url' not in status and 'token_hash' not in status
+    assert not repo.get_account(saved['id'])['allowed_user_ids']
+    assert not repo.get_account(saved['id'])['enabled']
+    assert pairing.capture(saved['id'], incoming) is None
+    assert pairing.capture(saved['id'], link_update(link, user=456)) is None
+    result = pairing.approve(saved['id'], link['id'], 'owner')
+    assert result['status'] == 'approved'
+    assert repo.get_account(saved['id'])['allowed_user_ids'] == ['123']
+    assert repo.get_account(saved['id'])['enabled']
+    assert not pairing.active(saved['id'])
+    with pytest.raises(ValueError, match='pairing_not_ready'):
+        pairing.approve(saved['id'], link['id'], 'owner')
+    with repo.connection() as db:
+        stored = str(tuple(db.execute('SELECT * FROM channel_pairings').fetchone()))
+    assert link['url'].split('link_')[1] not in stored
+
+
+def test_pairing_scope_expiry_cancellation_and_regeneration(monkeypatch):
+    from storage.channels import pairing
+    saved, other = linkable_account(), linkable_account(bot='2')
+    link = pairing.create(saved['id'], 'owner')
+    assert pairing.get(saved['id'], link['id'], 'other owner') is None
+    assert pairing.get(other['id'], link['id'], 'owner') is None
+    assert pairing.capture(other['id'], link_update(link)) is None
+    with pytest.raises(ValueError, match='pairing_not_found'):
+        pairing.approve(saved['id'], link['id'], 'other owner')
+    assert not pairing.cancel(saved['id'], link['id'], 'other owner')
+    with pytest.raises(ValueError, match='account_not_found'):
+        pairing.create(saved['id'], 'other owner')
+    with pytest.raises(ValueError, match='pairing_not_ready'):
+        pairing.approve(saved['id'], link['id'], 'owner')
+    assert pairing.cancel(saved['id'], link['id'], 'owner')
+    assert pairing.capture(saved['id'], link_update(link)) is None
+    replacement = pairing.create(saved['id'], 'owner')
+    assert pairing.capture(saved['id'], link_update(link)) is None
+    with repo.connection() as db:
+        db.execute('UPDATE channel_pairings SET expires_at=0')
+    assert pairing.get(saved['id'], replacement['id'], 'owner')['status'] == 'expired'
+    assert pairing.capture(saved['id'], link_update(replacement)) is None
+    assert not pairing.active(saved['id'])
+    fresh = pairing.create(saved['id'], 'owner')
+    pairing.capture(saved['id'], link_update(fresh))
+    with repo.connection() as db:
+        db.execute('UPDATE channel_pairings SET expires_at=0')
+    with pytest.raises(ValueError, match='pairing_not_ready'):
+        pairing.approve(saved['id'], fresh['id'], 'owner')
+    pairing.expire()
+    expired = pairing.get(saved['id'], fresh['id'], 'owner')
+    assert expired['user_id'] is None and expired['confirmation'] is None
+    assert not repo.get_account(saved['id'])['enabled']
+    repo.delete_account(saved['id'], 'owner')
+    with repo.connection() as db:
+        assert db.execute('SELECT COUNT(*) FROM channel_pairings').fetchone()[0] == 0
+
+
+@pytest.mark.parametrize('kind,user', [('group', 123), ('supergroup', 123), ('private', True), ('private', -1)])
+def test_pairing_rejects_groups_and_invalid_identity(kind, user):
+    from storage.channels import pairing
+    saved = linkable_account()
+    link = pairing.create(saved['id'], 'owner')
+    assert pairing.capture(saved['id'], link_update(link, user=user, kind=kind)) is None
+    assert pairing.get(saved['id'], link['id'], 'owner')['status'] == 'waiting'
+
+
+def test_pairing_rejects_forged_bot_edited_and_wrong_codes():
+    from storage.channels import pairing
+    saved = linkable_account()
+    link = pairing.create(saved['id'], 'owner')
+    forged = link_update(link)
+    forged['message']['chat']['id'] = 456
+    assert pairing.capture(saved['id'], forged) is None
+    bot = link_update(link)
+    bot['message']['from']['is_bot'] = True
+    assert pairing.capture(saved['id'], bot) is None
+    assert pairing.capture(saved['id'], {'update_id': 1, 'edited_message': link_update(link)['message']}) is None
+    assert pairing.capture(saved['id'], update(text='/start link_' + 'a' * 43)) is None
+    assert pairing.get(saved['id'], link['id'], 'owner')['status'] == 'waiting'
+
+
+def test_pairing_control_plane_checks_ownership_and_requires_users_for_enable(monkeypatch):
+    from contextlib import nullcontext
+    import importlib
+    from storage.channels import pairing
+    routes = importlib.import_module('routes.channels.router')
+    monkeypatch.setattr(routes, 'current_credential_write', lambda _: nullcontext())
+    saved = linkable_account()
+    other = linkable_account(owner='other owner', bot='2')
+    app = FastAPI()
+    app.include_router(router, prefix='/api/channels')
+    app.dependency_overrides[ui_credential] = lambda: ('owner', None)
+    base = '/api/channels/' + saved['id']
+    with TestClient(app) as client:
+        assert client.patch(base, json={'enabled': True}).status_code == 422
+        assert client.post('/api/channels/' + other['id'] + '/pairings').status_code == 404
+        link = client.post(base + '/pairings').json()
+        path = base + '/pairings/' + link['id']
+        assert client.get(path).json()['status'] == 'waiting'
+        assert client.post(path + '/approve').status_code == 409
+        pairing.capture(saved['id'], link_update(link))
+        assert client.post(path + '/approve').json()['status'] == 'approved'
+        assert client.get(path).json()['status'] == 'approved'
+        assert repo.get_account(saved['id'])['allowed_user_ids'] == ['123']
+        assert repo.get_account(saved['id'])['enabled']
+        assert client.post(path + '/approve').status_code == 409
+        assert client.get('/api/channels/' + other['id'] + '/pairings/' + link['id']).status_code == 404
+
+
+def test_paused_pairing_worker_never_executes_chat_or_persists_link(monkeypatch):
+    from storage.channels import pairing
+    saved = linkable_account()
+    link = pairing.create(saved['id'], 'owner')
+    transport = AsyncMock()
+    polls = 0
+    async def call(method, **kwargs):
+        nonlocal polls
+        if method == 'getUpdates':
+            polls += 1
+            if polls > 1:
+                raise asyncio.CancelledError()
+            return [link_update(link), update(text='execute a tool', update_id=2)]
+        return True
+    transport.call.side_effect = call
+    monkeypatch.setattr(runtime, 'Telegram', lambda _: transport)
+    monkeypatch.setattr(runtime, 'get_secret', lambda *_: 'secret')
+    provider = AsyncMock()
+    monkeypatch.setattr(runtime, 'respond', provider)
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(runtime._worker(saved))
+    provider.assert_not_called()
+    assert repo.claim(saved['id']) is None
+    assert repo.offset(saved['id']) == 3
+    assert pairing.get(saved['id'], link['id'], 'owner')['status'] == 'review'
+    assert not repo.get_account(saved['id'])['enabled']
+    transport.send.assert_awaited_once()
+    assert link['url'].split('link_')[1] not in str(transport.send.call_args)
+
+
+def test_pairing_rejects_full_allowlist_without_granting_access():
+    from storage.channels import pairing
+    saved = repo.create_account('owner', '1', {'name': 'Bot', 'bot_username': 'example_bot',
+        'allowed_user_ids': [str(number) for number in range(1, 21)]})
+    link = pairing.create(saved['id'], 'owner')
+    pairing.capture(saved['id'], link_update(link, user=123))
+    with pytest.raises(ValueError, match='user_limit'):
+        pairing.approve(saved['id'], link['id'], 'owner')
+    assert len(repo.get_account(saved['id'])['allowed_user_ids']) == 20
+    assert not repo.get_account(saved['id'])['enabled']
+
+
+def test_supervisor_starts_discovery_and_stops_it_after_expiry(monkeypatch):
+    from storage.channels import pairing
+    saved = linkable_account()
+    pairing.create(saved['id'], 'owner')
+    started, closed = [], []
+    async def worker(account):
+        started.append(account['id'])
+        try:
+            await asyncio.Future()
+        finally:
+            closed.append(account['id'])
+    real_sleep = asyncio.sleep
+    ticks = 0
+    async def advance(_):
+        nonlocal ticks
+        ticks += 1
+        if ticks == 1:
+            await real_sleep(0)
+            with repo.connection() as db:
+                db.execute('UPDATE channel_pairings SET expires_at=0')
+        else:
+            raise asyncio.CancelledError()
+    monkeypatch.setattr(runtime, '_worker', worker)
+    monkeypatch.setattr(runtime.asyncio, 'sleep', advance)
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(runtime.run())
+    assert started == [saved['id']]
+    assert closed == started
+    assert not runtime.workers

@@ -1,4 +1,38 @@
 export const channels = {
+  pairing: {
+    approved: "Tu cuenta ya está autorizada. Spartan está conectando el bot.",
+    done: "Listo",
+    listenerError:
+      "Spartan no puede recibir mensajes de este bot. Revisa la conexión, el token y si otra aplicación está usando el bot antes de generar otro enlace.",
+    title: "Vincular mi Telegram",
+    description: "Abre tu bot y autoriza tu cuenta sin buscar tu ID.",
+    qr: "Escanea para abrir tu bot en Telegram",
+    openHelp:
+      "Abre Telegram desde este botón o escanea el QR con tu móvil. En el chat con el bot, pulsa Iniciar.",
+    open: "Abrir mi bot en Telegram",
+    expiry:
+      "Este enlace es privado, de un solo uso y caduca en 10 minutos. Mantén Spartan abierto.",
+    waiting: "Esperando que pulses Iniciar en Telegram…",
+    detected: "Cuenta detectada",
+    accountId: "ID de la cuenta:",
+    confirmHelp:
+      "Comprueba que este código coincide con el que recibiste en Telegram:",
+    approveHelp:
+      "Si reconoces esta cuenta, autorízala para conectar el bot. Si no es tuya, cancela y genera otro enlace.",
+    approve: "Autorizar mi cuenta y conectar",
+    expired:
+      "El enlace ya no está disponible. Genera uno nuevo para continuar.",
+    renew: "Generar otro enlace",
+    setupHelp:
+      "Vincula tu cuenta abriendo tu bot en Telegram. Spartan obtiene tu ID automáticamente y te pide aprobar la cuenta.",
+    manual: "Introducir IDs manualmente (avanzado)",
+    setupSummary:
+      "Verificaremos el bot y abriremos la vinculación. Solo responderá después de que autorices tu cuenta en Spartan.",
+    verifyLink: "Verificar bot y vincular Telegram",
+    noUsers: "Ninguna cuenta autorizada todavía",
+    linkFailed:
+      "El bot ya está guardado. No se pudo generar el enlace; vuelve a intentarlo o continúa desde su tarjeta.",
+  },
   conversationContext: "Contexto de conversación",
   contextHelp:
     "Cada bot conserva el contexto reciente por usuario, hasta 6 intercambios durante 7 días. Usa /reset para borrarlo. No se comparte con tus chats ni con la memoria de Spartan.",
@@ -42,7 +76,8 @@ export const channels = {
     },
   },
   startSetup: "Empezar conexión",
-  setupTime: "Necesitarás el token del bot y tu ID de Telegram.",
+  setupTime:
+    "Necesitarás el token de tu bot. Tu cuenta se vincula desde Telegram.",
   whatYouCanDo: "Qué puedes hacer ahora",
   whatYouCanDoDescription:
     "Envía texto, conversa con Spartan y consulta tu proveedor, skills y servidores MCP.",
