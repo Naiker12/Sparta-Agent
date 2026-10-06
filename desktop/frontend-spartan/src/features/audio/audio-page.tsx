@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import {
   AudioWave01Icon,
   Copy01Icon,
@@ -212,13 +214,15 @@ function ClipRowMenu({
   onUseAsText: () => void;
   onDelete: () => void;
 }) {
+  const uiT = useUiT();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild={true}>
         <button
           type="button"
           onClick={(event) => event.stopPropagation()}
-          aria-label={`Actions for ${clip.prompt || "clip"}`}
+          aria-label={uiT("ui.actions_for_value0", { value0: String(clip.prompt || "clip") })}
           // Hidden until the row is hovered or the menu is open, so a long list
           // stays quiet; keyboard focus reveals it too.
           className="flex size-5 shrink-0 items-center justify-center rounded-md text-muted-foreground/60 opacity-0 transition-colors hover:bg-black/5 hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100 dark:hover:bg-white/10"
@@ -233,21 +237,17 @@ function ClipRowMenu({
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem onSelect={onUseAsText}>
           <HugeiconsIcon icon={SparklesIcon} className="size-4" />
-          Use text again
-        </DropdownMenuItem>
+          {uiT("ui.use_text_again")}</DropdownMenuItem>
         <DropdownMenuItem onSelect={onCopyPrompt}>
           <HugeiconsIcon icon={Copy01Icon} className="size-4" />
-          Copy text
-        </DropdownMenuItem>
+          {uiT("ui.copy_text")}</DropdownMenuItem>
         <DropdownMenuItem onSelect={onDownload}>
           <HugeiconsIcon icon={Download01Icon} className="size-4" />
-          Download WAV
-        </DropdownMenuItem>
+          {uiT("ui.download_wav")}</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onSelect={onDelete}>
           <HugeiconsIcon icon={Delete02Icon} className="size-4" />
-          Delete
-        </DropdownMenuItem>
+          {uiT("chat.menu.delete")}</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -264,6 +264,8 @@ function formatClipDuration(seconds: number): string {
 }
 
 export function AudioPage({ active = true }: { active?: boolean }) {
+  const uiT = useUiT();
+
   const t = useT();
   const [mode, setMode] = useState<CreateMode>("speak");
   const [selectorOpen, setSelectorOpen] = useState(false);
@@ -740,7 +742,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
       if (lifecycleLease === null) {
         ttsLoadInFlight.current = false;
         pendingRoutedTtsPick.current = null;
-        toast.info("Wait for the current model to finish loading.");
+        toast.info(uiTranslate("ui.wait_for_the_current_model_to_finish_loading"));
         return;
       }
       const releaseLifecycle = () =>
@@ -888,7 +890,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
       }
       if (!canTransitionAudioMode(busyRef.current)) {
         toast.info(
-          "Wait for the active audio task to finish before switching modes.",
+          uiTranslate("ui.wait_for_the_active_audio_task_to_finish_before_switching_modes"),
         );
         return false;
       }
@@ -1115,7 +1117,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
           sttLoadedByThisPage.current = sidecarKey;
         }
         if (isCurrent()) {
-          toast.success("Transcription model ready", { id: toastId });
+          toast.success(uiTranslate("ui.transcription_model_ready"), { id: toastId });
         }
       } catch (error) {
         if (isCurrent()) {
@@ -1443,7 +1445,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
   );
   const handleEject = useCallback(() => {
     if (busy !== null || isRecording) {
-      toast.info("Stop the active audio task before ejecting its model.");
+      toast.info(uiTranslate("ui.stop_the_active_audio_task_before_ejecting_its_model"));
       return;
     }
 
@@ -1467,7 +1469,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
       void (async () => {
         try {
           await releaseTranscribeSelection();
-          toast.success("Transcription model unloaded", {
+          toast.success(uiTranslate("ui.transcription_model_unloaded"), {
             id: toastId,
             duration: 1200,
           });
@@ -1494,7 +1496,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
     // dialog is open and then be stopped by the blanket queue stop below.
     const lifecycleLease = useChatRuntimeStore.getState().beginModelLoading();
     if (lifecycleLease === null) {
-      toast.info("Wait for the current model to finish loading.");
+      toast.info(uiTranslate("ui.wait_for_the_current_model_to_finish_loading"));
       return;
     }
 
@@ -1529,7 +1531,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
           });
           requestLocalPromptQueueStop();
           await refreshStatus();
-          toast.success("Model unloaded", { id: toastId, duration: 1200 });
+          toast.success(uiTranslate("ui.model_unloaded"), { id: toastId, duration: 1200 });
         } catch (error) {
           toast.error(
             error instanceof Error ? error.message : "Failed to unload model.",
@@ -1664,7 +1666,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
       const key = sttSidecarKeyFor(selectedSttRepo);
       const engine = sttEngineForRepoId(selectedSttRepo);
       if (sttLoadedModel !== key || sttLoadedEngine !== engine) {
-        toast.info("Wait for the transcription model to finish loading.");
+        toast.info(uiTranslate("ui.wait_for_the_transcription_model_to_finish_loading"));
         return;
       }
       transcriptionAbort.current?.abort();
@@ -1684,7 +1686,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
         }
         setTranscript(text);
         if (!text) {
-          toast.info("The model heard no speech in that audio.");
+          toast.info(uiTranslate("ui.the_model_heard_no_speech_in_that_audio"));
         }
       } catch (error) {
         if (controller.signal.aborted) {
@@ -1809,7 +1811,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
           activeRef.current,
         )
       ) {
-        toast.error("Could not access the microphone.");
+        toast.error(uiTranslate("ui.could_not_access_the_microphone"));
       }
     } finally {
       if (micPendingGeneration.current === requestGeneration) {
@@ -1845,8 +1847,8 @@ export function AudioPage({ active = true }: { active?: boolean }) {
 
   const handleCopyTranscript = useCallback(() => {
     void navigator.clipboard.writeText(transcript).then(
-      () => toast.success("Transcript copied"),
-      () => toast.error("Could not copy the transcript."),
+      () => toast.success(uiTranslate("ui.transcript_copied")),
+      () => toast.error(uiTranslate("ui.could_not_copy_the_transcript")),
     );
   }, [transcript]);
 
@@ -1952,7 +1954,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
       anchor.download = `${clip.id}.wav`;
       anchor.click();
     } catch {
-      toast.error("Could not download the clip.");
+      toast.error(uiTranslate("ui.could_not_download_the_clip"));
     } finally {
       // A history-row download does not need to become resident playback state.
       // Revoke it after the browser has consumed the synthetic click instead of
@@ -1967,9 +1969,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
   const handleCopyPrompt = useCallback(async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast.success("Text copied");
+      toast.success(uiTranslate("ui.text_copied"));
     } catch {
-      toast.error("Could not copy the text.");
+      toast.error(uiTranslate("ui.could_not_copy_the_text"));
     }
   }, []);
 
@@ -2034,7 +2036,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
       ...(catalogModel ?? {
         id: artifact.repoId,
         name: artifact.repoId.split("/").pop() || artifact.repoId,
-        description: "Speech-to-text",
+        get description() { return uiTranslate("ui.speech_to_text"); },
       }),
       isGguf: artifact.engine !== "transformers",
       deviceQuant:
@@ -2075,8 +2077,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
           {/* A long resident model name must yield to the mode pill instead of painting over it. */}
           <div className="pointer-events-auto flex min-w-0 max-w-full items-center gap-2 overflow-hidden pt-[var(--studio-chat-header-padding-top,11px)]">
             <span className="truncate px-3 text-ui-14 text-muted-foreground @[68rem]:px-4 @[68rem]:text-ui-16">
-              Audio mediante proveedor API
-            </span>
+              {uiT("ui.audio_through_api_provider")}</span>
           </div>
         </div>
       </div>
@@ -2134,17 +2135,17 @@ export function AudioPage({ active = true }: { active?: boolean }) {
                   <Textarea
                     value={prompt}
                     onChange={(event) => setPrompt(event.target.value)}
-                    placeholder="Type the sentence to speak…"
+                    placeholder={uiT("ui.type_the_sentence_to_speak")}
                     className="min-h-28"
                   />
                 </Field>
                 <AdvancedDisclosure
                   open={advancedOpen}
                   onOpenChange={setAdvancedOpen}
-                  description="Generation sampling. Changes apply to the next audio clip."
+                  description={uiT("ui.generation_sampling_changes_apply_to_the_next_audio_clip")}
                 >
                   <ParamSlider
-                    label="Temperature"
+                    label={uiT("studio.progress.temperature")}
                     value={temperature}
                     min={0}
                     max={1.5}
@@ -2152,7 +2153,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
                     onChange={handleTemperatureChange}
                   />
                   <ParamSlider
-                    label="Max tokens"
+                    label={uiT("runSettings.maxTokens")}
                     value={maxTokens}
                     min={256}
                     max={TTS_MAX_TOKENS}
@@ -2164,7 +2165,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
             ) : (
               <>
                 <Field
-                  label="Microphone"
+                  label={uiT("settings.voice.dictation.microphoneLabel")}
                   hint={
                     recordingSupported
                       ? "Record a clip and it is transcribed when you stop."
@@ -2185,14 +2186,14 @@ export function AudioPage({ active = true }: { active?: boolean }) {
                       className="mr-2 size-4"
                     />
                     {isRecording
-                      ? "Stop recording"
+                      ? uiT("ui.stop_recording")
                       : micRequestPending
-                        ? "Waiting for microphone…"
-                        : "Record"}
+                        ? uiT("ui.waiting_for_microphone")
+                        : uiT("ui.record")}
                   </Button>
                 </Field>
                 <Field
-                  label="Audio file"
+                  label={uiT("ui.audio_file")}
                   hint="Or transcribe an existing recording (wav, mp3, m4a, webm…)."
                 >
                   <input
@@ -2213,9 +2214,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
                 </Field>
                 {sttSelected ? null : (
                   <p className="text-ui-11p5 leading-snug text-muted-foreground">
-                    Pick a speech-to-text model (Whisper or Qwen3-ASR) from the
-                    selector above to transcribe.
-                  </p>
+                    {uiT("ui.pick_a_speech_to_text_model_whisper_or_qwen3_asr_from_the_selecto")}</p>
                 )}
               </>
             )}
@@ -2238,10 +2237,9 @@ export function AudioPage({ active = true }: { active?: boolean }) {
                 {busy === "generating" ? (
                   <>
                     <HugeiconsIcon icon={StopIcon} className="mr-2 size-4" />
-                    Stop
-                  </>
+                    {uiT("studio.training.stopAction")}</>
                 ) : (
-                  "Generate"
+                  uiT("audioPage.generate")
                 )}
               </Button>
             </div>
@@ -2254,7 +2252,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
               {busy === "transcribing" ? (
                 <div className="flex items-center gap-2 text-ui-13 text-muted-foreground">
                   <Spinner className="size-4" />
-                  Transcribing {transcribedName ?? "audio"}…
+                  {uiT("ui.transcribing")}{" "}{transcribedName ?? "audio"}…
                 </div>
               ) : null}
               {transcript ? (
@@ -2265,8 +2263,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
                       size="sm"
                       onClick={handleCopyTranscript}
                     >
-                      Copy
-                    </Button>
+                      {uiT("chat.actions.copy")}</Button>
                     <Button
                       variant="secondary"
                       size="sm"
@@ -2276,8 +2273,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
                         icon={Download01Icon}
                         className="mr-2 size-3.5"
                       />
-                      Download .txt
-                    </Button>
+                      {uiT("ui.download_txt")}</Button>
                   </div>
                   <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
                     {transcript}
@@ -2285,9 +2281,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
                 </>
               ) : busy !== "transcribing" ? (
                 <p className="text-ui-13 text-muted-foreground">
-                  The transcript appears here. It is not stored: copy or
-                  download what you want to keep.
-                </p>
+                  {uiT("ui.the_transcript_appears_here_it_is_not_stored_copy_or_download_wha")}</p>
               ) : null}
             </div>
           ) : (
@@ -2312,7 +2306,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        aria-label="Download audio clip"
+                        aria-label={uiT("ui.download_audio_clip")}
                         disabled={!srcById[selectedClip.id]}
                         onClick={() => handleDownloadClip(selectedClip)}
                       >
@@ -2324,7 +2318,7 @@ export function AudioPage({ active = true }: { active?: boolean }) {
                       <Button
                         variant="ghost"
                         size="sm"
-                        aria-label="Delete audio clip"
+                        aria-label={uiT("ui.delete_audio_clip")}
                         onClick={() => void handleDeleteClip(selectedClip.id)}
                       >
                         <HugeiconsIcon
@@ -2348,8 +2342,8 @@ export function AudioPage({ active = true }: { active?: boolean }) {
                       <span>
                         {fallbackClip.model}
                         {fallbackClip.saved
-                          ? " · saved, waiting for the gallery"
-                          : " · not saved to the gallery"}
+                          ? uiT("ui.saved_waiting_for_the_gallery")
+                          : uiT("ui.not_saved_to_the_gallery")}
                       </span>
                       <span className="flex-1" />
                       <Button
@@ -2361,30 +2355,25 @@ export function AudioPage({ active = true }: { active?: boolean }) {
                           icon={Download01Icon}
                           className="size-3.5"
                         />
-                        Download WAV
-                      </Button>
+                        {uiT("ui.download_wav")}</Button>
                     </div>
                   </div>
                 ) : (
                   <p className="text-ui-13 text-muted-foreground">
-                    Generated speech lands here. Load a TTS model, type a
-                    sentence, and press Generate.
-                  </p>
+                    {uiT("ui.generated_speech_lands_here_load_a_tts_model_type_a_sentence_and_")}</p>
                 )}
               </div>
               {clips.length > 0 ? (
                 <div className="flex shrink-0 flex-col gap-2">
                   <div className="flex items-center justify-between">
                     <span className="text-ui-11p5 font-medium text-muted-foreground">
-                      History
-                    </span>
+                      {uiT("studio.history.title")}</span>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => void handleClearGallery()}
                     >
-                      Clear all
-                    </Button>
+                      {uiT("settings.voice.recents.clearConfirm")}</Button>
                   </div>
                   <div
                     className="hover-scrollbar flex max-h-40 flex-col gap-1 overflow-y-auto"

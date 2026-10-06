@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   DocumentAttachmentIcon,
   DocumentCodeIcon,
@@ -33,6 +34,8 @@ export function InlineSeed({
   config,
   onUpdate,
 }: InlineSeedProps): ReactElement {
+  const uiT = useUiT();
+
   const mode = config.seed_source_type ?? "hf";
 
   if (mode === "github_repo") {
@@ -87,7 +90,7 @@ export function InlineSeed({
   if (mode === "hf") {
     return (
       <div className="space-y-2">
-        <InlineField label="Dataset">
+        <InlineField label={uiT("studio.trainingStart.dataset")}>
           <HfDatasetCombobox
             value={config.hf_repo_id}
             accessToken={config.hf_token?.trim() || undefined}
@@ -104,8 +107,7 @@ export function InlineSeed({
           />
         </InlineField>
         <p className="text-ui-11 text-muted-foreground">
-          Load columns in dialog.
-        </p>
+          {uiT("ui.load_columns_in_dialog")}</p>
       </div>
     );
   }
@@ -128,12 +130,10 @@ export function InlineSeed({
       </div>
       <div className="min-w-0">
         <p className="truncate text-xs font-medium">
-          {fileName || "No file selected"}
+          {fileName || uiT("ui.no_file_selected")}
         </p>
         <p className="text-ui-11 text-muted-foreground">
-          {isLocal ? "Structured file" : "Unstructured document"} · configure in
-          dialog
-        </p>
+          {isLocal ? uiT("ui.structured_file") : uiT("ui.unstructured_document")} {" "}{uiT("ui.configure_in_dialog")}</p>
       </div>
       <HugeiconsIcon
         icon={Plant01Icon}

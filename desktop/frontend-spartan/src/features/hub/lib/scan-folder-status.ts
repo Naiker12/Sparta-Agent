@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 
 
 
@@ -53,18 +54,18 @@ export function scanFolderStatusCopy(
       };
     case "partial":
       return {
-        title: "Some models in this folder could not be read",
+        get title() { return uiTranslate("ui.some_models_in_this_folder_could_not_be_read"); },
         hint: permissionHint(userAgent),
       };
     case "missing":
       return {
-        title: "This folder is no longer there",
-        hint: "It was moved, renamed, or is on a drive that is not connected.",
+        get title() { return uiTranslate("ui.this_folder_is_no_longer_there"); },
+        get hint() { return uiTranslate("ui.it_was_moved_renamed_or_is_on_a_drive_that_is_not_connected"); },
       };
     case "unreadable":
       return {
-        title: "This folder could not be read",
-        hint: "The drive may be disconnected or failing. Check it, then reopen this dialog.",
+        get title() { return uiTranslate("ui.this_folder_could_not_be_read"); },
+        get hint() { return uiTranslate("ui.the_drive_may_be_disconnected_or_failing_check_it_then_reopen_thi"); },
       };
     default:
       return null;

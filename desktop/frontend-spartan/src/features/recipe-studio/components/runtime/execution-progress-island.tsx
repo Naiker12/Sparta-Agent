@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
@@ -98,6 +99,8 @@ export function ExecutionProgressIsland({
   onMinimizedChange,
   onViewExecutions,
 }: ExecutionProgressIslandProps): ReactElement {
+  const uiT = useUiT();
+
   const complete = execution.status === "completed";
   const inProgress = isExecutionInProgress(execution.status);
   const sourceSummary = formatGitHubSourceSummary(execution);
@@ -160,8 +163,8 @@ export function ExecutionProgressIsland({
             type="button"
             onClick={() => onMinimizedChange(!minimized)}
             className="inline-flex size-8 shrink-0 items-center justify-center rounded border border-border/70 text-muted-foreground transition hover:bg-muted/50"
-            aria-label={minimized ? "Expand progress" : "Minimize progress"}
-            title={minimized ? "Expand" : "Minimize"}
+            aria-label={minimized ? uiT("ui.expand_progress") : uiT("ui.minimize_progress")}
+            title={minimized ? uiT("ui.expand") : uiT("ui.minimize")}
           >
             <HugeiconsIcon
               icon={minimized ? ChevronDownStandardIcon : ChevronUpStandardIcon}
@@ -180,27 +183,27 @@ export function ExecutionProgressIsland({
           <div className="grid grid-cols-2 gap-2 px-3 pt-2 text-ui-11 text-muted-foreground sm:grid-cols-4">
             <p
               className="truncate"
-              title={`Done: ${formatMetricValue(execution.progress?.done)}`}
+              title={uiT("ui.done_value0", { value0: String(formatMetricValue(execution.progress?.done)) })}
             >
-              Done: {formatMetricValue(execution.progress?.done)}
+              {uiT("ui.done")}{" "}{formatMetricValue(execution.progress?.done)}
             </p>
             <p
               className="truncate"
-              title={`Total: ${formatMetricValue(execution.progress?.total)}`}
+              title={uiT("ui.total_value0", { value0: String(formatMetricValue(execution.progress?.total)) })}
             >
-              Total: {formatMetricValue(execution.progress?.total)}
+              {uiT("ui.total")}{" "}{formatMetricValue(execution.progress?.total)}
             </p>
             <p
               className="truncate"
-              title={`Rate: ${formatMetricValue(execution.progress?.rate)}`}
+              title={uiT("ui.rate_value0", { value0: String(formatMetricValue(execution.progress?.rate)) })}
             >
-              Rate: {formatMetricValue(execution.progress?.rate)}
+              {uiT("ui.rate")}{" "}{formatMetricValue(execution.progress?.rate)}
             </p>
             <p
               className="truncate"
-              title={`ETA: ${formatEta(execution.progress?.eta_sec)}`}
+              title={uiT("ui.eta_value0", { value0: String(formatEta(execution.progress?.eta_sec)) })}
             >
-              ETA: {formatEta(execution.progress?.eta_sec)}
+              {uiT("ui.eta")}{" "}{formatEta(execution.progress?.eta_sec)}
             </p>
           </div>
           {showSourceProgress ? (
@@ -210,7 +213,7 @@ export function ExecutionProgressIsland({
                 className="size-3.5 shrink-0 text-amber-700 dark:text-amber-300"
               />
               <p className="truncate" title={sourceSummary ?? undefined}>
-                GitHub source: {sourceSummary}
+                {uiT("ui.github_source")}{" "}{sourceSummary}
               </p>
             </div>
           ) : (
@@ -220,16 +223,16 @@ export function ExecutionProgressIsland({
                 className="size-3.5 shrink-0"
               />
               <p className="truncate" title={execution.current_column ?? "--"}>
-                Column: {execution.current_column ?? "--"}
+                {uiT("ui.column_")}{" "}{execution.current_column ?? "--"}
               </p>
             </div>
           )}
           {showBatch && (
             <div
               className="mt-1 truncate px-3 text-ui-11 text-muted-foreground"
-              title={`Batch: ${execution.batch?.idx ?? "--"}/${execution.batch?.total ?? "--"}`}
+              title={uiT("ui.batch_value0_value1", { value0: String(execution.batch?.idx ?? "--"), value1: String(execution.batch?.total ?? "--") })}
             >
-              Batch: {execution.batch?.idx ?? "--"}/
+              {uiT("ui.batch")}{" "}{execution.batch?.idx ?? "--"}/
               {execution.batch?.total ?? "--"}
             </div>
           )}
@@ -241,8 +244,7 @@ export function ExecutionProgressIsland({
               className="h-7 w-full text-ui-11"
               onClick={onViewExecutions}
             >
-              View run details
-            </Button>
+              {uiT("ui.view_run_details")}</Button>
           </div>
         </>
       )}

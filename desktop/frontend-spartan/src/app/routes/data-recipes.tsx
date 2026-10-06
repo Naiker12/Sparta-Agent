@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { createRoute, lazyRouteComponent } from "@tanstack/react-router";
 import { requireAuth } from "../auth-guards";
 import { Route as rootRoute } from "./__root";
@@ -10,7 +11,7 @@ const DataRecipesPage = lazyRouteComponent(
 export const Route = createRoute({
   getParentRoute: () => rootRoute,
   path: "/data-recipes",
-  staticData: { title: "Data Recipes" },
+  staticData: { get title() { return uiTranslate("ui.data_recipes"); } },
   beforeLoad: () => requireAuth(),
   component: DataRecipesPage,
 });

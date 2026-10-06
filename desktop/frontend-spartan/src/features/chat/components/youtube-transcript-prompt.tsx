@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { getLocale } from "@/i18n";
@@ -78,6 +80,8 @@ export function YoutubeTranscriptPrompt({
   url: string;
   onClose: () => void;
 }) {
+  const uiT = useUiT();
+
   const aui = useAui();
   const [fetching, setFetching] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -121,7 +125,7 @@ export function YoutubeTranscriptPrompt({
         return;
       }
       setFetching(false);
-      toast.error("Could not attach the transcript", {
+      toast.error(uiTranslate("ui.could_not_attach_the_transcript"), {
         description: error instanceof Error ? error.message : "Unknown error",
       });
     }
@@ -130,7 +134,7 @@ export function YoutubeTranscriptPrompt({
   return (
     <div
       className="relative z-0 mx-7 mb-[-8px] rounded-t-[18px] rounded-b-none border border-border/45 bg-background/90 px-5 py-2 text-muted-foreground shadow-none backdrop-blur-md dark:bg-card/85"
-      aria-label="Attach YouTube transcript"
+      aria-label={uiT("ui.attach_youtube_transcript")}
     >
       <div className="grid h-10 grid-cols-[minmax(0,1fr)_auto] items-center gap-2.5">
         <div className="flex min-w-0 items-center gap-2.5">
@@ -141,8 +145,8 @@ export function YoutubeTranscriptPrompt({
           />
           <div className="truncate text-sm">
             {fetching
-              ? "Fetching the transcript…"
-              : "Attach this video's transcript?"}
+              ? uiT("ui.fetching_the_transcript")
+              : uiT("ui.attach_this_video_s_transcript")}
           </div>
         </div>
         {fetching ? (
@@ -156,16 +160,14 @@ export function YoutubeTranscriptPrompt({
               className="h-7 px-2 text-xs text-muted-foreground"
               onClick={onClose}
             >
-              Dismiss
-            </Button>
+              {uiT("ui.dismiss")}</Button>
             <Button
               type="button"
               size="sm"
               className="h-7 px-2 text-xs"
               onClick={() => void attach()}
             >
-              Attach transcript
-            </Button>
+              {uiT("ui.attach_transcript")}</Button>
           </div>
         )}
       </div>

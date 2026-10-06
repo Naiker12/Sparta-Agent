@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Tick02Icon } from "@/lib/tick-icon";
 import { FileDatabaseIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -43,6 +44,8 @@ export function KnowledgeBaseComposerButton({
 }: {
   side?: "top" | "bottom";
 } = {}) {
+  const uiT = useUiT();
+
   const ragEnabled = useChatRuntimeStore((s) => s.ragEnabled);
   const setRagEnabled = useChatRuntimeStore((s) => s.setRagEnabled);
   const ragDisabled = useRagToolDisabled();
@@ -104,7 +107,7 @@ export function KnowledgeBaseComposerButton({
             className="composer-pill-btn"
             data-pill-label="RAG"
             data-active={ragDisabled ? "false" : "true"}
-            aria-label="Retrieval source"
+            aria-label={uiT("ui.retrieval_source")}
           >
             {/* Icon doubles as an off switch: hover swaps to an X; clicking it
                 turns RAG off without opening the menu. In compact icon-only
@@ -112,7 +115,7 @@ export function KnowledgeBaseComposerButton({
                 the trigger and open the menu instead. */}
             <span
               role="button"
-              aria-label="Turn off retrieval"
+              aria-label={uiT("ui.turn_off_retrieval")}
               tabIndex={-1}
               onPointerDown={(e) => {
                 if (e.currentTarget.closest('[data-pill-compact="true"]')) {
@@ -147,7 +150,7 @@ export function KnowledgeBaseComposerButton({
           avoidCollisions={true}
           className="unsloth-plus-menu mcp-menu w-[232px]"
         >
-          <DropdownMenuLabel>Retrieve from</DropdownMenuLabel>
+          <DropdownMenuLabel>{uiT("ui.retrieve_from")}</DropdownMenuLabel>
           <DropdownMenuItem
             onSelect={() => setRagSource({ type: "thread" })}
             className={
@@ -156,7 +159,7 @@ export function KnowledgeBaseComposerButton({
                 : "relative"
             }
           >
-            <span className="truncate">This thread's documents</span>
+            <span className="truncate">{uiT("ui.this_thread_s_documents")}</span>
             {ragSource.type === "thread" ? (
               <HugeiconsIcon
                 icon={Tick02Icon}
@@ -195,8 +198,7 @@ export function KnowledgeBaseComposerButton({
               setDialogOpen(true);
             }}
           >
-            Manage knowledge bases…
-          </DropdownMenuItem>
+            {uiT("ui.manage_knowledge_bases")}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <KnowledgeBaseDialog

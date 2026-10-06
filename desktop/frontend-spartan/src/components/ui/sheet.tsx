@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 
 import { Dialog as SheetPrimitive } from "radix-ui";
 import type * as React from "react";
@@ -36,11 +37,13 @@ function SheetClose({
 }
 
 function SheetCloseButton({ className }: { className?: string }) {
+  const uiT = useUiT();
+
   return (
     <SheetPrimitive.Close data-slot="sheet-close" asChild={true}>
       <Button variant="ghost" className={className} size="icon-sm">
         <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} />
-        <span className="sr-only">Close</span>
+        <span className="sr-only">{uiT("settings.about.shutDown")}</span>
       </Button>
     </SheetPrimitive.Close>
   );

@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { toast } from "@/lib/toast";
@@ -137,18 +138,16 @@ export function useStagedDownload({
       // clear the queue instead of leaving the head in place, where the effect never re-runs and onReady never fires.
       // The pick dies with it, so the consumer's pending auto-load has to go too.
       if (outcome === "error") {
-        toast.error("Could not start the download", {
-          description: "Check the connection, then select the model again.",
+        toast.error(uiTranslate("ui.could_not_start_the_download"), {
+          get description() { return uiTranslate("ui.check_the_connection_then_select_the_model_again"); },
         });
       } else if (outcome === "conflict") {
-        toast.info("Resume this download from Models", {
-          description:
-            "An earlier partial download used a different transport. Open the Model hub tab to resume or restart it.",
+        toast.info(uiTranslate("ui.resume_this_download_from_models"), {
+          get description() { return uiTranslate("ui.an_earlier_partial_download_used_a_different_transport_open_the_m"); },
         });
       } else if (outcome === "busy") {
-        toast.info("Download already in progress", {
-          description:
-            "Reselect this model once the running download finishes to load it.",
+        toast.info(uiTranslate("ui.download_already_in_progress"), {
+          get description() { return uiTranslate("ui.reselect_this_model_once_the_running_download_finishes_to_load_it"); },
         });
       }
       setQueue(null);

@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { Delete02Icon, ImageAdd02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -36,6 +38,8 @@ export function ImageDropzone({
   removeLabel?: string;
   className?: string;
 }) {
+  const uiT = useUiT();
+
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [dragging, setDragging] = useState(false);
   // File reads can finish after another picker action. Only the newest
@@ -66,7 +70,7 @@ export function ImageDropzone({
     (file: File | undefined | null) => {
       if (!file?.type.startsWith("image/")) {
         if (file) {
-          toast.error("Please choose an image file");
+          toast.error(uiTranslate("ui.please_choose_an_image_file"));
         }
         return;
       }
@@ -80,7 +84,7 @@ export function ImageDropzone({
         onChange(typeof reader.result === "string" ? reader.result : null);
       };
       reader.onerror = () => {
-        if (mounted.current && claimed === selection.current) toast.error("Could not read the image");
+        if (mounted.current && claimed === selection.current) toast.error(uiTranslate("ui.could_not_read_the_image"));
       };
       reader.readAsDataURL(file);
     },
@@ -97,9 +101,8 @@ export function ImageDropzone({
       if (
         !NATIVE_IMAGE_EXTS.includes(path.split(".").pop()?.toLowerCase() ?? "")
       ) {
-        toast.error("Drop a JPEG, PNG, WebP or GIF image", {
-          description:
-            "Other image formats can still be chosen with the picker.",
+        toast.error(uiTranslate("ui.drop_a_jpeg_png_webp_or_gif_image"), {
+          get description() { return uiTranslate("ui.other_image_formats_can_still_be_chosen_with_the_picker"); },
         });
         return;
       }
@@ -114,7 +117,7 @@ export function ImageDropzone({
         onChange(`data:${file.mimeType};base64,${file.base64}`);
       } catch (error) {
         if (!mounted.current || claimed !== selection.current) return;
-        toast.error("Could not read the image", {
+        toast.error(uiTranslate("ui.could_not_read_the_image"), {
           description: error instanceof Error ? error.message : String(error),
         });
       }
@@ -137,7 +140,7 @@ export function ImageDropzone({
       >
         <img
           src={value}
-          alt="Source"
+          alt={uiT("chat.preview.source")}
           className="max-h-44 w-full object-contain bg-muted/30"
         />
         <Tooltip>
@@ -159,7 +162,7 @@ export function ImageDropzone({
               <HugeiconsIcon icon={Delete02Icon} className="size-3.5" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Remove</TooltipContent>
+          <TooltipContent>{uiT("settings.appearance.custom.importFont.remove")}</TooltipContent>
         </Tooltip>
       </div>
     );

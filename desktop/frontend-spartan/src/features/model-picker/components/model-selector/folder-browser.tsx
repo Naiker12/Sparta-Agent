@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -92,6 +93,8 @@ export function FolderBrowser({
   confirmLabel = "Use this folder",
   showModelHints = true,
 }: FolderBrowserProps) {
+  const uiT = useUiT();
+
   const t = useT();
   const [data, setData] = useState<BrowseFoldersResponse | null>(null);
   const [path, setPath] = useState<string | undefined>(initialPath);
@@ -184,7 +187,7 @@ export function FolderBrowser({
         {/* Breadcrumb */}
         <div className="flex flex-wrap items-center gap-0.5 border-t border-border/50 px-6 py-2 font-mono text-ui-11 text-muted-foreground">
           {crumbs.length === 0 ? (
-            <span className="text-muted-foreground/60">(loading…)</span>
+            <span className="text-muted-foreground/60">{uiT("ui.loading_")}</span>
           ) : (
             crumbs.map((c, i) => (
               <span key={c.value} className="flex items-center gap-0.5">
@@ -266,23 +269,17 @@ export function FolderBrowser({
                   data.model_files_here > 0
                 ) && (
                   <div className="px-6 py-3 text-xs text-muted-foreground/60">
-                    (empty directory)
-                  </div>
+                    {uiT("ui.empty_directory")}</div>
                 )}
               {showModelHints &&
                 data.model_files_here !== undefined &&
                 data.model_files_here > 0 && (
                   <div className="border-t border-border/30 px-6 py-1.5 text-ui-10 text-foreground/70">
-                    {data.model_files_here} model file
-                    {data.model_files_here === 1 ? "" : "s"} in this folder.
-                    Click "Use this folder" to scan it.
-                  </div>
+                    {data.model_files_here} {" "}{uiT("ui.model_file")}{data.model_files_here === 1 ? "" : "s"} {" "}{uiT("ui.in_this_folder_click_use_this_folder_to_scan_it")}</div>
                 )}
               {data.truncated === true && (
                 <div className="border-t border-border/30 px-6 py-1.5 text-ui-10 text-muted-foreground/70">
-                  Showing first {data.entries.length} entries. Narrow the path
-                  to see more.
-                </div>
+                  {uiT("ui.showing_first")}{" "}{data.entries.length} {" "}{uiT("ui.entries_narrow_the_path_to_see_more")}</div>
               )}
               {data.entries.map((e) => (
                 <button
@@ -309,8 +306,7 @@ export function FolderBrowser({
                   <span className="truncate font-mono">{e.name}</span>
                   {showModelHints && e.has_models && (
                     <span className="ml-auto shrink-0 rounded-full border border-border/50 px-1.5 py-0 text-ui-9 uppercase tracking-wider text-muted-foreground">
-                      models
-                    </span>
+                      {uiT("studio.modelPicker.noun")}</span>
                   )}
                 </button>
               ))}
@@ -334,13 +330,11 @@ export function FolderBrowser({
                 navigate(path, next);
               }}
             />
-            Show hidden
-          </label>
+            {uiT("ui.show_hidden")}</label>
           <div className="flex gap-2">
             <DialogClose asChild={true}>
               <Button type="button" variant="ghost">
-                Cancel
-              </Button>
+                {uiT("chat.workspace.cancel")}</Button>
             </DialogClose>
             <Button
               type="button"

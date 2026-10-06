@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { isTauri } from "@/lib/api-base";
 import { toast } from "@/lib/toast";
 import type React from "react";
@@ -42,8 +43,8 @@ function toastNothingAccepted(
   // A folder is one extension-less name, and the native side takes files only.
   const looksLikeFolder = names.some((name) => !name.includes("."));
   if (looksLikeFolder) {
-    toast.error("Folders can't be dropped here", {
-      description: "Drop the files inside it, or use the picker button.",
+    toast.error(uiTranslate("ui.folders_can_t_be_dropped_here"), {
+      get description() { return uiTranslate("ui.drop_the_files_inside_it_or_use_the_picker_button"); },
     });
     return;
   }

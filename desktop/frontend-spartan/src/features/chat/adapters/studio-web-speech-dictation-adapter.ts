@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { useSettingsDialogStore } from "@/features/settings/stores/settings-dialog-store";
 import {
   applyDictationDictionary,
@@ -7,7 +8,7 @@ import {
 } from "@/features/settings/stores/voice-settings-store";
 import { isTauri } from "@/lib/api-base";
 import type { DictationAdapter } from "@assistant-ui/react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { useChatRuntimeStore } from "../stores/chat-runtime-store";
 import { startDictationLevelMeter } from "./dictation-level";
 import {
@@ -177,7 +178,7 @@ export class StudioWebSpeechDictationAdapter implements DictationAdapter {
   listen(): DictationAdapter.Session {
     const SpeechRecognitionAPI = getSpeechRecognitionAPI();
     if (!(SpeechRecognitionAPI && navigator.mediaDevices?.getUserMedia)) {
-      throw new Error("Speech recognition is not supported in this browser.");
+      throw new Error(uiTranslate("ui.speech_recognition_is_not_supported_in_this_browser"));
     }
 
     beginDictationSession();
@@ -424,12 +425,11 @@ export class StudioWebSpeechDictationAdapter implements DictationAdapter {
       if (errorEvent.error === "network") {
         // Online speech service unreachable; point the user to the offline
         // local engine (the toast opens Voice settings).
-        toast.error("No internet connection", {
+        toast.error(uiTranslate("ui.no_internet_connection"), {
           id: NETWORK_TOAST_ID,
-          description:
-            "Browser dictation needs the online speech service. Switch to Local in Voice settings and pick a local STT model to dictate offline.",
+          get description() { return uiTranslate("ui.browser_dictation_needs_the_online_speech_service_switch_to_local"); },
           action: {
-            label: "Open Voice settings",
+            get label() { return uiTranslate("settings.voice.dictation.sttOpenVoiceSettings"); },
             onClick: () =>
               useSettingsDialogStore.getState().openDialog("voice"),
           },

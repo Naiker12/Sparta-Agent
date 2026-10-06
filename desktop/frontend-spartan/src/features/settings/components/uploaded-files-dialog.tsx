@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -227,7 +229,7 @@ async function openResolvedUrl(resolve: () => Promise<string>): Promise<void> {
   const win = window.open("", "_blank");
   if (!win) {
     throw new Error(
-      "Your browser blocked the new tab. Allow popups and retry.",
+      uiTranslate("ui.your_browser_blocked_the_new_tab_allow_popups_and_retry"),
     );
   }
   win.opener = null;
@@ -375,6 +377,8 @@ function errorMessage(error: unknown, fallback: string): string {
 
 /** Inline settings page listing uploaded files from each available source. */
 export function UploadedFilesView() {
+  const uiT = useUiT();
+
   const [ragFiles, setRagFiles] = useState<SourceLoad<UploadedDocument[]>>({
     status: "loading",
     data: [],
@@ -511,7 +515,7 @@ export function UploadedFilesView() {
       if (isDownloadCancelled(err)) {
         return;
       }
-      toast.error("Failed to open file", {
+      toast.error(uiTranslate("ui.failed_to_open_file"), {
         description: err instanceof Error ? err.message : undefined,
       });
     }
@@ -544,9 +548,9 @@ export function UploadedFilesView() {
           current === null ? null : Math.max(0, current - 1),
         );
       }
-      toast.success("File deleted");
+      toast.success(uiTranslate("ui.file_deleted"));
     } catch (err) {
-      toast.error("Failed to delete file", {
+      toast.error(uiTranslate("ui.failed_to_delete_file"), {
         description: err instanceof Error ? err.message : undefined,
       });
     }
@@ -556,26 +560,24 @@ export function UploadedFilesView() {
     <div className="flex flex-col gap-4">
       {ragFiles.status === "error" ? (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm">
-          <span>RAG documents unavailable: {ragFiles.error}</span>
+          <span>{uiT("ui.rag_documents_unavailable")}{" "}{ragFiles.error}</span>
           <button
             type="button"
             onClick={retryRagFiles}
             className="font-medium underline underline-offset-2"
           >
-            Retry
-          </button>
+            {uiT("chat.actions.retry")}</button>
         </div>
       ) : null}
       {chatFiles.status === "error" ? (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm">
-          <span>Chat attachments unavailable: {chatFiles.error}</span>
+          <span>{uiT("ui.chat_attachments_unavailable")}{" "}{chatFiles.error}</span>
           <button
             type="button"
             onClick={retryChatFiles}
             className="font-medium underline underline-offset-2"
           >
-            Retry
-          </button>
+            {uiT("chat.actions.retry")}</button>
         </div>
       ) : null}
 
@@ -588,14 +590,13 @@ export function UploadedFilesView() {
         ragFiles.status !== "error" &&
         chatFiles.status !== "error" ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
-          No uploaded files.
-        </p>
+          {uiT("ui.no_uploaded_files")}</p>
       ) : rows.length > 0 ? (
         <div>
           <div className="hidden items-center gap-3 border-b border-border/60 px-1 pb-2 text-xs font-semibold text-foreground sm:flex">
-            <span className="flex-1">Name</span>
-            <span className="w-36 shrink-0">Location</span>
-            <span className="w-24 shrink-0">Uploaded</span>
+            <span className="flex-1">{uiT("projectsPage.colName")}</span>
+            <span className="w-36 shrink-0">{uiT("settings.debugging.path")}</span>
+            <span className="w-24 shrink-0">{uiT("ui.uploaded_")}</span>
             <span className="w-16 shrink-0" />
           </div>
           {rows.map((row) => (
@@ -633,8 +634,7 @@ export function UploadedFilesView() {
                     ) : null}
                     {row.failed ? (
                       <span className="shrink-0 text-xs text-destructive">
-                        failed
-                      </span>
+                        {uiT("ui.failed")}</span>
                     ) : null}
                   </span>
                   <span className="text-xs text-muted-foreground tabular-nums">
@@ -646,7 +646,7 @@ export function UploadedFilesView() {
                 <button
                   type="button"
                   onClick={() => goToChat(row)}
-                  title={`Go to ${row.location}`}
+                  title={uiT("ui.go_to_value0", { value0: String(row.location) })}
                   className="order-3 w-full truncate pl-10 text-left text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline sm:order-none sm:w-36 sm:pl-0"
                 >
                   {row.location}
@@ -666,8 +666,8 @@ export function UploadedFilesView() {
                 <button
                   type="button"
                   onClick={() => void handleOpen(row)}
-                  aria-label={`Open ${row.name}`}
-                  title="Open"
+                  aria-label={uiT("ui.open_value0", { value0: String(row.name) })}
+                  title={uiT("settings.resources.storage.openAction")}
                   className="inline-flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
                   <HugeiconsIcon
@@ -681,8 +681,8 @@ export function UploadedFilesView() {
                     type="button"
                     disabled={loadingMore}
                     onClick={() => setConfirmingDelete(row)}
-                    aria-label={`Delete ${row.name}`}
-                    title="Delete"
+                    aria-label={uiT("ui.delete_value0", { value0: String(row.name) })}
+                    title={uiT("chat.menu.delete")}
                     className="inline-flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:cursor-wait disabled:opacity-50"
                   >
                     <HugeiconsIcon
@@ -703,7 +703,7 @@ export function UploadedFilesView() {
                 onClick={() => void loadChatPage(chatNextOffset, true)}
                 className="rounded-md border border-border px-3 py-1.5 text-sm font-medium hover:bg-muted disabled:cursor-wait disabled:opacity-60"
               >
-                {loadingMore ? "Loading..." : "Load more chat attachments"}
+                {loadingMore ? uiT("studio.history.loading") : uiT("ui.load_more_chat_attachments")}
               </button>
             </div>
           ) : null}
@@ -720,9 +720,9 @@ export function UploadedFilesView() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete file</AlertDialogTitle>
+            <AlertDialogTitle>{uiT("ui.delete_file")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Delete{" "}
+              {uiT("chat.menu.delete")}{" "}
               <span className="font-medium text-foreground">
                 &quot;{confirmingDelete?.name}&quot;
               </span>
@@ -730,7 +730,7 @@ export function UploadedFilesView() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{uiT("chat.workspace.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
@@ -741,8 +741,7 @@ export function UploadedFilesView() {
                 }
               }}
             >
-              Delete
-            </AlertDialogAction>
+              {uiT("chat.menu.delete")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

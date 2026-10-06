@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { createRoute } from "@tanstack/react-router";
 import { lazy } from "react";
 import { requirePasswordChangeFlow } from "../auth-guards";
@@ -12,7 +13,7 @@ const ChangePasswordPage = lazy(() =>
 export const Route = createRoute({
   getParentRoute: () => rootRoute,
   path: "/change-password",
-  staticData: { title: "Change Password", isAuthFlow: true },
+  staticData: { get title() { return uiTranslate("ui.change_password"); }, isAuthFlow: true },
   beforeLoad: () => requirePasswordChangeFlow(),
   component: ChangePasswordPage,
 });

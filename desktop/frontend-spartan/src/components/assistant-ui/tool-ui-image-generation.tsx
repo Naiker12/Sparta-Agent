@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -156,6 +157,8 @@ const ImageGenerationToolUIImpl: ToolCallMessagePartComponent = ({
   result,
   status,
 }) => {
+  const uiT = useUiT();
+
   const { openOverlay } = useGeneratedImageOverlay();
   const parsedArgs = (args as ImageGenerationArgs) ?? {};
   const prompt = parsedArgs.prompt ?? "";
@@ -329,7 +332,7 @@ const ImageGenerationToolUIImpl: ToolCallMessagePartComponent = ({
                   imageDimensions ? "size-full" : "max-w-full",
                 )}
                 onClick={showPreview}
-                aria-label="Open generated image preview"
+                aria-label={uiT("ui.open_generated_image_preview")}
               >
                 <img
                   src={imagePart.image}
@@ -353,15 +356,14 @@ const ImageGenerationToolUIImpl: ToolCallMessagePartComponent = ({
                   onClick={handleEditClick}
                 >
                   <PencilIcon className="size-3.5" />
-                  Edit
-                </Button>
+                  {uiT("chat.actions.edit")}</Button>
                 <Button
                   type="button"
                   variant="dark"
                   size="icon-sm"
                   className="pointer-events-auto rounded-full bg-black/70 text-white hover:bg-black/85"
                   onClick={handleDownload}
-                  aria-label="Download generated image"
+                  aria-label={uiT("ui.download_generated_image")}
                 >
                   <HugeiconsIcon icon={Download01Icon} className="size-4" />
                 </Button>
@@ -389,7 +391,7 @@ const ImageGenerationToolUIImpl: ToolCallMessagePartComponent = ({
                     }
                     aria-expanded={promptExpanded}
                   >
-                    {promptExpanded ? "Show less" : "Show more"}
+                    {promptExpanded ? uiT("shell.navigation.showLess") : uiT("shell.navigation.showMore")}
                   </button>
                 ) : null}
               </figcaption>

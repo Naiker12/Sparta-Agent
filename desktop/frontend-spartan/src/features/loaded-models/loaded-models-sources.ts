@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 // Chat, images, video and dictation each own a runtime and their own /status, and
 // nothing publishes "everything resident" in one call. These map each payload to a
 // common row shape. Pure and React-free so node --test can import them; the types
@@ -69,9 +70,9 @@ export function loadedModelTarget(
 ): LoadedModelTarget {
   switch (source) {
     case "stt":
-      return { open: "settings", tab: "voice", label: "Voice settings" };
+      return { open: "settings", tab: "voice", get label() { return uiTranslate("ui.voice_settings"); } };
     default:
-      return { open: "route", to: "/chat", label: "Chat" };
+      return { open: "route", to: "/chat", get label() { return uiTranslate("settings.chat.title"); } };
   }
 }
 

@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
@@ -37,6 +38,8 @@ export function ConfigDialog({
   container,
   readOnly = false,
 }: ConfigDialogProps): ReactElement {
+  const uiT = useUiT();
+
   const blockDefinition = getBlockDefinitionForConfig(config);
   const showDropToggle =
     config?.kind === "sampler" ||
@@ -60,20 +63,18 @@ export function ConfigDialog({
           description={
             blockDefinition
               ? blockDefinition.description
-              : "Choose a step to edit."
+              : uiT("ui.choose_a_step_to_edit")
           }
         />
         {!config && (
           <div className="text-sm text-muted-foreground">
-            Select a step to edit.
-          </div>
+            {uiT("ui.select_a_step_to_edit")}</div>
         )}
         {config && (
           <div className="min-w-0 space-y-4">
             {readOnly && (
               <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
-                This recipe is locked while a run is in progress.
-              </div>
+                {uiT("ui.this_recipe_is_locked_while_a_run_is_in_progress")}</div>
             )}
             <ValidationBanner config={config} />
             <div
@@ -85,12 +86,9 @@ export function ConfigDialog({
                 <div className="mb-2 flex items-center corner-squircle justify-between gap-3 rounded-2xl border border-border/60 px-3 pt-2 pb-4">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold">
-                      Keep out of final dataset
-                    </p>
+                      {uiT("ui.keep_out_of_final_dataset")}</p>
                     <p className="break-words text-xs text-muted-foreground">
-                      Use this step while generating, but leave it out of
-                      exported rows.
-                    </p>
+                      {uiT("ui.use_this_step_while_generating_but_leave_it_out_of_exported_rows")}</p>
                   </div>
                   <Switch
                     checked={config.drop ?? false}
@@ -121,8 +119,7 @@ export function ConfigDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
           >
-            Done
-          </Button>
+            {uiT("tour.done")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

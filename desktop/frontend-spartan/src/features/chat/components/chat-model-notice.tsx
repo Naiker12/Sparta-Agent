@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -68,6 +69,8 @@ export function ChatModelNotice({
   selectableModelIds,
   onSwitch,
 }: ChatModelNoticeProps) {
+  const uiT = useUiT();
+
   const createdModelId = useChatCreatedModel(threadId);
   if (!createdModelId || createdModelId === checkpoint) {
     return null;
@@ -89,7 +92,7 @@ export function ChatModelNotice({
       className="absolute left-0 right-[10px] top-[calc(var(--studio-content-top-inset,0px)+var(--studio-chat-header-height,48px))] z-30 flex h-[var(--studio-chat-notice-height,2.25rem)] items-center gap-2 border-b border-border/60 bg-muted px-4 text-ui-12 text-muted-foreground"
     >
       <span className="min-w-0 truncate">
-        This chat was started on <span className="font-medium">{label}</span>.
+        {uiT("ui.this_chat_was_started_on")}{" "}<span className="font-medium">{label}</span>.
       </span>
       <Button
         variant="ghost"
@@ -97,8 +100,7 @@ export function ChatModelNotice({
         className="ml-auto h-6 shrink-0 px-2 text-ui-12"
         onClick={() => onSwitch(createdModelId)}
       >
-        Switch back
-      </Button>
+        {uiT("ui.switch_back")}</Button>
     </div>
   );
 }

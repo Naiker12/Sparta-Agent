@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 
 import { Slot } from "radix-ui";
 import type * as React from "react";
@@ -10,9 +11,11 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 
 function Breadcrumb({ className, ...props }: React.ComponentProps<"nav">) {
+  const uiT = useUiT();
+
   return (
     <nav
-      aria-label="breadcrumb"
+      aria-label={uiT("ui.breadcrumb")}
       data-slot="breadcrumb"
       className={cn(className)}
       {...props}
@@ -96,6 +99,8 @@ function BreadcrumbEllipsis({
   className,
   ...props
 }: React.ComponentProps<"span">) {
+  const uiT = useUiT();
+
   return (
     <span
       data-slot="breadcrumb-ellipsis"
@@ -108,7 +113,7 @@ function BreadcrumbEllipsis({
       {...props}
     >
       <HugeiconsIcon icon={MoreHorizontalCircle01Icon} strokeWidth={2} />
-      <span className="sr-only">More</span>
+      <span className="sr-only">{uiT("chat.actions.more")}</span>
     </span>
   );
 }

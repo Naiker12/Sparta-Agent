@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -113,9 +115,9 @@ function ViewToggleButton({
 export type InventorySort = "recent" | "name" | "size";
 
 const INVENTORY_SORTS: { value: InventorySort; label: string }[] = [
-  { value: "recent", label: "Recent" },
-  { value: "name", label: "Name" },
-  { value: "size", label: "Size" },
+  { value: "recent", get label() { return uiTranslate("picker.recent"); } },
+  { value: "name", get label() { return uiTranslate("projectsPage.colName"); } },
+  { value: "size", get label() { return uiTranslate("picker.size"); } },
 ];
 
 // Sort picker as a compact dropdown pill so it sits beside the view-mode tabs.
@@ -199,6 +201,8 @@ export function HubListHeader({
   isRefreshing?: boolean;
   actions?: ReactNode;
 }) {
+  const uiT = useUiT();
+
   const accessibleLabel =
     count && count > 0 ? `${title} (${count.toLocaleString()})` : undefined;
 
@@ -212,7 +216,7 @@ export function HubListHeader({
           <button
             type="button"
             onClick={onBack}
-            aria-label="Back to feed"
+            aria-label={uiT("ui.back_to_feed")}
             // Pull the button left so the inset chevron lines up with the
             // avatars below, just inside the row hover's left edge.
             className="hub-section-chevron -ml-3 inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground"
@@ -241,7 +245,7 @@ export function HubListHeader({
             <TooltipTrigger asChild={true}>
               <button
                 type="button"
-                aria-label="Refresh"
+                aria-label={uiT("chat.actions.refresh")}
                 onClick={onRefresh}
                 // Tiny drop so the icon aligns with the heading text.
                 className="inline-flex size-7 shrink-0 translate-y-px cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -254,8 +258,7 @@ export function HubListHeader({
               </button>
             </TooltipTrigger>
             <TooltipContent side="bottom" className="tooltip-compact">
-              Refresh from Hugging Face
-            </TooltipContent>
+              {uiT("ui.refresh_from_hugging_face")}</TooltipContent>
           </Tooltip>
         )}
       </div>
@@ -267,7 +270,7 @@ export function HubListHeader({
           {onViewChange && (
             <div
               className="hub-tab-toggle relative inline-flex h-8 shrink-0 items-center rounded-full"
-              aria-label="Results layout"
+              aria-label={uiT("ui.results_layout")}
             >
               <span
                 aria-hidden="true"
@@ -280,19 +283,19 @@ export function HubListHeader({
               />
               <ViewToggleButton
                 active={view === "two"}
-                label="Two columns"
+                label={uiT("ui.two_columns")}
                 icon={LayoutTwoColumnIcon}
                 onClick={() => onViewChange("two")}
               />
               <ViewToggleButton
                 active={view === "split"}
-                label="Split view"
+                label={uiT("ui.split_view")}
                 icon={ViewSidebarLeftIcon}
                 onClick={() => onViewChange("split")}
               />
               <ViewToggleButton
                 active={view === "grid"}
-                label="Compact"
+                label={uiT("ui.compact")}
                 icon={LeftToRightListBulletIcon}
                 onClick={() => onViewChange("grid")}
               />
@@ -305,16 +308,18 @@ export function HubListHeader({
 }
 
 export function ResultListHeader({ isDataset }: { isDataset: boolean }) {
+  const uiT = useUiT();
+
   return (
     <div className="flex w-full items-center gap-3 px-4 pb-2 text-ui-11 font-medium text-muted-foreground/55">
-      <span className={LIST_COLS.model}>{isDataset ? "Dataset" : "Model"}</span>
+      <span className={LIST_COLS.model}>{isDataset ? uiT("studio.trainingStart.dataset") : uiT("studio.progress.model")}</span>
       <span className={isDataset ? LIST_COLS.caps : LIST_COLS.capsModel}>
-        {isDataset ? "Details" : "Capabilities"}
+        {isDataset ? uiT("ui.details") : uiT("ui.capabilities")}
       </span>
-      <span className={LIST_COLS.size}>Size</span>
-      <span className={LIST_COLS.updated}>Updated</span>
-      <span className={LIST_COLS.downloads}>Downloads</span>
-      <span className={LIST_COLS.likes}>Likes</span>
+      <span className={LIST_COLS.size}>{uiT("picker.size")}</span>
+      <span className={LIST_COLS.updated}>{uiT("studio.dataset.updated")}</span>
+      <span className={LIST_COLS.downloads}>{uiT("ui.downloads")}</span>
+      <span className={LIST_COLS.likes}>{uiT("ui.likes")}</span>
       <span className={LIST_COLS.actions} aria-hidden="true" />
     </div>
   );
@@ -337,6 +342,8 @@ function TitleMarkers({
   unsupported: boolean;
   onDevice: boolean;
 }) {
+  const uiT = useUiT();
+
   return (
     <span className="flex shrink-0 items-center gap-1.5">
       {format === "gguf" && (
@@ -357,21 +364,21 @@ function TitleMarkers({
       {partial && (
         <span
           role="img"
-          aria-label="Partial download"
+          aria-label={uiT("ui.partial_download")}
           className={cn(STATUS_DOT_CLASS, "bg-status-warning")}
         />
       )}
       {unsupported && (
         <span
           role="img"
-          aria-label="May not be supported yet"
+          aria-label={uiT("ui.may_not_be_supported_yet_")}
           className={cn(STATUS_DOT_CLASS, "bg-status-danger")}
         />
       )}
       {onDevice && (
         <span
           role="img"
-          aria-label="On device"
+          aria-label={uiT("hub.gguf.status.onDevice")}
           className={cn(STATUS_DOT_CLASS, "bg-status-success")}
         />
       )}
@@ -380,12 +387,14 @@ function TitleMarkers({
 }
 
 function VerifiedOwner({ owner }: { owner: string }) {
+  const uiT = useUiT();
+
   return (
     <span className="flex min-w-0 items-center gap-1">
       <span className="truncate">{owner}</span>
       {owner.toLowerCase() === "unsloth" && (
         <span
-          aria-label="Verified Unsloth"
+          aria-label={uiT("ui.legacy_verified_unsloth")}
           className="hub-verified-badge size-3.5 shrink-0 text-verified"
         />
       )}
@@ -473,6 +482,8 @@ function RowActions({
   isDataset: boolean;
   onSelect: (id: string) => void;
 }) {
+  const uiT = useUiT();
+
   const hfUrl = `https://huggingface.co/${isDataset ? "datasets/" : ""}${row.result.id}`;
   const actionClass =
     "pointer-events-auto inline-flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground/70 transition-colors hover:bg-foreground/[0.07] hover:text-foreground focus-visible:text-foreground data-[state=open]:bg-foreground/[0.07] data-[state=open]:text-foreground";
@@ -482,7 +493,7 @@ function RowActions({
         <TooltipTrigger asChild={true}>
           <button
             type="button"
-            aria-label={`Get ${row.repo}`}
+            aria-label={uiT("ui.get_value0", { value0: String(row.repo) })}
             onClick={(event) => {
               event.stopPropagation();
               onSelect(row.id);
@@ -497,14 +508,14 @@ function RowActions({
           </button>
         </TooltipTrigger>
         <TooltipContent side="top" className="tooltip-compact">
-          {isDataset ? "View dataset" : "View and download"}
+          {isDataset ? uiT("studio.dataset.viewDataset") : uiT("ui.view_and_download")}
         </TooltipContent>
       </Tooltip>
       <DropdownMenu>
         <DropdownMenuTrigger asChild={true}>
           <button
             type="button"
-            aria-label={`More options for ${row.repo}`}
+            aria-label={uiT("ui.more_options_for_value0", { value0: String(row.repo) })}
             onClick={(event) => event.stopPropagation()}
             className={actionClass}
           >
@@ -527,8 +538,7 @@ function RowActions({
               strokeWidth={1.75}
               className="size-4"
             />
-            Copy ID
-          </DropdownMenuItem>
+            {uiT("ui.copy_id")}</DropdownMenuItem>
           <DropdownMenuItem
             onClick={(event) => {
               event.stopPropagation();
@@ -542,8 +552,7 @@ function RowActions({
               strokeWidth={1.75}
               className="size-4"
             />
-            Open on Hugging Face
-          </DropdownMenuItem>
+            {uiT("ui.open_on_hugging_face")}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </>
@@ -596,6 +605,8 @@ export const ResultCard = memo(function ResultCard({
   isDataset: boolean;
   onSelect: (id: string) => void;
 }) {
+  const uiT = useUiT();
+
   const { support, unsupported, partial, onDevice, sizeLabel, taskLabel } =
     useResultRowModel(row, deviceType, isDataset);
   const format = isDataset ? null : row.result.isGguf ? "gguf" : "checkpoint";
@@ -624,7 +635,7 @@ export const ResultCard = memo(function ResultCard({
       key: "updated",
       node: (
         <span className="shrink-0">
-          Updated {formatRelativeLong(row.result.updatedAt)}
+          {uiT("studio.dataset.updated")}{" "}{formatRelativeLong(row.result.updatedAt)}
         </span>
       ),
     });

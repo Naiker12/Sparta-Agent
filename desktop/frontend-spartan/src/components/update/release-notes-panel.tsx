@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { MarkdownPreview } from "@/components/markdown/markdown-preview";
 import { useReleaseNotes } from "@/hooks/use-release-notes";
 import { resolveReleaseBodyLinks } from "@/lib/release-body-links";
@@ -46,6 +47,8 @@ function NotesLink({
   href: string;
   isRelease: boolean;
 }): ReactElement {
+  const uiT = useUiT();
+
   return (
     <a
       href={href}
@@ -54,7 +57,7 @@ function NotesLink({
       className={NOTES_LINK_CLASS}
       data-testid="update-release-notes-link"
     >
-      {isRelease ? "Open release" : "Open changelog"}
+      {isRelease ? uiT("ui.open_release") : uiT("ui.open_changelog")}
     </a>
   );
 }
@@ -66,6 +69,8 @@ export function ReleaseNotesPanel({
   fallbackMarkdown = null,
   className,
 }: ReleaseNotesPanelProps): ReactElement | null {
+  const uiT = useUiT();
+
   // Fetched with the popup: the collapsed preview needs the notes too.
   const { state, notes, retry } = useReleaseNotes({ version, enabled: true });
   const scrollRef = useRef<HTMLElement | null>(null);
@@ -128,7 +133,7 @@ export function ReleaseNotesPanel({
               ref={scrollRef}
               // biome-ignore lint/a11y/noNoninteractiveTabindex: keyboard-scrollable region
               tabIndex={0}
-              aria-label={`Release notes for ${notes?.tag ?? `version ${version}`}`}
+              aria-label={uiT("ui.release_notes_for_value0", { value0: String(notes?.tag ?? `version ${version}`) })}
               // Long notes scroll here instead of pushing the buttons off screen.
               className="hover-scrollbar max-h-64 min-h-0 flex-1 overflow-y-auto overscroll-contain py-3 pr-1"
               data-testid="update-release-notes-scroll"
@@ -141,8 +146,7 @@ export function ReleaseNotesPanel({
               />
               {notes?.truncated ? (
                 <p className="mt-2 text-ui-10 text-muted-foreground/80">
-                  Notes truncated. See the full release notes.
-                </p>
+                  {uiT("ui.notes_truncated_see_the_full_release_notes")}</p>
               ) : null}
             </section>
           ) : (
@@ -170,6 +174,8 @@ function ReleaseNotesSummary({
 }: {
   preview: ReturnType<typeof releaseNotesPreview> | null;
 }): ReactElement | null {
+  const uiT = useUiT();
+
   if (preview === null || preview.items.length === 0) {
     return null;
   }
@@ -182,7 +188,7 @@ function ReleaseNotesSummary({
       // biome-ignore lint/a11y/noNoninteractiveTabindex: keyboard-scrollable region
       tabIndex={0}
       // Unversioned: the notes are the release's, not the offered version's.
-      aria-label="Release notes summary"
+      aria-label={uiT("ui.release_notes_summary")}
       className="hover-scrollbar min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain py-2 pr-1"
       data-testid="update-release-notes-summary"
     >
@@ -204,8 +210,7 @@ function ReleaseNotesSummary({
       ))}
       {remaining > 0 ? (
         <li className="pl-3 text-ui-10 text-muted-foreground/70">
-          +{remaining} more
-        </li>
+          +{remaining} {" "}{uiT("ui.more")}</li>
       ) : null}
     </ul>
   );
@@ -223,8 +228,10 @@ function NotesStatus({
   link: ReactNode;
   retry: () => void;
 }): ReactElement {
+  const uiT = useUiT();
+
   if (state === "loading" || state === "idle") {
-    return <NotesMessage>Loading release notes...</NotesMessage>;
+    return <NotesMessage>{uiT("ui.loading_release_notes")}</NotesMessage>;
   }
 
   if (state === "error") {
@@ -239,14 +246,12 @@ function NotesStatus({
               className={NOTES_LINK_CLASS}
               data-testid="update-release-notes-retry"
             >
-              Retry
-            </button>
+              {uiT("chat.actions.retry")}</button>
             {link}
           </span>
         }
       >
-        Could not load release notes.
-      </NotesMessage>
+        {uiT("ui.could_not_load_release_notes")}</NotesMessage>
     );
   }
 
@@ -255,7 +260,7 @@ function NotesStatus({
     <NotesMessage action={link}>
       {release
         ? `No release notes published for ${release} yet.`
-        : "No release notes published yet."}
+        : uiT("ui.no_release_notes_published_yet")}
     </NotesMessage>
   );
 }

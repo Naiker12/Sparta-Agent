@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { shouldRefreshPickerInventoryOnMount } from "@/components/resource-picker/picker-tab-policy";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -262,13 +264,14 @@ export function GgufDownloadFootprintExplanation({
   checkpointBytes: number;
   companionBytes: number;
 }) {
+  const uiT = useUiT();
+
   return (
     <>
-      <span className="font-medium">Full required size</span>
+      <span className="font-medium">{uiT("ui.full_required_size")}</span>
       <span className="ml-1 text-muted-foreground">
-        {formatBytes(checkpointBytes)} model + {formatBytes(companionBytes)}{" "}
-        required assets
-      </span>
+        {formatBytes(checkpointBytes)} {" "}{uiT("ui.model")}{" "}{formatBytes(companionBytes)}{" "}
+        {uiT("ui.required_assets")}</span>
     </>
   );
 }
@@ -435,9 +438,9 @@ function sortLmStudio(models: LocalModelInfo[]): LocalModelInfo[] {
 type RecommendedSortKey = "recommended" | "trendingScore" | "lastModified";
 
 const _RECOMMENDED_SORT_OPTIONS: HubOption<RecommendedSortKey>[] = [
-  { value: "recommended", label: "Recommended" },
-  { value: "trendingScore", label: "Trending" },
-  { value: "lastModified", label: "Recent" },
+  { value: "recommended", get label() { return uiTranslate("settings.agents.recommended"); } },
+  { value: "trendingScore", get label() { return uiTranslate("picker.trending"); } },
+  { value: "lastModified", get label() { return uiTranslate("picker.recent"); } },
 ];
 
 // Sort for the On Device lists. "recent" = last loaded;
@@ -445,10 +448,10 @@ const _RECOMMENDED_SORT_OPTIONS: HubOption<RecommendedSortKey>[] = [
 type LocalSortKey = "recent" | "downloaded" | "size" | "name";
 
 const _LOCAL_SORT_OPTIONS: HubOption<LocalSortKey>[] = [
-  { value: "recent", label: "Recent" },
-  { value: "size", label: "Size" },
-  { value: "name", label: "Name" },
-  { value: "downloaded", label: "Downloaded" },
+  { value: "recent", get label() { return uiTranslate("picker.recent"); } },
+  { value: "size", get label() { return uiTranslate("picker.size"); } },
+  { value: "name", get label() { return uiTranslate("projectsPage.colName"); } },
+  { value: "downloaded", get label() { return uiTranslate("settings.agents.downloaded"); } },
 ];
 
 
@@ -657,6 +660,8 @@ export function HubModelPicker({
 
   communityModelPolicy?: CommunityModelPolicy;
 }) {
+  const uiT = useUiT();
+
   const t = useT();
   const gpu = useGpuInfo();
   const inferenceGpu = useInferenceGpuInfo();
@@ -1065,7 +1070,7 @@ export function HubModelPicker({
         const message = e instanceof Error ? e.message : "Failed to add folder";
         setFolderError(message);
         if (fromBrowser) {
-          toast.error("Couldn't add folder", { description: message });
+          toast.error(uiTranslate("ui.couldn_t_add_folder"), { description: message });
         }
       } finally {
         setFolderLoading(false);
@@ -1121,11 +1126,11 @@ export function HubModelPicker({
             // A sibling variant/snapshot for this repo is already downloading,
             // so this update did not start. Say so instead of closing the
             // dialog as if it began and leaving the cached copy stale.
-            toast.info("A download for this model is already in progress", {
-              description: "Try updating again once it finishes.",
+            toast.info(uiTranslate("ui.a_download_for_this_model_is_already_in_progress"), {
+              get description() { return uiTranslate("ui.try_updating_again_once_it_finishes"); },
             });
           } else if (outcome === "error") {
-            throw new Error("Failed to start update");
+            throw new Error(uiTranslate("ui.failed_to_start_update"));
           }
         });
     },
@@ -2659,7 +2664,7 @@ export function HubModelPicker({
     [hubOptionKeys, value],
   );
   const hubModelList = useRovingModelList({
-    label: "Hub models",
+    get label() { return uiTranslate("ui.hub_models"); },
     optionKeys: hubOptionKeys,
     selectedOptionKey: selectedHubOptionKey,
   });
@@ -2921,13 +2926,10 @@ export function HubModelPicker({
             aria-hidden={true}
             className="pointer-events-none size-3.5 rounded-full [&_svg]:!size-2.5"
           />
-          Only show models that fit
-        </button>
+          {uiT("hub.onlyFit")}</button>
       </TooltipTrigger>
       <TooltipContent side="bottom">
-        Hides models larger than this device's memory budget. Downloaded models
-        stay visible.
-      </TooltipContent>
+        {uiT("hub.onlyFitHint")}</TooltipContent>
     </Tooltip>
   );
   // Sort icon + selected label inside the trigger pill.
@@ -3174,19 +3176,18 @@ export function HubModelPicker({
               onToggle: () => togglePinned(entry.repoId, entry.quant),
             }}
             del={{
-              title: "Delete cached model?",
+              get title() { return uiTranslate("ui.delete_cached_model"); },
               // Same preview the Hub On Device row asks for, so a companion base an
               // installed image model still needs shows the reason and a disabled
               // Delete rather than an enabled one that comes back 400.
               impact: { repoId: entry.repoId, variant: entry.quant },
               description: (
                 <>
-                  This will remove{" "}
+                  {uiT("ui.this_will_remove")}{" "}
                   <span className="font-medium text-foreground">
                     {entry.repoId} ({entry.quant})
                   </span>{" "}
-                  from disk. You can re-download it later.
-                </>
+                  {uiT("ui.from_disk_you_can_re_download_it_later")}</>
               ),
               successMessage: `Deleted ${entry.repoId} ${entry.quant}`,
               disabled: deleteDisabled,
@@ -3277,16 +3278,15 @@ export function HubModelPicker({
               onToggle: () => togglePinned(c.repo_id, variant.quant),
             }}
             del={{
-              title: "Delete cached model?",
+              get title() { return uiTranslate("ui.delete_cached_model"); },
               impact: { repoId: c.repo_id, variant: variant.quant },
               description: (
                 <>
-                  This will remove{" "}
+                  {uiT("ui.this_will_remove")}{" "}
                   <span className="font-medium text-foreground">
                     {c.repo_id} ({variant.quant})
                   </span>{" "}
-                  from disk. You can re-download it later.
-                </>
+                  {uiT("ui.from_disk_you_can_re_download_it_later")}</>
               ),
               successMessage: `Deleted ${c.repo_id} ${variant.quant}`,
               disabled: deleteDisabled,
@@ -3458,16 +3458,15 @@ export function HubModelPicker({
               onToggle: () => togglePinned(c.repo_id),
             }}
             del={{
-              title: "Delete cached model?",
+              get title() { return uiTranslate("ui.delete_cached_model"); },
               impact: { repoId: c.repo_id },
               description: (
                 <>
-                  This will remove{" "}
+                  {uiT("ui.this_will_remove")}{" "}
                   <span className="font-medium text-foreground">
                     {c.repo_id}
                   </span>{" "}
-                  from disk. You can re-download it later.
-                </>
+                  {uiT("ui.from_disk_you_can_re_download_it_later")}</>
               ),
               successMessage: `Deleted ${c.repo_id}`,
               disabled: deleteDisabled,
@@ -3751,7 +3750,7 @@ export function HubModelPicker({
                                 <button
                                   type="button"
                                   onClick={scrollToOtherModels}
-                                  aria-label="Go to other models"
+                                  aria-label={uiT("ui.go_to_other_models")}
                                   className="shrink-0 rounded p-1 text-muted-foreground/60 transition-colors hover:text-foreground"
                                 >
                                   <HugeiconsIcon
@@ -3764,8 +3763,7 @@ export function HubModelPicker({
                                 side="bottom"
                                 className="tooltip-compact"
                               >
-                                Other non-Unsloth models
-                              </TooltipContent>
+                                {uiT("ui.legacy_other_non_unsloth_models")}</TooltipContent>
                             </Tooltip>
                           ) : null}
                           {!task && (
@@ -3774,7 +3772,7 @@ export function HubModelPicker({
                                 <button
                                   type="button"
                                   onClick={scrollToFineTuned}
-                                  aria-label="Go to fine-tuned models"
+                                  aria-label={uiT("ui.go_to_fine_tuned_models")}
                                   className="shrink-0 rounded p-1 text-muted-foreground/60 transition-colors hover:text-foreground"
                                 >
                                   <HugeiconsIcon
@@ -3787,8 +3785,7 @@ export function HubModelPicker({
                                 side="bottom"
                                 className="tooltip-compact"
                               >
-                                Go to fine-tuned models
-                              </TooltipContent>
+                                {uiT("ui.go_to_fine_tuned_models")}</TooltipContent>
                             </Tooltip>
                           )}
                           <Tooltip delayDuration={0}>
@@ -3796,7 +3793,7 @@ export function HubModelPicker({
                               <button
                                 type="button"
                                 onClick={scrollToCustomFolders}
-                                aria-label="Go to custom folders"
+                                aria-label={uiT("ui.go_to_custom_folders")}
                                 className="shrink-0 rounded p-1 text-muted-foreground/60 transition-colors hover:text-foreground"
                               >
                                 <HugeiconsIcon
@@ -3809,8 +3806,7 @@ export function HubModelPicker({
                               side="bottom"
                               className="tooltip-compact"
                             >
-                              Go to custom folders
-                            </TooltipContent>
+                              {uiT("ui.go_to_custom_folders")}</TooltipContent>
                           </Tooltip>
                         </>
                       }
@@ -3871,10 +3867,10 @@ export function HubModelPicker({
                           type="button"
                           aria-label={
                             fineTunedCollapsed
-                              ? "Expand fine-tuned models"
-                              : "Collapse fine-tuned models"
+                              ? uiT("ui.expand_fine_tuned_models")
+                              : uiT("ui.collapse_fine_tuned_models")
                           }
-                          title={fineTunedCollapsed ? "Expand" : "Collapse"}
+                          title={fineTunedCollapsed ? uiT("ui.expand") : uiT("ui.collapse")}
                           onClick={() => setFineTunedCollapsed((v) => !v)}
                           className="shrink-0 rounded p-1 text-muted-foreground/60 transition-colors hover:text-foreground"
                         >
@@ -3914,7 +3910,7 @@ export function HubModelPicker({
                       <button
                         type="button"
                         onClick={() => setShowFolderBrowser(true)}
-                        title="Browse folders on the server"
+                        title={uiT("ui.browse_folders_on_the_server")}
                         className="flex items-center gap-1.5 text-ui-10 font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground"
                       >
                         <HugeiconsIcon
@@ -3928,11 +3924,11 @@ export function HubModelPicker({
                           type="button"
                           aria-label={
                             showFolderInput
-                              ? "Cancel adding folder"
-                              : "Add scan folder by path"
+                              ? uiT("ui.cancel_adding_folder")
+                              : uiT("ui.add_scan_folder_by_path")
                           }
                           title={
-                            showFolderInput ? "Cancel" : "Add by typing a path"
+                            showFolderInput ? uiT("chat.workspace.cancel") : uiT("ui.add_by_typing_a_path")
                           }
                           onClick={() => {
                             setShowFolderInput((open) => {
@@ -3952,8 +3948,8 @@ export function HubModelPicker({
                         </button>
                         <button
                           type="button"
-                          aria-label="Browse for a folder on the server"
-                          title="Browse folders on the server"
+                          aria-label={uiT("ui.browse_for_a_folder_on_the_server")}
+                          title={uiT("ui.browse_folders_on_the_server")}
                           onClick={() => setShowFolderBrowser(true)}
                           className="shrink-0 rounded p-0.5 text-muted-foreground/60 transition-colors hover:text-foreground"
                         >
@@ -3968,10 +3964,10 @@ export function HubModelPicker({
                           type="button"
                           aria-label={
                             customFoldersCollapsed
-                              ? "Expand custom folders"
-                              : "Collapse custom folders"
+                              ? uiT("ui.expand_custom_folders")
+                              : uiT("ui.collapse_custom_folders")
                           }
-                          title={customFoldersCollapsed ? "Expand" : "Collapse"}
+                          title={customFoldersCollapsed ? uiT("ui.expand") : uiT("ui.collapse")}
                           onClick={() => setCustomFoldersCollapsed((v) => !v)}
                           className="shrink-0 rounded p-1 text-muted-foreground/60 transition-colors hover:text-foreground"
                         >
@@ -4016,7 +4012,7 @@ export function HubModelPicker({
                             <button
                               type="button"
                               onClick={() => handleRemoveFolder(f.id)}
-                              aria-label={`Remove folder ${f.path}`}
+                              aria-label={uiT("ui.remove_folder_value0", { value0: String(f.path) })}
                               className="shrink-0 rounded p-1 text-foreground/70 transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:bg-destructive/10 focus-visible:text-destructive"
                             >
                               <HugeiconsIcon
@@ -4048,7 +4044,7 @@ export function HubModelPicker({
                                 type="button"
                                 onClick={() => void handleAddFolder(p)}
                                 disabled={folderLoading}
-                                title={`Add ${p}`}
+                                title={uiT("ui.add_value0", { value0: String(p) })}
                                 className="rounded-full border border-dashed border-border/50 px-2 py-0.5 font-mono text-ui-10 text-muted-foreground/70 transition-colors hover:border-foreground/30 hover:bg-accent hover:text-foreground disabled:opacity-40"
                               >
                                 <span className="text-ui-11 font-semibold">
@@ -4096,8 +4092,8 @@ export function HubModelPicker({
                             type="button"
                             onClick={() => setShowFolderBrowser(true)}
                             disabled={folderLoading}
-                            aria-label="Browse for folder"
-                            title="Browse folders on the server"
+                            aria-label={uiT("ui.browse_for_folder")}
+                            title={uiT("ui.browse_folders_on_the_server")}
                             className="flex h-6 shrink-0 items-center justify-center rounded border border-border/50 px-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40"
                           >
                             <HugeiconsIcon
@@ -4113,8 +4109,7 @@ export function HubModelPicker({
                             disabled={folderLoading || !folderInput.trim()}
                             className="h-6 shrink-0 rounded border border-border/50 px-1.5 text-ui-10 text-muted-foreground transition-colors hover:bg-accent disabled:opacity-40"
                           >
-                            Add
-                          </button>
+                            {uiT("ui.add")}</button>
                         </div>
                         {folderError && (
                           <p className="px-0.5 pt-0.5 text-ui-10 text-destructive">
@@ -4289,8 +4284,7 @@ export function HubModelPicker({
                       collapsed={lmStudioCollapsed}
                       onToggle={() => setLmStudioCollapsed((v) => !v)}
                     >
-                      LM Studio
-                    </ListLabel>
+                      {uiT("studio.modelPicker.sourceLmStudio")}</ListLabel>
                     {!lmStudioCollapsed &&
                       sortedLmStudio.map((m) => {
                         // LM Studio dirs are GGUF but rarely carry a -GGUF suffix;
@@ -4389,8 +4383,7 @@ export function HubModelPicker({
                       collapsed={localDirCollapsed}
                       onToggle={() => setLocalDirCollapsed((v) => !v)}
                     >
-                      Local models
-                    </ListLabel>
+                      {uiT("ui.local_models")}</ListLabel>
                     {!localDirCollapsed &&
                       sortedLocalDir.map((m) => {
                         // A loose ./models/*.gguf loads directly; a GGUF repo dir
@@ -4519,13 +4512,11 @@ export function HubModelPicker({
                       <div className="flex items-center gap-2 px-5 py-3">
                         <Spinner className="size-3 text-muted-foreground" />
                         <span className="text-xs text-muted-foreground">
-                          Loading models…
-                        </span>
+                          {uiT("picker.loadingModels")}</span>
                       </div>
                     ) : recommendedRows.length === 0 ? (
                       <div className="px-2.5 py-2 text-xs text-muted-foreground">
-                        No models found.
-                      </div>
+                        {uiT("studio.modelPicker.noModelsFound")}</div>
                     ) : (
                       recommendedRows.map((r) => {
                         const id = r.id;
@@ -4749,8 +4740,8 @@ export function HubModelPicker({
                       filteredRecommendedIds.length === 0 ? (
                         <div className="px-2.5 py-2 text-xs text-muted-foreground">
                           {communityDiscoveryEnabled
-                            ? "No matching models."
-                            : "No matching Unsloth models."}
+                            ? uiT("ui.no_matching_models")
+                            : uiT("ui.legacy_no_matching_unsloth_models")}
                         </div>
                       ) : null
                     ) : (

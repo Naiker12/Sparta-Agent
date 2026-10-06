@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { authFetch } from "@/features/auth";
 import { mirrorHfTokenInto, useHfTokenStore } from "@/features/hub";
 import {
@@ -1321,7 +1322,7 @@ export async function settleThreadScopedSettingsForCopy(
   // pre-edit snapshot and tells the user nothing.
   if (!(await awaitThreadScopedSettingsWrite(threadId))) {
     throw new Error(
-      "This chat's settings could not be saved before copying it",
+      uiTranslate("ui.this_chat_s_settings_could_not_be_saved_before_copying_it"),
     );
   }
 }

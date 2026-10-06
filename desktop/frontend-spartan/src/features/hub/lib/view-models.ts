@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import type { HfModelResult } from "@/features/hub/hooks/use-hub-model-search";
 import { resolveInventoryResource } from "@/features/hub/inventory/resource-resolver";
 import type {
@@ -31,19 +32,19 @@ export const CAPABILITY_FILTER_OPTIONS: ReadonlyArray<{
   value: CapabilityFilter;
   label: string;
 }> = [
-  { value: "all", label: "All capabilities" },
-  { value: "reasoning", label: "Reasoning" },
-  { value: "vision", label: "Vision" },
-  { value: "audio", label: "Audio" },
-  { value: "embedding", label: "Embeddings" },
-  { value: "diffusion", label: "Image generation" },
+  { value: "all", get label() { return uiTranslate("hub.filters.allCapabilities"); } },
+  { value: "reasoning", get label() { return uiTranslate("hub.filters.reasoning"); } },
+  { value: "vision", get label() { return uiTranslate("hub.filters.vision"); } },
+  { value: "audio", get label() { return uiTranslate("shell.navigation.audio"); } },
+  { value: "embedding", get label() { return uiTranslate("hub.filters.embeddings"); } },
+  { value: "diffusion", get label() { return uiTranslate("hub.filters.imageGeneration"); } },
 ];
 
 export const FORMAT_FILTER_OPTIONS: ReadonlyArray<{
   value: ModelFormatFilter;
   label: string;
 }> = [
-  { value: "all", label: "All formats" },
+  { value: "all", get label() { return uiTranslate("hub.filters.allFormats"); } },
   { value: "gguf", label: "GGUF" },
   { value: "checkpoint", label: "Safetensors" },
   { value: "mlx", label: "MLX" },

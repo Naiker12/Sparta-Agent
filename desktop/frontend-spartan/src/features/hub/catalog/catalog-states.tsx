@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import type { HubFailure } from "@/features/hub/lib/network";
 import {
   CloudOffIcon,
@@ -21,20 +23,20 @@ function describeFailure(
   switch (failure?.kind) {
     case "browser-offline":
       return {
-        title: "You're offline",
+        get title() { return uiTranslate("picker.offlineTitle"); },
         body: `Reconnect to the internet to browse ${resourceLabel} from Hugging Face.`,
         offlineLike: true,
       };
     case "timeout":
       return {
-        title: "Hugging Face timed out",
+        get title() { return uiTranslate("ui.hugging_face_timed_out"); },
         body: failure.message,
         offlineLike: false,
       };
     case "network-opaque":
     case "unknown":
       return {
-        title: "Can't reach Hugging Face",
+        get title() { return uiTranslate("ui.can_t_reach_hugging_face"); },
         body: failure.message,
         offlineLike: false,
       };
@@ -43,12 +45,12 @@ function describeFailure(
   }
   return online
     ? {
-        title: "Couldn't reach Hugging Face",
+        get title() { return uiTranslate("studio.modelPicker.hubUnreachable"); },
         body: "The discovery feed couldn't load. Check your connection or try again.",
         offlineLike: false,
       }
     : {
-        title: "Can't reach Hugging Face",
+        get title() { return uiTranslate("ui.can_t_reach_hugging_face"); },
         body: `Studio couldn't load ${resourceLabel} from Hugging Face.`,
         offlineLike: false,
       };
@@ -69,6 +71,8 @@ export function NetworkErrorState({
   onSwitchDevice?: () => void;
   resourceLabel?: "models" | "datasets";
 }) {
+  const uiT = useUiT();
+
   const { title, body, offlineLike } = describeFailure(
     failure,
     online,
@@ -97,8 +101,7 @@ export function NetworkErrorState({
             onClick={onSwitchDevice}
             className="inline-flex h-8 items-center gap-1.5 rounded-full bg-foreground/[0.06] px-3 text-ui-12 font-medium text-foreground transition-colors hover:bg-foreground/[0.1] dark:bg-white/[0.06] dark:hover:bg-white/[0.1]"
           >
-            On Device
-          </button>
+            {uiT("picker.onDevice")}</button>
         ) : null}
         <button
           type="button"
@@ -110,8 +113,7 @@ export function NetworkErrorState({
             strokeWidth={1.75}
             className="size-3.5"
           />
-          Try again
-        </button>
+          {uiT("update.tryAgain")}</button>
       </div>
     </div>
   );
@@ -130,6 +132,8 @@ export function DiscoverFetchMoreState({
   onFetchMore: () => void;
   onClearFilters: () => void;
 }) {
+  const uiT = useUiT();
+
   return (
     <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 px-6 text-center">
       <div className="inline-flex size-11 items-center justify-center rounded-[12px] bg-muted text-muted-foreground">
@@ -137,12 +141,9 @@ export function DiscoverFetchMoreState({
       </div>
       <div className="space-y-1">
         <p className="text-ui-14 font-semibold tracking-tight text-foreground">
-          No matches yet
-        </p>
+          {uiT("ui.no_matches_yet")}</p>
         <p className="max-w-md text-ui-12p5 leading-5 text-muted-foreground">
-          Scanned {scannedCount.toLocaleString()} results. Load another page to
-          keep searching Hugging Face.
-        </p>
+          {uiT("ui.scanned")}{" "}{scannedCount.toLocaleString()} {" "}{uiT("ui.results_load_another_page_to_keep_searching_hugging_face")}</p>
       </div>
       <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
         {hasActiveFilters && (
@@ -151,8 +152,7 @@ export function DiscoverFetchMoreState({
             onClick={onClearFilters}
             className="inline-flex h-8 items-center gap-1.5 rounded-full bg-foreground/[0.06] px-3 text-ui-12 font-medium text-foreground transition-colors hover:bg-foreground/[0.1] dark:bg-white/[0.06] dark:hover:bg-white/[0.1]"
           >
-            Clear filters
-          </button>
+            {uiT("ui.clear_filters")}</button>
         )}
         <button
           type="button"
@@ -165,7 +165,7 @@ export function DiscoverFetchMoreState({
             strokeWidth={1.75}
             className="size-3.5"
           />
-          {isLoadingMore ? "Loading..." : "Load more"}
+          {isLoadingMore ? uiT("studio.history.loading") : uiT("studio.history.loadMore")}
         </button>
       </div>
     </div>
@@ -190,13 +190,14 @@ export function DiscoverFetchMoreFooter({
   failureText?: string;
   onRetry?: () => void;
 }) {
+  const uiT = useUiT();
+
   return (
     <div className="relative z-10 flex flex-col items-center gap-2 rounded-[16px] bg-card px-4 py-4 text-center">
       {/* Only warn about hidden results when a filter is actually narrowing them. */}
       {hasActiveFilters && (
         <p className="text-ui-11p5 leading-4 text-muted-foreground">
-          Some results may be hidden by your filters.
-        </p>
+          {uiT("ui.some_results_may_be_hidden_by_your_filters")}</p>
       )}
       {/* Rows stay on screen when the feed fails, so without this the outage is
           invisible and there is nothing left to click once the toast goes. The
@@ -204,7 +205,7 @@ export function DiscoverFetchMoreFooter({
           transient, so reducing this to "out of date" threw it away again. */}
       {failed && (
         <p className="max-w-md text-ui-11p5 leading-4 text-muted-foreground">
-          {failureText || "These results may be out of date."}
+          {failureText || uiT("ui.these_results_may_be_out_of_date")}
         </p>
       )}
       <button
@@ -218,7 +219,7 @@ export function DiscoverFetchMoreFooter({
           strokeWidth={1.75}
           className="size-3.5"
         />
-        {isLoadingMore ? "Loading..." : failed ? "Try again" : "Load more"}
+        {isLoadingMore ? uiT("studio.history.loading") : failed ? uiT("update.tryAgain") : uiT("studio.history.loadMore")}
       </button>
     </div>
   );
@@ -231,6 +232,8 @@ export function InventoryErrorState({
   isDataset: boolean;
   onRetry: () => void;
 }) {
+  const uiT = useUiT();
+
   return (
     <div className="flex min-h-[260px] flex-col items-center justify-center gap-3 px-6 text-center">
       <div className="inline-flex size-11 items-center justify-center rounded-[12px] bg-amber-500/10 text-amber-700 dark:text-amber-300">
@@ -242,13 +245,10 @@ export function InventoryErrorState({
       </div>
       <div className="space-y-1">
         <p className="text-ui-14 font-semibold tracking-tight text-foreground">
-          Couldn't load your library
-        </p>
+          {uiT("ui.couldn_t_load_your_library")}</p>
         <p className="max-w-md text-ui-12p5 leading-5 text-muted-foreground">
-          Something went wrong reading your downloaded{" "}
-          {isDataset ? "datasets" : "models"}. Check that the backend is running
-          and try again.
-        </p>
+          {uiT("ui.something_went_wrong_reading_your_downloaded")}{" "}
+          {isDataset ? uiT("studio.datasetPicker.noun") : uiT("studio.modelPicker.noun")}{uiT("ui.check_that_the_backend_is_running_and_try_again")}</p>
       </div>
       <button
         type="button"
@@ -260,8 +260,7 @@ export function InventoryErrorState({
           strokeWidth={1.75}
           className="size-3.5"
         />
-        Try again
-      </button>
+        {uiT("update.tryAgain")}</button>
     </div>
   );
 }

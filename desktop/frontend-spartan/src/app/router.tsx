@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/i18n";
 import { Link, createRouter, useRouterState } from "@tanstack/react-router";
@@ -33,6 +34,8 @@ const routeTree = rootRoute.addChildren([
 ]);
 
 function DefaultNotFound() {
+  const uiT = useUiT();
+
   const t = useT();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
@@ -40,7 +43,7 @@ function DefaultNotFound() {
     <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
       <img
         src={`${import.meta.env.BASE_URL}spartan-logo.svg`}
-        alt="Sparta Agent"
+        alt={uiT("settings.about.license.studioLabel")}
         className="size-20 object-contain"
       />
       <div className="flex flex-col items-center gap-1">

@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { prepareHfTokenForUse } from "@/features/hf-auth";
 // eslint-disable-next-line no-restricted-imports -- Avoid the hub barrel's React and download-manager exports.
 import { modelDisplayName } from "@/features/hub/lib/model-identity";
@@ -499,8 +500,7 @@ async function syncInferenceStatusToStore(options?: {
         // Already the clean id the header shows: resolveInferenceCheckpointId
         // put it there, not a load path.
         toast.info(`${wasResident} is no longer loaded`, {
-          description:
-            "The server released it, which loading an image or video model does. Pick it again to keep chatting.",
+          get description() { return uiTranslate("ui.the_server_released_it_which_loading_an_image_or_video_model_does"); },
         });
         // Drop the pick too, which is what a server-side unload already does.
         // Dimming the tick was not enough: the name alone reads as "this is my
@@ -517,7 +517,7 @@ async function syncInferenceStatusToStore(options?: {
     const message =
       error instanceof Error ? error.message : "Failed to load models";
     setModelsError(message);
-    toast.error("Failed to refresh models", {
+    toast.error(uiTranslate("ui.failed_to_refresh_models"), {
       description: message,
     });
   }
@@ -784,8 +784,8 @@ export function useChatModelRuntime() {
         if (throwOnError) {
           throw new Error(message);
         }
-        toast.info("Another model is already loading", {
-          description: "Wait for it to finish or cancel it first.",
+        toast.info(uiTranslate("ui.another_model_is_already_loading"), {
+          get description() { return uiTranslate("ui.wait_for_it_to_finish_or_cancel_it_first"); },
         });
         return true;
       };
@@ -1004,8 +1004,8 @@ export function useChatModelRuntime() {
       const lifecycleLease = useChatRuntimeStore.getState().beginModelLoading();
       if (lifecycleLease === null) {
         restorePreviousConfig();
-        toast.info("A model is loading", {
-          description: "Wait for it to finish or cancel it first.",
+        toast.info(uiTranslate("ui.a_model_is_loading"), {
+          get description() { return uiTranslate("ui.wait_for_it_to_finish_or_cancel_it_first"); },
         });
         return;
       }
@@ -1142,7 +1142,7 @@ export function useChatModelRuntime() {
       try {
         async function performLoad(): Promise<void> {
           if (abortCtrl.signal.aborted) {
-            throw new Error("Cancelled");
+            throw new Error(uiTranslate("apiPage.filterCancelled"));
           }
           let previousWasUnloaded = false;
           const pendingLoadConfig =
@@ -1180,7 +1180,7 @@ export function useChatModelRuntime() {
               useChatRuntimeStore.getState().hfToken || null,
             );
             if (!preparedToken.proceed) {
-              throw new Error("Model load cancelled.");
+              throw new Error(uiTranslate("ui.model_load_cancelled"));
             }
             isDiffusion = (
               await fetchGgufStagedMetadata({
@@ -1442,7 +1442,7 @@ export function useChatModelRuntime() {
               }
             }
             if (abortCtrl.signal.aborted) {
-              throw new Error("Cancelled");
+              throw new Error(uiTranslate("apiPage.filterCancelled"));
             }
             // Open the consent dialog when the model needs custom-code consent or has a
             // flagged unsafe file. Fires even when trustRemoteCode is preset on, since the
@@ -1465,7 +1465,7 @@ export function useChatModelRuntime() {
               }
             }
             if (abortCtrl.signal.aborted) {
-              throw new Error("Cancelled");
+              throw new Error(uiTranslate("apiPage.filterCancelled"));
             }
             const loadNativePathLease = nativePathToken
               ? (await consumeNativePathToken(nativePathToken, "load-model"))
@@ -1486,7 +1486,7 @@ export function useChatModelRuntime() {
               previousWasUnloaded = true;
             }
             if (abortCtrl.signal.aborted) {
-              throw new Error("Cancelled");
+              throw new Error(uiTranslate("apiPage.filterCancelled"));
             }
 
             // On a model switch, fall back to the persisted standing
@@ -1648,7 +1648,7 @@ export function useChatModelRuntime() {
             // If cancelled while loading, don't update UI to show
             // the model as active -- it's being unloaded.
             if (abortCtrl.signal.aborted) {
-              throw new Error("Cancelled");
+              throw new Error(uiTranslate("apiPage.filterCancelled"));
             }
 
             // The load applied this spec mode, so persist the user's standing
@@ -1952,7 +1952,7 @@ export function useChatModelRuntime() {
                   ).nativePathLease;
                 } catch {
                   throw new Error(
-                    "Could not reload the previous local model: please re-select the file.",
+                    uiTranslate("ui.could_not_reload_the_previous_local_model_please_re_select_the_fi"),
                   );
                 }
               }
@@ -2266,7 +2266,7 @@ export function useChatModelRuntime() {
               }
               notifyNative({
                 key: `model-downloaded:${notificationModelKey}`,
-                title: "Model downloaded",
+                get title() { return uiTranslate("ui.model_downloaded"); },
                 body: `${safeModelName} finished downloading and is loading into memory.`,
                 requestPermission: false,
               }).catch(() => undefined);
@@ -2467,7 +2467,7 @@ export function useChatModelRuntime() {
           }
           notifyNative({
             key: `model-loaded:${notificationModelKey}`,
-            title: "Model ready",
+            get title() { return uiTranslate("ui.model_ready"); },
             body: `${safeModelName} is loaded and ready to chat.`,
             requestPermission: false,
           }).catch(() => undefined);
@@ -2565,8 +2565,8 @@ export function useChatModelRuntime() {
       if (!(runtime.modelLoading || runtime.loadingModelPick)) {
         return false;
       }
-      toast.info("A model is loading", {
-        description: "Wait for it to finish or cancel it first.",
+      toast.info(uiTranslate("ui.a_model_is_loading"), {
+        get description() { return uiTranslate("ui.wait_for_it_to_finish_or_cancel_it_first"); },
       });
       return true;
     };
@@ -2616,7 +2616,7 @@ export function useChatModelRuntime() {
         success: { message: "Model unloaded", duration: 1200 },
         error: (err) =>
           err instanceof Error ? err.message : "Failed to unload model",
-        description: "Releases VRAM and resets inference state.",
+        get description() { return uiTranslate("ui.releases_vram_and_resets_inference_state"); },
       });
       await unloadPromise;
       return true;

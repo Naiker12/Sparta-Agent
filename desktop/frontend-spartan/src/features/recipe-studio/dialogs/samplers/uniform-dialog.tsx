@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -20,6 +21,8 @@ export function UniformDialog({
   config,
   onUpdate,
 }: UniformDialogProps): ReactElement {
+  const uiT = useUiT();
+
   const lowId = `${config.id}-uniform-low`;
   const highId = `${config.id}-uniform-high`;
   const convertId = `${config.id}-uniform-convert`;
@@ -32,7 +35,7 @@ export function UniformDialog({
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="grid gap-1.5">
           <FieldLabel
-            label="Low"
+            label={uiT("ui.low")}
             htmlFor={lowId}
             hint="Minimum sampled value."
           />
@@ -46,7 +49,7 @@ export function UniformDialog({
         </div>
         <div className="grid gap-1.5">
           <FieldLabel
-            label="High"
+            label={uiT("ui.high")}
             htmlFor={highId}
             hint="Maximum sampled value."
           />
@@ -61,7 +64,7 @@ export function UniformDialog({
       </div>
       <div className="grid gap-1.5">
         <FieldLabel
-          label="Convert to"
+          label={uiT("ui.convert_to")}
           htmlFor={convertId}
           hint="Optionally cast sampled values before output."
         />
@@ -78,10 +81,10 @@ export function UniformDialog({
           }
         >
           <SelectTrigger className="nodrag w-full" id={convertId}>
-            <SelectValue placeholder="No conversion" />
+            <SelectValue placeholder={uiT("ui.no_conversion")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="none">None</SelectItem>
+            <SelectItem value="none">{uiT("studio.params.none")}</SelectItem>
             <SelectItem value="int">int</SelectItem>
             <SelectItem value="float">float</SelectItem>
             <SelectItem value="str">str</SelectItem>

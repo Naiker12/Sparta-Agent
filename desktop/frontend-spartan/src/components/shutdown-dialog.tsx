@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +28,8 @@ export function ShutdownDialog({
   onOpenChange,
   onAfterShutdown,
 }: ShutdownDialogProps) {
+  const uiT = useUiT();
+
   const [stopping, setStopping] = useState(false);
 
   const handleStop = async () => {
@@ -35,13 +39,13 @@ export function ShutdownDialog({
       const res = await authFetch("/api/shutdown", { method: "POST" });
       accepted = res.ok;
       if (!accepted) {
-        toastError("Failed to shut down server");
+        toastError(uiTranslate("ui.failed_to_shut_down_server"));
         setStopping(false);
         return;
       }
     } catch {
       // Network error: request never reached the server
-      toastError("Could not reach server");
+      toastError(uiTranslate("ui.could_not_reach_server"));
       setStopping(false);
       return;
     }
@@ -58,21 +62,18 @@ export function ShutdownDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>¿Detener Sparta?</AlertDialogTitle>
+          <AlertDialogTitle>{uiT("ui.stop_sparta")}</AlertDialogTitle>
           <AlertDialogDescription>
-            This will shut down the server. Any active training or inference
-            jobs will be terminated. You can restart it any time from the
-            desktop shortcut.
-          </AlertDialogDescription>
+            {uiT("ui.this_will_shut_down_the_server_any_active_training_or_inference_j")}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{uiT("chat.workspace.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleStop}
             disabled={stopping}
             variant="destructive"
           >
-            {stopping ? "Stopping…" : "Stop server"}
+            {stopping ? uiT("ui.stopping") : uiT("ui.stop_server")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

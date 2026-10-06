@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 
 import {
   type ColumnDef,
@@ -38,6 +39,8 @@ export function DataTable<TData, TValue>({
   onRowClick,
   getRowClassName,
 }: DataTableProps<TData, TValue>) {
+  const uiT = useUiT();
+
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const table = useReactTable({
@@ -110,8 +113,7 @@ export function DataTable<TData, TValue>({
                 colSpan={columns.length}
                 className="h-32 text-center text-muted-foreground text-sm"
               >
-                No results.
-              </TableCell>
+                {uiT("ui.no_results")}</TableCell>
             </TableRow>
           )}
         </TableBody>

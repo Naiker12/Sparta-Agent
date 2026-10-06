@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { formatBytes } from "@/features/hub/lib/format";
 import { useEffect, useState } from "react";
 import { type DeleteImpact, fetchDeleteImpact } from "../inventory";
@@ -50,15 +51,15 @@ function joinNames(names: string[]): string {
 export function DeleteImpactSummary({
   impact,
 }: { impact: DeleteImpact | null }) {
+  const uiT = useUiT();
+
   if (!impact) {
     return null;
   }
   if (impact.blocked_by.length > 0) {
     return (
       <span className="mt-2 block text-ui-12p5 text-destructive">
-        These are shared assets that {joinNames(impact.blocked_by)} still needs,
-        so they cannot be removed yet. Delete those models first.
-      </span>
+        {uiT("ui.these_are_shared_assets_that")}{" "}{joinNames(impact.blocked_by)} {" "}{uiT("ui.still_needs_so_they_cannot_be_removed_yet_delete_those_models_fir")}</span>
     );
   }
   const retained = impact.retained_companions.reduce(
@@ -75,16 +76,14 @@ export function DeleteImpactSummary({
         className="block text-foreground"
         data-testid="delete-impact-reclaimed"
       >
-        Frees {formatBytes(impact.reclaimed_bytes)} of disk space.
-      </span>
+        {uiT("ui.frees")}{" "}{formatBytes(impact.reclaimed_bytes)} {" "}{uiT("ui.of_disk_space")}</span>
       {retained > 0 ? (
         <span
           className="block text-muted-foreground"
           data-testid="delete-impact-retained"
         >
-          {formatBytes(retained)} of shared assets stay on disk:{" "}
-          {joinNames(impact.retained_companions.map((c) => c.repo_id))} is still
-          needed by{" "}
+          {formatBytes(retained)} {" "}{uiT("ui.of_shared_assets_stay_on_disk")}{" "}
+          {joinNames(impact.retained_companions.map((c) => c.repo_id))} {" "}{uiT("ui.is_still_needed_by")}{" "}
           {joinNames(
             Array.from(
               new Set(impact.retained_companions.flatMap((c) => c.needed_by)),
@@ -98,11 +97,7 @@ export function DeleteImpactSummary({
           className="block text-muted-foreground"
           data-testid="delete-impact-freeable"
         >
-          This also leaves {formatBytes(freeable)} of shared assets (
-          {joinNames(impact.freeable_companions.map((c) => c.repo_id))}) that
-          nothing else needs. Remove them with Free up space on the On Device
-          tab.
-        </span>
+          {uiT("ui.this_also_leaves")}{" "}{formatBytes(freeable)} {" "}{uiT("ui.of_shared_assets")}{joinNames(impact.freeable_companions.map((c) => c.repo_id))}{uiT("ui.that_nothing_else_needs_remove_them_with_free_up_space_on_the_on_")}</span>
       ) : null}
     </span>
   );

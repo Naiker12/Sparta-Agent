@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import {
   type HubFailure,
   clearRemoteBackoff,
@@ -186,7 +187,7 @@ export function useDiscoverSearch({
     clearRemoteBackoff();
     retrySearch();
     toast.message("Retrying…", {
-      description: "Reaching Hugging Face for the latest models.",
+      get description() { return uiTranslate("ui.reaching_hugging_face_for_the_latest_models"); },
     });
   }, [retrySearch]);
 
@@ -209,7 +210,7 @@ export function useDiscoverSearch({
       // The classified failure names the cause; the raw message covers HTTP
       // errors that never reach the network layer.
       description: searchFailure?.message ?? searchError,
-      action: { label: "Retry", onClick: handleRetrySearch },
+      action: { get label() { return uiTranslate("chat.actions.retry"); }, onClick: handleRetrySearch },
     });
   }, [isDiscoverTab, searchError, searchFailure, online, handleRetrySearch]);
 
@@ -235,8 +236,8 @@ export function useDiscoverSearch({
         lastReconnectAtRef.current = now;
         const selfProbed = selfProbedRef.current;
         selfProbedRef.current = false;
-        toast.success("Back online", {
-          description: "Refreshing the discovery feed.",
+        toast.success(uiTranslate("ui.back_online"), {
+          get description() { return uiTranslate("ui.refreshing_the_discovery_feed"); },
         });
         // Only when something else proved the Hub reachable. Our own successful
         // request is what usually clears the window, and its results are already

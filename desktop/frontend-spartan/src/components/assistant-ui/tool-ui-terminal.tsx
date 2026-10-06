@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 "use client";
 
 import { Spinner } from "@/components/ui/spinner";
@@ -32,6 +33,8 @@ const TerminalToolUIImpl: ToolCallMessagePartComponent = ({
   result,
   status,
 }) => {
+  const uiT = useUiT();
+
   const t = useT();
   const command = (args as { command?: string })?.command ?? "";
   const isRunning = status?.type === "running";
@@ -91,7 +94,7 @@ const TerminalToolUIImpl: ToolCallMessagePartComponent = ({
       <ToolFallbackContent>
         {command && (
           <ToolCodeCell
-            label="command"
+            label={uiT("ui.command")}
             code={command}
             language="bash"
             downloadName="command.sh"

@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -131,6 +132,8 @@ export function CardDeleteButton({
   label: string;
   onClick: () => void;
 }) {
+  const uiT = useUiT();
+
   return (
     <Tooltip>
       <TooltipTrigger asChild={true}>
@@ -151,8 +154,7 @@ export function CardDeleteButton({
         </button>
       </TooltipTrigger>
       <TooltipContent side="top" sideOffset={4}>
-        Delete from device
-      </TooltipContent>
+        {uiT("ui.delete_from_device")}</TooltipContent>
     </Tooltip>
   );
 }
@@ -171,6 +173,8 @@ export function CardUpdateButton({
    *  system's feedback-color convention, so the one emerald accent stays scarce. */
   emphasized?: boolean;
 }) {
+  const uiT = useUiT();
+
   if (emphasized) {
     return (
       <Tooltip>
@@ -189,12 +193,10 @@ export function CardUpdateButton({
               strokeWidth={2}
               className="size-3.5"
             />
-            Update
-          </button>
+            {uiT("update.update")}</button>
         </TooltipTrigger>
         <TooltipContent side="top" sideOffset={4}>
-          A newer version is available on Hugging Face
-        </TooltipContent>
+          {uiT("ui.a_newer_version_is_available_on_hugging_face")}</TooltipContent>
       </Tooltip>
     );
   }
@@ -218,8 +220,7 @@ export function CardUpdateButton({
         </button>
       </TooltipTrigger>
       <TooltipContent side="top" sideOffset={4}>
-        Update from Hugging Face
-      </TooltipContent>
+        {uiT("ui.update_from_hugging_face")}</TooltipContent>
     </Tooltip>
   );
 }
@@ -250,6 +251,8 @@ export function DownloadActionButton({
   onClick: () => void;
   className?: string;
 }) {
+  const uiT = useUiT();
+
   return (
     <button
       type="button"
@@ -268,8 +271,7 @@ export function DownloadActionButton({
       {cancelling ? (
         <span className="inline-flex items-center gap-2 text-muted-foreground">
           <Spinner />
-          Cancelling…
-        </span>
+          {uiT("settings.voice.dictation.sttCancellingDownload")}</span>
       ) : downloading ? (
         <>
           <DownloadStopIndicator mode={stopMode} />
@@ -278,8 +280,7 @@ export function DownloadActionButton({
       ) : loading ? (
         <>
           <Spinner />
-          Loading…
-        </>
+          {uiT("chat.projectSwitcher.loading")}</>
       ) : (
         <>
           <HugeiconsIcon icon={Download01Icon} strokeWidth={1.75} />
@@ -309,6 +310,8 @@ export function DeleteConfirmDialog({
   blocked?: boolean;
   onConfirm: () => void;
 }) {
+  const uiT = useUiT();
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent size="sm">
@@ -317,7 +320,7 @@ export function DeleteConfirmDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={deleting}>{uiT("chat.workspace.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             variant="destructive"
             disabled={deleting || blocked}
@@ -326,7 +329,7 @@ export function DeleteConfirmDialog({
               onConfirm();
             }}
           >
-            {deleting ? "Deleting…" : "Delete"}
+            {deleting ? uiT("ui.deleting") : uiT("chat.menu.delete")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -350,6 +353,8 @@ export function UpdateConfirmDialog({
   updating: boolean;
   onConfirm: () => void;
 }) {
+  const uiT = useUiT();
+
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent size="sm">
@@ -358,7 +363,7 @@ export function UpdateConfirmDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={updating}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={updating}>{uiT("chat.workspace.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             variant="default"
             disabled={updating}
@@ -367,7 +372,7 @@ export function UpdateConfirmDialog({
               onConfirm();
             }}
           >
-            {updating ? "Updating…" : "Update"}
+            {updating ? uiT("ui.updating") : uiT("update.update")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

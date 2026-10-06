@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 /**
  * Sparta Agent - Controles Derechos del Composer (ComposerRightControls)
  * Gestiona los botones de envío, dictado por voz, parada de generación,
@@ -22,7 +23,7 @@ import { useT } from "@/i18n";
 import { AuiIf, ComposerPrimitive, useAui } from "@assistant-ui/react";
 import { ArrowUpIcon, MicIcon, SquareIcon } from "lucide-react";
 import { type FC, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { findPromptQueueEntry } from "./prompt-queue-manager";
 import { ReasoningToggle } from "./reasoning-toggle";
 
@@ -107,7 +108,7 @@ export const ComposerRightControls: FC<ComposerRightControlsProps> = ({
         .catch((error) => {
           stoppingResearchRunIdRef.current = null;
           setStoppingResearchRunId(null);
-          toast.error("Could not stop research", {
+          toast.error(uiTranslate("ui.could_not_stop_research"), {
             description: error instanceof Error ? error.message : undefined,
           });
         });

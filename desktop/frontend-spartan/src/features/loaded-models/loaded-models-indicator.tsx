@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 // A loaded model only shows on the page that loaded it, so memory stays held with
 // nothing on screen saying so. This card lists what is resident from anywhere and
 // ejects it in place. It joins the shared bottom-right stack instead of pinning
@@ -84,6 +85,8 @@ function LoadedModelRow({
   onEject: () => void;
   onOpen: () => void;
 }) {
+  const uiT = useUiT();
+
   const label = shortModelLabel(entry.name);
   const target = loadedModelTarget(entry.source);
   return (
@@ -93,7 +96,7 @@ function LoadedModelRow({
         <TooltipTrigger asChild={true}>
           <button
             type="button"
-            aria-label={`${label}. Open ${target.label}`}
+            aria-label={uiT("ui.value0_open_value1", { value0: String(label), value1: String(target.label) })}
             onClick={onOpen}
             className="flex min-w-0 flex-1 items-center gap-2 text-left"
           >
@@ -117,7 +120,7 @@ function LoadedModelRow({
         <TooltipContent side="left" sideOffset={6}>
           <span className="block">{entry.name}</span>
           <span className="block text-muted-foreground">
-            Open {target.label}
+            {uiT("settings.resources.storage.openAction")}{" "}{target.label}
           </span>
         </TooltipContent>
       </Tooltip>
@@ -125,20 +128,20 @@ function LoadedModelRow({
         // Nothing resident to release yet, so the eject slot holds the spinner
         // the toast is showing at the same moment.
         <span className="flex size-6 shrink-0 items-center justify-center">
-          <Spinner className="size-3.5" label="Loading" />
+          <Spinner className="size-3.5" label={uiT("ui.loading")} />
         </span>
       ) : (
         <Tooltip>
           <TooltipTrigger asChild={true}>
             <button
               type="button"
-              aria-label={`Eject ${label}`}
+              aria-label={uiT("ui.eject_value0", { value0: String(label) })}
               disabled={ejecting}
               onClick={onEject}
               className="flex size-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/[0.07] hover:text-foreground disabled:pointer-events-none disabled:opacity-60"
             >
               {ejecting ? (
-                <Spinner className="size-3.5" label="Ejecting" />
+                <Spinner className="size-3.5" label={uiT("ui.ejecting")} />
               ) : (
                 // Eject, not dismiss: this releases the weights, which the
                 // header's X does not. Same glyph the model picker's own eject
@@ -152,8 +155,7 @@ function LoadedModelRow({
             </button>
           </TooltipTrigger>
           <TooltipContent side="left" sideOffset={6}>
-            Eject to free memory
-          </TooltipContent>
+            {uiT("ui.eject_to_free_memory")}</TooltipContent>
         </Tooltip>
       )}
     </div>
@@ -163,6 +165,8 @@ function LoadedModelRow({
 export function LoadedModelsIndicator({
   positioned = true,
 }: { positioned?: boolean } = {}) {
+  const uiT = useUiT();
+
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const showIndicator = useShowLoadedModels();
   const dismissed = useLoadedModelsDismissed();
@@ -270,7 +274,7 @@ export function LoadedModelsIndicator({
           <TooltipTrigger asChild={true}>
             <button
               type="button"
-              aria-label={`${countLabel}. Show details, or drag to move`}
+              aria-label={uiT("ui.value0_show_details_or_drag_to_move", { value0: String(countLabel) })}
               onPointerDown={startDrag}
               // The pill is its own drag handle, so a press that moved is a
               // drag and must not also expand the card.
@@ -304,12 +308,11 @@ export function LoadedModelsIndicator({
               className="size-[15px] shrink-0 text-muted-foreground"
             />
             <span className="min-w-0 flex-1 truncate text-ui-12p5 font-semibold text-foreground">
-              Loaded models
-            </span>
+              {uiT("ui.loaded_models")}</span>
             <Tooltip>
               <TooltipTrigger asChild={true}>
                 <div
-                  aria-label="Drag to move"
+                  aria-label={uiT("ui.drag_to_move")}
                   // Not a button, so no click follows to consume the drag
                   // sentinel: say so, or the collapsed pill's next click reads
                   // this drag as its own and refuses to expand.
@@ -324,14 +327,13 @@ export function LoadedModelsIndicator({
                 </div>
               </TooltipTrigger>
               <TooltipContent side="left" sideOffset={6}>
-                Drag to move
-              </TooltipContent>
+                {uiT("ui.drag_to_move")}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild={true}>
                 <button
                   type="button"
-                  aria-label="Collapse loaded models"
+                  aria-label={uiT("ui.collapse_loaded_models")}
                   onClick={() => setCollapsed(true)}
                   className="flex size-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/[0.07] hover:text-foreground"
                 >
@@ -343,14 +345,13 @@ export function LoadedModelsIndicator({
                 </button>
               </TooltipTrigger>
               <TooltipContent side="left" sideOffset={6}>
-                Collapse
-              </TooltipContent>
+                {uiT("ui.collapse")}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild={true}>
                 <button
                   type="button"
-                  aria-label="Close loaded models"
+                  aria-label={uiT("ui.close_loaded_models")}
                   onClick={() => setLoadedModelsDismissed(true)}
                   className="flex size-6 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/[0.07] hover:text-foreground"
                 >
@@ -362,10 +363,9 @@ export function LoadedModelsIndicator({
                 </button>
               </TooltipTrigger>
               <TooltipContent side="left" sideOffset={6}>
-                <span className="block">Close</span>
+                <span className="block">{uiT("settings.about.shutDown")}</span>
                 <span className="block text-muted-foreground">
-                  Back on the next model load
-                </span>
+                  {uiT("ui.back_on_the_next_model_load")}</span>
               </TooltipContent>
             </Tooltip>
           </div>

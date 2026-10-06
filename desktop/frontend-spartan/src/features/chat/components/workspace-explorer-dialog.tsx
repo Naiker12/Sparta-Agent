@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -27,6 +28,8 @@ export function WorkspaceExplorerDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const uiT = useUiT();
+
   const t = useT();
   const root = project?.connectedFolderPath ?? null;
   const [currentPath, setCurrentPath] = useState<string | null>(root);
@@ -220,12 +223,12 @@ export function WorkspaceExplorerDialog({
                         onClick={() => void saveFile()}
                         disabled={saving}
                       >
-                        {saving ? "Saving…" : "Save"}
+                        {saving ? uiT("ui.saving") : uiT("chat.actions.save")}
                       </Button>
                     )}
                   </div>
                   <Textarea
-                    aria-label="Workspace file editor"
+                    aria-label={uiT("ui.workspace_file_editor")}
                     fieldSizing="fixed"
                     value={content}
                     readOnly={project?.workspaceAccess !== "write"}
@@ -235,8 +238,7 @@ export function WorkspaceExplorerDialog({
                 </>
               ) : (
                 <p className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-                  Select a file to edit
-                </p>
+                  {uiT("ui.select_a_file_to_edit")}</p>
               )}
             </div>
           </div>

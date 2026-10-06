@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { ChevronDownStandardIcon } from "@/lib/chevron-icons";
 import { cn } from "@/lib/utils";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -27,6 +28,8 @@ export const CollapsibleSectionTriggerButton = forwardRef<
   }: CollapsibleSectionTriggerProps,
   ref,
 ): ReactElement {
+  const uiT = useUiT();
+
   return (
     <button
       ref={ref}
@@ -47,7 +50,7 @@ export const CollapsibleSectionTriggerButton = forwardRef<
         />
         <span className="font-semibold uppercase">{label}</span>
       </span>
-      <span className="shrink-0">{summary ?? (open ? "Hide" : "Show")}</span>
+      <span className="shrink-0">{summary ?? (open ? uiT("ui.hide") : uiT("ui.show"))}</span>
     </button>
   );
 });

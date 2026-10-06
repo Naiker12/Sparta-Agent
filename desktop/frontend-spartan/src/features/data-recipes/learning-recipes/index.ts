@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import type { RecipePayload } from "@/features/recipe-studio";
 
 const structuredOutputsJinjaUrl = new URL(
@@ -99,50 +100,44 @@ export type LearningRecipeDef = {
 export const LEARNING_RECIPES: LearningRecipeDef[] = [
   {
     id: "structured-outputs-jinja",
-    title: "Structured Outputs + Jinja Expressions",
-    description:
-      "Support ticket triage with structured JSON outputs and Jinja conditionals.",
+    get title() { return uiTranslate("ui.structured_outputs_jinja_expressions"); },
+    get description() { return uiTranslate("ui.support_ticket_triage_with_structured_json_outputs_and_jinja_cond"); },
     loadPayload: () => loadPayloadFromUrl(structuredOutputsJinjaUrl),
   },
   {
     id: "pdf-grounded-qa",
-    title: "PDF Document QA",
-    description: "Build grounded question-answer examples from PDF chunks.",
+    get title() { return uiTranslate("ui.pdf_document_qa"); },
+    get description() { return uiTranslate("ui.build_grounded_question_answer_examples_from_pdf_chunks"); },
     loadPayload: () => loadPayloadFromUrl(pdfGroundedQaUrl),
   },
   {
     id: "instruction-from-answer",
-    title: "Instruction from Answer",
-    description:
-      "Use seed answer columns to generate high-quality instruction targets.",
+    get title() { return uiTranslate("ui.instruction_from_answer"); },
+    get description() { return uiTranslate("ui.use_seed_answer_columns_to_generate_high_quality_instruction_targ"); },
     loadPayload: () => loadPayloadFromUrl(instructionFromAnswerUrl),
   },
   {
     id: "text-to-python",
-    title: "Text to Python",
-    description:
-      "Generate instruction-to-code data with category sampling and LLM judging.",
+    get title() { return uiTranslate("ui.text_to_python"); },
+    get description() { return uiTranslate("ui.generate_instruction_to_code_data_with_category_sampling_and_llm_"); },
     loadPayload: () => loadPayloadFromUrl(textToPythonUrl),
   },
   {
     id: "text-to-sql",
-    title: "Text to SQL",
-    description:
-      "Generate SQL tasks and runnable SQL outputs with prompt-driven generation.",
+    get title() { return uiTranslate("ui.text_to_sql"); },
+    get description() { return uiTranslate("ui.generate_sql_tasks_and_runnable_sql_outputs_with_prompt_driven_ge"); },
     loadPayload: () => loadPayloadFromUrl(textToSqlUrl),
   },
   {
     id: "ocr-document-extraction",
-    title: "OCR Document Extraction",
-    description:
-      "Use image context to generate OCR-style document extraction output.",
+    get title() { return uiTranslate("ui.ocr_document_extraction"); },
+    get description() { return uiTranslate("ui.use_image_context_to_generate_ocr_style_document_extraction_outpu"); },
     loadPayload: () => loadPayloadFromUrl(ocrDocumentExtractionUrl),
   },
   {
     id: "github-support-bot",
-    title: "GitHub Crawler",
-    description:
-      "Crawl real GitHub issues and PRs and turn each thread into a {User, Assistant} training pair.",
+    get title() { return uiTranslate("ui.github_crawler"); },
+    get description() { return uiTranslate("ui.crawl_real_github_issues_and_prs_and_turn_each_thread_into_a_user"); },
     loadPayload: () => loadPayloadFromUrl(githubSupportBotUrl),
   },
 ];

@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 /**
  * Sparta Agent - Dock Inferior del Composer (ThreadComposerDock)
  * Contenedor flotante fijado a la parte inferior del hilo con gradiente de desvanecimiento,
@@ -20,6 +21,8 @@ export const FOOTER_GAP_BELOW_SPACER_PX = 10;
 export const RUN_SHRINK_WINDOW_MS = 1000;
 
 export const PendingAudioChip: FC = () => {
+  const uiT = useUiT();
+
   const audioName = useChatRuntimeStore((s) => s.pendingAudioName);
   const clearPendingAudio = useChatRuntimeStore((s) => s.clearPendingAudio);
   if (!audioName) {
@@ -34,7 +37,7 @@ export const PendingAudioChip: FC = () => {
           type="button"
           onClick={clearPendingAudio}
           className="flex size-4 items-center justify-center rounded-full hover:bg-destructive hover:text-destructive-foreground"
-          aria-label="Remove audio"
+          aria-label={uiT("ui.remove_audio")}
         >
           <XIcon className="size-3" />
         </button>

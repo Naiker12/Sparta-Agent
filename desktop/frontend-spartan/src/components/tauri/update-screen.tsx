@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Spinner } from "@/components/ui/spinner";
 import type { UpdateStatus } from "@/hooks/use-tauri-update";
 import { useT } from "@/i18n";
@@ -21,11 +22,13 @@ interface UpdateScreenProps {
 const EASE_OUT_QUART: [number, number, number, number] = [0.165, 0.84, 0.44, 1];
 
 function Logo() {
+  const uiT = useUiT();
+
   return (
     <div className="flex items-center justify-center gap-3">
       <img
         src="/spartan-logo.svg"
-        alt="SPARTAN AGENT"
+        alt={uiT("shell.brand")}
         aria-hidden="true"
         className="h-[64px] w-[64px] rounded-2xl object-contain shadow-lg"
       />
@@ -33,8 +36,7 @@ function Logo() {
         className="text-ui-50 font-bold uppercase leading-none tracking-[0.04em] text-foreground"
         style={{ fontFamily: '"Hellix", sans-serif' }}
       >
-        SPARTAN AGENT
-      </span>
+        {uiT("shell.brand")}</span>
     </div>
   );
 }

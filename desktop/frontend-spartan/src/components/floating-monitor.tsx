@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -422,6 +423,8 @@ function FloatingMonitorPanel({
   onClose,
   systemInfo,
 }: FloatingMonitorPanelProps) {
+  const uiT = useUiT();
+
   const t = useT();
   const [constraintsElement, setConstraintsElement] =
     useState<HTMLDivElement | null>(null);
@@ -611,7 +614,7 @@ function FloatingMonitorPanel({
                   {t("settings.resources.gpu.ggufInference")}
                 </span>
                 <span className="uppercase text-foreground">
-                  {separateInferenceGpu.backend ?? "GPU"}
+                  {separateInferenceGpu.backend ?? uiT("settings.about.gpu")}
                   {separateInferenceGpu.available
                     ? inferenceVramTotal
                       ? ` · ${formatGiB(inferenceVramTotal)}`

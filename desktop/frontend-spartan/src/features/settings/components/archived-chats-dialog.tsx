@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +39,8 @@ function formatCreatedAt(ms: number): string {
 }
 
 export function ArchivedChatsView() {
+  const uiT = useUiT();
+
   const { archivedItems } = useChatSidebarItems({ requireMessages: true });
   const navigate = useNavigate();
   const closeSettings = useSettingsDialogStore((s) => s.closeDialog);
@@ -81,9 +85,9 @@ export function ArchivedChatsView() {
   async function handleUnarchive(item: SidebarItem) {
     try {
       await unarchiveChatItem(item);
-      toast.success("Chat unarchived");
+      toast.success(uiTranslate("ui.chat_unarchived"));
     } catch (err) {
-      toast.error("Failed to unarchive chat", {
+      toast.error(uiTranslate("ui.failed_to_unarchive_chat"), {
         description: err instanceof Error ? err.message : undefined,
       });
     }
@@ -105,9 +109,9 @@ export function ArchivedChatsView() {
         },
         { deleteFiles },
       );
-      toast.success("Chat deleted");
+      toast.success(uiTranslate("ui.chat_deleted"));
     } catch (err) {
-      toast.error("Failed to delete chat", {
+      toast.error(uiTranslate("shell.toast.failedToDeleteChat"), {
         description: err instanceof Error ? err.message : undefined,
       });
     }
@@ -127,13 +131,12 @@ export function ArchivedChatsView() {
     <div className="flex flex-col gap-4">
       {archivedItems.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
-          No archived chats.
-        </p>
+          {uiT("ui.no_archived_chats")}</p>
       ) : (
         <div>
           <div className="flex items-center gap-4 border-b border-border/60 px-1 pb-2 text-xs font-semibold text-foreground">
-            <span className="flex-1">Name</span>
-            <span className="w-32 shrink-0">Date created</span>
+            <span className="flex-1">{uiT("projectsPage.colName")}</span>
+            <span className="w-32 shrink-0">{uiT("settings.voice.recents.dateColumn")}</span>
             <span className="w-16 shrink-0" />
           </div>
           {archivedItems.slice(0, visibleCount).map((item) => (
@@ -156,8 +159,8 @@ export function ArchivedChatsView() {
                 <button
                   type="button"
                   onClick={() => void handleUnarchive(item)}
-                  aria-label="Unarchive chat"
-                  title="Unarchive"
+                  aria-label={uiT("ui.unarchive_chat")}
+                  title={uiT("ui.unarchive")}
                   className="inline-flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
                   <HugeiconsIcon
@@ -169,8 +172,8 @@ export function ArchivedChatsView() {
                 <button
                   type="button"
                   onClick={() => requestDelete(item)}
-                  aria-label="Delete chat"
-                  title="Delete"
+                  aria-label={uiT("shell.dialog.deleteChat.title")}
+                  title={uiT("chat.menu.delete")}
                   className="inline-flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                 >
                   <HugeiconsIcon
@@ -191,7 +194,7 @@ export function ArchivedChatsView() {
                   setVisibleCount(visibleCount + ARCHIVED_PAGE_SIZE)
                 }
               >
-                Show more ({archivedItems.length - visibleCount})
+                {uiT("ui.show_more")}{archivedItems.length - visibleCount})
               </Button>
             </div>
           ) : null}
@@ -208,14 +211,13 @@ export function ArchivedChatsView() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete chat</AlertDialogTitle>
+            <AlertDialogTitle>{uiT("shell.dialog.deleteChat.title")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Delete{" "}
+              {uiT("chat.menu.delete")}{" "}
               <span className="font-medium text-foreground">
                 &quot;{confirmingDelete?.title}&quot;
               </span>
-              ? This cannot be undone.
-            </AlertDialogDescription>
+              {uiT("ui.this_cannot_be_undone_")}</AlertDialogDescription>
           </AlertDialogHeader>
           <DeleteChatFilesSwitch
             id="archived-chat-delete-files"
@@ -223,7 +225,7 @@ export function ArchivedChatsView() {
             onCheckedChange={setDeleteFilesOnDelete}
           />
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{uiT("chat.workspace.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
@@ -235,8 +237,7 @@ export function ArchivedChatsView() {
                 }
               }}
             >
-              Delete
-            </AlertDialogAction>
+              {uiT("chat.menu.delete")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +17,8 @@ import { useStopRunningChatsDialogStore } from "../stores/stop-running-chats-dia
  * opt in rather than truncating silently.
  */
 export function StopRunningChatsDialog() {
+  const uiT = useUiT();
+
   const open = useStopRunningChatsDialogStore((s) => s.open);
   const count = useStopRunningChatsDialogStore((s) => s.count);
   const titles = useStopRunningChatsDialogStore((s) => s.titles);
@@ -56,12 +59,10 @@ export function StopRunningChatsDialog() {
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            Stop {count} running {noun}?
+            {uiT("studio.training.stopAction")}{" "}{count} {" "}{uiT("ui.running")}{" "}{noun}?
           </AlertDialogTitle>
           <AlertDialogDescription>
-            {lead}so {count === 1 ? "this" : "these"} {noun} will stop
-            {hasNonChat ? "" : " generating"}. Work produced so far is kept.
-          </AlertDialogDescription>
+            {lead}{uiT("ui.so")}{" "}{count === 1 ? uiT("ui.this_") : uiT("ui.these")} {noun} {" "}{uiT("ui.will_stop")}{hasNonChat ? "" : uiT("ui.generating")}{uiT("ui.work_produced_so_far_is_kept")}</AlertDialogDescription>
         </AlertDialogHeader>
         {shown.length > 0 && (
           <ul className="max-h-40 overflow-y-auto rounded-md border bg-muted/40 px-3 py-2 text-sm">
@@ -72,17 +73,15 @@ export function StopRunningChatsDialog() {
             ))}
             {remaining > 0 && (
               <li className="py-0.5 text-muted-foreground">
-                and {remaining} more
-              </li>
+                {uiT("ui.and")}{" "}{remaining} {" "}{uiT("ui.more")}</li>
             )}
           </ul>
         )}
         <AlertDialogFooter>
           <AlertDialogCancel onClick={() => resolve(false)}>
-            Keep generating
-          </AlertDialogCancel>
+            {uiT("ui.keep_generating")}</AlertDialogCancel>
           <AlertDialogAction onClick={() => resolve(true)}>
-            {unloads ? "Stop and unload" : "Stop and reload"}
+            {unloads ? uiT("ui.stop_and_unload") : uiT("ui.stop_and_reload")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

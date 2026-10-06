@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { useEffect, useState } from "react";
 import { getThreadWorkspace, type WorkspaceAccess } from "../api/modules/workspaces-api";
 import { getPendingWorkspace } from "../utils/pending-workspace";
@@ -23,7 +24,7 @@ export function useThreadFileScope(threadId: string | null) {
           ? { id: saved.bindingId, connectedFolderPath: saved.canonicalPath, workspaceAccess: saved.access, threadBinding: true }
           : pending ? {id: "sparta-draft-workspace", connectedFolderPath: pending.folder, workspaceAccess: pending.access, threadBinding: true} : null;
         if (!stopped && current === sequence) { setScope(next); setLoadedThread(threadId); }
-      } catch { if (!stopped && current === sequence) { setError("No se pudo recuperar la carpeta del chat."); setLoadedThread(threadId); } }
+      } catch { if (!stopped && current === sequence) { setError(uiTranslate("ui.could_not_recover_the_chat_folder")); setLoadedThread(threadId); } }
     }
     void load();
     const changed = () => void load();

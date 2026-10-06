@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { requestSttDownload } from "@/features/settings/stores/stt-download-prompt-store";
 import {
   type DictationEngine,
@@ -81,7 +82,7 @@ export class StudioDictationAdapter implements DictationAdapter {
         }).listen();
       }
       throw new Error(
-        "Local model dictation is not supported in this browser.",
+        uiTranslate("ui.local_model_dictation_is_not_supported_in_this_browser"),
       );
     }
     if (StudioWebSpeechDictationAdapter.isSupported()) {
@@ -89,7 +90,7 @@ export class StudioDictationAdapter implements DictationAdapter {
         chatId: this.chatId,
       }).listen();
     }
-    throw new Error("Browser dictation is not supported in this browser.");
+    throw new Error(uiTranslate("ui.browser_dictation_is_not_supported_in_this_browser"));
   }
 }
 
@@ -108,15 +109,14 @@ export function notifyStudioDictationUnavailable(
 ): void {
   // Both engines need a secure context (localhost or HTTPS).
   if (typeof window !== "undefined" && !window.isSecureContext) {
-    toast.error("Voice typing needs a secure connection.", {
-      description:
-        "Open Studio at http://127.0.0.1 (localhost) or over HTTPS to dictate.",
+    toast.error(uiTranslate("ui.voice_typing_needs_a_secure_connection"), {
+      get description() { return uiTranslate("ui.open_studio_at_http_127_0_0_1_localhost_or_over_https_to_dictate"); },
     });
     return;
   }
   if (usesModelRecording(dictationEngine)) {
     // Defensive: MediaRecorder is effectively always present here.
-    toast.error("Voice recording isn't available in this browser.");
+    toast.error(uiTranslate("ui.voice_recording_isn_t_available_in_this_browser"));
     return;
   }
   // Browser Web Speech is missing (e.g. Firefox). Local dictation is the only
@@ -137,17 +137,15 @@ async function offerLocalDictation(): Promise<void> {
     // An engine with no runtime installed cannot load what it downloads, so
     // say what is missing rather than asking for gigabytes first.
     if (engine && !engine.available) {
-      toast.error("Local transcription isn't installed on this server.", {
-        description:
-          "Run `unsloth studio update` to install it, then choose a model in Voice settings.",
+      toast.error(uiTranslate("ui.local_transcription_isn_t_installed_on_this_server"), {
+        get description() { return uiTranslate("ui.run_unsloth_studio_update_to_install_it_then_choose_a_model_in_vo"); },
       });
       return;
     }
     if (engine?.downloaded_models.includes(sttModel)) {
       setDictationEngine("model");
-      toast.success("Switched to local transcription.", {
-        description:
-          "Voice typing isn't available in this browser. Press the mic again to dictate.",
+      toast.success(uiTranslate("ui.switched_to_local_transcription"), {
+        get description() { return uiTranslate("ui.voice_typing_isn_t_available_in_this_browser_press_the_mic_again_"); },
       });
       return;
     }

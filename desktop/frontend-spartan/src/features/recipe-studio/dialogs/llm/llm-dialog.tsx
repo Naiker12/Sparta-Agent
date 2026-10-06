@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { type ReactElement, useRef } from "react";
 import type { LlmConfig } from "../../types";
@@ -19,6 +20,8 @@ export function LlmDialog({
   toolProfileAliases,
   onUpdate,
 }: LlmDialogProps): ReactElement {
+  const uiT = useUiT();
+
   const modelAliasAnchorRef = useRef<HTMLDivElement>(null);
 
   if (config.llm_type !== "judge") {
@@ -37,9 +40,9 @@ export function LlmDialog({
   return (
     <Tabs defaultValue="general" className="w-full">
       <TabsList className="w-full">
-        <TabsTrigger value="general">General</TabsTrigger>
+        <TabsTrigger value="general">{uiT("settings.general.title")}</TabsTrigger>
         {config.llm_type === "judge" && (
-          <TabsTrigger value="scores">Scores</TabsTrigger>
+          <TabsTrigger value="scores">{uiT("ui.scores")}</TabsTrigger>
         )}
       </TabsList>
       <TabsContent value="general" className="pt-3">

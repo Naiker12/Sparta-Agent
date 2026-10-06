@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -24,6 +25,8 @@ function ConvertToField({
   value: SamplerConfig["convert_to"];
   onValueChange: (value: ConvertTo | undefined) => void;
 }): ReactElement {
+  const uiT = useUiT();
+
   return (
     <Select
       value={value ?? "none"}
@@ -32,10 +35,10 @@ function ConvertToField({
       }
     >
       <SelectTrigger className="nodrag h-8 w-full text-xs">
-        <SelectValue placeholder="Convert" />
+        <SelectValue placeholder={uiT("ui.convert")} />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="none">None</SelectItem>
+        <SelectItem value="none">{uiT("studio.params.none")}</SelectItem>
         <SelectItem value="int">int</SelectItem>
         <SelectItem value="float">float</SelectItem>
         <SelectItem value="str">str</SelectItem>
@@ -48,10 +51,12 @@ export function InlineSampler({
   config,
   onUpdate,
 }: InlineSamplerProps): ReactElement | null {
+  const uiT = useUiT();
+
   if (config.sampler_type === "uniform") {
     return (
       <div className="grid gap-3 sm:grid-cols-3">
-        <InlineField label="Low">
+        <InlineField label={uiT("ui.low")}>
           <Input
             className="nodrag h-8 w-full text-xs"
             type="number"
@@ -60,7 +65,7 @@ export function InlineSampler({
             onChange={(event) => onUpdate({ low: event.target.value })}
           />
         </InlineField>
-        <InlineField label="High">
+        <InlineField label={uiT("ui.high")}>
           <Input
             className="nodrag h-8 w-full text-xs"
             type="number"
@@ -69,7 +74,7 @@ export function InlineSampler({
             onChange={(event) => onUpdate({ high: event.target.value })}
           />
         </InlineField>
-        <InlineField label="Convert to">
+        <InlineField label={uiT("ui.convert_to")}>
           <ConvertToField
             value={config.convert_to}
             onValueChange={(value) =>
@@ -87,7 +92,7 @@ export function InlineSampler({
   if (config.sampler_type === "gaussian") {
     return (
       <div className="grid gap-3 sm:grid-cols-3">
-        <InlineField label="Mean">
+        <InlineField label={uiT("ui.mean")}>
           <Input
             className="nodrag h-8 w-full text-xs"
             type="number"
@@ -96,7 +101,7 @@ export function InlineSampler({
             onChange={(event) => onUpdate({ mean: event.target.value })}
           />
         </InlineField>
-        <InlineField label="Std dev">
+        <InlineField label={uiT("ui.std_dev")}>
           <Input
             className="nodrag h-8 w-full text-xs"
             type="number"
@@ -105,7 +110,7 @@ export function InlineSampler({
             onChange={(event) => onUpdate({ std: event.target.value })}
           />
         </InlineField>
-        <InlineField label="Convert to">
+        <InlineField label={uiT("ui.convert_to")}>
           <ConvertToField
             value={config.convert_to}
             onValueChange={(value) =>
@@ -122,7 +127,7 @@ export function InlineSampler({
 
   if (config.sampler_type === "bernoulli") {
     return (
-      <InlineField label="Probability (p)">
+      <InlineField label={uiT("ui.probability_p")}>
         <Input
           className="nodrag h-8 w-full text-xs"
           type="number"
@@ -139,7 +144,7 @@ export function InlineSampler({
 
   if (config.sampler_type === "uuid") {
     return (
-      <InlineField label="UUID format">
+      <InlineField label={uiT("ui.uuid_format")}>
         <Input
           className="nodrag h-8 w-full text-xs"
           placeholder="uuid4"

@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   Tooltip,
   TooltipContent,
@@ -18,6 +19,8 @@ export function FieldLabel({
   htmlFor,
   hint,
 }: FieldLabelProps): ReactElement {
+  const uiT = useUiT();
+
   return (
     <div className="flex min-w-0 items-center gap-1 text-xs font-semibold uppercase text-muted-foreground">
       {htmlFor ? (
@@ -33,8 +36,8 @@ export function FieldLabel({
             <button
               type="button"
               className="inline-flex size-4 shrink-0 items-center justify-center rounded-full text-muted-foreground/80 transition hover:text-foreground"
-              aria-label={`More info: ${label}`}
-              title={`More info about ${label}`}
+              aria-label={uiT("ui.more_info_value0", { value0: String(label) })}
+              title={uiT("ui.more_info_about_value0", { value0: String(label) })}
             >
               <HugeiconsIcon icon={InformationCircleIcon} className="size-4" />
             </button>

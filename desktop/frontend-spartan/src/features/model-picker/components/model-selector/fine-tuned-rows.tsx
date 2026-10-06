@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 /**
  * Sparta Agent – Fine Tuned Rows Component
  *
@@ -112,6 +113,8 @@ export function FineTunedRows({
     systemRamAvailableGb: number;
   };
 }) {
+  const uiT = useUiT();
+
   return (
     <>
       {adapters.map((adapter) => {
@@ -212,15 +215,14 @@ export function FineTunedRows({
                 {canDelete && (
                   <ModelDeleteAction
                     ariaLabel={`Delete ${adapter.name}`}
-                    title="Delete fine-tuned model?"
+                    title={uiT("ui.delete_fine_tuned_model")}
                     description={
                       <>
-                        This will remove{" "}
+                        {uiT("ui.this_will_remove")}{" "}
                         <span className="font-medium text-foreground">
                           {adapter.name}
                         </span>{" "}
-                        from disk. This cannot be undone.
-                      </>
+                        {uiT("ui.from_disk_this_cannot_be_undone")}</>
                     }
                     successMessage={`Deleted ${adapter.name}`}
                     disabled={deleteDisabled}
@@ -254,12 +256,11 @@ export function FineTunedRows({
                   deleteTitle: "Delete exported GGUF variant?",
                   renderDeleteDescription: (quant) => (
                     <>
-                      This will remove{" "}
+                      {uiT("ui.this_will_remove")}{" "}
                       <span className="font-medium text-foreground">
                         {adapter.name} ({quant})
                       </span>{" "}
-                      from disk. This cannot be undone.
-                    </>
+                      {uiT("ui.from_disk_this_cannot_be_undone")}</>
                   ),
                   getDeleteSuccessMessage: (quant) =>
                     `Deleted ${adapter.name} ${quant}`,

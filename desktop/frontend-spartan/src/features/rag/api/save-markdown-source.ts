@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { toast } from "@/lib/toast";
 import { type IndexJob, terminalJobStatus } from "../types/rag";
 import {
@@ -129,12 +130,12 @@ export async function saveMarkdownAsProjectSource(
   try {
     const result = await uploadProjectDocument(projectId, file);
     if (!options.quiet) {
-      toast.success("Saved to project sources.");
+      toast.success(uiTranslate("ui.saved_to_project_sources"));
     }
     void watchIngestion(projectId, result.jobId, result.filename || filename);
     return true;
   } catch (error) {
-    toast.error("Failed to save to project sources.", {
+    toast.error(uiTranslate("chat.menu.saveToProjectSourcesFailed"), {
       description: error instanceof Error ? error.message : undefined,
     });
     return false;

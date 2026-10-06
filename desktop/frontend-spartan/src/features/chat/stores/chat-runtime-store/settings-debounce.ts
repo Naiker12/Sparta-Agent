@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 /**
  * Sparta Agent - Debounce y Coalescencia de Parches de Configuración
  * Agrupa escrituras de configuración para evitar llamadas HTTP excesivas.
@@ -22,8 +23,8 @@ export function warnSettingsPersistenceFailure(): void {
     return;
   }
   hasShownSettingsPersistenceWarning = true;
-  toast.warning("Chat settings could not be persisted", {
-    description: "Your changes apply now, but may reset after refresh.",
+  toast.warning(uiTranslate("ui.chat_settings_could_not_be_persisted"), {
+    get description() { return uiTranslate("ui.your_changes_apply_now_but_may_reset_after_refresh"); },
   });
 }
 

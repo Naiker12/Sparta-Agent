@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -177,13 +178,15 @@ function modelDisplayName(modelName?: string): string {
 
 /** ` from "<provider>"` clause, rendered only when a provider was resolved. */
 function ProviderSuffix({ provider }: { provider: string | null }) {
+  const uiT = useUiT();
+
   if (!provider) {
     return null;
   }
   return (
     <>
       {" "}
-      from <span className="font-medium text-foreground">"{provider}"</span>
+      {uiT("ui.from")}{" "}<span className="font-medium text-foreground">"{provider}"</span>
     </>
   );
 }
@@ -191,6 +194,8 @@ function ProviderSuffix({ provider }: { provider: string | null }) {
 /** App-wide consent dialog for trust_remote_code loads: shows scan findings with the
  *  flagged code in context; CRITICAL is a hard block. Mounted once in the root layout. */
 export function RemoteCodeConsentDialog() {
+  const uiT = useUiT();
+
   const open = useRemoteCodeConsentDialogStore((s) => s.open);
   const scan = useRemoteCodeConsentDialogStore((s) => s.scan);
   const resolve = useRemoteCodeConsentDialogStore((s) => s.resolve);
@@ -238,10 +243,10 @@ export function RemoteCodeConsentDialog() {
               <div className="space-y-1">
                 <AlertDialogTitle>
                   {malware
-                    ? "Unsafe files detected"
+                    ? uiT("ui.unsafe_files_detected")
                     : blocked
-                      ? "Custom code blocked"
-                      : "Enable custom code for this model?"}
+                      ? uiT("ui.custom_code_blocked")
+                      : uiT("ui.enable_custom_code_for_this_model")}
                 </AlertDialogTitle>
                 <AlertDialogDescription>
                   {malware ? (
@@ -249,24 +254,18 @@ export function RemoteCodeConsentDialog() {
                       <span className="font-medium text-foreground">
                         {displayName}
                       </span>
-                      <ProviderSuffix provider={provider} /> contains files that
-                      Hugging Face's security scan flagged as unsafe (for
-                      example, a malicious pickle that would run code when the
-                      model loads). It cannot be loaded. The flagged files were
-                      never downloaded.
-                    </>
+                      <ProviderSuffix provider={provider} /> {" "}{uiT("ui.contains_files_that_hugging_face_s_security_scan_flagged_as_unsaf")}</>
                   ) : (
                     <>
                       <span className="font-medium text-foreground">
                         {displayName}
                       </span>
-                      <ProviderSuffix provider={provider} /> declares custom
-                      Python code in its repository.{" "}
+                      <ProviderSuffix provider={provider} /> {" "}{uiT("ui.declares_custom_python_code_in_its_repository")}{" "}
                       {blocked
-                        ? "A security scan flagged CRITICAL issues, so it cannot be enabled."
+                        ? uiT("ui.a_security_scan_flagged_critical_issues_so_it_cannot_be_enabled")
                         : findings.length > 0
-                          ? "Review the security scan below. Continue only if you trust the model source."
-                          : "Continue only if you trust the model source."}
+                          ? uiT("ui.review_the_security_scan_below_continue_only_if_you_trust_the_mod")
+                          : uiT("ui.continue_only_if_you_trust_the_model_source")}
                     </>
                   )}
                 </AlertDialogDescription>
@@ -275,8 +274,7 @@ export function RemoteCodeConsentDialog() {
               {malware ? (
                 <div className="min-w-0 space-y-2">
                   <p className="text-xs font-medium text-muted-foreground">
-                    Our automatic scanner flagged issues including:
-                  </p>
+                    {uiT("ui.our_automatic_scanner_flagged_issues_including")}</p>
                   <div className="max-h-[14rem] min-w-0 space-y-2 overflow-y-auto pr-1">
                     {unsafeFiles.map((f, i) => (
                       <UnsafeFileCard key={`${f.path}-${i}`} file={f} />
@@ -288,8 +286,7 @@ export function RemoteCodeConsentDialog() {
               {findings.length > 0 ? (
                 <div className="min-w-0 space-y-2">
                   <p className="text-xs font-medium text-muted-foreground">
-                    Our automatic scanner flagged issues including:
-                  </p>
+                    {uiT("ui.our_automatic_scanner_flagged_issues_including")}</p>
                   <div className="max-h-[22rem] min-w-0 space-y-3 overflow-y-auto pr-1">
                     {findings.map((f, i) => (
                       <FindingCard key={i} finding={f} />
@@ -300,20 +297,17 @@ export function RemoteCodeConsentDialog() {
 
               {!(malware || blocked) && findings.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
-                  Our automatic scanner did not flag any worrying files, but
-                  please double check.
-                </p>
+                  {uiT("ui.our_automatic_scanner_did_not_flag_any_worrying_files_but_please_")}</p>
               ) : null}
             </div>
           </div>
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{uiT("chat.workspace.cancel")}</AlertDialogCancel>
           {blocked ? null : (
             <AlertDialogAction onClick={() => resolve(true)}>
-              Enable and continue
-            </AlertDialogAction>
+              {uiT("ui.enable_and_continue")}</AlertDialogAction>
           )}
         </AlertDialogFooter>
       </AlertDialogContent>

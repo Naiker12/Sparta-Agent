@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { authFetch } from "@/features/auth/api";
 
 export interface ApiKey {
@@ -13,7 +14,7 @@ export interface ApiKey {
 export async function fetchApiKeys(): Promise<ApiKey[]> {
   const res = await authFetch("/api/auth/api-keys");
   if (!res.ok) {
-    throw new Error("Failed to load API access");
+    throw new Error(uiTranslate("ui.failed_to_load_api_access"));
   }
   const data = (await res.json()) as { api_keys: ApiKey[] };
   return data.api_keys.filter((k) => k.is_active);
@@ -29,7 +30,7 @@ export async function createApiKey(
     body: JSON.stringify({ name, expires_in_days: expiresInDays }),
   });
   if (!res.ok) {
-    throw new Error("Failed to create access token");
+    throw new Error(uiTranslate("ui.failed_to_create_access_token"));
   }
   return res.json();
 }
@@ -39,6 +40,6 @@ export async function revokeApiKey(keyId: number): Promise<void> {
     method: "DELETE",
   });
   if (!res.ok) {
-    throw new Error("Failed to revoke access token");
+    throw new Error(uiTranslate("ui.failed_to_revoke_access_token"));
   }
 }

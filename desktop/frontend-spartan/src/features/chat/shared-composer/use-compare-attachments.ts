@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 /**
  * Sparta Agent – Compare Attachments Hook
  *
@@ -110,8 +111,8 @@ export function useCompareAttachments({
         toast.error(audioSizeError);
       }
       if (videoUnsupported) {
-        toast.error("Video can't be attached in compare mode", {
-          description: "Open a single chat with a video-capable model instead.",
+        toast.error(uiTranslate("ui.video_can_t_be_attached_in_compare_mode"), {
+          get description() { return uiTranslate("ui.open_a_single_chat_with_a_video_capable_model_instead"); },
         });
       }
       setPendingImages((prev) => [...prev, ...next]);
@@ -131,14 +132,13 @@ export function useCompareAttachments({
                 file.size <= MAX_IMAGE_SIZE),
           );
           if (!supported) {
-            throw new Error("Unsupported compare attachment");
+            throw new Error(uiTranslate("ui.unsupported_compare_attachment"));
           }
           addFiles(files);
         },
         () =>
-          toast.error("Could not paste files.", {
-            description:
-              "Compare supports images and audio within the attachment size limits.",
+          toast.error(uiTranslate("ui.could_not_paste_files"), {
+            get description() { return uiTranslate("ui.compare_supports_images_and_audio_within_the_attachment_size_limi"); },
           }),
       );
     },

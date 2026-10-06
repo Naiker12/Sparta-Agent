@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import {
   Delete02Icon,
   Edit03Icon,
@@ -12,7 +14,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 import {
   AlertDialog,
@@ -127,6 +129,8 @@ function HeadersEditor({
   // stdio servers reuse this editor for environment variables instead of headers.
   stdio: boolean;
 }) {
+  const uiT = useUiT();
+
   const update = (id: string, patch: Partial<HeaderRow>) =>
     onChange(rows.map((row) => (row.id === id ? { ...row, ...patch } : row)));
   const add = () => onChange([...rows, { id: newRowId(), key: "", value: "" }]);
@@ -134,14 +138,14 @@ function HeadersEditor({
 
   const copy = stdio
     ? {
-        label: "Environment variables",
+        get label() { return uiTranslate("ui.environment_variables"); },
         add: "Add variable",
         keyPlaceholder: "Variable name",
         valuePlaceholder: "Variable value",
         remove: "Remove variable",
       }
     : {
-        label: "Custom headers",
+        get label() { return uiTranslate("ui.custom_headers"); },
         add: "Add header",
         keyPlaceholder: "Header name",
         valuePlaceholder: "Header value",
@@ -160,12 +164,10 @@ function HeadersEditor({
       {rows.length === 0 ? (
         <div className="text-xs text-muted-foreground">
           {stdio ? (
-            "Optional. Environment variables passed to the server process."
+            uiT("ui.optional_environment_variables_passed_to_the_server_process")
           ) : (
             <>
-              Optional. Add an <code>Authorization</code> header here for
-              servers that require auth.
-            </>
+              {uiT("ui.optional_add_an")}{" "}<code>Authorization</code> {" "}{uiT("ui.header_here_for_servers_that_require_auth")}</>
           )}
         </div>
       ) : (
@@ -214,6 +216,8 @@ export function ChatMcpServersDialog({
   open,
   onOpenChange,
 }: ChatMcpServersDialogProps) {
+  const uiT = useUiT();
+
   const [servers, setServers] = useState<McpServerConfig[]>([]);
   const [catalog, setCatalog] = useState<McpCatalogTemplate[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(false);
@@ -234,7 +238,7 @@ export function ChatMcpServersDialog({
       const rows = await listMcpServers();
       setServers(rows);
     } catch (err) {
-      toast.error("Failed to load MCP servers", {
+      toast.error(uiTranslate("ui.failed_to_load_mcp_servers"), {
         description: err instanceof Error ? err.message : String(err),
       });
     } finally {
@@ -266,7 +270,7 @@ export function ChatMcpServersDialog({
     try {
       setCatalog(await listMcpCatalog());
     } catch (err) {
-      toast.error("Failed to load MCP catalog", {
+      toast.error(uiTranslate("ui.failed_to_load_mcp_catalog"), {
         description: err instanceof Error ? err.message : String(err),
       });
     } finally {
@@ -305,7 +309,7 @@ export function ChatMcpServersDialog({
   async function testConnection() {
     const trimmedUrl = form.url.trim();
     if (!isValidAddress(trimmedUrl)) {
-      toast.error("Enter an http(s):// URL or a local command first");
+      toast.error(uiTranslate("ui.enter_an_http_s_url_or_a_local_command_first"));
       return;
     }
     setTesting(true);
@@ -320,12 +324,12 @@ export function ChatMcpServersDialog({
           `Connected (${result.tool_count} tool${result.tool_count === 1 ? "" : "s"})`,
         );
       } else {
-        toast.error("Connection failed", {
+        toast.error(uiTranslate("ui.connection_failed"), {
           description: result.error ?? "Unknown error",
         });
       }
     } catch (err) {
-      toast.error("Connection test failed", {
+      toast.error(uiTranslate("ui.connection_test_failed"), {
         description: err instanceof Error ? err.message : String(err),
       });
     } finally {
@@ -337,15 +341,15 @@ export function ChatMcpServersDialog({
     const trimmedName = form.displayName.trim();
     const trimmedUrl = form.url.trim();
     if (!trimmedName) {
-      toast.error("Display name is required");
+      toast.error(uiTranslate("ui.display_name_is_required"));
       return;
     }
     if (!trimmedUrl) {
-      toast.error("URL or command is required");
+      toast.error(uiTranslate("ui.url_or_command_is_required"));
       return;
     }
     if (!isValidAddress(trimmedUrl)) {
-      toast.error("Enter an http(s):// URL or a local command");
+      toast.error(uiTranslate("ui.enter_an_http_s_url_or_a_local_command"));
       return;
     }
     setSaving(true);
@@ -358,7 +362,7 @@ export function ChatMcpServersDialog({
           headers: headers ?? null,
           useOauth: form.useOauth,
         });
-        toast.success("MCP server updated");
+        toast.success(uiTranslate("ui.mcp_server_updated"));
       } else {
         await createMcpServer({
           displayName: trimmedName,
@@ -366,12 +370,12 @@ export function ChatMcpServersDialog({
           headers: headers,
           useOauth: form.useOauth,
         });
-        toast.success("MCP server added");
+        toast.success(uiTranslate("ui.mcp_server_added"));
       }
       cancelForm();
       await refresh();
     } catch (err) {
-      toast.error("Save failed", {
+      toast.error(uiTranslate("ui.save_failed"), {
         description: err instanceof Error ? err.message : String(err),
       });
     } finally {
@@ -389,7 +393,7 @@ export function ChatMcpServersDialog({
     try {
       config = JSON.parse(await file.text());
     } catch {
-      toast.error("Invalid JSON file");
+      toast.error(uiTranslate("ui.invalid_json_file"));
       return;
     }
     setImporting(true);
@@ -418,7 +422,7 @@ export function ChatMcpServersDialog({
       }
       await refresh();
     } catch (err) {
-      toast.error("Import failed", {
+      toast.error(uiTranslate("ui.import_failed"), {
         description: err instanceof Error ? err.message : String(err),
       });
     } finally {
@@ -431,7 +435,7 @@ export function ChatMcpServersDialog({
       await deleteMcpServer(server.id);
       await refresh();
     } catch (err) {
-      toast.error("Delete failed", {
+      toast.error(uiTranslate("ui.delete_failed"), {
         description: err instanceof Error ? err.message : String(err),
       });
     }
@@ -452,7 +456,7 @@ export function ChatMcpServersDialog({
           row.id === server.id ? { ...row, is_enabled: !next } : row,
         ),
       );
-      toast.error("Update failed", {
+      toast.error(uiTranslate("update.screen.updateFailed"), {
         description: err instanceof Error ? err.message : String(err),
       });
     }
@@ -472,7 +476,7 @@ export function ChatMcpServersDialog({
         });
       }
     } catch (err) {
-      toast.error("Refresh failed", {
+      toast.error(uiTranslate("ui.refresh_failed"), {
         description: err instanceof Error ? err.message : String(err),
       });
     } finally {
@@ -488,10 +492,9 @@ export function ChatMcpServersDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>MCP Servers</DialogTitle>
+          <DialogTitle>{uiT("ui.mcp_servers")}</DialogTitle>
           <DialogDescription>
-            Register remote (HTTP) or local (stdio command) MCP servers.
-          </DialogDescription>
+            {uiT("ui.register_remote_http_or_local_stdio_command_mcp_servers")}</DialogDescription>
         </DialogHeader>
         <input
           ref={fileInputRef}
@@ -505,17 +508,14 @@ export function ChatMcpServersDialog({
           <div className="flex max-h-[60dvh] flex-col gap-3 overflow-auto">
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm text-muted-foreground">
-                Choose a template, then review credentials and confirm before
-                connecting.
-              </p>
+                {uiT("ui.choose_a_template_then_review_credentials_and_confirm_before_conn")}</p>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 onClick={cancelForm}
               >
-                Back
-              </Button>
+                {uiT("tour.back")}</Button>
             </div>
             {catalogLoading ? (
               <div className="flex justify-center py-6">
@@ -523,8 +523,7 @@ export function ChatMcpServersDialog({
               </div>
             ) : catalog.length === 0 ? (
               <div className="rounded-md border border-dashed py-6 text-center text-sm text-muted-foreground">
-                No MCP templates are available.
-              </div>
+                {uiT("ui.no_mcp_templates_are_available")}</div>
             ) : (
               <div className="flex flex-col gap-2">
                 {catalog.map((template) => (
@@ -543,13 +542,13 @@ export function ChatMcpServersDialog({
                       </p>
                       {template.auth_type !== "none" ? (
                         <p className="mt-1 text-xs text-muted-foreground">
-                          Requires{" "}
+                          {uiT("ui.requires")}{" "}
                           {template.auth_type === "oauth2"
-                            ? "OAuth sign-in"
+                            ? uiT("ui.oauth_sign_in")
                             : [
                                 ...template.env_required,
                                 ...template.headers_required,
-                              ].join(", ") || "an API key"}
+                              ].join(", ") || uiT("ui.an_api_key")}
                           .
                         </p>
                       ) : null}
@@ -560,8 +559,7 @@ export function ChatMcpServersDialog({
                       variant="outline"
                       onClick={() => applyCatalogTemplate(template)}
                     >
-                      Use template
-                    </Button>
+                      {uiT("ui.use_template")}</Button>
                   </div>
                 ))}
               </div>
@@ -572,8 +570,7 @@ export function ChatMcpServersDialog({
             {view.kind === "create" && (
               <div className="flex items-center justify-between gap-3 rounded-md border border-dashed px-3 py-2">
                 <span className="text-xs text-muted-foreground">
-                  Import servers from a config file.
-                </span>
+                  {uiT("ui.import_servers_from_a_config_file")}</span>
                 <Button
                   type="button"
                   size="sm"
@@ -581,51 +578,44 @@ export function ChatMcpServersDialog({
                   className="shrink-0"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={importing}
-                  title="Import servers from a mcpServers JSON config (Claude Desktop, Cursor, VS Code…)"
+                  title={uiT("ui.import_servers_from_a_mcpservers_json_config_claude_desktop_curso")}
                 >
                   {importing ? <Spinner /> : <UploadIcon size={14} />}
-                  Import config
-                </Button>
+                  {uiT("ui.import_config")}</Button>
               </div>
             )}
             <div className="grid gap-2">
-              <Label htmlFor="mcp-display-name">Display name</Label>
+              <Label htmlFor="mcp-display-name">{uiT("settings.profile.displayName")}</Label>
               <Input
                 id="mcp-display-name"
                 value={form.displayName}
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, displayName: e.target.value }))
                 }
-                placeholder="e.g. GitHub MCP"
+                placeholder={uiT("ui.e_g_github_mcp")}
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="mcp-url">URL or command</Label>
+              <Label htmlFor="mcp-url">{uiT("ui.url_or_command")}</Label>
               <Input
                 id="mcp-url"
                 value={form.url}
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, url: e.target.value }))
                 }
-                placeholder="https://example.com/mcp or npx -y @modelcontextprotocol/server-filesystem /tmp"
+                placeholder={uiT("ui.https_example_com_mcp_or_npx_y_modelcontextprotocol_server_filesy")}
               />
               <span className="text-xs text-muted-foreground">
-                An http(s) URL for a remote server, or a local command to run an
-                stdio server (local installs only).
-              </span>
+                {uiT("ui.an_http_s_url_for_a_remote_server_or_a_local_command_to_run_an_st")}</span>
             </div>
 
             {!addressIsCommand && (
               <div className="flex items-start justify-between gap-3">
                 <div className="flex flex-col gap-0.5">
                   <Label className="text-sm" htmlFor="mcp-oauth">
-                    Use OAuth sign-in
-                  </Label>
+                    {uiT("ui.use_oauth_sign_in")}</Label>
                   <span className="text-xs text-muted-foreground">
-                    For servers that require browser-based authentication
-                    (GitHub, Linear, etc.). A browser window will open on first
-                    connect.
-                  </span>
+                    {uiT("ui.for_servers_that_require_browser_based_authentication_github_line")}</span>
                 </div>
                 <Switch
                   id="mcp-oauth"
@@ -652,15 +642,13 @@ export function ChatMcpServersDialog({
                 disabled={testing || saving || !form.url.trim()}
               >
                 {testing ? <Spinner /> : null}
-                Test connection
-              </Button>
+                {uiT("chat.providersDialog.testConnection")}</Button>
               <div className="flex gap-2">
                 <Button variant="ghost" onClick={cancelForm} disabled={saving}>
-                  Cancel
-                </Button>
+                  {uiT("chat.workspace.cancel")}</Button>
                 <Button onClick={submitForm} disabled={saving}>
                   {saving ? <Spinner /> : null}
-                  {view.kind === "edit" ? "Save changes" : "Add server"}
+                  {view.kind === "edit" ? uiT("ui.save_changes") : uiT("ui.add_server")}
                 </Button>
               </div>
             </div>
@@ -669,22 +657,19 @@ export function ChatMcpServersDialog({
           <div className="flex min-w-0 flex-col gap-3">
             <div className="flex justify-end gap-2">
               <Button size="sm" variant="outline" onClick={openCatalog}>
-                Browse catalog
-              </Button>
+                {uiT("ui.browse_catalog")}</Button>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={importing}
-                title="Import servers from a mcpServers JSON config (Claude Desktop, Cursor, VS Code…)"
+                title={uiT("ui.import_servers_from_a_mcpservers_json_config_claude_desktop_curso")}
               >
                 {importing ? <Spinner /> : <UploadIcon size={14} />}
-                Import config
-              </Button>
+                {uiT("ui.import_config")}</Button>
               <Button size="sm" onClick={startCreate}>
                 <HugeiconsIcon icon={PlusSignIcon} size={14} />
-                Add server
-              </Button>
+                {uiT("ui.add_server")}</Button>
             </div>
             {loading ? (
               <div className="flex justify-center py-6">
@@ -692,8 +677,7 @@ export function ChatMcpServersDialog({
               </div>
             ) : servers.length === 0 ? (
               <div className="rounded-md border border-dashed py-6 text-center text-sm text-muted-foreground">
-                No MCP servers configured yet.
-              </div>
+                {uiT("ui.no_mcp_servers_configured_yet")}</div>
             ) : (
               <ul className="flex flex-col divide-y rounded-md border">
                 {servers.map((server) => (
@@ -709,7 +693,7 @@ export function ChatMcpServersDialog({
                         <Badge
                           variant={server.is_enabled ? "secondary" : "outline"}
                         >
-                          {server.is_enabled ? "Enabled" : "Disabled"}
+                          {server.is_enabled ? uiT("ui.enabled") : uiT("ui.disabled_")}
                         </Badge>
                         <Badge variant="outline">
                           {server.url.startsWith("http") ? "HTTP" : "stdio"}
@@ -720,7 +704,7 @@ export function ChatMcpServersDialog({
                       </div>
                       <div className="truncate text-xs text-muted-foreground">
                         {server.tool_count === null
-                          ? "Tools not discovered yet"
+                          ? uiT("ui.tools_not_discovered_yet")
                           : `${server.tool_count} tool${server.tool_count === 1 ? "" : "s"}`}{" "}
                         · {server.url}
                       </div>
@@ -729,15 +713,15 @@ export function ChatMcpServersDialog({
                       <Switch
                         checked={server.is_enabled}
                         onCheckedChange={(next) => toggleEnabled(server, next)}
-                        aria-label="Enable server"
+                        aria-label={uiT("ui.enable_server")}
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
                         onClick={() => refreshTools(server)}
-                        aria-label="Refresh tools"
-                        title="Refresh tools from this server"
+                        aria-label={uiT("ui.refresh_tools")}
+                        title={uiT("ui.refresh_tools_from_this_server")}
                         disabled={refreshingId === server.id}
                       >
                         {refreshingId === server.id ? (
@@ -751,7 +735,7 @@ export function ChatMcpServersDialog({
                         variant="ghost"
                         size="icon"
                         onClick={() => startEdit(server)}
-                        aria-label="Edit server"
+                        aria-label={uiT("ui.edit_server")}
                       >
                         <HugeiconsIcon icon={Edit03Icon} size={14} />
                       </Button>
@@ -760,7 +744,7 @@ export function ChatMcpServersDialog({
                         variant="ghost"
                         size="icon"
                         onClick={() => setConfirmingDelete(server)}
-                        aria-label="Delete server"
+                        aria-label={uiT("ui.delete_server")}
                       >
                         <HugeiconsIcon icon={Delete02Icon} size={14} />
                       </Button>
@@ -782,17 +766,16 @@ export function ChatMcpServersDialog({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete MCP server</AlertDialogTitle>
+            <AlertDialogTitle>{uiT("ui.delete_mcp_server")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Delete{" "}
+              {uiT("chat.menu.delete")}{" "}
               <span className="font-medium text-foreground">
                 &quot;{confirmingDelete?.display_name}&quot;
               </span>
-              ? Its tools stop being available to chats. This cannot be undone.
-            </AlertDialogDescription>
+              {uiT("ui.its_tools_stop_being_available_to_chats_this_cannot_be_undone")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{uiT("chat.workspace.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               variant="destructive"
               onClick={() => {
@@ -803,8 +786,7 @@ export function ChatMcpServersDialog({
                 }
               }}
             >
-              Delete
-            </AlertDialogAction>
+              {uiT("chat.menu.delete")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -74,6 +76,8 @@ export function PublishExecutionDialog({
   execution,
   onPublish,
 }: PublishExecutionDialogProps): ReactElement {
+  const uiT = useUiT();
+
   const [repoId, setRepoId] = useState("");
   const [description, setDescription] = useState("");
   const [hfToken, setHfToken] = useState("");
@@ -120,10 +124,10 @@ export function PublishExecutionDialog({
     }
     const ok = await copyTextToClipboard(publishedUrl);
     if (ok) {
-      toastSuccess("Dataset link copied");
+      toastSuccess(uiTranslate("ui.dataset_link_copied"));
       return;
     }
-    toastError("Copy failed", "Could not copy the dataset link.");
+    toastError(uiTranslate("ui.copy_failed"), "Could not copy the dataset link.");
   };
 
   const handlePublish = async (): Promise<void> => {
@@ -144,14 +148,14 @@ export function PublishExecutionDialog({
         artifact_path: execution.artifact_path,
       });
       setPublishedUrl(result.url);
-      toastSuccess("Dataset published");
+      toastSuccess(uiTranslate("ui.dataset_published"));
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
           : "Could not publish this dataset.";
       setPublishError(message);
-      toastError("Publish failed", message);
+      toastError(uiTranslate("ui.publish_failed"), message);
     } finally {
       setPublishing(false);
     }
@@ -186,14 +190,13 @@ export function PublishExecutionDialog({
                 />
               </div>
               <div className="space-y-1 text-center">
-                <DialogTitle>Published</DialogTitle>
+                <DialogTitle>{uiT("ui.published")}</DialogTitle>
                 <DialogDescription>
-                  Your dataset is live on Hugging Face.
-                </DialogDescription>
+                  {uiT("ui.your_dataset_is_live_on_hugging_face")}</DialogDescription>
               </div>
             </div>
             <div className="rounded-2xl border border-border/60 bg-card/55 p-3 text-xs">
-              <p className="mb-1 text-muted-foreground">Dataset URL</p>
+              <p className="mb-1 text-muted-foreground">{uiT("ui.dataset_url")}</p>
               <p className="break-all font-medium text-foreground">
                 {publishedUrl}
               </p>
@@ -201,47 +204,41 @@ export function PublishExecutionDialog({
             <DialogFooter>
               <Button variant="outline" onClick={handleCopyUrl}>
                 <HugeiconsIcon icon={Copy01Icon} className="mr-2 size-4" />
-                Copy link
-              </Button>
+                {uiT("ui.copy_link")}</Button>
               <Button asChild={true}>
                 <a href={publishedUrl} target="_blank" rel="noreferrer">
-                  Open repo
-                  <HugeiconsIcon
+                  {uiT("ui.open_repo")}<HugeiconsIcon
                     icon={ArrowRight01Icon}
                     className="ml-2 size-4"
                   />
                 </a>
               </Button>
               <Button variant="ghost" onClick={() => onOpenChange(false)}>
-                Done
-              </Button>
+                {uiT("tour.done")}</Button>
             </DialogFooter>
           </>
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>Publish to Hugging Face</DialogTitle>
+              <DialogTitle>{uiT("ui.publish_to_hugging_face")}</DialogTitle>
               <DialogDescription>
-                Create or update a dataset repo from this completed run.
-              </DialogDescription>
+                {uiT("ui.create_or_update_a_dataset_repo_from_this_completed_run")}</DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4">
               <div className="rounded-2xl border border-border/60 bg-card/55 p-3 text-xs">
-                <p className="font-medium text-foreground">From this run</p>
+                <p className="font-medium text-foreground">{uiT("ui.from_this_run")}</p>
                 <div className="mt-2 grid gap-1.5 text-muted-foreground sm:grid-cols-2">
                   <p>
-                    Run: <span className="text-foreground">{runLabel}</span>
+                    {uiT("ui.run")}{" "}<span className="text-foreground">{runLabel}</span>
                   </p>
                   <p>
-                    Records:{" "}
+                    {uiT("ui.records_")}{" "}
                     <span className="text-foreground">{recordLabel}</span>
                   </p>
                 </div>
                 <p className="mt-2 text-muted-foreground">
-                  We’ll upload the generated dataset, dataset card, images, and
-                  any processor outputs from this execution.
-                </p>
+                  {uiT("ui.we_ll_upload_the_generated_dataset_dataset_card_images_and_any_pr")}</p>
               </div>
 
               <div className="space-y-1.5">
@@ -249,8 +246,7 @@ export function PublishExecutionDialog({
                   className="text-sm font-medium text-foreground"
                   htmlFor="publish-repo-id"
                 >
-                  Repository
-                </label>
+                  {uiT("ui.repository")}</label>
                 <Input
                   id="publish-repo-id"
                   placeholder="your-name/customer-support-synth"
@@ -259,7 +255,7 @@ export function PublishExecutionDialog({
                   disabled={publishing}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Use the format{" "}
+                  {uiT("ui.use_the_format")}{" "}
                   <span className="font-mono">
                     username-or-org/dataset-name
                   </span>
@@ -272,8 +268,7 @@ export function PublishExecutionDialog({
                   className="text-sm font-medium text-foreground"
                   htmlFor="publish-description"
                 >
-                  About this dataset
-                </label>
+                  {uiT("ui.about_this_dataset")}</label>
                 <Textarea
                   id="publish-description"
                   className="corner-squircle"
@@ -282,13 +277,11 @@ export function PublishExecutionDialog({
                   disabled={publishing}
                   rows={4}
                   placeholder={
-                    defaultDescription || "What is this dataset for?"
+                    defaultDescription || uiT("ui.what_is_this_dataset_for")
                   }
                 />
                 <p className="text-xs text-muted-foreground">
-                  This short summary is used in the dataset card on Hugging
-                  Face.
-                </p>
+                  {uiT("ui.this_short_summary_is_used_in_the_dataset_card_on_hugging_face")}</p>
               </div>
 
               <div className="space-y-1.5">
@@ -297,16 +290,14 @@ export function PublishExecutionDialog({
                     className="text-sm font-medium text-foreground"
                     htmlFor="publish-hf-token"
                   >
-                    HF write token
-                  </label>
+                    {uiT("ui.hf_write_token")}</label>
                   <a
                     href="https://huggingface.co/settings/tokens"
                     target="_blank"
                     rel="noreferrer"
                     className="text-xs text-muted-foreground underline underline-offset-3 hover:text-foreground"
                   >
-                    Manage tokens
-                  </a>
+                    {uiT("ui.manage_tokens")}</a>
                 </div>
                 <div className="relative">
                   <HugeiconsIcon
@@ -325,8 +316,7 @@ export function PublishExecutionDialog({
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Leave empty if you're already logged in via CLI.
-                </p>
+                  {uiT("ui.leave_empty_if_you_re_already_logged_in_via_cli")}</p>
               </div>
 
               <div className="corner-squircle flex items-start gap-3 rounded-2xl border border-border/60 bg-card/35 p-3">
@@ -342,11 +332,9 @@ export function PublishExecutionDialog({
                     htmlFor="publish-private"
                     className="text-sm font-medium text-foreground"
                   >
-                    Private dataset
-                  </label>
+                    {uiT("ui.private_dataset")}</label>
                   <p className="text-xs text-muted-foreground">
-                    Only people with access can view or download the repo.
-                  </p>
+                    {uiT("ui.only_people_with_access_can_view_or_download_the_repo")}</p>
                 </div>
               </div>
 
@@ -363,13 +351,12 @@ export function PublishExecutionDialog({
                 onClick={() => onOpenChange(false)}
                 disabled={publishing}
               >
-                Cancel
-              </Button>
+                {uiT("chat.workspace.cancel")}</Button>
               <Button
                 onClick={() => void handlePublish()}
                 disabled={!canSubmit}
               >
-                {publishing ? "Publishing..." : "Publish to Hugging Face"}
+                {publishing ? uiT("ui.publishing") : uiT("ui.publish_to_hugging_face")}
               </Button>
             </DialogFooter>
           </>

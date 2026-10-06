@@ -1,10 +1,14 @@
+import { useT as useUiT } from "@/i18n";
+import { getLocale, translate } from "@/i18n";
+import { WORK_STATUS_LABELS } from "@/features/work/work-view-model";
+import type { WorkStatus } from "@/features/work/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { authFetch } from "@/features/auth";
 import { useExternalProvidersStore } from "@/features/chat/stores/external-providers-store";
 import { ApiProviderLogo } from "@/features/chat/api-provider-logo";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Switch } from "@/components/ui/switch";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { primeNativeNotificationPermission } from "@/lib/native-notifications";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -97,29 +101,31 @@ const blank: Draft = {
   notify: true,
 };
 const days = [
-  "Lunes",
-  "Martes",
-  "Miércoles",
-  "Jueves",
-  "Viernes",
-  "Sábado",
-  "Domingo",
-];
+  "ui.monday",
+  "ui.tuesday",
+  "ui.wednesday",
+  "ui.thursday",
+  "ui.friday",
+  "ui.saturday",
+  "ui.sunday",
+] as const;
 const weeklyLabel = (value: {
   weekdays?: number[];
   localTime?: string;
   timezone?: string;
 }) =>
-  `${(value.weekdays ?? []).map((day) => days[day]?.slice(0, 3)).join(", ")} · ${value.localTime ?? "09:00"} · ${value.timezone ?? "UTC"}`;
+  `${(value.weekdays ?? []).map((day) => (days[day] ? translate(days[day]).slice(0, 3) : "")).join(", ")} · ${value.localTime ?? "09:00"} · ${value.timezone ?? "UTC"}`;
 const dateLabel = (value: number | null) =>
   value
-    ? new Intl.DateTimeFormat(undefined, {
+    ? new Intl.DateTimeFormat(getLocale(), {
         dateStyle: "medium",
         timeStyle: "short",
       }).format(value)
-    : "Sin fecha";
+    : translate("ui.no_date");
 const message = (error: unknown) =>
-  error instanceof Error ? error.message : "No se pudo completar la operación.";
+  error instanceof Error
+    ? error.message
+    : translate("ui.the_operation_could_not_be_completed");
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await authFetch(`/api/tasks${path}`, init);
   if (!response.ok) {
@@ -127,13 +133,15 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new Error(
       typeof payload?.detail === "string"
         ? payload.detail
-        : `No se pudo completar la operación (HTTP ${response.status}).`,
+        : `${translate("ui.the_operation_could_not_be_completed")} (HTTP ${response.status}).`,
     );
   }
   return response.json();
 }
 
 export function AutomationsPage() {
+  const uiT = useUiT();
+
   const providers = useExternalProvidersStore((s) => s.providers).filter(
     (p) => p.authKind !== "chatgpt_oauth" && p.providerType !== "openai_codex",
   );
@@ -316,11 +324,13 @@ export function AutomationsPage() {
       });
       if (sequence === detailSequence.current) setSelected(next);
       if (selected.notify !== false)
-        toast.success(`Prueba completada: ${selected.title}`);
+        toast.success(
+          uiT("ui.test_completed_value0", { value0: selected.title }),
+        );
     } catch (cause) {
       if (sequence === detailSequence.current) {
         if (selected.notify !== false)
-          toast.error(`La prueba falló: ${selected.title}`);
+          toast.error(uiT("ui.test_failed_value0", { value0: selected.title }));
         setError(message(cause));
         // Failed executions also leave a durable history record.
         const next = await request<Task>(`/${taskId}`).catch(() => null);
@@ -364,7 +374,7 @@ export function AutomationsPage() {
   );
   const errorAlert = error && (
     <Alert variant="destructive" role="alert">
-      <AlertTitle>No se pudo completar la operación</AlertTitle>
+      <AlertTitle>{uiT("ui.the_operation_could_not_be_completed")}</AlertTitle>
       <AlertDescription>{error}</AlertDescription>
     </Alert>
   );
@@ -372,9 +382,11 @@ export function AutomationsPage() {
     <main className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-5 md:p-8">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Automatizaciones</h1>
+          <h1 className="text-2xl font-semibold">{uiT("ui.automations")}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Organiza lo que quieres delegar y revisa cada resultado.
+            {uiT(
+              "ui.organize_the_work_you_want_to_delegate_and_review_each_result",
+            )}
           </p>
         </div>
         <div className="flex gap-2">
@@ -384,33 +396,36 @@ export function AutomationsPage() {
             disabled={loading || busy}
             onClick={() => void refresh()}
           >
-            Actualizar
+            {uiT("update.update")}
           </Button>
           <Button size="sm" onClick={create}>
-            Nueva automatización
+            {uiT("ui.new_automation")}
           </Button>
         </div>
       </header>
       <Alert>
-        <AlertTitle>Ejecución mientras la aplicación esté abierta</AlertTitle>
+        <AlertTitle>{uiT("ui.runs_while_the_application_is_open")}</AlertTitle>
         <AlertDescription>
-          Guarda un borrador, elige proveedor y modelo y confirma la activación.
-          No se ejecuta con el backend cerrado. Las tareas son de texto y no tienen acceso a archivos ni comandos.
+          {uiT(
+            "ui.save_a_draft_choose_a_provider_and_model_and_confirm_activation_i",
+          )}
         </AlertDescription>
       </Alert>
       {errorAlert}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Tabs value={filter} onValueChange={setFilter}>
           <TabsList>
-            <TabsTrigger value="all">Todas</TabsTrigger>
-            <TabsTrigger value="enabled">Habilitadas</TabsTrigger>
-            <TabsTrigger value="paused">Borradores</TabsTrigger>
-            <TabsTrigger value="attention">Con errores</TabsTrigger>
+            <TabsTrigger value="all">{uiT("ui.all")}</TabsTrigger>
+            <TabsTrigger value="enabled">
+              {uiT("ui.enabled_automations")}
+            </TabsTrigger>
+            <TabsTrigger value="paused">{uiT("ui.drafts")}</TabsTrigger>
+            <TabsTrigger value="attention">{uiT("ui.with_errors")}</TabsTrigger>
           </TabsList>
         </Tabs>
         <Input
-          aria-label="Buscar automatizaciones"
-          placeholder="Buscar automatizaciones…"
+          aria-label={uiT("ui.search_automations")}
+          placeholder={uiT("ui.search_automations_")}
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           className="max-w-xs"
@@ -420,7 +435,7 @@ export function AutomationsPage() {
         <div
           className="flex flex-col gap-3"
           role="status"
-          aria-label="Cargando automatizaciones"
+          aria-label={uiT("ui.loading_automations")}
         >
           <Skeleton className="h-16 w-full" />
           <Skeleton className="h-16 w-full" />
@@ -429,23 +444,27 @@ export function AutomationsPage() {
         <Empty>
           <EmptyHeader>
             <EmptyTitle>
-              {tasks.length ? "Sin coincidencias" : "Tu primera automatización"}
+              {tasks.length
+                ? uiT("ui.no_matches")
+                : uiT("ui.your_first_automation")}
             </EmptyTitle>
             <EmptyDescription>
               {tasks.length
-                ? "Prueba otro filtro o búsqueda."
-                : "Define instrucciones y horario. Se guardará como borrador."}
+                ? uiT("ui.try_a_different_filter_or_search")
+                : uiT(
+                    "ui.set_instructions_and_a_schedule_it_will_be_saved_as_a_draft",
+                  )}
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button variant="outline" onClick={create}>
-              Crear borrador
+              {uiT("ui.create_draft")}
             </Button>
           </EmptyContent>
         </Empty>
       ) : (
         <section
-          aria-label="Automatizaciones guardadas"
+          aria-label={uiT("ui.saved_automations")}
           className="overflow-hidden rounded-xl border border-border"
         >
           {visible.map((task, index) => (
@@ -460,18 +479,20 @@ export function AutomationsPage() {
                   <p className="truncate font-medium">{task.title}</p>
                   <p className="truncate text-sm text-muted-foreground">
                     {task.scheduleType === "once"
-                      ? `Una vez · ${dateLabel(task.runAt)}`
+                      ? uiT("ui.once_value0", { value0: dateLabel(task.runAt) })
                       : task.scheduleType === "weekly"
                         ? weeklyLabel(task)
-                        : `Cada ${(task.intervalSeconds ?? 0) / 60} minutos`}
+                        : uiT("ui.every_value0_min", {
+                            value0: (task.intervalSeconds ?? 0) / 60,
+                          })}
                   </p>
                 </div>
                 <Badge variant={task.lastError ? "destructive" : "secondary"}>
                   {task.lastError
-                    ? "Requiere atención"
+                    ? uiT("ui.needs_attention_")
                     : task.enabled
-                      ? "Activa"
-                      : "Borrador"}
+                      ? uiT("ui.active_")
+                      : uiT("ui.draft")}
                 </Badge>
               </button>
             </div>
@@ -490,24 +511,28 @@ export function AutomationsPage() {
       >
         <SheetContent className="flex w-full flex-col overflow-y-auto sm:max-w-lg">
           <SheetHeader>
-            <SheetTitle>{selected?.title ?? "Automatización"}</SheetTitle>
+            <SheetTitle>{selected?.title ?? uiT("ui.automation")}</SheetTitle>
             <SheetDescription>
-              Instrucciones, horario y registros disponibles.
+              {uiT("ui.instructions_schedule_and_records_available")}
             </SheetDescription>
           </SheetHeader>
           {selected && (
             <div className="flex flex-col gap-5 px-4 pb-6">
               {errorAlert}
               <section>
-                <h2 className="text-sm font-medium">Instrucciones</h2>
+                <h2 className="text-sm font-medium">
+                  {uiT("ui.instructions")}
+                </h2>
                 <p className="mt-2 whitespace-pre-wrap break-words text-sm">
                   {selected.prompt}
                 </p>
               </section>
               <Separator />
               <p className="text-sm text-muted-foreground">
-                Próxima ejecución: {dateLabel(selected.nextRunAt)}. Requiere el
-                backend abierto. Solo texto, sin archivos ni comandos.
+                {uiT("ui.next_run")} {dateLabel(selected.nextRunAt)}
+                {uiT(
+                  "ui.requires_the_backend_to_be_open_text_only_no_files_or_commands",
+                )}
               </p>
               {selected.scheduleType === "weekly" && (
                 <p className="text-sm text-muted-foreground">
@@ -520,7 +545,7 @@ export function AutomationsPage() {
                   disabled={busy || detailLoading}
                   onClick={() => edit(selected)}
                 >
-                  Editar
+                  {uiT("chat.actions.edit")}
                 </Button>
                 {selected.enabled && (
                   <Button
@@ -528,7 +553,7 @@ export function AutomationsPage() {
                     disabled={busy || detailLoading}
                     onClick={() => void pause(selected)}
                   >
-                    Pausar
+                    {uiT("apiPage.pause")}
                   </Button>
                 )}
                 <Button
@@ -536,14 +561,14 @@ export function AutomationsPage() {
                   disabled={busy}
                   onClick={() => setDeleting(selected)}
                 >
-                  Eliminar
+                  {uiT("chat.menu.delete")}
                 </Button>
               </div>
               <Separator />
               <FieldGroup>
                 <Field data-disabled={busy}>
                   <FieldLabel htmlFor="preview-provider">
-                    Proveedor para la prueba
+                    {uiT("ui.test_provider")}
                   </FieldLabel>
                   <Select
                     value={providerId}
@@ -554,7 +579,9 @@ export function AutomationsPage() {
                     }}
                   >
                     <SelectTrigger id="preview-provider">
-                      <SelectValue placeholder="Elegir proveedor API" />
+                      <SelectValue
+                        placeholder={uiT("ui.choose_api_provider")}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -571,19 +598,22 @@ export function AutomationsPage() {
                     </SelectContent>
                   </Select>
                   <FieldDescription>
-                    Si no aparece ninguno, configura una conexión API en
-                    ajustes.
+                    {uiT(
+                      "ui.if_none_appear_configure_an_api_connection_in_settings",
+                    )}
                   </FieldDescription>
                 </Field>
                 <Field data-disabled={busy || !provider}>
-                  <FieldLabel htmlFor="preview-model">Modelo</FieldLabel>
+                  <FieldLabel htmlFor="preview-model">
+                    {uiT("studio.progress.model")}
+                  </FieldLabel>
                   <Select
                     value={model}
                     disabled={busy || !provider}
                     onValueChange={setModel}
                   >
                     <SelectTrigger id="preview-model">
-                      <SelectValue placeholder="Elegir modelo" />
+                      <SelectValue placeholder={uiT("ui.choose_model")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
@@ -596,9 +626,9 @@ export function AutomationsPage() {
                     </SelectContent>
                   </Select>
                   <FieldDescription>
-                    Envía solo estas instrucciones al proveedor elegido; puede
-                    generar coste. No lee archivos, ejecuta comandos ni activa
-                    el horario.
+                    {uiT(
+                      "ui.sends_only_these_instructions_to_the_chosen_provider_and_may_incu",
+                    )}
                   </FieldDescription>
                 </Field>
                 <Button
@@ -610,7 +640,9 @@ export function AutomationsPage() {
                   }
                   onClick={() => void preview()}
                 >
-                  {busy ? "Procesando…" : "Enviar prueba al proveedor"}
+                  {busy
+                    ? uiT("ui.processing")
+                    : uiT("ui.send_test_to_provider")}
                 </Button>
                 {!selected.enabled && (
                   <Button
@@ -622,28 +654,32 @@ export function AutomationsPage() {
                     }
                     onClick={() => setActivating(true)}
                   >
-                    Activar horario…
+                    {uiT("ui.activate_schedule")}
                   </Button>
                 )}
               </FieldGroup>
               <Separator />
-              <h2 className="text-sm font-medium">Historial</h2>
+              <h2 className="text-sm font-medium">
+                {uiT("studio.history.title")}
+              </h2>
               {detailLoading ? (
                 <Skeleton className="h-16" />
               ) : selected.runs?.length ? (
                 selected.runs.map((run) => (
                   <section key={run.id} className="flex flex-col gap-2">
                     <p className="text-sm">
-                      {dateLabel(run.startedAt)} · {run.status}
+                      {dateLabel(run.startedAt)} ·{" "}
+                      {WORK_STATUS_LABELS[run.status as WorkStatus] ??
+                        run.status}
                     </p>
                     <p className="whitespace-pre-wrap break-words text-sm text-muted-foreground">
-                      {run.error || run.output || "Sin resultado registrado"}
+                      {run.error || run.output || uiT("ui.no_recorded_result")}
                     </p>
                   </section>
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  No hay ejecuciones registradas.
+                  {uiT("ui.no_recorded_runs")}
                 </p>
               )}
             </div>
@@ -659,10 +695,10 @@ export function AutomationsPage() {
         <SheetContent className="flex w-full flex-col overflow-y-auto sm:max-w-lg">
           <SheetHeader>
             <SheetTitle>
-              {editingId ? "Editar automatización" : "Nueva automatización"}
+              {editingId ? uiT("ui.edit_automation") : uiT("ui.new_automation")}
             </SheetTitle>
             <SheetDescription>
-              Paso {step + 1} de 3 · {timezone}
+              {uiT("ui.step")} {step + 1} {uiT("ui.of_3")} {timezone}
             </SheetDescription>
           </SheetHeader>
           <form
@@ -679,7 +715,9 @@ export function AutomationsPage() {
               {step === 0 && (
                 <>
                   <Field>
-                    <FieldLabel htmlFor="task-title">Nombre</FieldLabel>
+                    <FieldLabel htmlFor="task-title">
+                      {uiT("projectsPage.colName")}
+                    </FieldLabel>
                     <Input
                       id="task-title"
                       value={draft.title}
@@ -688,12 +726,12 @@ export function AutomationsPage() {
                       onChange={(event) =>
                         setDraft({ ...draft, title: event.target.value })
                       }
-                      placeholder="Resumen del proyecto"
+                      placeholder={uiT("ui.project_summary")}
                     />
                   </Field>
                   <Field>
                     <FieldLabel htmlFor="task-prompt">
-                      ¿Qué debe hacer el agente?
+                      {uiT("ui.what_should_the_agent_do")}
                     </FieldLabel>
                     <Textarea
                       id="task-prompt"
@@ -704,10 +742,12 @@ export function AutomationsPage() {
                       onChange={(event) =>
                         setDraft({ ...draft, prompt: event.target.value })
                       }
-                      placeholder="Describe el objetivo y el resultado esperado…"
+                      placeholder={uiT(
+                        "ui.describe_the_goal_and_expected_result",
+                      )}
                     />
                     <FieldDescription>
-                      No incluyas claves API ni contraseñas.
+                      {uiT("ui.do_not_include_api_keys_or_passwords")}
                     </FieldDescription>
                   </Field>
                 </>
@@ -715,7 +755,7 @@ export function AutomationsPage() {
               {step === 1 && (
                 <>
                   <Field>
-                    <FieldLabel>Frecuencia</FieldLabel>
+                    <FieldLabel>{uiT("ui.frequency")}</FieldLabel>
                     <Select
                       value={draft.scheduleType}
                       onValueChange={(value) =>
@@ -725,17 +765,17 @@ export function AutomationsPage() {
                         })
                       }
                     >
-                      <SelectTrigger aria-label="Frecuencia">
+                      <SelectTrigger aria-label={uiT("ui.frequency")}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectGroup>
                           <SelectItem value="interval">
-                            Cada cierto tiempo
+                            {uiT("ui.at_intervals")}
                           </SelectItem>
-                          <SelectItem value="once">Una sola vez</SelectItem>
+                          <SelectItem value="once">{uiT("ui.once")}</SelectItem>
                           <SelectItem value="weekly">
-                            Días de la semana
+                            {uiT("ui.days_of_the_week")}
                           </SelectItem>
                         </SelectGroup>
                       </SelectContent>
@@ -744,7 +784,7 @@ export function AutomationsPage() {
                   {draft.scheduleType === "interval" ? (
                     <Field data-invalid={!validSchedule}>
                       <FieldLabel htmlFor="task-minutes">
-                        Intervalo en minutos
+                        {uiT("ui.interval_in_minutes")}
                       </FieldLabel>
                       <Input
                         id="task-minutes"
@@ -763,7 +803,7 @@ export function AutomationsPage() {
                     <>
                       <Field data-invalid={!draft.weekdays.length}>
                         <FieldLabel id="task-days">
-                          Días de ejecución
+                          {uiT("ui.run_days")}
                         </FieldLabel>
                         <ToggleGroup
                           type="multiple"
@@ -780,20 +820,22 @@ export function AutomationsPage() {
                             <ToggleGroupItem
                               key={day}
                               value={String(index)}
-                              aria-label={day}
+                              aria-label={uiT(day)}
                             >
-                              {day.slice(0, 3)}
+                              {uiT(day).slice(0, 3)}
                             </ToggleGroupItem>
                           ))}
                         </ToggleGroup>
                         {!draft.weekdays.length && (
                           <FieldDescription>
-                            Selecciona al menos un día.
+                            {uiT("ui.select_at_least_one_day")}
                           </FieldDescription>
                         )}
                       </Field>
                       <Field>
-                        <FieldLabel htmlFor="task-time">Hora</FieldLabel>
+                        <FieldLabel htmlFor="task-time">
+                          {uiT("ui.time")}
+                        </FieldLabel>
                         <Input
                           id="task-time"
                           type="time"
@@ -807,15 +849,17 @@ export function AutomationsPage() {
                           }
                         />
                         <FieldDescription>
-                          Zona guardada: {draft.timezone}. Horario preparado; se
-                          ejecuta únicamente con la aplicación abierta.
+                          {uiT("ui.saved_time_zone")} {draft.timezone}
+                          {uiT(
+                            "ui.schedule_ready_runs_only_while_the_application_is_open",
+                          )}
                         </FieldDescription>
                       </Field>
                     </>
                   ) : (
                     <Field data-invalid={!validSchedule}>
                       <FieldLabel htmlFor="task-date">
-                        Fecha y hora local
+                        {uiT("ui.local_date_and_time")}
                       </FieldLabel>
                       <Input
                         id="task-date"
@@ -828,7 +872,7 @@ export function AutomationsPage() {
                         }
                       />
                       <FieldDescription>
-                        Elige una fecha futura. Zona: {timezone}.
+                        {uiT("ui.choose_a_future_date_time_zone")} {timezone}.
                       </FieldDescription>
                     </Field>
                   )}
@@ -841,21 +885,20 @@ export function AutomationsPage() {
                       }
                     />
                     <FieldLabel htmlFor="task-notify">
-                      Avisarme del resultado en la aplicación
+                      {uiT("ui.notify_me_of_the_result_in_the_application")}
                     </FieldLabel>
                   </Field>
                   <FieldDescription>
-                    Actualmente avisa al terminar una prueba manual en esta
-                    pantalla. Las notificaciones del sistema y de ejecuciones
-                    programadas requieren permiso del sistema y la aplicación
-                    abierta.
+                    {uiT(
+                      "ui.currently_notifies_when_a_manual_test_finishes_on_this_screen_sys",
+                    )}
                   </FieldDescription>
                 </>
               )}
               {step === 2 && (
                 <>
                   <Field>
-                    <FieldLabel>Revisar borrador</FieldLabel>
+                    <FieldLabel>{uiT("ui.review_draft")}</FieldLabel>
                     <p className="font-medium">{draft.title}</p>
                     <p className="whitespace-pre-wrap break-words text-sm">
                       {draft.prompt}
@@ -872,11 +915,11 @@ export function AutomationsPage() {
                     </FieldDescription>
                   </Field>
                   <Alert>
-                    <AlertTitle>Se guardará pausada</AlertTitle>
+                    <AlertTitle>{uiT("ui.will_be_saved_paused")}</AlertTitle>
                     <AlertDescription>
-                      No concede acceso a carpetas ni ejecuta acciones. La
-                      selección de proyecto, proveedor y permisos llegará con el
-                      ejecutor.
+                      {uiT(
+                        "ui.does_not_grant_folder_access_or_run_actions_project_provider_and_",
+                      )}
                     </AlertDescription>
                   </Alert>
                 </>
@@ -889,17 +932,17 @@ export function AutomationsPage() {
                 disabled={busy}
                 onClick={() => (step ? setStep(step - 1) : setEditor(false))}
               >
-                {step ? "Atrás" : "Cancelar"}
+                {step ? uiT("tour.back") : uiT("chat.workspace.cancel")}
               </Button>
               <Button
                 type="submit"
                 disabled={busy || (step === 0 ? !validText : !validSchedule)}
               >
                 {busy
-                  ? "Guardando…"
+                  ? uiT("ui.saving")
                   : step === 2
-                    ? "Guardar borrador"
-                    : "Continuar"}
+                    ? uiT("ui.save_draft")
+                    : uiT("chat.actions.continue")}
               </Button>
             </div>
           </form>
@@ -913,20 +956,24 @@ export function AutomationsPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Activar este horario?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {uiT("ui.activate_this_schedule")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Autoriza enviar las instrucciones guardadas a {provider?.name}{" "}
-              usando {model} en cada horario. Puede generar costes. No accede a
-              archivos ni ejecuta comandos. Requiere el backend abierto; al
-              reiniciar ejecutará una sola ocurrencia pendiente, no todas las
-              perdidas.
+              {uiT("ui.authorizes_sending_the_saved_instructions_to")}{" "}
+              {provider?.name} {uiT("ui.using")} {model}{" "}
+              {uiT(
+                "ui.on_each_scheduled_run_may_incur_costs_does_not_access_files_or_ru",
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {errorAlert}
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={busy}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={busy}>
+              {uiT("chat.workspace.cancel")}
+            </AlertDialogCancel>
             <Button disabled={busy} onClick={() => void activate()}>
-              {busy ? "Activando…" : "Confirmar activación"}
+              {busy ? uiT("ui.activating") : uiT("ui.confirm_activation")}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -939,21 +986,26 @@ export function AutomationsPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Eliminar esta automatización?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {uiT("ui.delete_this_automation")}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Se eliminarán «{deleting?.title}» y su historial. No se borrarán
-              archivos de tu proyecto.
+              {uiT("ui.this_will_delete")}
+              {deleting?.title}
+              {uiT("ui.and_its_history_your_project_files_will_not_be_deleted")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {errorAlert}
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={busy}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={busy}>
+              {uiT("chat.workspace.cancel")}
+            </AlertDialogCancel>
             <Button
               variant="destructive"
               disabled={busy}
               onClick={() => void remove()}
             >
-              {busy ? "Eliminando…" : "Eliminar"}
+              {busy ? uiT("ui.deleting") : uiT("chat.menu.delete")}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

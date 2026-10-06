@@ -1,3 +1,4 @@
+import { ui } from "./ui.ts";
 import type { DeepPartialMessageTree } from "../../types.ts";
 import type { en } from "../en/index.ts";
 import { apiPage } from "./api-page.ts";
@@ -17,6 +18,7 @@ import { tour } from "./tour.ts";
 import { update } from "./update.ts";
 
 export const es = {
+  ui,
   audioPage,
   exportPage,
   hub,

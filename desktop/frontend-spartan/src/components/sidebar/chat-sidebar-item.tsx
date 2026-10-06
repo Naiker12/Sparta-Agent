@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 /**
  * Sparta Agent – Chat Sidebar Item Component
  *
@@ -188,6 +189,8 @@ export function ChatSidebarItem({
   markSelectedUnread,
   deleteSelected,
 }: ChatSidebarItemProps): ReactElement {
+  const uiT = useUiT();
+
   const t = useT();
   const threadIds = getSidebarItemThreadIds(item);
   const isPinned = pinnedIdSet.has(item.id);
@@ -346,7 +349,7 @@ export function ChatSidebarItem({
               <Spinner
                 data-testid="chat-row-spinner"
                 label={
-                  isGenerating ? t("shell.navigation.chatGenerating") : "Queued"
+                  isGenerating ? t("shell.navigation.chatGenerating") : uiT("ui.queued")
                 }
                 className="ml-auto size-3.5 shrink-0 text-muted-foreground"
               />

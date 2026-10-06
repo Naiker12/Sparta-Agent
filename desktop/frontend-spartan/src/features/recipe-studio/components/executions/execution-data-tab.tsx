@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import {
@@ -62,6 +63,8 @@ function RunningDatasetEmptyState({
   execution: RecipeExecutionRecord;
   onOpenOverview: () => void;
 }): ReactElement {
+  const uiT = useUiT();
+
   const source = execution.source_progress;
   if (source?.source === "github") {
     const title =
@@ -97,40 +100,39 @@ function RunningDatasetEmptyState({
             variant="outline"
             onClick={onOpenOverview}
           >
-            Open Overview
-          </Button>
+            {uiT("ui.open_overview")}</Button>
         </div>
         {showProgress && (
           <Progress value={source.percent ?? 0} className="mt-3 h-1" />
         )}
         <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2 lg:grid-cols-5">
           <p className="flex items-center justify-between gap-3">
-            <span className="text-muted-foreground">Repo</span>
+            <span className="text-muted-foreground">{uiT("ui.repo")}</span>
             <span className="truncate font-semibold">
               {source.repo ?? "--"}
             </span>
           </p>
           <p className="flex items-center justify-between gap-3">
-            <span className="text-muted-foreground">Resource</span>
+            <span className="text-muted-foreground">{uiT("ui.resource")}</span>
             <span className="font-semibold">
               {formatSourceResource(source.resource)}
               {typeof source.page === "number" ? ` page ${source.page}` : ""}
             </span>
           </p>
           <p className="flex items-center justify-between gap-3">
-            <span className="text-muted-foreground">Fetched</span>
+            <span className="text-muted-foreground">{uiT("ui.fetched")}</span>
             <span className="font-semibold">
               {formatFetchedValue(execution)}
             </span>
           </p>
           <p className="flex items-center justify-between gap-3">
-            <span className="text-muted-foreground">Rate remaining</span>
+            <span className="text-muted-foreground">{uiT("ui.rate_remaining")}</span>
             <span className="font-semibold">
               {formatMetricValue(source.rate_remaining)}
             </span>
           </p>
           <p className="flex items-center justify-between gap-3">
-            <span className="text-muted-foreground">Retry wait</span>
+            <span className="text-muted-foreground">{uiT("ui.retry_wait")}</span>
             <span className="font-semibold">
               {typeof source.retry_after_sec === "number"
                 ? `${formatMetricValue(source.retry_after_sec)}s`
@@ -148,12 +150,11 @@ function RunningDatasetEmptyState({
         <Spinner className="size-5" />
         <div className="space-y-1">
           <p className="text-sm font-medium text-muted-foreground">
-            Generating data…
-          </p>
+            {uiT("ui.generating_data")}</p>
           <p className="text-xs text-muted-foreground">
             {execution.current_column
               ? `Current column: ${execution.current_column}`
-              : "Rows will appear here once the run produces a dataset sample."}
+              : uiT("ui.rows_will_appear_here_once_the_run_produces_a_dataset_sample")}
           </p>
         </div>
         <Button
@@ -162,8 +163,7 @@ function RunningDatasetEmptyState({
           variant="outline"
           onClick={onOpenOverview}
         >
-          Open Overview
-        </Button>
+          {uiT("ui.open_overview")}</Button>
       </div>
     </div>
   );
@@ -198,20 +198,21 @@ export function ExecutionDataTab({
   onPrevPage,
   onNextPage,
 }: ExecutionDataTabProps): ReactElement {
+  const uiT = useUiT();
+
   return (
     <div className="mt-3">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm font-semibold">Dataset sample</p>
+        <p className="text-sm font-semibold">{uiT("ui.dataset_sample")}</p>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {datasetColumnNames.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild={true}>
                 <Button type="button" size="sm" variant="outline">
-                  Columns
-                </Button>
+                  {uiT("studio.dataset.columns")}</Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Visible columns</DropdownMenuLabel>
+                <DropdownMenuLabel>{uiT("ui.visible_columns")}</DropdownMenuLabel>
                 {datasetColumnNames.map((columnName) => (
                   <DropdownMenuCheckboxItem
                     key={columnName}
@@ -239,7 +240,7 @@ export function ExecutionDataTab({
           {canPageDataset && (
             <>
               <span>
-                Page {currentDatasetPage}/{totalPages}
+                {uiT("ui.page")}{" "}{currentDatasetPage}/{totalPages}
               </span>
               <Button
                 type="button"
@@ -251,8 +252,7 @@ export function ExecutionDataTab({
                 }
                 onClick={onPrevPage}
               >
-                Prev
-              </Button>
+                {uiT("ui.prev")}</Button>
               <Button
                 type="button"
                 size="sm"
@@ -263,8 +263,7 @@ export function ExecutionDataTab({
                 }
                 onClick={onNextPage}
               >
-                Next
-              </Button>
+                {uiT("tour.next")}</Button>
             </>
           )}
         </div>
@@ -276,12 +275,11 @@ export function ExecutionDataTab({
             onOpenOverview={onOpenOverview}
           />
         ) : (
-          <p className="text-xs text-muted-foreground">No rows returned.</p>
+          <p className="text-xs text-muted-foreground">{uiT("ui.no_rows_returned")}</p>
         )
       ) : tableColumns.length === 0 ? (
         <p className="text-xs text-muted-foreground">
-          All columns hidden. Use Columns to show at least one.
-        </p>
+          {uiT("ui.all_columns_hidden_use_columns_to_show_at_least_one")}</p>
       ) : (
         <div className="max-h-[55vh] overflow-auto">
           <DataTable columns={tableColumns} data={datasetRowsForTable} />

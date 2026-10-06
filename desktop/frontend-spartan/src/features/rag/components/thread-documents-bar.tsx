@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,6 +64,8 @@ import { useRagDocuments } from "./use-rag-documents";
 
 // Read-only chip shown when retrieval comes from a KB, so the source isn't invisible.
 function KnowledgeBaseSourceChip({ kbId }: { kbId: string }) {
+  const uiT = useUiT();
+
   const [name, setName] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
@@ -84,14 +88,14 @@ function KnowledgeBaseSourceChip({ kbId }: { kbId: string }) {
     <div className="mb-2 flex w-full flex-row items-center gap-1.5 pl-0.5 pr-1.5 pt-0.5 pb-1">
       <span
         className="composer-pill-btn shrink-0 cursor-default"
-        title="This chat retrieves from a knowledge base. Change the source in RAG retrieval settings."
+        title={uiT("ui.this_chat_retrieves_from_a_knowledge_base_change_the_source_in_ra")}
       >
         <HugeiconsIcon
           icon={FileDatabaseIcon}
           strokeWidth={2}
           className="size-3.5"
         />
-        <span>{name ? `Knowledge base: ${name}` : "Knowledge base"}</span>
+        <span>{name ? `Knowledge base: ${name}` : uiT("ui.knowledge_base")}</span>
       </span>
     </div>
   );
@@ -130,18 +134,20 @@ function InheritedProjectSources({
 }: {
   documents: { id: string; filename: string; status: DocumentStatus }[];
 }) {
+  const uiT = useUiT();
+
   return (
     <div className="mb-2 flex w-full flex-row items-center gap-1.5 pl-0.5 pr-1.5 pt-0.5 pb-1">
       <span
         className="composer-pill-btn shrink-0 cursor-default !text-foreground/60"
-        title="This chat retrieves from its project's sources. Manage them in the project's Sources tab."
+        title={uiT("ui.this_chat_retrieves_from_its_project_s_sources_manage_them_in_the")}
       >
         <HugeiconsIcon
           icon={Folder02Icon}
           strokeWidth={2}
           className="size-3.5"
         />
-        <span>Project sources</span>
+        <span>{uiT("ui.project_sources")}</span>
       </span>
       {/* Same cap as the editable list: a linked folder can carry hundreds of
           sources, and an uncapped row would swallow the chat viewport. */}
@@ -247,6 +253,8 @@ function AttachFilesButton({
   sharesWithProject: boolean;
   onClick: () => void;
 }) {
+  const uiT = useUiT();
+
   return (
     <button
       type="button"
@@ -259,13 +267,13 @@ function AttachFilesButton({
       )}
       aria-label={
         sharesWithProject
-          ? "Attach documents to this project"
-          : "Attach documents to this thread"
+          ? uiT("ui.attach_documents_to_this_project")
+          : uiT("ui.attach_documents_to_this_thread")
       }
       title={
         sharesWithProject
-          ? "Attach documents for retrieval, shared with every chat in this project"
-          : "Attach documents for retrieval in this chat"
+          ? uiT("ui.attach_documents_for_retrieval_shared_with_every_chat_in_this_pro")
+          : uiT("ui.attach_documents_for_retrieval_in_this_chat")
       }
     >
       <HugeiconsIcon
@@ -276,8 +284,8 @@ function AttachFilesButton({
       {compact ? null : (
         <span>
           {sharesWithProject
-            ? "Add files for this project"
-            : "Add files to chat with"}
+            ? uiT("ui.add_files_for_this_project")
+            : uiT("ui.add_files_to_chat_with")}
         </span>
       )}
     </button>
@@ -295,23 +303,25 @@ function AttachmentTargetMenu({
   sharesWithProject: boolean;
   onSelect: (target: ProjectAttachmentTarget) => void;
 }) {
+  const uiT = useUiT();
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild={true}>
         <button
           type="button"
           disabled={disabled}
-          aria-label="Choose where attached files go"
-          title="Choose where attached files go"
+          aria-label={uiT("ui.choose_where_attached_files_go")}
+          title={uiT("ui.choose_where_attached_files_go")}
           className="composer-pill-btn shrink-0 -translate-y-px !text-foreground/60 px-2"
         >
           <span className="text-ui-11">
-            {sharesWithProject ? "Project" : "This chat"}
+            {sharesWithProject ? uiT("chat.projectSwitcher.project") : uiT("ui.this_chat")}
           </span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="unsloth-plus-menu w-64">
-        <DropdownMenuLabel>New files go to</DropdownMenuLabel>
+        <DropdownMenuLabel>{uiT("ui.new_files_go_to")}</DropdownMenuLabel>
         <DropdownMenuItem onSelect={() => onSelect("project")}>
           <HugeiconsIcon
             icon={sharesWithProject ? Tick02Icon : Folder02Icon}
@@ -319,10 +329,9 @@ function AttachmentTargetMenu({
             className="size-icon"
           />
           <span className="flex flex-col">
-            <span>The project</span>
+            <span>{uiT("ui.the_project")}</span>
             <span className="text-ui-11 text-muted-foreground">
-              Every chat in this project can use them
-            </span>
+              {uiT("ui.every_chat_in_this_project_can_use_them")}</span>
           </span>
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onSelect("thread")}>
@@ -332,10 +341,9 @@ function AttachmentTargetMenu({
             className="size-icon"
           />
           <span className="flex flex-col">
-            <span>This chat only</span>
+            <span>{uiT("ui.this_chat_only")}</span>
             <span className="text-ui-11 text-muted-foreground">
-              Other chats in the project won't see them
-            </span>
+              {uiT("ui.other_chats_in_the_project_won_t_see_them")}</span>
           </span>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -350,6 +358,8 @@ export function ThreadDocumentsBar({
   threadId: string | null;
   onIndexingChange?: (active: boolean) => void;
 }) {
+  const uiT = useUiT();
+
   const ragEnabled = useChatRuntimeStore((s) => s.ragEnabled);
   const ragSource = useChatRuntimeStore((s) => s.ragSource);
   const setRagSource = useChatRuntimeStore((s) => s.setRagSource);
@@ -500,7 +510,7 @@ export function ThreadDocumentsBar({
       return requireStoredThread(effectiveThreadId).then(
         () => effectiveThreadId,
         () => {
-          toast.error("Couldn't start a chat for these documents");
+          toast.error(uiTranslate("ui.couldn_t_start_a_chat_for_these_documents"));
           return null;
         },
       );
@@ -524,7 +534,7 @@ export function ThreadDocumentsBar({
           .adoptPendingProjectAttachmentTarget(remoteId, claim);
         // a clear that landed while the row write was in flight is deleting this thread
         if (chatHistoryClearBoundary.capture() !== clearGeneration) {
-          throw new Error("Chat history was cleared");
+          throw new Error(uiTranslate("ui.chat_history_was_cleared"));
         }
         // an older request can still finish after the component moved to another thread
         if (initGenerationRef.current === generation) {
@@ -533,7 +543,7 @@ export function ThreadDocumentsBar({
         return remoteId;
       })
       .catch(() => {
-        toast.error("Couldn't start a chat for these documents");
+        toast.error(uiTranslate("ui.couldn_t_start_a_chat_for_these_documents"));
         return null;
       });
     initPromiseRef.current = pending;
@@ -594,8 +604,8 @@ export function ThreadDocumentsBar({
       useNativeIntentStore
         .getState()
         .takeAttachments(nativeAttachmentTargetKey);
-      toast.error("This chat retrieves from a knowledge base", {
-        description: "Add these files to the knowledge base instead.",
+      toast.error(uiTranslate("ui.this_chat_retrieves_from_a_knowledge_base"), {
+        get description() { return uiTranslate("ui.add_these_files_to_the_knowledge_base_instead"); },
       });
       return;
     }
@@ -756,15 +766,12 @@ export function ThreadDocumentsBar({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove from project sources</AlertDialogTitle>
+            <AlertDialogTitle>{uiT("ui.remove_from_project_sources")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Remove "{removingShared?.filename}"? Every chat in this project
-              loses it, and the file and its indexed content are deleted. This
-              cannot be undone.
-            </AlertDialogDescription>
+              {uiT("ui.remove")}{removingShared?.filename}{uiT("ui.every_chat_in_this_project_loses_it_and_the_file_and_its_indexed_")}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{uiT("chat.workspace.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
                 const doc = removingShared;
@@ -774,8 +781,7 @@ export function ThreadDocumentsBar({
                 }
               }}
             >
-              Remove
-            </AlertDialogAction>
+              {uiT("settings.appearance.custom.importFont.remove")}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

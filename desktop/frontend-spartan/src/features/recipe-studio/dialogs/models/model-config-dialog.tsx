@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Collapsible,
@@ -34,6 +35,8 @@ export function ModelConfigDialog({
   localProviderNames,
   onUpdate,
 }: ModelConfigDialogProps): ReactElement {
+  const uiT = useUiT();
+
   const isLinkedToLocal = localProviderNames.has(config.provider);
   const [optionalOpen, setOptionalOpen] = useState(false);
   const modelId = `${config.id}-model`;
@@ -85,22 +88,19 @@ export function ModelConfigDialog({
   return (
     <div className="space-y-4">
       <NameField
-        label="Model preset name"
+        label={uiT("ui.model_preset_name")}
         value={config.name}
         onChange={(value) => onUpdate({ name: value })}
       />
       <div className="rounded-2xl border border-border/60 bg-muted/10 px-4 py-3">
         <p className="text-sm font-semibold text-foreground">
-          Set up one reusable model choice for your AI steps
-        </p>
+          {uiT("ui.set_up_one_reusable_model_choice_for_your_ai_steps")}</p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Choose the provider connection, enter the exact model ID, then save
-          any generation defaults you want to reuse.
-        </p>
+          {uiT("ui.choose_the_provider_connection_enter_the_exact_model_id_then_save")}</p>
       </div>
       <div className="grid gap-1.5">
         <FieldLabel
-          label="Provider connection"
+          label={uiT("ui.provider_connection")}
           htmlFor={providerId}
           hint="Choose where this model should run."
         />
@@ -120,7 +120,7 @@ export function ModelConfigDialog({
             <ComboboxInput
               id={providerId}
               className="nodrag w-full"
-              placeholder="Choose a provider connection"
+              placeholder={uiT("ui.choose_a_provider_connection")}
               onBlur={() => {
                 const next = providerInputRef.current;
                 if (next !== config.provider) {
@@ -129,7 +129,7 @@ export function ModelConfigDialog({
               }}
             />
             <ComboboxContent anchor={providerAnchorRef}>
-              <ComboboxEmpty>No providers found</ComboboxEmpty>
+              <ComboboxEmpty>{uiT("ui.no_providers_found")}</ComboboxEmpty>
               <ComboboxList>
                 {(provider: string) => (
                   <ComboboxItem key={provider} value={provider}>
@@ -142,13 +142,13 @@ export function ModelConfigDialog({
         </div>
         <p className="text-xs text-muted-foreground">
           {providerOptions.length === 0
-            ? "Add a Provider connection step first, then come back here."
-            : "Matching blocks are linked automatically on the canvas."}
+            ? uiT("ui.add_a_provider_connection_step_first_then_come_back_here")
+            : uiT("ui.matching_blocks_are_linked_automatically_on_the_canvas")}
         </p>
       </div>
       <div className="grid gap-1.5">
         <FieldLabel
-          label="Model ID"
+          label={uiT("ui.model_id")}
           htmlFor={modelId}
           hint={
             isLinkedToLocal
@@ -188,24 +188,20 @@ export function ModelConfigDialog({
         )}
         {isLinkedToLocal ? (
           <p className="text-xs text-muted-foreground">
-            Recipes will load this model automatically. GGUF quantization is
-            saved with the preset.
-          </p>
+            {uiT("ui.recipes_will_load_this_model_automatically_gguf_quantization_is_s")}</p>
         ) : null}
       </div>
       <div className="grid gap-3">
         <div className="space-y-1">
           <p className="text-sm font-semibold text-foreground">
-            Default generation settings
-          </p>
+            {uiT("ui.default_generation_settings")}</p>
           <p className="text-xs text-muted-foreground">
-            These defaults are reused anywhere you choose this model preset.
-          </p>
+            {uiT("ui.these_defaults_are_reused_anywhere_you_choose_this_model_preset")}</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="grid gap-1.5">
             <FieldLabel
-              label="Temperature"
+              label={uiT("studio.progress.temperature")}
               htmlFor={tempId}
               hint="Higher values make responses more varied."
             />
@@ -235,7 +231,7 @@ export function ModelConfigDialog({
           </div>
           <div className="grid gap-1.5">
             <FieldLabel
-              label="Max tokens"
+              label={uiT("runSettings.maxTokens")}
               htmlFor={maxTokensId}
               hint="Maximum length of the model response."
             />
@@ -250,7 +246,7 @@ export function ModelConfigDialog({
           </div>
           <div className="grid gap-1.5">
             <FieldLabel
-              label="Timeout (seconds)"
+              label={uiT("ui.timeout_seconds")}
               htmlFor={timeoutId}
               hint="How long to wait before a request is treated as failed."
             />
@@ -268,14 +264,14 @@ export function ModelConfigDialog({
       <Collapsible open={optionalOpen} onOpenChange={setOptionalOpen}>
         <CollapsibleTrigger asChild={true}>
           <CollapsibleSectionTriggerButton
-            label="Advanced request fields"
+            label={uiT("ui.advanced_request_fields")}
             open={optionalOpen}
           />
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-3 space-y-4">
           <div className="grid gap-1.5">
             <FieldLabel
-              label="Advanced request fields (JSON)"
+              label={uiT("ui.advanced_request_fields_json")}
               htmlFor={extraBodyId}
               hint="Extra request fields to send with every call."
             />
@@ -300,8 +296,7 @@ export function ModelConfigDialog({
                 updateField("skip_health_check", Boolean(value))
               }
             />
-            Skip connection check
-          </label>
+            {uiT("ui.skip_connection_check")}</label>
         </CollapsibleContent>
       </Collapsible>
     </div>

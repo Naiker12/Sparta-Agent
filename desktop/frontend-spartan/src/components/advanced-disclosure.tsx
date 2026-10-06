@@ -1,3 +1,5 @@
+import { UiText } from "@/i18n/ui-text";
+import { useT as useUiT } from "@/i18n";
 import type { ReactNode } from "react";
 
 import { Settings02Icon } from "@hugeicons/core-free-icons";
@@ -14,9 +16,7 @@ export function AdvancedDisclosure({
   onOpenChange,
   description = (
     <>
-      Load-time tuning. Changes apply on the next load; Reapply reloads the
-      current model.
-    </>
+      <UiText messageKey="ui.load_time_tuning_changes_apply_on_the_next_load_reapply_reloads_t" /></>
   ),
   children,
 }: {
@@ -25,6 +25,8 @@ export function AdvancedDisclosure({
   description?: ReactNode;
   children: ReactNode;
 }) {
+  const uiT = useUiT();
+
   return (
     // mt-2 over pt-4 sits the rule between the field above and this row, not up against it.
     <div className="mt-2 flex flex-col gap-3 border-t border-border/60 pt-4 pb-4">
@@ -40,8 +42,7 @@ export function AdvancedDisclosure({
           className="size-3.5 shrink-0 text-muted-foreground"
         />
         <span className="min-w-0 flex-1 text-ui-13 font-medium leading-[1.25] tracking-nav text-foreground">
-          Advanced
-        </span>
+          {uiT("studio.params.mode.advanced")}</span>
         <ChevronDown
           className={cn(
             "size-4 shrink-0 text-muted-foreground transition-transform",

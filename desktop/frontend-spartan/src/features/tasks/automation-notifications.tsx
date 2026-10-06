@@ -1,7 +1,8 @@
+import { translate as uiTranslate } from "@/i18n";
 import { useEffect } from "react";
 import { authFetch } from "@/features/auth";
 import { notifyNative } from "@/lib/native-notifications";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 /** Poll across all app routes, without exposing task prompts/results on the lock screen. */
 export function AutomationNotifications() {
@@ -45,15 +46,17 @@ export function AutomationNotifications() {
           if (event.notify) {
             const title =
               event.status === "completed"
-                ? "Automatización completada"
-                : "La automatización requiere atención";
+                ? uiTranslate("ui.automation_completed")
+                : uiTranslate("ui.the_automation_needs_attention");
             toast(title, {
-              description: "Consulta el resultado en Automatizaciones.",
+              get description() {
+                return uiTranslate("ui.view_the_result_in_automations");
+              },
             });
             await notifyNative({
               key: `automation-${event.id}`,
               title,
-              body: "Consulta el resultado en Automatizaciones.",
+              body: uiTranslate("ui.view_the_result_in_automations"),
               requestPermission: false,
             });
           }

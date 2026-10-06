@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { toast } from "@/lib/toast";
 import { disposableTimeoutSignal } from "../lib/abort-signals";
 import { getActiveModelDownloads } from "./api";
@@ -29,7 +30,7 @@ import { getTransportMode } from "./transport-preference";
 function reportConflictStartError(error: unknown): void {
   const description =
     error instanceof Error ? error.message : String(error || "Unknown error");
-  toast.error("Couldn't start download", { description });
+  toast.error(uiTranslate("ui.couldn_t_start_download"), { description });
 }
 
 function pendingStartKey(req: DownloadRequest): string {
@@ -172,7 +173,7 @@ export async function requestStart(
       siblingTransport = await activeSiblingTransport(req);
       siblingProbed = true;
       if (siblingTransport && siblingTransport !== mode) {
-        toast.info("Another variant is already downloading", {
+        toast.info(uiTranslate("ui.another_variant_is_already_downloading"), {
           description:
             siblingTransport === TRANSPORT.XET
               ? "This repository is currently downloading with Xet. Switch to Xet or wait for it to finish."
@@ -199,9 +200,8 @@ export async function requestStart(
         return "conflict";
       }
       if (status.has_partial && !status.last_transport) {
-        toast.info("Restarting this download", {
-          description:
-            "An earlier partial download can't be resumed, so it will start again from the beginning.",
+        toast.info(uiTranslate("ui.restarting_this_download"), {
+          get description() { return uiTranslate("ui.an_earlier_partial_download_can_t_be_resumed_so_it_will_start_aga"); },
         });
       }
     } catch (_err) {
@@ -211,16 +211,14 @@ export async function requestStart(
       // next time. Only downgrade once we confirmed no sibling variant is
       // downloading, since a live sibling may be mid-transfer on Xet.
       if (mode === TRANSPORT.XET && siblingProbed && !siblingTransport) {
-        toast.warning("Couldn't verify existing partial download", {
-          description:
-            "Starting with HTTP so an existing partial is not discarded. Switch transport to retry with Xet.",
+        toast.warning(uiTranslate("ui.couldn_t_verify_existing_partial_download"), {
+          get description() { return uiTranslate("ui.starting_with_http_so_an_existing_partial_is_not_discarded_switch"); },
         });
         await startJob(req, { useXet: false });
         return isJobActiveFor(req) ? "started" : "error";
       }
-      toast.warning("Couldn't verify existing partial download", {
-        description:
-          "Starting with the selected transport. If a partial from another transport exists, it may be restarted from the beginning.",
+      toast.warning(uiTranslate("ui.couldn_t_verify_existing_partial_download"), {
+        get description() { return uiTranslate("ui.starting_with_the_selected_transport_if_a_partial_from_another_tr"); },
       });
     }
     await startJob(req, { useXet: mode === TRANSPORT.XET });

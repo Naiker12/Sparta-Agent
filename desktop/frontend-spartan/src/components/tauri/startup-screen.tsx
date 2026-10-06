@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   STATUS_MESSAGE_ROTATION_MS,
   type StartupMessage,
@@ -6,7 +7,7 @@ import {
 } from "@/components/tauri/startup-messages";
 import { Spinner } from "@/components/ui/spinner";
 import type { BackendStatus } from "@/hooks/use-tauri-backend";
-import { translate } from "@/i18n";
+import { translate, useLocale } from "@/i18n";
 import type { CopySupportDiagnosticsResult } from "@/lib/tauri-diagnostics";
 
 import { LanguageSelect } from "@/features/settings/components/language-select";
@@ -95,24 +96,20 @@ function DiagnosticsCopyActions({
   );
 }
 
-
-
-
-
 const EASE_OUT_QUART: [number, number, number, number] = [0.165, 0.84, 0.44, 1];
-
 
 // Sub-components
 
-
 function Logo() {
+  const uiT = useUiT();
+
   return (
     <div className="flex flex-col items-center justify-center gap-5 text-center select-none">
       <div className="relative flex items-center justify-center">
         <div className="absolute -inset-4 rounded-full bg-primary/10 blur-2xl dark:bg-primary/20 pointer-events-none" />
         <img
           src="/spartan-logo.svg"
-          alt="SPARTAN AGENT"
+          alt={uiT("shell.brand")}
           aria-hidden="true"
           className="relative h-28 w-28 sm:h-36 sm:w-36 object-contain drop-shadow-[0_12px_28px_rgba(0,0,0,0.4)] transition-transform duration-300 hover:scale-105"
         />
@@ -122,7 +119,7 @@ function Logo() {
           className="text-2xl sm:text-3xl font-black uppercase tracking-[0.12em] text-foreground"
           style={{ fontFamily: '"Hellix", sans-serif' }}
         >
-          SPARTAN AGENT
+          {uiT("shell.brand")}
         </span>
       </div>
     </div>
@@ -151,9 +148,7 @@ function ActionButton({
   );
 }
 
-
 // Per-status renderers
-
 
 function CheckingContent() {
   return (
@@ -394,6 +389,8 @@ function NeedsElevationContent({
   onApproveElevation: () => void;
   onRetryInstall: () => void;
 }) {
+  const uiT = useUiT();
+
   return (
     <>
       <Logo />
@@ -411,7 +408,7 @@ function NeedsElevationContent({
         </div>
         <div className="mt-4 flex gap-3">
           <ActionButton variant="secondary" onClick={onRetryInstall}>
-            Cancel
+            {uiT("chat.workspace.cancel")}
           </ActionButton>
           <ActionButton onClick={onApproveElevation}>
             {translate("shell.startup.allow")}
@@ -423,6 +420,7 @@ function NeedsElevationContent({
 }
 
 function StartingContent({ message }: { message: StartupMessage }) {
+  useLocale();
   const messageIndex = useRotatingMessageIndex();
   const displayMessage = startupWaitingMessage(message, messageIndex);
 
@@ -488,9 +486,7 @@ function ErrorContent({
   );
 }
 
-
 // Main component
-
 
 export function StartupScreen({
   status,

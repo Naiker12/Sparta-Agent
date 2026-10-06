@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   Combobox,
   ComboboxContent,
@@ -43,6 +44,8 @@ const CODE_LANG_OPTIONS = [
 ] as const;
 
 export function InlineLlm({ config, onUpdate }: InlineLlmProps): ReactElement {
+  const uiT = useUiT();
+
   const isCode = config.llm_type === "code";
   const configs = useRecipeStudioStore((state) => state.configs);
   const modelConfigAliases = useMemo(
@@ -70,7 +73,7 @@ export function InlineLlm({ config, onUpdate }: InlineLlmProps): ReactElement {
 
   return (
     <div className="space-y-3">
-      <InlineField label="Model alias">
+      <InlineField label={uiT("ui.model_alias")}>
         <div ref={anchorRef}>
           <Combobox
             items={modelConfigAliases}
@@ -91,7 +94,7 @@ export function InlineLlm({ config, onUpdate }: InlineLlmProps): ReactElement {
           >
             <ComboboxInput
               className="nodrag h-8 w-full text-xs"
-              placeholder="Model alias"
+              placeholder={uiT("ui.model_alias")}
               onBlur={() => {
                 const next = aliasInputRef.current;
                 if (next !== config.model_alias) {
@@ -103,7 +106,7 @@ export function InlineLlm({ config, onUpdate }: InlineLlmProps): ReactElement {
               }}
             />
             <ComboboxContent anchor={anchorRef}>
-              <ComboboxEmpty>No model configs found</ComboboxEmpty>
+              <ComboboxEmpty>{uiT("ui.no_model_configs_found")}</ComboboxEmpty>
               <ComboboxList>
                 {(alias: string) => (
                   <ComboboxItem key={alias} value={alias}>
@@ -115,7 +118,7 @@ export function InlineLlm({ config, onUpdate }: InlineLlmProps): ReactElement {
           </Combobox>
         </div>
       </InlineField>
-      <InlineField label="Tool profile">
+      <InlineField label={uiT("ui.tool_profile")}>
         <div ref={toolAnchorRef}>
           <Combobox
             items={toolProfileAliases}
@@ -133,7 +136,7 @@ export function InlineLlm({ config, onUpdate }: InlineLlmProps): ReactElement {
           >
             <ComboboxInput
               className="nodrag h-8 w-full text-xs"
-              placeholder="Tool profile"
+              placeholder={uiT("ui.tool_profile")}
               onBlur={(event) => {
                 const next = event.target.value;
                 if (next !== (config.tool_alias ?? "")) {
@@ -145,7 +148,7 @@ export function InlineLlm({ config, onUpdate }: InlineLlmProps): ReactElement {
               }}
             />
             <ComboboxContent anchor={toolAnchorRef}>
-              <ComboboxEmpty>No tool profiles found</ComboboxEmpty>
+              <ComboboxEmpty>{uiT("ui.no_tool_profiles_found")}</ComboboxEmpty>
               <ComboboxList>
                 {(alias: string) => (
                   <ComboboxItem key={alias} value={alias}>
@@ -158,7 +161,7 @@ export function InlineLlm({ config, onUpdate }: InlineLlmProps): ReactElement {
         </div>
       </InlineField>
       {isCode && (
-        <InlineField label="Code language">
+        <InlineField label={uiT("ui.code_language")}>
           <Select
             value={config.code_lang?.trim() || "python"}
             onValueChange={(value) =>
@@ -169,7 +172,7 @@ export function InlineLlm({ config, onUpdate }: InlineLlmProps): ReactElement {
             }
           >
             <SelectTrigger className="nodrag h-8 w-full text-xs">
-              <SelectValue placeholder="Language" />
+              <SelectValue placeholder={uiT("settings.appearance.language.title")} />
             </SelectTrigger>
             <SelectContent>
               {CODE_LANG_OPTIONS.map((lang) => (
@@ -182,8 +185,7 @@ export function InlineLlm({ config, onUpdate }: InlineLlmProps): ReactElement {
         </InlineField>
       )}
       <p className="text-ui-11 text-muted-foreground">
-        Prompt/system edited on aux nodes.
-      </p>
+        {uiT("ui.prompt_system_edited_on_aux_nodes")}</p>
     </div>
   );
 }

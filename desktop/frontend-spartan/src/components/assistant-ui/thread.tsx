@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { ComposerAttachments } from "@/components/assistant-ui/attachment";
 import { ChatDictationBar } from "@/components/assistant-ui/chat-dictation-bar";
 import {
@@ -223,6 +225,8 @@ export const Thread: FC<{
   hideWelcome?: boolean;
   targetThreadId?: string;
 }> = memo(({ hideComposer, hideWelcome, targetThreadId }) => {
+  const uiT = useUiT();
+
   // Intent-aware autoscroll replaces assistant-ui's built-in autoscroll to
   // prevent the streaming-mutation race that snaps the viewport back to the
   // bottom while the user scrolls up (see the hook for the full explanation).
@@ -518,8 +522,7 @@ export const Thread: FC<{
                   <div className="flex flex-1 flex-col items-center justify-center py-24 text-muted-foreground animate-in fade-in duration-300">
                     <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent mb-3" />
                     <p className="text-sm font-medium">
-                      Cargando conversación...
-                    </p>
+                      {uiT("ui.loading_conversation")}</p>
                   </div>
                 </AuiIf>
               )}
@@ -624,6 +627,8 @@ const GeneratedImageViewportOverlay: FC<{
   hideComposer?: boolean;
   bottomOffsetPx?: number | null;
 }> = ({ hideComposer, bottomOffsetPx }) => {
+  const uiT = useUiT();
+
   const { overlay, closeOverlay } = useGeneratedImageOverlay();
 
   useEffect(() => {
@@ -643,7 +648,7 @@ const GeneratedImageViewportOverlay: FC<{
         type="button"
         className="pointer-events-auto absolute inset-0 bg-background/65 backdrop-blur-[1px] dark:bg-background/55"
         onClick={closeOverlay}
-        aria-label="Close generated image preview"
+        aria-label={uiT("ui.close_generated_image_preview")}
       />
       <section
         className={cn(
@@ -659,7 +664,7 @@ const GeneratedImageViewportOverlay: FC<{
             ? { bottom: bottomOffsetPx }
             : undefined
         }
-        aria-label="Generated image preview"
+        aria-label={uiT("ui.generated_image_preview")}
       >
         <div className="pointer-events-auto relative flex min-h-0 w-full max-w-[1100px] flex-1 flex-col items-center justify-center gap-3 rounded-3xl bg-muted/10 p-3 ring-1 ring-border/20">
           <div className="absolute inset-x-3 top-3 z-10 flex justify-end">
@@ -675,7 +680,7 @@ const GeneratedImageViewportOverlay: FC<{
                     filename: overlay.filename,
                   })
                 }
-                aria-label="Download generated image"
+                aria-label={uiT("ui.download_generated_image")}
               >
                 <HugeiconsIcon icon={Download01Icon} className="size-3.5" />
               </Button>
@@ -685,7 +690,7 @@ const GeneratedImageViewportOverlay: FC<{
                 size="icon-sm"
                 className="size-7 rounded-full"
                 onClick={closeOverlay}
-                aria-label="Close generated image preview"
+                aria-label={uiT("ui.close_generated_image_preview")}
               >
                 <XIcon className="size-3.5" />
               </Button>
@@ -703,8 +708,7 @@ const GeneratedImageViewportOverlay: FC<{
             title={overlay.title}
           >
             <p className="truncate text-xs font-semibold text-foreground/80">
-              Generated image
-            </p>
+              {uiT("ui.generated_image")}</p>
             {overlay.metadata ? (
               <p className="truncate text-ui-11 font-medium text-muted-foreground">
                 {overlay.metadata}
@@ -712,8 +716,7 @@ const GeneratedImageViewportOverlay: FC<{
             ) : null}
             {hideComposer ? null : (
               <p className="mx-auto mt-2 inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                Type edits below, then send
-              </p>
+                {uiT("ui.type_edits_below_then_send")}</p>
             )}
           </div>
         </div>
@@ -766,6 +769,8 @@ const Composer: FC<{
   menuSide?: "top" | "bottom";
   disableQueue?: boolean;
 }> = ({ disabled, placeholder, threadId, menuSide, disableQueue }) => {
+  const uiT = useUiT();
+
   const t = useT();
   const modelSelector = useContext(ChatComposerModelSelectorContext);
   const aui = useAui();
@@ -937,8 +942,8 @@ const Composer: FC<{
             dropReplacedSelection();
           },
           () =>
-            toast.error("Could not attach the pasted text.", {
-              description: "Paste it again, or paste it in smaller pieces.",
+            toast.error(uiTranslate("ui.could_not_attach_the_pasted_text"), {
+              get description() { return uiTranslate("ui.paste_it_again_or_paste_it_in_smaller_pieces"); },
             }),
           pastedTextMinChars,
         );
@@ -953,9 +958,8 @@ const Composer: FC<{
           );
         },
         () =>
-          toast.error("Could not paste files.", {
-            description:
-              "The clipboard item is unsupported, unreadable, or exceeds its size limit.",
+          toast.error(uiTranslate("ui.could_not_paste_files"), {
+            get description() { return uiTranslate("ui.the_clipboard_item_is_unsupported_unreadable_or_exceeds_its_size_"); },
           }),
       );
       // A paste is a gesture, so it retires the guard and re-pasting the sent
@@ -1222,7 +1226,7 @@ const Composer: FC<{
             try {
               file = await nativeAttachmentIntentToFile(intent);
             } catch (error) {
-              toast.error("Could not attach dropped audio", {
+              toast.error(uiTranslate("ui.could_not_attach_dropped_audio"), {
                 description:
                   error instanceof Error ? error.message : String(error),
               });
@@ -1347,7 +1351,7 @@ const Composer: FC<{
             try {
               file = await nativeAttachmentIntentToFile(intent);
             } catch (error) {
-              toast.error("Could not attach dropped video", {
+              toast.error(uiTranslate("ui.could_not_attach_dropped_video"), {
                 description:
                   error instanceof Error ? error.message : String(error),
               });
@@ -1505,7 +1509,7 @@ const Composer: FC<{
       } finally {
         draining = false;
         if (readFailures > 0) {
-          toast.error("Could not attach dropped images", {
+          toast.error(uiTranslate("ui.could_not_attach_dropped_images"), {
             description:
               lastReadError instanceof Error
                 ? lastReadError.message
@@ -2038,7 +2042,7 @@ const Composer: FC<{
           const state = getThreadListItemState();
           if (!(runtime && state) || cancelled || targetAuthEpoch !== getAuthSessionEpoch() ||
               chatHistoryClearBoundary.capture() !== historyClearGeneration) {
-            throw new Error("El chat de la cola ya no está disponible");
+            throw new Error(uiTranslate("ui.the_queue_s_chat_is_no_longer_available"));
           }
           shouldCorrectPersistedModel ??= !state.remoteId;
           const { remoteId } = await runtime.threads.getItemById(state.id).initialize();
@@ -2050,7 +2054,7 @@ const Composer: FC<{
             shouldCorrectPersistedModel = false;
           }
           if (removeFreshThreadPersistedAfterAbort() || cancelled || targetAuthEpoch !== getAuthSessionEpoch()) {
-            throw new Error("La cola fue cancelada");
+            throw new Error(uiTranslate("ui.the_queue_was_cancelled"));
           }
           return remoteId;
         },
@@ -2297,7 +2301,7 @@ const Composer: FC<{
           }
         })
         .catch((error) => {
-          toast.error("Could not start prompt queue", {
+          toast.error(uiTranslate("ui.could_not_start_prompt_queue"), {
             description:
               error instanceof Error ? error.message : "Please try again.",
           });
@@ -2374,8 +2378,8 @@ const Composer: FC<{
             armJustSent(state.text);
           },
           () => {
-            toast.info("Pasted text was not queued", {
-              description: "The chat settings changed. Send it again.",
+            toast.info(uiTranslate("ui.pasted_text_was_not_queued"), {
+              get description() { return uiTranslate("ui.the_chat_settings_changed_send_it_again"); },
             });
           },
           capturedAt,
@@ -2444,8 +2448,8 @@ const Composer: FC<{
           queueTexts(texts, pendingRead);
         })
         .catch(() => {
-          toast.error("Could not queue the pasted text.", {
-            description: "Show it in the text field, then send it again.",
+          toast.error(uiTranslate("ui.could_not_queue_the_pasted_text"), {
+            get description() { return uiTranslate("ui.show_it_in_the_text_field_then_send_it_again"); },
           });
         })
         .finally(() => {
@@ -2541,10 +2545,9 @@ const Composer: FC<{
                 ? "Loading this chat's settings"
                 : "Waiting for documents to finish indexing";
       waitToastRef.current = toast(title, {
-        description:
-          "Your message will send automatically once they are ready.",
+        get description() { return uiTranslate("ui.your_message_will_send_automatically_once_they_are_ready"); },
         duration: Number.POSITIVE_INFINITY,
-        cancel: { label: "Cancel", onClick: cancelQueuedSend },
+        cancel: { get label() { return uiTranslate("chat.workspace.cancel"); }, onClick: cancelQueuedSend },
       });
     },
     [cancelQueuedSend],
@@ -2632,7 +2635,7 @@ const Composer: FC<{
         },
       });
       if (!reservationToken) {
-        toast.error("Wait for the current response to finish");
+        toast.error(uiTranslate("ui.wait_for_the_current_response_to_finish"));
         return;
       }
       preStreamRunReservationRef.current = reservationToken;
@@ -2646,7 +2649,7 @@ const Composer: FC<{
           notifyPromptQueueRunFailed(referenceThreadId);
         }
         preStreamRunReservationRef.current = null;
-        toast.error("Could not prepare attachments", {
+        toast.error(uiTranslate("ui.could_not_prepare_attachments"), {
           description:
             error instanceof Error ? error.message : "Please retry the send.",
         });
@@ -2947,7 +2950,7 @@ const Composer: FC<{
         event.preventDefault();
         // Project new-chat composer: never queue, just ask the user to wait.
         if (disableQueue) {
-          toast.error("Wait for the current response to finish");
+          toast.error(uiTranslate("ui.wait_for_the_current_response_to_finish"));
           return;
         }
         if (!canQueueCurrentPrompt) {
@@ -2960,11 +2963,10 @@ const Composer: FC<{
           if (overlay || hasAttachments || hasPendingAudio) {
             toast.error(
               liveThreadIsRunning
-                ? "Wait for the current response to finish"
+                ? uiTranslate("ui.wait_for_the_current_response_to_finish")
                 : "Wait for the prompt queue to finish",
               {
-                description:
-                  "Only text prompts can be queued while a response is running or the prompt queue is active.",
+                get description() { return uiTranslate("ui.only_text_prompts_can_be_queued_while_a_response_is_running_or_th"); },
               },
             );
           }
@@ -3003,17 +3005,16 @@ const Composer: FC<{
         }
         if (!overlay.openaiImageGenerationCallId) {
           event.preventDefault();
-          toast.error("This generated image cannot be edited", {
-            description:
-              "The original image reference is missing. Generate the image again, then retry the edit.",
+          toast.error(uiTranslate("ui.this_generated_image_cannot_be_edited"), {
+            get description() { return uiTranslate("ui.the_original_image_reference_is_missing_generate_the_image_again_"); },
           });
           closeOverlay();
           return;
         }
         if ((overlay.threadId ?? null) !== referenceThreadId) {
           event.preventDefault();
-          toast.error("This generated image belongs to another chat", {
-            description: "Open the original chat and retry the edit.",
+          toast.error(uiTranslate("ui.this_generated_image_belongs_to_another_chat"), {
+            get description() { return uiTranslate("ui.open_the_original_chat_and_retry_the_edit"); },
           });
           closeOverlay();
           return;
@@ -3180,7 +3181,7 @@ const Composer: FC<{
               maxRows={12}
               autoFocus={!disabled}
               disabled={disabled}
-              aria-label={overlay ? "Image edit instructions" : "Message input"}
+              aria-label={overlay ? uiT("ui.image_edit_instructions") : uiT("ui.message_input")}
               // dir="auto": browser picks LTR/RTL from the first strong char;
               // no effect on Latin / CJK / Devanagari.
               dir="auto"
@@ -3331,8 +3332,7 @@ const Composer: FC<{
                   className="size-6 text-primary"
                 />
                 <span className="text-sm font-medium text-primary">
-                  Drop files here
-                </span>
+                  {uiT("ui.drop_files_here")}</span>
               </div>
             </ComposerPrimitive.AttachmentDropzone>
           )}

@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 /**
  * Sparta Agent – Shared Composer Tools Menu
  *
@@ -119,6 +121,8 @@ export const SharedComposerToolsMenu: FC<SharedComposerToolsMenuProps> = ({
   recentProjects,
   openProject,
 }) => {
+  const uiT = useUiT();
+
   const t = useT();
   const plusPins = usePlusMenuPrefsStore((s) => s.pins);
 
@@ -189,7 +193,7 @@ export const SharedComposerToolsMenu: FC<SharedComposerToolsMenuProps> = ({
           className="unsloth-plus-menu w-[208px]"
         >
           {[
-            { label: "Raw JSONL", fn: exportConversationRawJsonl },
+            { get label() { return uiTranslate("ui.raw_jsonl"); }, fn: exportConversationRawJsonl },
             { label: "CSV", fn: exportConversationCsv },
             { label: "ShareGPT JSONL", fn: exportConversationShareGPT },
             {
@@ -202,7 +206,7 @@ export const SharedComposerToolsMenu: FC<SharedComposerToolsMenuProps> = ({
               disabled={exportThreadIds.length === 0}
               onSelect={() => {
                 if (exportThreadIds.length === 0) {
-                  toast.error("No conversation to export yet.");
+                  toast.error(uiTranslate("ui.no_conversation_to_export_yet"));
                   return;
                 }
                 (async () => {
@@ -211,7 +215,7 @@ export const SharedComposerToolsMenu: FC<SharedComposerToolsMenuProps> = ({
                   }
                 })().catch((error) => {
                   if (!isDownloadCancelled(error)) {
-                    toast.error("Export failed.");
+                    toast.error(uiTranslate("chat.menu.exportFailed"));
                   }
                 });
               }}
@@ -285,7 +289,7 @@ export const SharedComposerToolsMenu: FC<SharedComposerToolsMenuProps> = ({
       <DropdownMenuTrigger asChild={true}>
         <button
           type="button"
-          aria-label="Tools and attachments"
+          aria-label={uiT("ui.tools_and_attachments")}
           className="unsloth-composer-plus"
         >
           <PlusIcon className="size-[22px] stroke-[1.75px]" />
@@ -306,8 +310,7 @@ export const SharedComposerToolsMenu: FC<SharedComposerToolsMenuProps> = ({
         {hasAudioInput && (
           <DropdownMenuItem onSelect={onSelectAudioFiles}>
             <HeadphonesIcon />
-            Upload audio
-          </DropdownMenuItem>
+            {uiT("ui.upload_audio")}</DropdownMenuItem>
         )}
         <DropdownMenuItem
           disabled={searchDisabled}
@@ -362,8 +365,7 @@ export const SharedComposerToolsMenu: FC<SharedComposerToolsMenuProps> = ({
             onSelect={onToggleImages}
           >
             <HugeiconsIcon icon={Image03Icon} strokeWidth={2} />
-            Images
-            {imageToolsEnabled && !imageDisabled ? (
+            {uiT("chat.composer.imagesPill")}{imageToolsEnabled && !imageDisabled ? (
               <HugeiconsIcon
                 icon={Tick02Icon}
                 strokeWidth={2}

@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { toast } from "@/lib/toast";
 import { appendSample, computeTransferStats } from "@/lib/transfer-stats";
 import { invalidateGgufVariantsCache } from "../inventory/api";
@@ -829,7 +830,7 @@ function applyCancelResult(
     );
   } else if (live?.pollingStarted) {
     patchJob(key, { state: "running" });
-    toast.error("Couldn't cancel the download. It's still running.");
+    toast.error(uiTranslate("ui.couldn_t_cancel_the_download_it_s_still_running"));
   } else {
     finalize(key, "cancelled");
   }
@@ -959,7 +960,7 @@ export async function cancelJob(key: string): Promise<void> {
       live.cancelRequested = false;
     }
     patchJob(key, { state: "running" });
-    toast.error("Couldn't cancel the download. It's still running.");
+    toast.error(uiTranslate("ui.couldn_t_cancel_the_download_it_s_still_running"));
   }
 }
 

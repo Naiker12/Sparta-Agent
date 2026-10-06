@@ -10,7 +10,7 @@ import type {
   CompleteAttachment,
   PendingAttachment,
 } from "@assistant-ui/react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { externalModelLabel } from "./lib/external-model-label";
 import { useChatRuntimeStore } from "./stores/chat-runtime-store";
 

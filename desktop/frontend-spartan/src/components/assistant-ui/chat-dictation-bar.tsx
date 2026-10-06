@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import { Spinner } from "@/components/ui/spinner";
 import {
   cancelActiveStudioDictation,
@@ -43,6 +44,8 @@ export const ChatDictationBar: FC<{
   /** Send is unavailable (e.g. an attachment is still uploading). */
   sendDisabled?: boolean;
 }> = ({ onSend, sendDisabled }) => {
+  const uiT = useUiT();
+
   const aui = useAui();
   const isDictating = useAuiState((s) => s.composer.dictation != null);
   // Which button started transcription, so only it shows the spinner.
@@ -221,7 +224,7 @@ export const ChatDictationBar: FC<{
       // order-2 places the bar in the input's slot after the left "+" tools.
       // No row gap: the wave padding and the timer margin set the spacing.
       className="unsloth-dictation-bar order-2 m-0 flex min-w-0 flex-1 items-center gap-0 border-0 p-0"
-      aria-label="Voice recording"
+      aria-label={uiT("ui.voice_recording")}
     >
       <div
         ref={rowRef}
@@ -246,10 +249,10 @@ export const ChatDictationBar: FC<{
         <TooltipIconButton
           type="button"
           tooltip={
-            transcribing !== null ? "Cancel transcription" : "Stop recording"
+            transcribing !== null ? uiT("ui.cancel_transcription") : uiT("ui.stop_recording")
           }
           aria-label={
-            transcribing !== null ? "Cancel transcription" : "Stop recording"
+            transcribing !== null ? uiT("ui.cancel_transcription") : uiT("ui.stop_recording")
           }
           variant="ghost"
           onClick={stop}
@@ -265,8 +268,8 @@ export const ChatDictationBar: FC<{
         </TooltipIconButton>
         <TooltipIconButton
           type="button"
-          tooltip={transcribing === "send" ? "Transcribing…" : "Send message"}
-          aria-label="Send message"
+          tooltip={transcribing === "send" ? uiT("ui.transcribing_") : uiT("chat.composer.sendMessage")}
+          aria-label={uiT("chat.composer.sendMessage")}
           variant="default"
           onClick={send}
           disabled={transcribing !== null || sendDisabled}

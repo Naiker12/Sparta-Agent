@@ -1,3 +1,4 @@
+import { translate as uiTranslate } from "@/i18n";
 import { getLocale } from "@/i18n";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { CHAT_PROJECTS_UPDATED_EVENT } from "../api/chat-api";
@@ -150,7 +151,7 @@ export async function renameChatProject(
 ): Promise<void> {
   const trimmed = name.trim();
   if (!trimmed) {
-    throw new Error("Project name is required.");
+    throw new Error(uiTranslate("ui.project_name_is_required"));
   }
   await updateStoredChatProject(projectId, { name: trimmed });
 }
@@ -323,7 +324,7 @@ export async function chooseProjectWorkspaceFolder(): Promise<string | null> {
   const filesystem = nativeFilesystem();
   if (!filesystem) {
     throw new Error(
-      "Connecting a local folder is available only in the desktop app.",
+      uiTranslate("ui.connecting_a_local_folder_is_available_only_in_the_desktop_app"),
     );
   }
   return filesystem.openFolderDialog();

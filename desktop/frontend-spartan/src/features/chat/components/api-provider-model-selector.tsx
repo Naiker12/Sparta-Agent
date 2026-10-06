@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -10,7 +12,7 @@ import { saveReasoningCatalog } from "../catalog-reasoning";
 import { cn } from "@/lib/utils";
 import { Check, ChevronDown, RefreshCw, Settings2 } from "lucide-react";
 import { useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 type Props = {
   models: ExternalModelOption[];
@@ -22,6 +24,8 @@ type Props = {
 };
 
 export function ApiProviderModelSelector({ models, value, onValueChange, onConfigureProviders, className, triggerDataTour }: Props) {
+  const uiT = useUiT();
+
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -49,7 +53,7 @@ export function ApiProviderModelSelector({ models, value, onValueChange, onConfi
       const current = useExternalProvidersStore.getState();
       current.setProviders(current.providers.map(row => row.id === p.id ? { ...row, availableModels: catalog.map(m => m.id) } : row));
     }));
-    if (results.some(r => r.status === "rejected")) toast.error("No se pudo actualizar un catálogo. Puedes usar los modelos guardados o revisar la conexión.");
+    if (results.some(r => r.status === "rejected")) toast.error(uiTranslate("ui.could_not_refresh_a_catalog_use_the_saved_models_or_check_the_con"));
     setLoaded(true);
     setLoading(false);
   }
@@ -72,18 +76,18 @@ export function ApiProviderModelSelector({ models, value, onValueChange, onConfi
     finally { setSaving(false); }
   }
 
-  if (!options.length && !connected.length) return <Button variant="ghost" size="sm" onClick={onConfigureProviders} disabled={!onConfigureProviders} aria-label="Elegir proveedor API para empezar a conversar">Elegir proveedor</Button>;
+  if (!options.length && !connected.length) return <Button variant="ghost" size="sm" onClick={onConfigureProviders} disabled={!onConfigureProviders} aria-label={uiT("ui.choose_an_api_provider_to_start_chatting")}>{uiT("ui.choose_provider")}</Button>;
 
   return <Popover open={open} onOpenChange={next => { setOpen(next); if (next && !loaded) void refresh(); }}>
-    <PopoverTrigger asChild><Button variant="ghost" size="sm" className={cn("composer-model-selector min-w-0 max-w-[180px] rounded-full", className)} data-tour={triggerDataTour} aria-label="Seleccionar modelo" title={selected ? `${selected.providerName}: ${selected.name}` : "Seleccionar modelo"} disabled={saving}>
+    <PopoverTrigger asChild><Button variant="ghost" size="sm" className={cn("composer-model-selector min-w-0 max-w-[180px] rounded-full", className)} data-tour={triggerDataTour} aria-label={uiT("studio.modelPicker.selectModel")} title={selected ? `${selected.providerName}: ${selected.name}` : uiT("studio.modelPicker.selectModel")} disabled={saving}>
       {selected && <ApiProviderLogo providerType={selected.providerType} className="size-4 shrink-0" />}
-      <span className="min-w-0 truncate">{selected?.name.replace(/^[^/:]+[:/]/, "") ?? "Seleccionar modelo"}</span><ChevronDown className="shrink-0" data-icon="inline-end" />
+      <span className="min-w-0 truncate">{selected?.name.replace(/^[^/:]+[:/]/, "") ?? uiT("studio.modelPicker.selectModel")}</span><ChevronDown className="shrink-0" data-icon="inline-end" />
     </Button></PopoverTrigger>
     <PopoverContent side="top" align="end" sideOffset={8} className="w-[min(360px,calc(100vw-32px))] gap-0 overflow-hidden rounded-2xl border p-0 shadow-xl">
       <Command>
-        <CommandInput placeholder="Buscar modelo o proveedor…" />
+        <CommandInput placeholder={uiT("ui.search_model_or_provider")} />
         <CommandList className="max-h-80">
-          <CommandEmpty>{loading ? "Cargando modelos…" : "No hay modelos que coincidan."}</CommandEmpty>
+          <CommandEmpty>{loading ? uiT("picker.loadingModels") : uiT("ui.no_matching_models")}</CommandEmpty>
           {groups.map(id => { const rows = options.filter(m => m.providerId === id); return <CommandGroup key={id} heading={rows[0]?.providerName}>
             {rows.map(m => <CommandItem key={m.id} value={`${m.providerName} ${m.name} ${m.id}`} disabled={saving} onSelect={() => void choose(m)} className="gap-3 py-2.5">
               <ApiProviderLogo providerType={m.providerType} className="size-4" />
@@ -94,8 +98,8 @@ export function ApiProviderModelSelector({ models, value, onValueChange, onConfi
         </CommandList>
       </Command>
       <div className="flex items-center justify-between gap-2 border-t p-2">
-        <Button variant="ghost" size="sm" onClick={() => void refresh()} disabled={loading || saving}><RefreshCw data-icon="inline-start" className={cn(loading && "animate-spin")} />{loading ? "Actualizando…" : "Actualizar"}</Button>
-        <Button variant="ghost" size="sm" onClick={() => { setOpen(false); onConfigureProviders?.(); }} disabled={!onConfigureProviders}><Settings2 data-icon="inline-start" />Proveedores</Button>
+        <Button variant="ghost" size="sm" onClick={() => void refresh()} disabled={loading || saving}><RefreshCw data-icon="inline-start" className={cn(loading && "animate-spin")} />{loading ? uiT("ui.updating") : uiT("update.update")}</Button>
+        <Button variant="ghost" size="sm" onClick={() => { setOpen(false); onConfigureProviders?.(); }} disabled={!onConfigureProviders}><Settings2 data-icon="inline-start" />{uiT("ui.providers")}</Button>
       </div>
     </PopoverContent>
   </Popover>;

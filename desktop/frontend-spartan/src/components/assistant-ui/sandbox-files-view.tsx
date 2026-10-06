@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 import {
   Download01Icon,
   File02Icon,
@@ -5,7 +6,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 
 import { Spinner } from "@/components/ui/spinner";
 import { authFetch, getAuthToken } from "@/features/auth";
@@ -61,6 +62,8 @@ function SandboxFileRow({
   sessionId: string;
   file: SandboxFile;
 }) {
+  const uiT = useUiT();
+
   const t = useT();
   const [busy, setBusy] = useState(false);
   const [_previewing, setPreviewing] = useState(false);
@@ -183,7 +186,7 @@ function SandboxFileRow({
             {file.name}
           </h4>
           <p className="text-xs text-muted-foreground mt-0.5 truncate">
-            {isHtmlFile ? "Página web creada" : fileTypeLabel(t, file.name)}
+            {isHtmlFile ? uiT("ui.created_web_page") : fileTypeLabel(t, file.name)}
           </p>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import { useT as useUiT } from "@/i18n";
 /**
  * Sparta Agent - Toggles de Herramientas y Estado Visual (ToolToggles)
  * Provee pills interactivos para Web Search, Code Execution, Image Generation,
@@ -24,6 +25,8 @@ import { type FC, useEffect, useRef, useState } from "react";
 import { PillGlyph } from "./reasoning-toggle";
 
 export const WebSearchToggle: FC = () => {
+  const uiT = useUiT();
+
   const t = useT();
   const toolsEnabled = useChatRuntimeStore((s) => s.toolsEnabled);
   const modelLoaded = useChatRuntimeStore(
@@ -68,7 +71,7 @@ export const WebSearchToggle: FC = () => {
       className="composer-pill-btn"
       data-pill-label={t("chat.composer.searchPill")}
       data-active={toolsEnabled && !disabled ? "true" : "false"}
-      aria-label={toolsEnabled ? "Disable web search" : "Enable web search"}
+      aria-label={toolsEnabled ? uiT("ui.disable_web_search") : uiT("ui.enable_web_search")}
     >
       <PillGlyph>
         <GlobeIcon className="size-3.5" />
@@ -79,6 +82,8 @@ export const WebSearchToggle: FC = () => {
 };
 
 export const CodeToolsToggle: FC = () => {
+  const uiT = useUiT();
+
   const t = useT();
   const codeToolsEnabled = useChatRuntimeStore((s) => s.codeToolsEnabled);
   const modelLoaded = useChatRuntimeStore(
@@ -105,7 +110,7 @@ export const CodeToolsToggle: FC = () => {
       data-pill-label={t("chat.composer.codePill")}
       data-active={codeToolsEnabled && !disabled ? "true" : "false"}
       aria-label={
-        codeToolsEnabled ? "Disable code execution" : "Enable code execution"
+        codeToolsEnabled ? uiT("ui.disable_code_execution") : uiT("ui.enable_code_execution")
       }
     >
       <PillGlyph>
@@ -117,6 +122,8 @@ export const CodeToolsToggle: FC = () => {
 };
 
 export const ImagesToggle: FC = () => {
+  const uiT = useUiT();
+
   const t = useT();
   const modelLoaded = useChatRuntimeStore(
     (s) => !!s.params.checkpoint && !s.modelLoading,
@@ -142,8 +149,8 @@ export const ImagesToggle: FC = () => {
       data-active={imageToolsEnabled && !disabled ? "true" : "false"}
       aria-label={
         imageToolsEnabled
-          ? "Disable image generation"
-          : "Enable image generation"
+          ? uiT("ui.disable_image_generation")
+          : uiT("ui.enable_image_generation")
       }
     >
       <PillGlyph>
@@ -159,6 +166,8 @@ export const ImagesToggle: FC = () => {
 };
 
 export const ArtifactsToggle: FC = () => {
+  const uiT = useUiT();
+
   const artifactsEnabled = useChatRuntimeStore((s) => s.artifactsEnabled);
   const setArtifactsEnabled = useChatRuntimeStore((s) => s.setArtifactsEnabled);
   if (!artifactsEnabled) {
@@ -172,7 +181,7 @@ export const ArtifactsToggle: FC = () => {
       className="composer-pill-btn"
       data-pill-label="Canvas"
       data-active="true"
-      aria-label="Disable canvas"
+      aria-label={uiT("ui.disable_canvas")}
     >
       <PillGlyph>
         <HugeiconsIcon
@@ -181,7 +190,7 @@ export const ArtifactsToggle: FC = () => {
           strokeWidth={2}
         />
       </PillGlyph>
-      <span>Canvas</span>
+      <span>{uiT("chat.timing.canvas")}</span>
     </button>
   );
 };

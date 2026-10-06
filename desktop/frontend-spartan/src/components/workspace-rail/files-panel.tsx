@@ -1,3 +1,5 @@
+import { translate as uiTranslate } from "@/i18n";
+import { useT as useUiT } from "@/i18n";
 import { getProjectNativeFilesystem } from "@/features/chat/hooks/use-chat-projects";
 import {
   type GitFileStatus,
@@ -36,6 +38,8 @@ export function FilesPanel({
   flatView = false,
   project,
 }: { flatView?: boolean; project: ProjectRecord | FileScope | null }) {
+  const uiT = useUiT();
+
   const searchQuery = useWorkspaceStore((state) => state.searchQuery);
   const setSearchQuery = useWorkspaceStore((state) => state.setSearchQuery);
   const changedFiles = useWorkspaceStore((state) => state.changedFiles);
@@ -73,7 +77,7 @@ export function FilesPanel({
       const filesystem = getProjectNativeFilesystem();
       if (!filesystem?.readDirLevel) {
         setError(
-          "El explorador de archivos solo está disponible en la aplicación de escritorio.",
+          uiTranslate("ui.the_file_explorer_is_only_available_in_the_desktop_application"),
         );
         return;
       }
@@ -187,7 +191,7 @@ export function FilesPanel({
       } catch (reason) { if (current === generation.current) setError(reason instanceof Error ? reason.message : "Error de imagen"); }
       return;
     }
-    if (/\.(zip|exe|dll|7z|rar|woff2?|ttf|mp4|mp3|bin)$/i.test(filePath)) { setError("Este archivo binario no admite vista de texto."); return; }
+    if (/\.(zip|exe|dll|7z|rar|woff2?|ttf|mp4|mp3|bin)$/i.test(filePath)) { setError(uiTranslate("ui.this_binary_file_has_no_text_view")); return; }
     let result;
     try { result = await getProjectNativeFilesystem()?.readFile?.(project.id, filePath); }
     catch (reason) { if (current === generation.current) setError(reason instanceof Error ? reason.message : "No se pudo abrir el archivo."); return; }
@@ -199,8 +203,7 @@ export function FilesPanel({
   if (!project?.connectedFolderPath) {
     return (
       <div className="flex h-full items-center justify-center p-6 text-center text-sm text-muted-foreground">
-        Conecta una carpeta de proyecto para ver sus archivos reales.
-      </div>
+        {uiT("ui.connect_a_project_folder_to_view_its_actual_files")}</div>
     );
   }
 
@@ -215,7 +218,7 @@ export function FilesPanel({
             className={cn("size-5 text-blue-600", !flatView && "hidden")}
           />
           <h2 className="font-serif text-2xl font-bold tracking-tight text-foreground/90">
-            {flatView ? "Cambios de archivos" : "Explorador de archivos"}
+            {flatView ? uiT("ui.file_changes") : uiT("ui.file_explorer")}
           </h2>
           <button
             type="button"
@@ -225,7 +228,7 @@ export function FilesPanel({
                 : path && void loadDirectory(path)
             }
             className="ml-auto rounded-md p-1.5 text-muted-foreground hover:bg-muted"
-            aria-label="Actualizar"
+            aria-label={uiT("update.update")}
           >
             <RefreshCwIcon
               className={cn("size-4", loading && "animate-spin")}
@@ -234,15 +237,14 @@ export function FilesPanel({
         </div>
         {flatView ? (
           <p className="text-xs text-muted-foreground">
-            {changedFiles.length} archivos cambiados
-          </p>
+            {changedFiles.length} {" "}{uiT("ui.changed_files")}</p>
         ) : (
           <div className="relative">
             <SearchIcon className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
             <input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Buscar en esta carpeta…"
+              placeholder={uiT("ui.search_this_folder")}
               className="w-full rounded-xl border border-border/40 bg-muted/40 py-2 pl-9 pr-3 text-xs"
             />
           </div>
@@ -254,14 +256,13 @@ export function FilesPanel({
         </p>
       )}
       <div className="flex-1 overflow-y-auto p-3">
-        {loading && <p role="status" className="p-3 text-xs text-muted-foreground">Leyendo archivos…</p>}
-        {!loading && !error && !flatView && nodes.length === 0 && <p className="p-3 text-xs text-muted-foreground">La carpeta no contiene archivos visibles.</p>}
+        {loading && <p role="status" className="p-3 text-xs text-muted-foreground">{uiT("ui.reading_files")}</p>}
+        {!loading && !error && !flatView && nodes.length === 0 && <p className="p-3 text-xs text-muted-foreground">{uiT("ui.the_folder_has_no_visible_files")}</p>}
         {flatView ? (
           <div className="space-y-3">
             {changedFiles.length === 0 ? (
               <p className="p-3 text-xs text-muted-foreground">
-                No hay cambios de Git en este proyecto.
-              </p>
+                {uiT("ui.no_git_changes_in_this_project")}</p>
             ) : (
               changedFiles.map((file) => (
                 <button
