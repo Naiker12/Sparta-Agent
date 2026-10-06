@@ -578,3 +578,41 @@ def test_supervisor_starts_discovery_and_stops_it_after_expiry(monkeypatch):
     assert started == [saved['id']]
     assert closed == started
     assert not runtime.workers
+
+
+def test_send_rate_limit_records_activity_and_waits_without_replaying(monkeypatch):
+    saved = account()
+    repo.set_enabled(saved['id'], 'owner', True)
+    repo.ingest(saved['id'], [update()], lambda item: normalize_private_message(item, ['123']))
+    transport = AsyncMock()
+    async def call(method, **kwargs):
+        if method == 'getUpdates':
+            raise asyncio.CancelledError()
+        return True
+    transport.call.side_effect = call
+    transport.send.side_effect = TelegramError('rate_limited', retry_after=45)
+    monkeypatch.setattr(runtime, 'Telegram', lambda _: transport)
+    monkeypatch.setattr(runtime, 'get_secret', lambda *_: 'secret')
+    provider = AsyncMock(return_value='reply')
+    monkeypatch.setattr(runtime, 'respond', provider)
+    waits = []
+    async def wait(duration):
+        waits.append(duration)
+    monkeypatch.setattr(runtime.asyncio, 'sleep', wait)
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(runtime._worker(saved))
+    assert waits == [45]
+    provider.assert_awaited_once()
+    assert repo.claim(saved['id']) is None
+    assert {'reply_failed', 'rate_limited'} <= {event['code'] for event in repo.events('owner')}
+    assert 'connected' not in {event['code'] for event in repo.events('owner')}
+
+
+def test_missing_token_records_error_without_opening_transport(monkeypatch):
+    saved = account()
+    monkeypatch.setattr(runtime, 'get_secret', lambda *_: None)
+    transport = AsyncMock()
+    monkeypatch.setattr(runtime, 'Telegram', transport)
+    asyncio.run(runtime._worker(saved))
+    transport.assert_not_called()
+    assert [event['code'] for event in repo.events('owner')] == ['credentials_error']

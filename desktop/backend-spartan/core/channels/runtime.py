@@ -30,6 +30,7 @@ async def _worker(account):
     token = get_secret(TOKEN_KIND, account_id)
     if not token:
         states[account_id] = 'credentials_error'
+        repo.event(account_id, 'credentials_error')
         return
     transport = Telegram(token)
     last_request: dict[str, float] = {}
@@ -44,10 +45,13 @@ async def _worker(account):
                     return
                 # Paused discovery listens only for a valid single-use link.
                 # It cannot execute a provider or accept ordinary messages.
+                connection_changed = account['enabled'] and states.get(account_id) != 'connected'
                 states[account_id] = 'connected' if account['enabled'] else 'paused'
                 pending = repo.claim(account_id) if account['enabled'] else None
                 if not pending:
                     updates = await transport.call('getUpdates', offset=repo.offset(account_id), timeout=25, limit=20, allowed_updates=['message'])
+                    if connection_changed:
+                        repo.event(account_id, 'connected')
                     captures = [candidate for update in updates if (candidate := pairing.capture(account_id, update))]
                     repo.ingest(account_id, updates, lambda update: normalize_private_message(update, account['allowed_user_ids']) if account['enabled'] and not pairing.is_link(update) else None)
                     for candidate in captures:
@@ -59,6 +63,7 @@ async def _worker(account):
                     conversation_reply = False
                     if message['text'].split() and message['text'].split()[0].split('@')[0].lower() == '/reset':
                         history.reset(account_id, message['user_id'])
+                        repo.event(account_id, 'context_reset')
                         output = 'Conversación reiniciada. El contexto de este chat se ha borrado.' if account['locale'] == 'es' else 'Conversation reset. The context for this chat has been cleared.'
                     elif time.monotonic() - last_request.get(message['user_id'], -100) < 3:
                         output = 'Espera unos segundos antes de enviar otra solicitud.' if account['locale'] == 'es' else 'Wait a few seconds before sending another request.'
@@ -74,6 +79,8 @@ async def _worker(account):
                             else:
                                 output = 'Se alcanzó el límite de 30 consultas por hora. Intenta más tarde.' if account['locale'] == 'es' else 'The 30 requests per hour limit has been reached. Try again later.'
                     await transport.send(message['chat_id'], output)
+                    if connection_changed:
+                        repo.event(account_id, 'connected')
                     if conversation_reply:
                         history.complete(account_id, update_id, message, output)
                     else:
@@ -81,6 +88,12 @@ async def _worker(account):
                     repo.event(account_id, 'reply_sent')
                 except asyncio.CancelledError:
                     repo.finish(account_id, update_id, 'failed')
+                    raise
+                except TelegramError:
+                    repo.finish(account_id, update_id, 'failed')
+                    repo.event(account_id, 'reply_failed')
+                    # Apply the same transport backoff to sending and polling.
+                    # An ambiguous reply is not replayed after the wait.
                     raise
                 except Exception:
                     repo.finish(account_id, update_id, 'failed')

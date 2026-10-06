@@ -1,4 +1,45 @@
 export const channels = {
+  activityView: {
+    recent: "Actividad reciente",
+    window: "Últimos 50 eventos",
+    all: "Todos",
+    responses: "Respuestas",
+    errors: "Errores",
+    connections: "Conexiones",
+    filter: "Filtrar actividad",
+    bot: "Filtrar por bot",
+    allBots: "Todos los bots",
+    needsAttention: "Revisar",
+    unknownBot: "Conexión",
+    noMatches: "Sin eventos para este filtro",
+    noMatchesHelp: "Selecciona otro tipo o bot para ver su actividad.",
+    event: {
+      replySent: "Respuesta enviada",
+      replyFailed: "La respuesta no pudo completarse",
+      credentialsError: "No se pudo autenticar el bot",
+      consumerConflict: "Otro servicio está usando este bot",
+      rateLimited: "Telegram limitó las solicitudes",
+      transportError: "No se pudo conectar con Telegram",
+      saved: "Bot guardado",
+      requested: "Conexión solicitada",
+      paused: "Conexión pausada",
+      connected: "Bot conectado",
+      pairingStarted: "Vinculación iniciada",
+      pairingApproved: "Cuenta autorizada",
+      pairingCancelled: "Vinculación cancelada",
+      contextReset: "Contexto reiniciado",
+      unknown: "Evento registrado",
+    },
+    help: {
+      credentialsError:
+        "Revisa el token en BotFather y vuelve a configurar el bot.",
+      consumerConflict:
+        "Detén la conexión de este bot en la otra aplicación antes de reconectarlo.",
+      rateLimited:
+        "Spartan respetará la espera indicada por Telegram antes de reintentar.",
+      general: "Revisa el proveedor y la conexión del bot en Conexiones.",
+    },
+  },
   pairing: {
     approved: "Tu cuenta ya está autorizada. Spartan está conectando el bot.",
     done: "Listo",

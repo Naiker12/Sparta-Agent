@@ -47,7 +47,7 @@ El frontend consume únicamente `/api/channels`. El transporte no recibe un JWT 
 
 ## Validación
 
-`desktop/backend-spartan/.venv/Scripts/python.exe -m pytest --noconftest tests/test_channels.py -q` desde el backend: 39 pruebas de Canales, almacenamiento temporal, transporte simulado, ninguna credencial real ni mensaje externo.
+`desktop/backend-spartan/.venv/Scripts/python.exe -m pytest --noconftest tests/test_channels.py -q` desde el backend: 41 pruebas de Canales, almacenamiento temporal, transporte simulado, ninguna credencial real ni mensaje externo.
 
 Se usa `--noconftest` porque la configuración general de pruebas de `main` importa `core.inference.diffusion_prequant`, ausente en este checkout. La suite de Canales define su propio aislamiento y no modifica esa configuración general.
 
@@ -82,3 +82,9 @@ La interfaz cubre espera, cuenta detectada, cancelación, renovación, caducidad
 Fuentes: [Deep linking de Telegram](https://core.telegram.org/bots/features#deep-linking) y [User en Bot API](https://core.telegram.org/bots/api#user).
 
 Los datos de una cuenta no aprobada se borran de la solicitud cuando se cancela o caduca; el supervisor limpia solicitudes caducadas una vez por minuto. La interfaz recupera una aprobación completada si su respuesta HTTP se perdió. Las consultas y operaciones de vinculación tienen un límite de quince segundos; la verificación inicial del bot dispone de noventa segundos.
+
+## Actividad
+
+La vista resume respuestas, errores y cambios de conexión sobre los últimos 50 eventos recibidos, no sobre todo el historial ni un periodo diario. Permite filtrar por tipo y por bot, agrupa por fecha local y muestra la hora y orientaciones para errores de autenticación, consumidor duplicado y límites de Telegram. Los eventos nuevos cubren guardado, activación, conexión confirmada, pausa, vinculación, autorización, cancelación y reinicio del contexto. Los eventos desconocidos se presentan como información, sin inventar un fallo.
+
+El contenido del mensaje, los tokens y códigos de vinculación no se incluyen en la actividad. Se conserva el límite existente de eventos por conexión. Los límites de Telegram al enviar se registran y respetan la espera del transporte, sin reintentar un envío ambiguo. Los eventos antiguos no se reconstruyen retroactivamente.

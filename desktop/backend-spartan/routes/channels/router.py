@@ -85,6 +85,7 @@ async def create(body: AccountInput, credential=Depends(ui_credential)):
             account = repo.create_account(credential[0], str(bot['id']), config)
             try:
                 upsert_secret(runtime.TOKEN_KIND, account['id'], body.token)
+                repo.event(account['id'], 'connection_saved')
             except Exception:
                 repo.delete_account(account['id'], credential[0])
                 raise
@@ -105,6 +106,7 @@ async def enable(account_id: str, body: EnabledInput, credential=Depends(ui_cred
         await runtime.stop(account_id)
         with current_credential_write(credential):
             repo.set_enabled(account_id, credential[0], body.enabled)
+            repo.event(account_id, 'connection_requested' if body.enabled else 'connection_paused')
         if body.enabled:
             runtime.states[account_id] = 'connecting'
     return {'ok': True}
@@ -116,6 +118,7 @@ async def start_pairing(account_id: str, credential=Depends(ui_credential)):
         async with runtime.control_lock:
             with current_credential_write(credential):
                 result = pairing.create(account_id, credential[0])
+                repo.event(account_id, 'pairing_started')
             worker = runtime.workers.get(account_id)
             if worker and worker.done():
                 await runtime.stop(account_id)
@@ -140,6 +143,7 @@ async def approve_pairing(account_id: str, session_id: str, credential=Depends(u
         try:
             with current_credential_write(credential):
                 result = pairing.approve(account_id, session_id, credential[0])
+                repo.event(account_id, 'pairing_approved')
         except ValueError as error:
             raise HTTPException(409, str(error)) from None
         await runtime.stop(account_id)
@@ -152,6 +156,7 @@ async def cancel_pairing(account_id: str, session_id: str, credential=Depends(ui
     with current_credential_write(credential):
         if not pairing.cancel(account_id, session_id, credential[0]):
             raise HTTPException(404, 'pairing_not_found')
+        repo.event(account_id, 'pairing_cancelled')
     return {'ok': True}
 
 
