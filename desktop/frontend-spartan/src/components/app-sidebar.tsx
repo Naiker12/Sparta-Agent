@@ -1684,12 +1684,8 @@ export function AppSidebar() {
                 <NavItem
                   icon={BubbleChatIcon}
                   label={t("shell.navigation.channels")}
-                  badge={t("shell.navigation.comingSoon")}
-                  active={false}
-                  disabled={true}
-                  tooltip={t("shell.navigation.channelsComingSoon")}
-                  alwaysTooltip={true}
-                  onClick={() => undefined}
+                  active={pathname === "/channels"}
+                  onClick={() => navigate({ to: "/channels" })}
                   testId="nav-row-channels"
                 />
                 {/* Unpinned destinations, behind one row. */}

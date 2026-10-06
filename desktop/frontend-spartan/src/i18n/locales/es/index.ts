@@ -3,6 +3,7 @@ import type { en } from "../en/index.ts";
 import { apiPage } from "./api-page.ts";
 import { audioPage } from "./audio-page.ts";
 import { chat } from "./chat.ts";
+import { channels } from "./channels.ts";
 import { common } from "./common.ts";
 import { exportPage } from "./export-page.ts";
 import { hub } from "./hub.ts";
@@ -17,6 +18,7 @@ import { tour } from "./tour.ts";
 import { update } from "./update.ts";
 
 export const es = {
+  channels,
   audioPage,
   exportPage,
   hub,

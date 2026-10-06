@@ -298,6 +298,7 @@ from routes.prompts import router as prompts_router
 from routes.profile_stats import router as profile_stats_router
 from routes.memory import router as memory_router
 from routes.tasks import router as tasks_router
+from routes.channels import router as channels_router
 from routes.work_runs import router as work_runs_router
 from auth import storage
 from auth.authentication import get_current_subject
@@ -608,9 +609,16 @@ async def lifespan(app: FastAPI):
     )
     from core.inference.task_scheduler import scheduler_loop
     _automation_task = asyncio.create_task(scheduler_loop())
+    from core.channels.runtime import run as run_channels
+    _channels_task = asyncio.create_task(run_channels())
     try:
         yield
     finally:
+        _channels_task.cancel()
+        try:
+            await _channels_task
+        except asyncio.CancelledError:
+            pass
         _automation_task.cancel()
         try:
             await _automation_task
@@ -1260,6 +1268,7 @@ app.include_router(skills_router, prefix = "/api/skills", tags = ["skills"])
 app.include_router(prompts_router, prefix = "/api/prompts", tags = ["prompts"])
 app.include_router(memory_router, prefix = "/api/memory", tags = ["memory"])
 app.include_router(tasks_router, prefix = "/api/tasks", tags = ["tasks"])
+app.include_router(channels_router, prefix = "/api/channels", tags = ["channels"])
 app.include_router(work_runs_router, prefix = "/api/work-runs", tags = ["work-runs"])
 app.include_router(profile_stats_router, prefix = "/api/profile", tags = ["profile"])
 app.include_router(picker_templates_router, prefix = "/api/picker", tags = ["picker"])

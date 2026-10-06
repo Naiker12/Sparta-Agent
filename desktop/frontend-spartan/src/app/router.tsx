@@ -6,6 +6,7 @@ import { Route as apiMonitorRoute } from "./routes/api";
 import { Route as audioRoute } from "./routes/audio";
 import { Route as changePasswordRoute } from "./routes/change-password";
 import { Route as chatRoute } from "./routes/chat";
+import { Route as channelsRoute } from "./routes/channels";
 import { Route as dataRecipesRoute } from "./routes/data-recipes";
 import { Route as editRecipeRoute } from "./routes/data-recipes.$recipeId";
 import { Route as exportRoute } from "./routes/export";
@@ -22,6 +23,7 @@ const routeTree = rootRoute.addChildren([
   changePasswordRoute,
   settingsRoute,
   chatRoute,
+  channelsRoute,
   projectsRoute,
   dataRecipesRoute,
   editRecipeRoute,
