@@ -90,6 +90,7 @@ export function visibleWork(
           workTitle(run),
           run.thread_title,
           run.project_name,
+          run.request.channelName,
           run.result?.summary,
         ]
           .filter(Boolean)
@@ -101,6 +102,16 @@ export function visibleWork(
 }
 
 export function workExplanation(run: WorkRun): string {
+  if (run.source_kind === "telegram") {
+    if (run.status === "completed")
+      return uiTranslate("channels.work.completed");
+    if (run.status === "cancelled")
+      return uiTranslate("channels.work.cancelled");
+    if (run.status === "failed") return uiTranslate("channels.work.failed");
+    if (run.status === "needs_review")
+      return uiTranslate("channels.work.review");
+    return uiTranslate("channels.work.running");
+  }
   if (run.source_kind === "manual" && run.status === "queued")
     return uiTranslate("ui.request_saved_no_executor_is_connected_yet");
   if (run.status === "needs_review")

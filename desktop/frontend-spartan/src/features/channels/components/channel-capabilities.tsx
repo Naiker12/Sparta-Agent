@@ -29,6 +29,7 @@ export function ChannelCapabilities({
                 "help",
                 "status",
                 "provider",
+                "usage",
                 "tools",
                 "skills",
                 "mcp",

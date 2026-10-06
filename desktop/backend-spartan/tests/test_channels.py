@@ -1,7 +1,7 @@
 import asyncio
 import json
 import logging
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, ANY
 
 import httpx
 import pytest
@@ -369,10 +369,14 @@ def test_worker_history_only_commits_after_acknowledged_delivery(monkeypatch, de
     provider.assert_awaited_once_with(saved, 'follow-up', history=[
         {'role': 'user', 'content': 'previous question'},
         {'role': 'assistant', 'content': 'previous answer'},
-    ])
+    ], on_usage=ANY)
     turns = history.messages(saved['id'], '123')
     assert len(turns) == (2 if delivery_fails else 4)
     assert turns[-1]['content'] == ('previous answer' if delivery_fails else 'follow-up answer')
+    with repo.connection() as db:
+        run = db.execute("SELECT * FROM work_runs WHERE source_kind='telegram'").fetchone()
+        assert run['status'] == ('needs_review' if delivery_fails else 'completed')
+        assert json.loads(run['result_json'])['summary'] == ('' if delivery_fails else 'follow-up answer')
 
 
 def linkable_account(owner='owner', bot='1'):
@@ -812,3 +816,153 @@ def test_revoked_queued_user_never_reaches_provider(monkeypatch):
         asyncio.run(runtime._worker(saved))
     provider.assert_not_called()
     transport.send.assert_not_called()
+
+
+def test_usage_reports_are_cumulative_validated_and_sender_scoped():
+    from storage.channels import usage
+    from core.channels.catalog import command_reply
+    saved = account()
+    usage.start(saved, 1, '123')
+    for counts in [{'prompt_tokens': 12, 'completion_tokens': 0},
+                   {'prompt_tokens': 12, 'completion_tokens': 8, 'total_tokens': 20},
+                   {'prompt_tokens': 12, 'completion_tokens': 8, 'total_tokens': 20}]:
+        usage.record(saved['id'], 1, counts)
+    usage.finish(saved['id'], 1, 'completed')
+    usage.start(saved, 2, '456')
+    usage.record(saved['id'], 2, {'input_tokens': 99, 'output_tokens': 1})
+    usage.finish(saved['id'], 2, 'completed')
+    usage.start(saved, 3, '123')  # Unknown usage must remain unknown.
+    usage.record(saved['id'], 3, {'prompt_tokens': True, 'completion_tokens': -1, 'total_tokens': '100'})
+    usage.finish(saved['id'], 3, 'cancelled')
+    personal = usage.summary(saved['id'], '123')
+    assert personal['total_tokens'] == 20
+    assert personal['requests'] == 2 and personal['complete_requests'] == 1
+    assert usage.summary(saved['id'])['total_tokens'] == 120
+    reply = command_reply('/usage', saved, user_id='123')
+    assert 'Tokens conocidos: 20' in reply and '99' not in reply
+    assert 'parcial' in reply and 'no es tu saldo' in reply
+    assert usage.normalize({'prompt_tokens': 1_000_000_001, 'completion_tokens': 2.5}) == {}
+
+
+def test_usage_no_reports_and_partial_reports_are_not_claimed_as_zero():
+    from storage.channels import usage
+    from core.channels.catalog import command_reply, COMMANDS
+    saved = account()
+    usage.start(saved, 1, '123')
+    assert 'todavía no ha reportado' in command_reply('/usage', saved, user_id='123')
+    usage.record(saved['id'], 1, {'total_tokens': 8})
+    reply = command_reply('/usage', saved, user_id='123')
+    assert 'Entrada reportada: no disponible' in reply
+    assert 'Salida reportada: no disponible' in reply
+    assert 'Tokens conocidos: 8' in reply
+    assert all('usage' in dict(COMMANDS[locale]) for locale in ('en', 'es'))
+    assert 'Provider balance: unavailable' in command_reply('/usage', {**saved, 'locale': 'en'}, user_id='123')
+
+
+def test_usage_window_and_request_budget_are_independent():
+    from storage.channels import usage
+    saved = account()
+    usage.start(saved, 1, '123')
+    usage.record(saved['id'], 1, {'prompt_tokens': 2, 'completion_tokens': 3})
+    with repo.connection() as db:
+        db.execute('UPDATE channel_usage SET created_at=0')
+    repo.reserve_provider_request(saved['id'])
+    value = usage.summary(saved['id'], '123')
+    assert value['requests'] == 0 and value['total_tokens'] == 0
+    assert value['hourly_requests_remaining'] == 29
+
+
+def test_executor_forwards_reported_usage_without_inserting_it_into_reply(monkeypatch):
+    from core.channels.executor import respond
+    from core.inference import task_scheduler
+    packets = []
+    class Client:
+        async def stream_chat_completion(self, **kwargs):
+            assert kwargs['tool_choice'] == 'none'
+            yield 'data: ' + json.dumps({'choices': [{'delta': {'content': 'answer'}}]})
+            yield 'data: ' + json.dumps({'choices': [], 'usage': {'prompt_tokens': 4, 'completion_tokens': 2, 'total_tokens': 6}})
+    monkeypatch.setattr(task_scheduler, 'make_client', lambda *_: Client())
+    result = asyncio.run(respond({'provider_id': 'p', 'model': 'm', 'locale': 'en'}, 'question', on_usage=packets.append))
+    assert result == 'answer'
+    assert packets == [{'prompt_tokens': 4, 'completion_tokens': 2, 'total_tokens': 6}]
+
+
+def test_channel_work_owner_scope_recovery_and_no_second_executor():
+    from storage.channels import work
+    from storage.work_runs_db import WorkRunRepository
+    from storage.prompt_queues_db import PromptQueueRepository
+    saved = account()
+    repo.set_enabled(saved['id'], 'owner', True)
+    message = normalize_private_message(update(), ['123'])
+    run_id = work.start(saved['id'], 1, message)
+    shared = WorkRunRepository()
+    assert shared.get('owner', run_id)['status'] == 'running'
+    with pytest.raises(KeyError):
+        shared.get('other owner', run_id)
+    assert shared.claim('owner', 'manual-worker') is None
+    from core.prompt_queue_contracts import QueueCheckpoint
+    from storage.chat_work_projection import synchronize_chat_work
+    with repo.connection() as db:
+        checkpoint = QueueCheckpoint.model_validate({'version': 1, 'threadId': 'unrelated', 'projectId': None, 'items': []})
+        synchronize_chat_work(db, 'owner', saved['id'], checkpoint, 1000)
+    assert shared.get('owner', run_id)['status'] == 'running'
+    with pytest.raises(ValueError, match='reserved'):
+        shared.create('owner', f"channel:{saved['id']}:2", {'prompt': 'spoof'})
+    assert PromptQueueRepository().overview('owner')['runs'][0]['source_kind'] == 'telegram'
+    with pytest.raises(ValueError, match='already_observed'):
+        work.start(saved['id'], 1, message)
+    work.recover(saved['id'])
+    assert shared.get('owner', run_id)['status'] == 'needs_review'
+    work.finish(run_id, 'completed', 'late answer')
+    assert shared.get('owner', run_id)['status'] == 'needs_review'
+    assert PromptQueueRepository().overview('other owner')['runs'] == []
+
+
+def test_channel_work_requires_authorized_user_and_delete_removes_projections():
+    from storage.channels import work, usage
+    saved = account()
+    message = normalize_private_message(update(), ['123'])
+    with pytest.raises(ValueError, match='not_authorized'):
+        work.start(saved['id'], 1, message)
+    repo.set_enabled(saved['id'], 'owner', True)
+    with pytest.raises(ValueError, match='not_authorized'):
+        work.start(saved['id'], 1, {**message, 'user_id': '456'})
+    run_id = work.start(saved['id'], 1, message)
+    usage.start(saved, 1, '123')
+    work.finish(run_id, 'completed', 'reply')
+    work.finish(run_id, 'failed', 'must not overwrite result')
+    with repo.connection() as db:
+        assert db.execute('SELECT status FROM work_runs WHERE id=?', (run_id,)).fetchone()[0] == 'completed'
+    assert not repo.delete_account(saved['id'], 'other owner')
+    assert repo.delete_account(saved['id'], 'owner')
+    with repo.connection() as db:
+        assert db.execute('SELECT COUNT(*) FROM channel_usage').fetchone()[0] == 0
+        assert db.execute('SELECT COUNT(*) FROM work_run_events').fetchone()[0] == 0
+        assert db.execute('SELECT COUNT(*) FROM work_runs').fetchone()[0] == 0
+
+
+def test_usage_command_after_reply_is_local_and_does_not_consume_budget(monkeypatch):
+    from storage.channels import usage
+    saved = account()
+    repo.set_enabled(saved['id'], 'owner', True)
+    repo.ingest(saved['id'], [update(), update(text='/usage', update_id=2)], lambda item: normalize_private_message(item, ['123']))
+    transport = AsyncMock()
+    async def call(method, **kwargs):
+        if method == 'getUpdates':
+            raise asyncio.CancelledError()
+        return True
+    transport.call.side_effect = call
+    monkeypatch.setattr(runtime, 'Telegram', lambda _: transport)
+    monkeypatch.setattr(runtime, 'get_secret', lambda *_: 'secret')
+    async def reply(*args, on_usage=None, **kwargs):
+        on_usage({'prompt_tokens': 7, 'completion_tokens': 3, 'total_tokens': 10})
+        return 'answer'
+    provider = AsyncMock(side_effect=reply)
+    monkeypatch.setattr(runtime, 'respond', provider)
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(runtime._worker(saved))
+    provider.assert_awaited_once()
+    assert transport.send.await_count == 2
+    assert 'Tokens conocidos: 10' in transport.send.call_args.args[1]
+    assert usage.summary(saved['id'])['hourly_requests_remaining'] == 29
+    assert usage.summary(saved['id'])['requests'] == 1

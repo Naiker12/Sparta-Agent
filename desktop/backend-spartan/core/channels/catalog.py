@@ -1,8 +1,8 @@
 """Safe inventory. Never expose headers, credentials, commands or skill paths."""
 
 COMMANDS = {
-    'es': [('help', 'Ver comandos y capacidades'), ('status', 'Estado de esta conexión'), ('provider', 'Proveedor y modelo de esta conexión'), ('tools', 'Permisos de herramientas'), ('skills', 'Skills instaladas'), ('mcp', 'Servidores MCP configurados'), ('cancel', 'Cancelar mi consulta en curso'), ('reset', 'Reiniciar esta conversación')],
-    'en': [('help', 'Show commands and capabilities'), ('status', 'Connection status'), ('provider', 'Provider and model for this connection'), ('tools', 'Tool permissions'), ('skills', 'Installed skills'), ('mcp', 'Configured MCP servers'), ('cancel', 'Cancel my active request'), ('reset', 'Reset this conversation')],
+    'es': [('help', 'Ver comandos y capacidades'), ('status', 'Estado de esta conexión'), ('provider', 'Proveedor y modelo de esta conexión'), ('usage', 'Mi consumo y límite local de consultas'), ('tools', 'Permisos de herramientas'), ('skills', 'Skills instaladas'), ('mcp', 'Servidores MCP configurados'), ('cancel', 'Cancelar mi consulta en curso'), ('reset', 'Reiniciar esta conversación')],
+    'en': [('help', 'Show commands and capabilities'), ('status', 'Connection status'), ('provider', 'Provider and model for this connection'), ('usage', 'My usage and local request limit'), ('tools', 'Tool permissions'), ('skills', 'Installed skills'), ('mcp', 'Configured MCP servers'), ('cancel', 'Cancel my active request'), ('reset', 'Reset this conversation')],
 }
 
 
@@ -17,7 +17,7 @@ def inventory():
     }
 
 
-def command_reply(text: str, account: dict):
+def command_reply(text: str, account: dict, *, user_id=None):
     if not text.startswith('/'):
         return None
     command = text.split()[0].split('@')[0].lower()
@@ -28,6 +28,27 @@ def command_reply(text: str, account: dict):
         return 'Spartan conectado. Acceso privado autorizado.' if spanish else 'Spartan connected. Authorized private access.'
     if command == '/provider':
         return f"{account['provider_name']} · {account['model']}"
+    if command == '/usage':
+        if user_id is None:
+            return 'Uso no disponible.' if spanish else 'Usage unavailable.'
+        from storage.channels.usage import summary
+        value = summary(account['id'], user_id)
+        lines = [
+            'Tu uso en este bot · últimas 24 horas' if spanish else 'Your usage in this bot · last 24 hours',
+            ('Consultas: ' if spanish else 'Requests: ') + str(value['requests']),
+        ]
+        if value['reported_requests']:
+            unavailable = 'no disponible' if spanish else 'unavailable'
+            lines += [('Entrada reportada: ' if spanish else 'Reported input: ') + (str(value['prompt_tokens']) if value['input_reports'] else unavailable),
+                      ('Salida reportada: ' if spanish else 'Reported output: ') + (str(value['completion_tokens']) if value['output_reports'] else unavailable),
+                      ('Tokens conocidos: ' if spanish else 'Known tokens: ') + str(value['total_tokens'])]
+        else:
+            lines.append('El proveedor todavía no ha reportado tokens.' if spanish else 'The provider has not reported tokens yet.')
+        if value['complete_requests'] < value['requests']:
+            lines.append('Hay consultas con datos de uso incompletos o no disponibles; el total puede ser parcial.' if spanish else 'Some requests have incomplete or unavailable usage data; the total may be partial.')
+        lines.append(('Límite local compartido del bot: ' if spanish else 'Bot shared local limit: ') + str(value['hourly_requests_remaining']) + '/30 ' + ('consultas disponibles en la ventana móvil de una hora.' if spanish else 'requests available in the rolling one-hour window.'))
+        lines.append('Saldo del proveedor: no disponible. Este límite local no es tu saldo de tokens.' if spanish else 'Provider balance: unavailable. This local limit is not your token balance.')
+        return '\n'.join(lines)
     if command == '/tools':
         return ('Esta primera versión permite conversación y consultas de inventario. Web, ejecución de skills, MCP, archivos locales y comandos todavía están bloqueados.' if spanish else 'This first version supports conversations and inventory queries. Web, skill execution, MCP, local files and commands are still blocked.')
     if command in ('/skills', '/mcp'):

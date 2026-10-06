@@ -2,7 +2,9 @@
 
 Fecha: 2026-10-05. Rama: `canales`. Estado: propuesta para revisión; las capacidades futuras descritas aquí todavía no están implementadas.
 
-Avance de implementación: indicador nativo renovable, `/cancel` durante generación, recepción de nuevos mensajes durante la consulta, eventos de inicio/cancelación en Actividad y descripciones ES/EN. La cancelación interrumpe la espera local y descarta la respuesta; no garantiza que el proveedor remoto deje de facturar una solicitud ya recibida. El trabajo compartido, web, voz, archivos y perfil siguen pendientes. Falta comprobar este bloque con Telegram real después de reiniciar Spartan.
+Avance de implementación: indicador nativo renovable, `/cancel` durante generación, recepción de nuevos mensajes durante la consulta, eventos de inicio/cancelación en Actividad y descripciones ES/EN. La cancelación interrumpe la espera local y descarta la respuesta; no garantiza que el proveedor remoto deje de facturar una solicitud ya recibida.
+
+Segundo bloque: `/usage` con tokens reportados por usuario durante las últimas 24 horas y límite local compartido del bot; resumen por bot en Actividad; proyección de consultas en Tareas → Bandeja de trabajo. La proyección muestra origen, ejecución, respuesta entregada, cancelación, error o necesidad de revisión. No agrega un segundo ejecutor ni da acceso a proyectos/carpetas. Las consultas completadas conservan una vista previa y su respuesta en esa bandeja hasta eliminar el bot, independientemente del contexto conversacional de siete días; los registros de consumo se conservan durante 30 días y el resumen utiliza 24 horas. La vinculación con un chat/proyecto, el ejecutor de herramientas compartido, web, voz, archivos y perfil siguen pendientes. Falta comprobar ambos bloques con Telegram real después de reiniciar Spartan.
 
 ## Objetivo y punto de partida
 

@@ -49,3 +49,19 @@ test("manual queued work does not imply an attached executor", async () => {
   assert.match(workExplanation(run("needs_review")), /No hay confirmación/);
   assert.equal(workExplanation(run("paused")), "La solicitud está pausada.");
 });
+test("Telegram work explains delivery and interruption in the selected language", async () => {
+  await setLocale("es");
+  assert.match(
+    workExplanation({ ...run("completed"), source_kind: "telegram" }),
+    /Telegram aceptó/,
+  );
+  assert.match(
+    workExplanation({ ...run("needs_review"), source_kind: "telegram" }),
+    /no se repetirá automáticamente/,
+  );
+  await setLocale("en");
+  assert.match(
+    workExplanation({ ...run("cancelled"), source_kind: "telegram" }),
+    /cancelled the request from Telegram/,
+  );
+});

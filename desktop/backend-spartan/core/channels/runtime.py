@@ -5,6 +5,7 @@ import time
 from storage.channels import repository as repo
 from storage.channels import history
 from storage.channels import pairing
+from storage.channels import usage, work
 from storage.credential_secrets import get_secret
 from .catalog import COMMANDS, command_reply
 from .executor import respond
@@ -27,6 +28,8 @@ async def stop(account_id: str):
 
 async def _worker(account):
     account_id = account['id']
+    repo.recover(account_id)
+    work.recover(account_id)
     token = get_secret(TOKEN_KIND, account_id)
     if not token:
         states[account_id] = 'credentials_error'
@@ -35,7 +38,6 @@ async def _worker(account):
     transport = Telegram(token)
     last_request: dict[str, float] = {}
     try:
-        repo.recover(account_id)
         await transport.call('setMyCommands', commands=[{'command': name, 'description': description} for name, description in COMMANDS[account['locale']]])
         await transport.call('setMyCommands', language_code=account['locale'], commands=[{'command': name, 'description': description} for name, description in COMMANDS[account['locale']]])
         while True:
@@ -54,6 +56,8 @@ async def _worker(account):
                         repo.event(account_id, 'connected')
                     continue
                 update_id, message = pending
+                run_id = None
+                generation_complete = False
                 if message['user_id'] not in account['allowed_user_ids']:
                     repo.finish(account_id, update_id, 'failed')
                     continue
@@ -65,21 +69,31 @@ async def _worker(account):
                         history.reset(account_id, message['user_id'])
                         repo.event(account_id, 'context_reset')
                         output = 'Conversación reiniciada. El contexto de este chat se ha borrado.' if account['locale'] == 'es' else 'Conversation reset. The context for this chat has been cleared.'
+                    elif command(message['text']) == '/usage' and not message['media']:
+                        # A local status read remains usable immediately after a reply.
+                        output = command_reply(message['text'], account, user_id=message['user_id'])
                     elif time.monotonic() - last_request.get(message['user_id'], -100) < 3:
                         output = 'Espera unos segundos antes de enviar otra solicitud.' if account['locale'] == 'es' else 'Wait a few seconds before sending another request.'
                     elif message['media']:
                         output = 'Audios y documentos todavía no están habilitados en este canal. Envía texto por ahora.' if account['locale'] == 'es' else 'Audio and documents are not enabled for this channel yet. Send text for now.'
                     else:
                         last_request[message['user_id']] = time.monotonic()
-                        output = command_reply(message['text'], account)
+                        output = command_reply(message['text'], account, user_id=message['user_id'])
                         if output is None:
                             if repo.reserve_provider_request(account_id):
+                                run_id = work.start(account_id, update_id, message)
+                                usage.start(account, update_id, message['user_id'])
                                 repo.event(account_id, 'request_started')
                                 try:
                                     output = await respond_with_progress(transport, account, update_id, message,
-                                        lambda: respond(account, message['text'], history=history.messages(account_id, message['user_id'])))
+                                        lambda: respond(account, message['text'], history=history.messages(account_id, message['user_id']),
+                                            on_usage=lambda value: usage.record(account_id, update_id, value)))
+                                    usage.finish(account_id, update_id, 'completed')
+                                    generation_complete = True
                                     conversation_reply = True
                                 except RequestCancelled:
+                                    usage.finish(account_id, update_id, 'cancelled')
+                                    work.finish(run_id, 'cancelled', reason='sender_cancelled')
                                     repo.event(account_id, 'request_cancelled')
                                     output = 'Consulta cancelada. No se ha añadido al contexto de la conversación.' if account['locale'] == 'es' else 'Request cancelled. It was not added to the conversation context.'
                             else:
@@ -87,6 +101,8 @@ async def _worker(account):
                     current = repo.get_account(account_id)
                     if not current or not current['enabled'] or message['user_id'] not in current['allowed_user_ids']:
                         repo.finish(account_id, update_id, 'failed')
+                        if run_id:
+                            work.finish(run_id, 'failed', reason='access_revoked')
                         continue
                     await transport.send(message['chat_id'], output)
                     if connection_changed:
@@ -96,17 +112,31 @@ async def _worker(account):
                     else:
                         repo.finish(account_id, update_id, 'completed')
                     repo.event(account_id, 'reply_sent')
+                    if run_id and conversation_reply:
+                        work.finish(run_id, 'completed', summary=output)
                 except asyncio.CancelledError:
                     repo.finish(account_id, update_id, 'failed')
+                    if run_id:
+                        if not generation_complete:
+                            usage.finish(account_id, update_id, 'failed')
+                        work.finish(run_id, 'needs_review', reason='worker_interrupted')
                     raise
                 except TelegramError:
                     repo.finish(account_id, update_id, 'failed')
+                    if run_id:
+                        if not generation_complete:
+                            usage.finish(account_id, update_id, 'failed')
+                        work.finish(run_id, 'needs_review' if generation_complete else 'failed', reason='delivery_unconfirmed' if generation_complete else 'transport_error')
                     repo.event(account_id, 'reply_failed')
                     # Apply the same transport backoff to sending and polling.
                     # An ambiguous reply is not replayed after the wait.
                     raise
                 except Exception:
                     repo.finish(account_id, update_id, 'failed')
+                    if run_id:
+                        if not generation_complete:
+                            usage.finish(account_id, update_id, 'failed')
+                        work.finish(run_id, 'needs_review' if generation_complete else 'failed', reason='delivery_unconfirmed' if generation_complete else 'request_failed')
                     repo.event(account_id, 'reply_failed')
             except TelegramError as error:
                 states[account_id] = error.code

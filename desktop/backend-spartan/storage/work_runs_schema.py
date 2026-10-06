@@ -39,8 +39,11 @@ def ensure_work_runs_schema(conn: sqlite3.Connection) -> None:
         "source_thread_id": "TEXT REFERENCES chat_threads(id) ON DELETE CASCADE",
         "source_queue_id": "TEXT",
         "source_item_id": "TEXT",
+        "source_channel_id": "TEXT",
     }.items():
         if name not in columns:
             conn.execute(f"ALTER TABLE work_runs ADD COLUMN {name} {declaration}")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_work_runs_chat_queue "
                  "ON work_runs(owner_subject,source_queue_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_work_runs_channel "
+                 "ON work_runs(owner_subject,source_kind,source_channel_id)")

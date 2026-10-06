@@ -7,6 +7,7 @@ export type ChannelStatus =
   | "rate_limited"
   | "transport_error";
 export type ChannelAccount = {
+  usage?: ChannelUsage;
   id: string;
   name: string;
   platform: "telegram";
@@ -18,6 +19,19 @@ export type ChannelAccount = {
   allowed_user_ids: string[];
   enabled: boolean;
   status: ChannelStatus;
+};
+export type ChannelUsage = {
+  period_hours: number;
+  requests: number;
+  reported_requests: number;
+  complete_requests: number;
+  input_reports: number;
+  output_reports: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  hourly_request_limit: number;
+  hourly_requests_remaining: number;
 };
 export type ChannelInventory = {
   providers: { id: string; name: string; models: string[] }[];

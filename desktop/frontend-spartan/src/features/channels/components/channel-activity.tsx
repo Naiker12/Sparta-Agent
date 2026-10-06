@@ -37,6 +37,7 @@ import {
   type ActivityFilter,
 } from "../activity-model";
 import type { ChannelOverview } from "../types";
+import { ChannelUsage } from "./channel-usage";
 const icons = {
   responses: CheckmarkCircle01Icon,
   errors: AlertCircleIcon,
@@ -57,6 +58,7 @@ export function ChannelActivity({ data }: { data: ChannelOverview }) {
   const time = new Intl.DateTimeFormat(locale, { timeStyle: "short" });
   return (
     <div className="flex flex-col gap-5">
+      <ChannelUsage accounts={data.accounts.filter((item) => selected === "all" || item.id === selected)} />
       <div className="grid gap-3 sm:grid-cols-3">
         {(["responses", "errors", "connections"] as const).map((kind) => (
           <Card key={kind} size="sm">

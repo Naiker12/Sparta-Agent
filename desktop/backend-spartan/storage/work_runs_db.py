@@ -62,8 +62,8 @@ class WorkRunRepository:
     def create(self, owner: str, request_key: str, request: dict) -> dict:
         if not owner.strip() or not request_key.strip():
             raise ValueError("Owner and request key are required")
-        if request_key.startswith("chat:"):
-            raise ValueError("Request key namespace is reserved for chat work")
+        if request_key.startswith(("chat:", "channel:")):
+            raise ValueError("Request key namespace is reserved for projected work")
         if request.get("temporary"):
             raise ValueError("Temporary conversations cannot create durable work")
         raw = _json(request)

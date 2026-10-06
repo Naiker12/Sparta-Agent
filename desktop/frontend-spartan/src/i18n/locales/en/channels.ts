@@ -1,4 +1,33 @@
 export const channels = {
+  usage: {
+    title: "Telegram usage",
+    description:
+      "Provider-reported tokens, aggregated per bot across its authorized users.",
+    period: "Last 24 hours",
+    unavailable: "Unavailable",
+    input: "Known input",
+    output: "Known output",
+    total: "Known tokens",
+    coverage: "Requests with complete input and output:",
+    remaining: "Local requests available per hour:",
+    partial: "Some requests have incomplete usage data. Totals may be partial.",
+    noReports:
+      "The provider has not reported tokens yet. Zero consumption is not assumed.",
+    balance:
+      "The local limit is shared by the bot. Provider token balance or credit is not available here.",
+  },
+  work: {
+    loadFailed: "Could not load work.",
+    open: "View work in Spartan",
+    running: "Spartan is preparing a reply for Telegram.",
+    completed:
+      "Telegram accepted the reply. You can review the result here.",
+    cancelled:
+      "The user cancelled the request from Telegram. It was not added to the conversation context.",
+    failed: "The request ended with an error. Check the bot activity.",
+    review:
+      "Execution was interrupted or delivery was not confirmed. Check Telegram before requesting it again; it will not be repeated automatically.",
+  },
   activityView: {
     recent: "Recent activity",
     window: "Latest 50 events",
@@ -220,6 +249,7 @@ export const channels = {
   commands: "Telegram commands",
   commandsDescription: "Type / in your bot chat to see these commands.",
   command: {
+    usage: "Check your token usage and local request limit",
     cancel: "Cancel your active request",
     reset: "Reset this conversation",
     help: "Show commands and capabilities",
@@ -241,7 +271,7 @@ export const channels = {
   capabilityNote:
     "Attachments are not downloaded yet. Upcoming releases will add file processing and approvals for remote actions.",
   activityDescription:
-    "Recent events without message content, tokens or credentials.",
+    "Recent events without message content or credentials.",
   noActivity: "No activity yet",
   noActivityDescription:
     "Once connected, your bot status and replies will appear here.",

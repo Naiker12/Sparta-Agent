@@ -3,7 +3,7 @@ import asyncio
 import json
 
 
-async def respond(account: dict, text: str, *, history: list[dict] | None = None):
+async def respond(account: dict, text: str, *, history: list[dict] | None = None, on_usage=None):
     from core.inference.task_scheduler import make_client
     client = make_client(account['provider_id'], account['model'])
 
@@ -17,6 +17,8 @@ async def respond(account: dict, text: str, *, history: list[dict] | None = None
                 if not item.startswith('data:') or item[5:].strip() == '[DONE]':
                     continue
                 payload = json.loads(item[5:].strip())
+                if on_usage and isinstance(payload.get('usage'), dict):
+                    on_usage(payload['usage'])
                 if payload.get('error'):
                     raise ValueError('provider_error')
                 for choice in payload.get('choices', []):

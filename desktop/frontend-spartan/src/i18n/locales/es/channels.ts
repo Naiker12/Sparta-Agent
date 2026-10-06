@@ -1,4 +1,34 @@
 export const channels = {
+  usage: {
+    title: "Consumo de Telegram",
+    description:
+      "Tokens reportados por el proveedor, sumados por bot y por todos sus usuarios autorizados.",
+    period: "Últimas 24 horas",
+    unavailable: "No disponible",
+    input: "Entrada conocida",
+    output: "Salida conocida",
+    total: "Tokens conocidos",
+    coverage: "Consultas con entrada y salida completas:",
+    remaining: "Consultas locales disponibles por hora:",
+    partial:
+      "Algunas consultas no tienen datos completos. Los totales pueden ser parciales.",
+    noReports:
+      "El proveedor todavía no ha reportado tokens. No se estima un consumo de cero.",
+    balance:
+      "El límite local es compartido por el bot. El saldo de tokens o crédito del proveedor no está disponible aquí.",
+  },
+  work: {
+    loadFailed: "No se pudo consultar el trabajo.",
+    open: "Ver trabajo en Spartan",
+    running: "Spartan está preparando una respuesta para Telegram.",
+    completed:
+      "Telegram aceptó el envío de la respuesta. Aquí puedes revisar el resultado.",
+    cancelled:
+      "El usuario canceló la consulta desde Telegram. No se añadió al contexto de conversación.",
+    failed: "La consulta terminó con un error. Consulta la actividad del bot.",
+    review:
+      "La ejecución se interrumpió o la entrega no se confirmó. Revisa Telegram antes de volver a pedirla; no se repetirá automáticamente.",
+  },
   activityView: {
     recent: "Actividad reciente",
     window: "Últimos 50 eventos",
@@ -221,6 +251,7 @@ export const channels = {
   commandsDescription:
     "Escribe / en tu chat con el bot para ver estos comandos.",
   command: {
+    usage: "Consultar tu consumo de tokens y el límite local",
     cancel: "Cancelar tu consulta en curso",
     reset: "Reiniciar esta conversación",
     help: "Ver comandos y capacidades",
@@ -242,7 +273,7 @@ export const channels = {
   capabilityNote:
     "Los adjuntos no se descargan todavía. Las siguientes entregas incorporarán procesamiento de archivos y aprobaciones para acciones remotas.",
   activityDescription:
-    "Eventos recientes sin contenido de mensajes, tokens ni credenciales.",
+    "Eventos recientes sin contenido de mensajes ni credenciales.",
   noActivity: "Sin actividad todavía",
   noActivityDescription:
     "Aquí verás el estado y las respuestas del bot después de conectarlo.",

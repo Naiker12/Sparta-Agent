@@ -31,6 +31,12 @@ def connection():
             code TEXT NOT NULL, created_at INTEGER NOT NULL);
           CREATE TABLE IF NOT EXISTS channel_budget (
             account_id TEXT NOT NULL, requested_at INTEGER NOT NULL);
+          CREATE TABLE IF NOT EXISTS channel_usage (
+            account_id TEXT NOT NULL, update_id INTEGER NOT NULL, user_id TEXT NOT NULL,
+            provider_id TEXT NOT NULL, model TEXT NOT NULL, status TEXT NOT NULL,
+            prompt_tokens INTEGER, completion_tokens INTEGER, total_tokens INTEGER,
+            created_at INTEGER NOT NULL, PRIMARY KEY(account_id,update_id));
+          CREATE INDEX IF NOT EXISTS channel_usage_user ON channel_usage(account_id,user_id,created_at);
           CREATE TABLE IF NOT EXISTS channel_history (
             account_id TEXT NOT NULL, user_id TEXT NOT NULL,
             update_id INTEGER NOT NULL, user_text TEXT NOT NULL,
@@ -87,8 +93,12 @@ def delete_account(account_id: str, owner: str):
         db.execute('DELETE FROM channel_inbox WHERE account_id=?', (account_id,))
         db.execute('DELETE FROM channel_events WHERE account_id=?', (account_id,))
         db.execute('DELETE FROM channel_budget WHERE account_id=?', (account_id,))
+        db.execute('DELETE FROM channel_usage WHERE account_id=?', (account_id,))
         db.execute('DELETE FROM channel_history WHERE account_id=?', (account_id,))
         db.execute('DELETE FROM channel_pairings WHERE account_id=?', (account_id,))
+        if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='work_runs'").fetchone():
+            from .work import delete
+            delete(db, account_id)
         return True
 
 

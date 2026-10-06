@@ -11,6 +11,7 @@ from auth.authentication import authenticated_via_api_key, get_current_credentia
 from routes.provider_credentials import current_credential_write, require_ui_session
 from storage.channels import repository as repo
 from storage.channels import pairing
+from storage.channels import usage
 from storage.credential_secrets import delete_secret, upsert_secret
 from core.channels import runtime
 from core.channels.catalog import inventory
@@ -54,7 +55,7 @@ class EnabledInput(BaseModel):
 
 @router.get('')
 def overview(credential=Depends(ui_credential)):
-    return {'accounts': [{**a, 'status': runtime.states.get(a['id'], 'connecting' if a['enabled'] else 'paused')} for a in repo.accounts(credential[0])], 'inventory': inventory(), 'events': repo.events(credential[0])}
+    return {'accounts': [{**a, 'status': runtime.states.get(a['id'], 'connecting' if a['enabled'] else 'paused'), 'usage': usage.summary(a['id'])} for a in repo.accounts(credential[0])], 'inventory': inventory(), 'events': repo.events(credential[0])}
 
 
 @router.post('')
