@@ -14,6 +14,7 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
+import { TELEGRAM_BOTFATHER_URL } from "../links";
 import { AccountCard } from "./account-card";
 import type { ChannelAccount } from "../types";
 
@@ -54,9 +55,9 @@ export function TelegramConnections({
           ))}
         </div>
       ) : (
-        <Card>
+        <Card className="@container">
           <CardHeader>
-            <div className="bg-primary/10 text-primary mb-3 flex size-12 items-center justify-center rounded-2xl">
+            <div className="bg-primary/10 text-primary mb-1 flex size-12 items-center justify-center rounded-2xl">
               <HugeiconsIcon icon={TelegramIcon} size={26} />
             </div>
             <CardTitle>{t("channels.firstConnection")}</CardTitle>
@@ -65,7 +66,7 @@ export function TelegramConnections({
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-6">
-            <ol className="grid gap-5 lg:grid-cols-3">
+            <ol className="grid gap-5 @2xl:grid-cols-3">
               {(["bot", "model", "access"] as const).map((step, index) => (
                 <li key={step} className="flex items-start gap-3">
                   <span className="bg-muted flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
@@ -75,9 +76,24 @@ export function TelegramConnections({
                     <p className="text-sm font-medium">
                       {t(`channels.guide.${step}.title`)}
                     </p>
-                    <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
+                    <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
                       {t(`channels.guide.${step}.description`)}
                     </p>
+                    {step === "bot" && (
+                      <a
+                        href={TELEGRAM_BOTFATHER_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary mt-2 inline-flex items-center gap-1 text-sm font-medium underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-4"
+                      >
+                        {t("channels.openBotFather")}
+                        <HugeiconsIcon
+                          icon={ArrowRight01Icon}
+                          size={14}
+                          aria-hidden="true"
+                        />
+                      </a>
+                    )}
                   </div>
                 </li>
               ))}
@@ -98,7 +114,7 @@ export function TelegramConnections({
           </CardContent>
         </Card>
       )}
-    <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <Card size="sm">
           <CardHeader>
             <CardTitle>{t("channels.whatYouCanDo")}</CardTitle>

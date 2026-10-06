@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConnectTelegram } from "./components/connect-telegram";
 import { ChannelNavigation } from "./components/channel-navigation";
@@ -24,7 +25,7 @@ import { useChannels } from "./use-channels";
 
 export function ChannelsPage() {
   const t = useT();
-  const { data, error, refresh } = useChannels();
+  const { data, error, loading, refresh } = useChannels();
   const [selected, setSelected] = useState<ChannelPlatform>("telegram");
   const [adding, setAdding] = useState(false);
   const [actionError, setActionError] = useState(false);
@@ -77,9 +78,18 @@ export function ChannelsPage() {
                 variant="ghost"
                 size="icon"
                 aria-label={t("channels.refresh")}
+                disabled={loading}
                 onClick={() => void refresh()}
               >
-                <HugeiconsIcon icon={RefreshIcon} size={17} />
+                {loading ? (
+                  <Spinner label={t("channels.loading")} />
+                ) : (
+                  <HugeiconsIcon
+                    icon={RefreshIcon}
+                    size={17}
+                    aria-hidden="true"
+                  />
+                )}
               </Button>
             )}
           </header>
@@ -88,11 +98,37 @@ export function ChannelsPage() {
               {(error || actionError) && (
                 <Alert variant="destructive">
                   <AlertTitle>{t("channels.requestFailed")}</AlertTitle>
-                  <AlertDescription>{t("channels.retryHelp")}</AlertDescription>
+                  <AlertDescription>
+                    <p>{t("channels.retryHelp")}</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={loading}
+                      onClick={() => {
+                        setActionError(false);
+                        void refresh();
+                      }}
+                    >
+                      {t("channels.retry")}
+                    </Button>
+                  </AlertDescription>
                 </Alert>
               )}
               {!data ? (
-                <Skeleton className="h-72 rounded-xl" />
+                loading ? (
+                  <div
+                    role="status"
+                    aria-label={t("channels.loading")}
+                    aria-busy="true"
+                    className="flex flex-col gap-5"
+                  >
+                    <p className="text-muted-foreground text-sm">
+                      {t("channels.loading")}
+                    </p>
+                    <Skeleton className="h-9 w-72 rounded-full" />
+                    <Skeleton className="h-72 rounded-2xl" />
+                  </div>
+                ) : null
               ) : (
                 <Tabs defaultValue="connections">
                   <TabsList

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Spinner } from "@/components/ui/spinner";
 import { useT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +64,9 @@ export function AccountCard({
           <div className="flex items-center justify-between gap-3">
             <CardTitle>{account.name}</CardTitle>
             <Badge variant={connected ? "default" : "secondary"}>
+              {account.status === "connecting" && (
+                <Spinner label={t("channels.connecting")} />
+              )}
               {t(statusKey)}
             </Badge>
           </div>
@@ -113,7 +117,14 @@ export function AccountCard({
             disabled={busy}
             onClick={() => void act()}
           >
-            {t(account.enabled ? "channels.pause" : "channels.connect")}
+            {busy && <Spinner label={t("channels.working")} />}
+            {t(
+              busy
+                ? "channels.working"
+                : account.enabled
+                  ? "channels.pause"
+                  : "channels.connect",
+            )}
           </Button>
         </CardFooter>
       </Card>
@@ -134,6 +145,7 @@ export function AccountCard({
               disabled={busy}
               onClick={() => void act(true)}
             >
+              {busy && <Spinner label={t("channels.working")} />}
               {t("channels.remove")}
             </Button>
           </AlertDialogFooter>

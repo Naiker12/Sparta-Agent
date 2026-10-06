@@ -2,6 +2,8 @@ import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Cancel01Icon } from "@hugeicons/core-free-icons";
 import { useLocale, useT } from "@/i18n";
+import { Spinner } from "@/components/ui/spinner";
+import { TELEGRAM_BOTFATHER_URL } from "../links";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -178,7 +180,7 @@ export function ConnectTelegram({
                   </p>
                   <Button asChild variant="outline" size="sm" className="mt-3">
                     <a
-                      href="https://t.me/BotFather"
+                      href={TELEGRAM_BOTFATHER_URL}
                       target="_blank"
                       rel="noreferrer"
                     >
@@ -367,6 +369,7 @@ export function ConnectTelegram({
                 busy || (step === 1 && (!draft.provider_id || !draft.model))
               }
             >
+              {busy && <Spinner label={t("channels.saving")} />}
               {t(
                 busy
                   ? "channels.saving"

@@ -64,3 +64,5 @@ Se revisó visualmente el formulario, sus tres pasos, el selector de modelos y l
 - [Discord Gateway](https://docs.discord.com/developers/events/gateway): protocolo y permisos para la siguiente integración.
 
 Las APIs de esas aplicaciones son referencias arquitectónicas; Spartan no utiliza sus credenciales, clientes ni sesiones.
+
+La guía muestra el enlace oficial de BotFather antes de abrir el asistente. Los indicadores SVG cubren carga, actualización, verificación y cambios de conexión. La consulta tiene un límite de 15 segundos, evita consultas simultáneas y ofrece reintento sin dejar un esqueleto permanente cuando falla. Los textos nuevos están disponibles en español e inglés. El último ajuste visual requiere revisión en la aplicación abierta.

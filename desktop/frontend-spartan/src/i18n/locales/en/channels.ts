@@ -1,4 +1,8 @@
 export const channels = {
+  loading: "Loading channels�",
+  retry: "Try again",
+  working: "Saving changes�",
+
   pageDescription:
     "Choose a channel, connect your account and start talking to Spartan.",
   platforms: "Your channels",

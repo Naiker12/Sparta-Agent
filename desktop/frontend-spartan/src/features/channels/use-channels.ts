@@ -5,19 +5,28 @@ import type { ChannelOverview } from "./types";
 export function useChannels() {
   const [data, setData] = useState<ChannelOverview>();
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(true);
   const controller = useRef<AbortController | null>(null);
   const refresh = useCallback(async () => {
-    controller.current?.abort();
+    if (controller.current) return;
+    setLoading(true);
     const next = new AbortController();
     controller.current = next;
     try {
-      const result = await channelsApi.overview(next.signal);
+      const result = await channelsApi.overview(
+        AbortSignal.any([next.signal, AbortSignal.timeout(15000)]),
+      );
       if (!next.signal.aborted) {
         setData(result);
         setError(false);
       }
     } catch {
       if (!next.signal.aborted) setError(true);
+    } finally {
+      if (controller.current === next) {
+        controller.current = null;
+        if (!next.signal.aborted) setLoading(false);
+      }
     }
   }, []);
   useEffect(() => {
@@ -29,7 +38,8 @@ export function useChannels() {
       window.clearTimeout(initial);
       window.clearInterval(interval);
       controller.current?.abort();
+      controller.current = null;
     };
   }, [refresh]);
-  return { data, error, refresh };
+  return { data, error, loading, refresh };
 }
