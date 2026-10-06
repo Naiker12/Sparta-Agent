@@ -16,6 +16,8 @@ export const channels = {
     event: {
       replySent: "Respuesta enviada",
       replyFailed: "La respuesta no pudo completarse",
+      requestStarted: "Consulta iniciada",
+      requestCancelled: "Consulta cancelada por su usuario",
       credentialsError: "No se pudo autenticar el bot",
       consumerConflict: "Otro servicio está usando este bot",
       rateLimited: "Telegram limitó las solicitudes",
@@ -75,6 +77,7 @@ export const channels = {
       "El bot ya está guardado. No se pudo generar el enlace; vuelve a intentarlo o continúa desde su tarjeta.",
   },
   conversationContext: "Contexto de conversación",
+  typingCancellation: "Indicador de escritura y cancelación",
   contextHelp:
     "Cada bot conserva el contexto reciente por usuario, hasta 6 intercambios durante 7 días. Usa /reset para borrarlo. No se comparte con tus chats ni con la memoria de Spartan.",
   loading: "Cargando canales…",
@@ -218,6 +221,7 @@ export const channels = {
   commandsDescription:
     "Escribe / en tu chat con el bot para ver estos comandos.",
   command: {
+    cancel: "Cancelar tu consulta en curso",
     reset: "Reiniciar esta conversación",
     help: "Ver comandos y capacidades",
     status: "Consultar el estado de la conexión",

@@ -616,3 +616,199 @@ def test_missing_token_records_error_without_opening_transport(monkeypatch):
     asyncio.run(runtime._worker(saved))
     transport.assert_not_called()
     assert [event['code'] for event in repo.events('owner')] == ['credentials_error']
+
+
+def test_typing_renews_and_stops_when_scope_finishes():
+    from core.channels.progress import typing
+    async def scenario():
+        transport = AsyncMock()
+        renewed = asyncio.Event()
+        calls = 0
+        async def action(*args):
+            nonlocal calls
+            calls += 1
+            if calls == 2:
+                renewed.set()
+        transport.action.side_effect = action
+        async with typing(transport, 123, interval=0.01):
+            await asyncio.wait_for(renewed.wait(), timeout=1)
+        completed = calls
+        await asyncio.sleep(0.03)
+        assert calls == completed == 2
+        assert transport.action.call_args.args == (123, 'typing')
+    asyncio.run(scenario())
+
+
+def test_typing_failure_does_not_discard_response_and_respects_retry(monkeypatch):
+    from core.channels import progress
+    async def scenario():
+        transport = AsyncMock()
+        transport.action.side_effect = TelegramError('rate_limited', 45)
+        delayed = asyncio.Event()
+        pauses = []
+        async def delay(seconds):
+            pauses.append(seconds)
+            delayed.set()
+            await asyncio.Future()
+        monkeypatch.setattr(progress, 'delay', delay)
+        async with progress.typing(transport, 123):
+            await asyncio.wait_for(delayed.wait(), timeout=1)
+        assert pauses == [45]
+    asyncio.run(scenario())
+
+
+def test_typing_cleanup_on_worker_cancellation():
+    from core.channels.progress import typing
+    async def scenario():
+        started, stopped = asyncio.Event(), asyncio.Event()
+        transport = AsyncMock()
+        async def action(*args):
+            started.set()
+            try:
+                await asyncio.Future()
+            finally:
+                stopped.set()
+        transport.action.side_effect = action
+        async def run():
+            async with typing(transport, 123):
+                await asyncio.Future()
+        task = asyncio.create_task(run())
+        await asyncio.wait_for(started.wait(), timeout=1)
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        assert stopped.is_set()
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize('queued', [False, True])
+def test_cancel_interrupts_only_sender_and_preserves_other_queued_messages(queued):
+    from core.channels.requests import RequestCancelled, respond_with_progress
+    from storage.channels import history
+    saved = account()
+    repo.set_enabled(saved['id'], 'owner', True)
+    first = update()
+    cancel = update(text='/cancel@example_bot', update_id=3)
+    other = update(user=456, text='/cancel', update_id=2)
+    following = update(text='next request', update_id=4)
+    # Authorize a second user; their control must never interrupt user 123.
+    with repo.connection() as db:
+        config = {k: v for k, v in saved.items() if k not in ('id', 'enabled')}
+        config['allowed_user_ids'] = ['123', '456']
+        db.execute('UPDATE channel_accounts SET config=? WHERE id=?', (json.dumps(config), saved['id']))
+    saved = repo.get_account(saved['id'])
+    repo.ingest(saved['id'], [first] + ([other, cancel, following] if queued else []), lambda item: normalize_private_message(item, saved['allowed_user_ids']))
+    pending = repo.claim(saved['id'])
+    async def scenario():
+        transport = AsyncMock()
+        polls = 0
+        finished = asyncio.Event()
+        async def call(method, **kwargs):
+            nonlocal polls
+            polls += 1
+            return [other] if polls == 1 else [cancel, following]
+        transport.call.side_effect = call
+        async def provider():
+            try:
+                await asyncio.Future()
+            finally:
+                finished.set()
+        with pytest.raises(RequestCancelled):
+            await asyncio.wait_for(respond_with_progress(transport, saved, *pending, provider), timeout=2)
+        assert finished.is_set()
+        transport.send.assert_not_called()
+    asyncio.run(scenario())
+    assert history.messages(saved['id'], '123') == []
+    assert repo.claim(saved['id'])[0] == 2
+    assert repo.claim(saved['id'])[0] == 4
+    assert not repo.consume_control(saved['id'], 3)
+
+
+def test_unauthorized_cancel_cannot_interrupt_provider():
+    from core.channels.requests import respond_with_progress
+    saved = account()
+    repo.set_enabled(saved['id'], 'owner', True)
+    repo.ingest(saved['id'], [update()], lambda item: normalize_private_message(item, ['123']))
+    pending = repo.claim(saved['id'])
+    async def scenario():
+        transport = AsyncMock()
+        polled = asyncio.Event()
+        async def call(*args, **kwargs):
+            polled.set()
+            return [update(user=456, text='/cancel', update_id=2)]
+        transport.call.side_effect = call
+        async def provider():
+            await polled.wait()
+            await asyncio.sleep(0)
+            return 'answer'
+        assert await respond_with_progress(transport, saved, *pending, provider) == 'answer'
+    asyncio.run(scenario())
+    with repo.connection() as db:
+        assert db.execute('SELECT COUNT(*) FROM channel_inbox').fetchone()[0] == 1
+
+
+def test_transport_failure_cleans_up_provider_during_request():
+    from core.channels.requests import respond_with_progress
+    saved = account()
+    repo.set_enabled(saved['id'], 'owner', True)
+    repo.ingest(saved['id'], [update()], lambda item: normalize_private_message(item, ['123']))
+    pending = repo.claim(saved['id'])
+    async def scenario():
+        transport = AsyncMock()
+        transport.call.side_effect = TelegramError('consumer_conflict')
+        stopped = asyncio.Event()
+        async def provider():
+            try:
+                await asyncio.Future()
+            finally:
+                stopped.set()
+        with pytest.raises(TelegramError, match='consumer_conflict'):
+            await respond_with_progress(transport, saved, *pending, provider)
+        assert stopped.is_set()
+    asyncio.run(scenario())
+
+
+def test_worker_cancel_acknowledges_once_and_never_saves_partial_history(monkeypatch):
+    from storage.channels import history
+    saved = account()
+    repo.set_enabled(saved['id'], 'owner', True)
+    repo.ingest(saved['id'], [update(), update(text='/cancel', update_id=2)], lambda item: normalize_private_message(item, ['123']))
+    transport = AsyncMock()
+    async def call(method, **kwargs):
+        if method == 'getUpdates':
+            raise asyncio.CancelledError()
+        return True
+    transport.call.side_effect = call
+    monkeypatch.setattr(runtime, 'Telegram', lambda _: transport)
+    monkeypatch.setattr(runtime, 'get_secret', lambda *_: 'secret')
+    async def provider(*args, **kwargs):
+        await asyncio.Future()
+    monkeypatch.setattr(runtime, 'respond', provider)
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(runtime._worker(saved))
+    transport.send.assert_awaited_once()
+    assert 'Consulta cancelada' in transport.send.call_args.args[1]
+    assert history.messages(saved['id'], '123') == []
+    codes = {event['code'] for event in repo.events('owner')}
+    assert {'request_started', 'request_cancelled', 'reply_sent'} <= codes
+    assert 'reply_failed' not in codes
+    assert repo.claim(saved['id']) is None
+
+
+def test_revoked_queued_user_never_reaches_provider(monkeypatch):
+    saved = account()
+    repo.set_enabled(saved['id'], 'owner', True)
+    repo.ingest(saved['id'], [update(user=456)], lambda item: normalize_private_message(item, ['456']))
+    transport = AsyncMock()
+    async def call(method, **kwargs):
+        if method == 'getUpdates':
+            raise asyncio.CancelledError()
+        return True
+    transport.call.side_effect = call
+    monkeypatch.setattr(runtime, 'Telegram', lambda _: transport)
+    monkeypatch.setattr(runtime, 'get_secret', lambda *_: 'secret')
+    provider = AsyncMock()
+    monkeypatch.setattr(runtime, 'respond', provider)
+    with pytest.raises(asyncio.CancelledError):
+        asyncio.run(runtime._worker(saved))
+    provider.assert_not_called()
+    transport.send.assert_not_called()

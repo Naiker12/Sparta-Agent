@@ -55,3 +55,6 @@ class Telegram:
             await self.call('sendMessage', chat_id=chat_id, text=text[start:start + 3500])
             if start + 3500 < len(text):
                 await asyncio.sleep(1)
+
+    async def action(self, chat_id: int, action: str = 'typing'):
+        await self.call('sendChatAction', chat_id=chat_id, action=action)

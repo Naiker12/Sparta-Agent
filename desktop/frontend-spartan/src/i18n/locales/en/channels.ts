@@ -16,6 +16,8 @@ export const channels = {
     event: {
       replySent: "Reply sent",
       replyFailed: "Reply could not be completed",
+      requestStarted: "Request started",
+      requestCancelled: "Request cancelled by its sender",
       credentialsError: "Bot authentication failed",
       consumerConflict: "Another service is using this bot",
       rateLimited: "Telegram limited requests",
@@ -77,6 +79,7 @@ export const channels = {
       "Your bot has been saved. The link could not be generated; try again or continue from its card.",
   },
   conversationContext: "Conversation context",
+  typingCancellation: "Typing indicator and cancellation",
   contextHelp:
     "Each bot keeps recent context per user, up to 6 exchanges for 7 days. Use /reset to clear it. Your desktop chats and Spartan memory stay separate.",
   loading: "Loading channels…",
@@ -217,6 +220,7 @@ export const channels = {
   commands: "Telegram commands",
   commandsDescription: "Type / in your bot chat to see these commands.",
   command: {
+    cancel: "Cancel your active request",
     reset: "Reset this conversation",
     help: "Show commands and capabilities",
     status: "Check connection status",

@@ -131,6 +131,26 @@ def finish(account_id: str, update_id: int, status: str):
         db.execute('UPDATE channel_inbox SET status=? WHERE account_id=? AND update_id=?', (status, account_id, update_id))
 
 
+def consume_control(account_id: str, update_id: int):
+    """Handle an ingested control once; replayed updates cannot cancel new work."""
+    with connection() as db:
+        return bool(db.execute("UPDATE channel_inbox SET status='completed' WHERE account_id=? AND update_id=? AND status='queued'", (account_id, update_id)).rowcount)
+
+
+def take_cancel(account_id: str, user_id: str, after: int):
+    """Also catch /cancel delivered in the same batch as the active prompt."""
+    with connection() as db:
+        db.execute('BEGIN IMMEDIATE')
+        rows = db.execute("SELECT update_id,payload FROM channel_inbox WHERE account_id=? AND status='queued' AND update_id>? AND json_extract(payload,'$.user_id')=? ORDER BY update_id", (account_id, after, user_id))
+        for row in rows:
+            payload = json.loads(row['payload'])
+            parts = payload['text'].split()
+            if not payload['media'] and parts and parts[0].split('@')[0].lower() == '/cancel':
+                db.execute("UPDATE channel_inbox SET status='completed' WHERE account_id=? AND update_id=?", (account_id, row['update_id']))
+                return True
+        return False
+
+
 def recover(account_id: str):
     # A restart cannot prove whether a provider/sendMessage completed. Do not replay
     # ambiguous operations and accidentally incur charges or duplicate replies.

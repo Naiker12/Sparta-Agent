@@ -4,6 +4,8 @@ export type ActivityFilter = "all" | Exclude<ActivityCategory, "other">;
 const eventTypes = {
   reply_sent: ["responses", "replySent"],
   reply_failed: ["errors", "replyFailed"],
+  request_started: ["other", "requestStarted"],
+  request_cancelled: ["other", "requestCancelled"],
   credentials_error: ["errors", "credentialsError"],
   consumer_conflict: ["errors", "consumerConflict"],
   rate_limited: ["errors", "rateLimited"],

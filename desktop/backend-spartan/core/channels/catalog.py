@@ -1,8 +1,8 @@
 """Safe inventory. Never expose headers, credentials, commands or skill paths."""
 
 COMMANDS = {
-    'es': [('help', 'Ver comandos y capacidades'), ('status', 'Estado de esta conexión'), ('provider', 'Proveedor y modelo de esta conexión'), ('tools', 'Permisos de herramientas'), ('skills', 'Skills instaladas'), ('mcp', 'Servidores MCP configurados'), ('reset', 'Reiniciar esta conversación')],
-    'en': [('help', 'Show commands and capabilities'), ('status', 'Connection status'), ('provider', 'Provider and model for this connection'), ('tools', 'Tool permissions'), ('skills', 'Installed skills'), ('mcp', 'Configured MCP servers'), ('reset', 'Reset this conversation')],
+    'es': [('help', 'Ver comandos y capacidades'), ('status', 'Estado de esta conexión'), ('provider', 'Proveedor y modelo de esta conexión'), ('tools', 'Permisos de herramientas'), ('skills', 'Skills instaladas'), ('mcp', 'Servidores MCP configurados'), ('cancel', 'Cancelar mi consulta en curso'), ('reset', 'Reiniciar esta conversación')],
+    'en': [('help', 'Show commands and capabilities'), ('status', 'Connection status'), ('provider', 'Provider and model for this connection'), ('tools', 'Tool permissions'), ('skills', 'Installed skills'), ('mcp', 'Configured MCP servers'), ('cancel', 'Cancel my active request'), ('reset', 'Reset this conversation')],
 }
 
 

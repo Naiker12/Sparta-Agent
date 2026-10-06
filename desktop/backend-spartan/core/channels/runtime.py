@@ -8,7 +8,7 @@ from storage.channels import pairing
 from storage.credential_secrets import get_secret
 from .catalog import COMMANDS, command_reply
 from .executor import respond
-from .policy import normalize_private_message
+from .requests import RequestCancelled, command, receive, respond_with_progress
 from .telegram import Telegram, TelegramError
 
 TOKEN_KIND = 'channel_bot_token'
@@ -49,19 +49,19 @@ async def _worker(account):
                 states[account_id] = 'connected' if account['enabled'] else 'paused'
                 pending = repo.claim(account_id) if account['enabled'] else None
                 if not pending:
-                    updates = await transport.call('getUpdates', offset=repo.offset(account_id), timeout=25, limit=20, allowed_updates=['message'])
+                    await receive(transport, account_id)
                     if connection_changed:
                         repo.event(account_id, 'connected')
-                    captures = [candidate for update in updates if (candidate := pairing.capture(account_id, update))]
-                    repo.ingest(account_id, updates, lambda update: normalize_private_message(update, account['allowed_user_ids']) if account['enabled'] and not pairing.is_link(update) else None)
-                    for candidate in captures:
-                        output = ('Vuelve a Spartan para autorizar tu cuenta. Comprueba este código: ' if account['locale'] == 'es' else 'Return to Spartan to authorize your account. Check this code: ') + candidate['confirmation']
-                        await transport.send(candidate['chat_id'], output)
                     continue
                 update_id, message = pending
+                if message['user_id'] not in account['allowed_user_ids']:
+                    repo.finish(account_id, update_id, 'failed')
+                    continue
                 try:
                     conversation_reply = False
-                    if message['text'].split() and message['text'].split()[0].split('@')[0].lower() == '/reset':
+                    if command(message['text']) == '/cancel':
+                        output = 'No tienes una consulta en curso para cancelar.' if account['locale'] == 'es' else 'You have no active request to cancel.'
+                    elif command(message['text']) == '/reset':
                         history.reset(account_id, message['user_id'])
                         repo.event(account_id, 'context_reset')
                         output = 'Conversación reiniciada. El contexto de este chat se ha borrado.' if account['locale'] == 'es' else 'Conversation reset. The context for this chat has been cleared.'
@@ -74,10 +74,20 @@ async def _worker(account):
                         output = command_reply(message['text'], account)
                         if output is None:
                             if repo.reserve_provider_request(account_id):
-                                output = await respond(account, message['text'], history=history.messages(account_id, message['user_id']))
-                                conversation_reply = True
+                                repo.event(account_id, 'request_started')
+                                try:
+                                    output = await respond_with_progress(transport, account, update_id, message,
+                                        lambda: respond(account, message['text'], history=history.messages(account_id, message['user_id'])))
+                                    conversation_reply = True
+                                except RequestCancelled:
+                                    repo.event(account_id, 'request_cancelled')
+                                    output = 'Consulta cancelada. No se ha añadido al contexto de la conversación.' if account['locale'] == 'es' else 'Request cancelled. It was not added to the conversation context.'
                             else:
                                 output = 'Se alcanzó el límite de 30 consultas por hora. Intenta más tarde.' if account['locale'] == 'es' else 'The 30 requests per hour limit has been reached. Try again later.'
+                    current = repo.get_account(account_id)
+                    if not current or not current['enabled'] or message['user_id'] not in current['allowed_user_ids']:
+                        repo.finish(account_id, update_id, 'failed')
+                        continue
                     await transport.send(message['chat_id'], output)
                     if connection_changed:
                         repo.event(account_id, 'connected')

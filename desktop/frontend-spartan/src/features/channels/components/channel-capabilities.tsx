@@ -32,6 +32,7 @@ export function ChannelCapabilities({
                 "tools",
                 "skills",
                 "mcp",
+                "cancel",
                 "reset",
               ] as const
             ).map((command) => (
@@ -59,6 +60,7 @@ export function ChannelCapabilities({
             {[
               [t("channels.textChat"), t("channels.available")],
               [t("channels.conversationContext"), t("channels.available")],
+              [t("channels.typingCancellation"), t("channels.available")],
               [
                 t("channels.inventory"),
                 `${inventory.skills.length} skills · ${inventory.mcp.length} MCP`,
