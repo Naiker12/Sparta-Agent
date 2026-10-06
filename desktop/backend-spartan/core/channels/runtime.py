@@ -138,6 +138,16 @@ async def _worker(account):
                             usage.finish(account_id, update_id, 'failed')
                         work.finish(run_id, 'needs_review' if generation_complete else 'failed', reason='delivery_unconfirmed' if generation_complete else 'request_failed')
                     repo.event(account_id, 'reply_failed')
+                    if run_id and not generation_complete:
+                        current = repo.get_account(account_id)
+                        if current and current['enabled'] and message['user_id'] in current['allowed_user_ids']:
+                            notice = ('No pude completar la consulta. Revisa el proveedor en Spartan. Para buscar en internet sin herramientas del modelo, usa /search seguido del tema.' if account['locale'] == 'es' else 'I could not complete the request. Check the provider in Spartan. To search without model tool support, use /search followed by the topic.')
+                            try:
+                                await transport.send(message['chat_id'], notice)
+                            except TelegramError:
+                                raise
+                            except Exception:
+                                pass
             except TelegramError as error:
                 states[account_id] = error.code
                 repo.event(account_id, error.code)

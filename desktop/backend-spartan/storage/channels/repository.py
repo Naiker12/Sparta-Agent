@@ -35,6 +35,7 @@ def connection():
             account_id TEXT NOT NULL, update_id INTEGER NOT NULL, user_id TEXT NOT NULL,
             provider_id TEXT NOT NULL, model TEXT NOT NULL, status TEXT NOT NULL,
             prompt_tokens INTEGER, completion_tokens INTEGER, total_tokens INTEGER,
+            usage_partial INTEGER NOT NULL DEFAULT 0,
             created_at INTEGER NOT NULL, PRIMARY KEY(account_id,update_id));
           CREATE INDEX IF NOT EXISTS channel_usage_user ON channel_usage(account_id,user_id,created_at);
           CREATE TABLE IF NOT EXISTS channel_history (
@@ -52,6 +53,13 @@ def connection():
           CREATE INDEX IF NOT EXISTS channel_pairings_account
             ON channel_pairings(account_id, expires_at);
         ''')
+        if 'usage_partial' not in {row['name'] for row in db.execute('PRAGMA table_info(channel_usage)')}:
+            try:
+                db.execute('ALTER TABLE channel_usage ADD COLUMN usage_partial INTEGER NOT NULL DEFAULT 0')
+            except sqlite3.OperationalError:
+                # Another UI/worker connection may have completed this additive migration.
+                if 'usage_partial' not in {row['name'] for row in db.execute('PRAGMA table_info(channel_usage)')}:
+                    raise
         yield db
         db.commit()
     finally:

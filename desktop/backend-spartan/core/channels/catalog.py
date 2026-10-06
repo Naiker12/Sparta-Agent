@@ -4,6 +4,8 @@ COMMANDS = {
     'es': [('help', 'Ver comandos y capacidades'), ('status', 'Estado de esta conexión'), ('provider', 'Proveedor y modelo de esta conexión'), ('usage', 'Mi consumo y límite local de consultas'), ('tools', 'Permisos de herramientas'), ('skills', 'Skills instaladas'), ('mcp', 'Servidores MCP configurados'), ('cancel', 'Cancelar mi consulta en curso'), ('reset', 'Reiniciar esta conversación')],
     'en': [('help', 'Show commands and capabilities'), ('status', 'Connection status'), ('provider', 'Provider and model for this connection'), ('usage', 'My usage and local request limit'), ('tools', 'Tool permissions'), ('skills', 'Installed skills'), ('mcp', 'Configured MCP servers'), ('cancel', 'Cancel my active request'), ('reset', 'Reset this conversation')],
 }
+COMMANDS['es'].append(('search', 'Buscar un tema público en internet'))
+COMMANDS['en'].append(('search', 'Search a public topic on the internet'))
 
 
 def inventory():
@@ -22,6 +24,8 @@ def command_reply(text: str, account: dict, *, user_id=None):
         return None
     command = text.split()[0].split('@')[0].lower()
     spanish = account['locale'] == 'es'
+    if command == '/search':
+        return None
     if command in ('/start', '/help'):
         return '\n'.join('/' + name + ' — ' + description for name, description in COMMANDS[account['locale']])
     if command == '/status':
@@ -50,7 +54,7 @@ def command_reply(text: str, account: dict, *, user_id=None):
         lines.append('Saldo del proveedor: no disponible. Este límite local no es tu saldo de tokens.' if spanish else 'Provider balance: unavailable. This local limit is not your token balance.')
         return '\n'.join(lines)
     if command == '/tools':
-        return ('Esta primera versión permite conversación y consultas de inventario. Web, ejecución de skills, MCP, archivos locales y comandos todavía están bloqueados.' if spanish else 'This first version supports conversations and inventory queries. Web, skill execution, MCP, local files and commands are still blocked.')
+        return ('Puedes conversar, consultar el inventario y buscar información pública con /search. La búsqueda automática depende de las herramientas que soporte el modelo. Archivos locales, ejecución de skills, MCP y comandos siguen bloqueados.' if spanish else 'You can chat, inspect inventory and search public information with /search. Automatic search depends on model tool support. Local files, skill execution, MCP and commands remain blocked.')
     if command in ('/skills', '/mcp'):
         items = inventory()['skills' if command == '/skills' else 'mcp']
         return '\n'.join('- ' + i['name'] for i in items) or ('No hay elementos configurados.' if spanish else 'No items configured.')

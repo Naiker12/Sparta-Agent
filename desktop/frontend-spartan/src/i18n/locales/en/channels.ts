@@ -47,6 +47,9 @@ export const channels = {
       replyFailed: "Reply could not be completed",
       requestStarted: "Request started",
       requestCancelled: "Request cancelled by its sender",
+      webSearchStarted: "Web search started",
+      webSearchCompleted: "Web sources obtained",
+      webSearchUnavailable: "No usable web results",
       credentialsError: "Bot authentication failed",
       consumerConflict: "Another service is using this bot",
       rateLimited: "Telegram limited requests",
@@ -249,6 +252,7 @@ export const channels = {
   commands: "Telegram commands",
   commandsDescription: "Type / in your bot chat to see these commands.",
   command: {
+    search: "Search a public topic: /search followed by your query",
     usage: "Check your token usage and local request limit",
     cancel: "Cancel your active request",
     reset: "Reset this conversation",
@@ -265,7 +269,9 @@ export const channels = {
   textChat: "Text conversation",
   inventory: "Installed inventory",
   audioDocuments: "Audio and documents",
-  webTools: "Web, skills and MCP tools",
+  webTools: "Skill and MCP tool execution",
+  publicWebSearch: "Public search with sources and links",
+  webSearchHelp: "Use /search followed by a public topic. Automatic search requires a model with tool support. Sources are search snippets; images and full-page reading are not available yet.",
   available: "Available",
   pending: "Pending",
   capabilityNote:

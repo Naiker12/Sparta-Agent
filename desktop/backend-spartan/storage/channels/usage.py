@@ -29,6 +29,8 @@ def record(account_id, update_id, value):
         return
     with connection() as db:
         # SSE usage packets describe cumulative counts, not increments.
+        if value.get('_incomplete') is True:
+            db.execute('UPDATE channel_usage SET usage_partial=1 WHERE account_id=? AND update_id=?', (account_id, update_id))
         for name, count in counts.items():
             db.execute(f'UPDATE channel_usage SET {name}=MAX(COALESCE({name},0),?) WHERE account_id=? AND update_id=?',
                        (count, account_id, update_id))
@@ -50,7 +52,7 @@ def summary(account_id, user_id=None):
     return {
         'period_hours': 24, 'requests': len(rows),
         'reported_requests': sum(any(row[name] is not None for name in ('prompt_tokens', 'completion_tokens', 'total_tokens')) for row in rows),
-        'complete_requests': sum(row['status'] == 'completed' and row['prompt_tokens'] is not None and row['completion_tokens'] is not None for row in rows),
+        'complete_requests': sum(row['status'] == 'completed' and not row['usage_partial'] and row['prompt_tokens'] is not None and row['completion_tokens'] is not None for row in rows),
         'input_reports': sum(row['prompt_tokens'] is not None for row in rows),
         'output_reports': sum(row['completion_tokens'] is not None for row in rows),
         'prompt_tokens': sum(row['prompt_tokens'] or 0 for row in rows),

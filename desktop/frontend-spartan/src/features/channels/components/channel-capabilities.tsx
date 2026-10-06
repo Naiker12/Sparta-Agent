@@ -30,6 +30,7 @@ export function ChannelCapabilities({
                 "status",
                 "provider",
                 "usage",
+                "search",
                 "tools",
                 "skills",
                 "mcp",
@@ -67,6 +68,7 @@ export function ChannelCapabilities({
                 `${inventory.skills.length} skills · ${inventory.mcp.length} MCP`,
               ],
               [t("channels.audioDocuments"), t("channels.pending")],
+              [t("channels.publicWebSearch"), t("channels.available")],
               [t("channels.webTools"), t("channels.pending")],
             ].map(([name, status]) => (
               <div
@@ -81,6 +83,9 @@ export function ChannelCapabilities({
             ))}
           </dl>
           <p className="text-muted-foreground mt-6 text-xs leading-relaxed">
+            {t("channels.webSearchHelp")}
+          </p>
+          <p className="text-muted-foreground mt-3 text-xs leading-relaxed">
             {t("channels.contextHelp")}
           </p>
           <p className="text-muted-foreground mt-3 text-xs leading-relaxed">

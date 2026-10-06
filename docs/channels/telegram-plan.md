@@ -135,6 +135,10 @@ Primero implementar la entrega 1: transporte `sendChatAction`, gestor de progres
 
 Después incorporar el contrato de trabajo y `/usage`; cerrar esa base antes de conceder herramientas. Las etapas siguientes añaden pruebas de permisos, rutas que escapan del alcance, contenido que intenta dar instrucciones, archivos grandes, reinicios y sincronización de perfil. Ninguna entrega exige fusionar `canales` a `main` o publicar una versión.
 
+## Avance de búsqueda pública
+
+Tercer bloque implementado: búsqueda pública por `/search` para proveedores de texto y una herramienta `search_public_web` que los modelos compatibles pueden solicitar automáticamente. Reutiliza el buscador existente, con una búsqueda de hasta tres fuentes por consulta y dos llamadas máximas al modelo. Las fuentes se añaden desde resultados reales y se identifican como extractos; todavía no se descargan imágenes ni se leen páginas completas. Se rechazan credenciales identificables, rutas locales y URLs internas conocidas; no se transmiten automáticamente historiales privados como consulta. La cancelación descarta el resultado y señala al buscador que se detenga; la petición bloqueante en curso puede terminar hasta su timeout. El uso de las llamadas al modelo se agrega sin duplicar informes acumulados y marca los datos incompletos. La búsqueda automática depende del soporte de herramientas del modelo; `/search` no requiere ese soporte. Permanece pendiente conectar chat/proyectos, voz, archivos y perfil.
+
 ## Fuentes primarias consultadas
 
 - [Telegram: sendChatAction](https://core.telegram.org/bots/api#sendchataction): duración y acciones nativas.
