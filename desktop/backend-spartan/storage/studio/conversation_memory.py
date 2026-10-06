@@ -65,7 +65,17 @@ def get_node(owner, node_id):
     try:
         row = conn.execute("SELECT * FROM conversation_memory_nodes WHERE owner=? AND id=?",
                            (owner, node_id)).fetchone()
-        return _node(row) if row else None
+        if row is None:
+            return None
+        result = _node(row)
+        evidence = conn.execute("""SELECT e.source_id, e.quote, n.thread_id, n.role
+            FROM conversation_memory_evidence e
+            JOIN conversation_memory_nodes n ON n.id=e.source_id
+            WHERE e.node_id=? AND n.owner=?""", (node_id, owner)).fetchall()
+        result["evidence"] = [{"sourceId": item["source_id"], "quote": item["quote"],
+                               "sourceThreadId": item["thread_id"], "sourceRole": item["role"]}
+                              for item in evidence]
+        return result
     finally:
         conn.close()
 

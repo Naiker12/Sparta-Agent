@@ -100,6 +100,11 @@ class ConversationMemoryTests(unittest.TestCase):
                               dict(type="entity", label="SQLite", content="SQLite", quote="SQLite")],
                     "relations": [dict(source=0, target=1, relation="usa", quote="Python y SQLite")]}
         first = memory.accept_extraction("alice", source["id"], proposal, [0, 1])
+        detail = memory.get_node("alice", first["nodeIds"][0])
+        self.assertEqual(detail["evidence"][0]["quote"], "Python")
+        self.assertEqual(detail["evidence"][0]["sourceId"], source["id"])
+        self.assertEqual(detail["evidence"][0]["sourceThreadId"], "thread")
+        self.assertIsNone(memory.get_node("bob", first["nodeIds"][0]))
         self.assertEqual(first, memory.accept_extraction("alice", source["id"], proposal, [0, 1]))
         self.assertEqual(len(memory.graph("alice")["nodes"]), 3)
         self.assertEqual(len(memory.graph("alice")["edges"]), 3)
