@@ -1,0 +1,1 @@
+import{a as e}from"./chunk-Cyuzqnbw.js";import{t}from"./index-DcckHXM4.js";var n=e(t(),1);function r({children:e}){return(0,n.jsx)(`div`,{className:`fd-steps`,children:e})}function i({children:e}){return(0,n.jsx)(`div`,{className:`fd-step`,children:e})}export{r as n,i as t};
