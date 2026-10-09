@@ -7,7 +7,13 @@ description: "Configura la conexión adecuada para tu tarea y comprueba sus capa
 
 Sparta Agent usa las APIs oficiales o compatibles de los proveedores configurados. Añade una conexión, guarda su credencial en la aplicación y elige el modelo disponible para esa conexión. La petición se procesa en el servicio seleccionado; el escritorio no descarga, carga ni sirve pesos de modelos.
 
-Sparta no instala, actualiza ni administra Ollama, LM Studio, llama.cpp, GGUF, vLLM, Torch ni Transformers. Si ya tienes un servidor compatible ejecutándose en tu PC o red, puedes usar **Servidor API compatible (local o remoto)** y su URL —por ejemplo `http://localhost:1234/v1`— sin incorporar ese motor al instalador.
+Para el chat, Sparta no administra motores ni pesos de modelos locales. Si ya tienes un servidor compatible en tu PC o red, elige **Servidor API compatible (local o remoto)**.
+
+```text title="URL de servidor de chat · ejemplo"
+http://localhost:1234/v1
+```
+
+El servidor debe existir y estar iniciado. Este ejemplo es para chat; la [transcripción de voz](/docs/features/voice-audio) tiene su propia configuración y restricciones.
 
 ## Configuración segura
 
@@ -23,10 +29,20 @@ No todos los modelos aceptan imágenes, herramientas o el mismo tamaño de conte
 
 ## Cuando un modelo no aparece o falla
 
-Comprueba que la credencial esté vigente, que tu cuenta tenga acceso al modelo y que el proveedor no tenga una incidencia o límite de cuota. Una conexión válida no garantiza acceso a todos los modelos ni a todas sus funciones. También verifica que el modelo seleccionado acepte las entradas que envías, por ejemplo imágenes, llamadas de herramientas o grandes ventanas de contexto.
+| Comprobación | Qué revisar |
+| --- | --- |
+| Credencial | Vigencia y permisos de la clave |
+| Modelo | Acceso permitido para tu cuenta |
+| Servicio | Incidencias y cuota disponible |
+| Entrada | Soporte de imágenes, herramientas y tamaño de contexto |
+
+Una conexión válida no garantiza acceso a todos los modelos o funciones.
 
 ## Contexto, coste y privacidad
 
-El tamaño del contexto y la salida se consumen y facturan según las reglas del proveedor. Adjunta solo la información necesaria, divide tareas grandes y usa el monitor de API para identificar solicitudes extensas. Los archivos, el historial y las configuraciones permanecen en tu equipo, pero el contenido incorporado a una solicitud se comparte con el proveedor remoto elegido.
+- **Coste:** contexto y salida se facturan según las reglas del proveedor.
+- **Contexto:** adjunta solo lo necesario y divide las tareas grandes.
+- **Seguimiento:** revisa solicitudes extensas en el monitor de API.
+- **Privacidad:** los datos guardados permanecen en tu equipo; el contenido incluido en la solicitud se envía al proveedor elegido.
 
 Consulta [Rendimiento](/docs/guides/performance) para medir la carga, la primera respuesta y la velocidad de generación por separado.

@@ -3,7 +3,7 @@ html.docs-mode {
   --spacing-8: 2rem; --spacing-16: 4rem; --spacing-24: 6rem; --spacing-32: 8rem;
   --spacing-40: 10rem; --spacing-48: 12rem; --spacing-56: 14rem; --spacing-64: 16rem;
   --spacing-80: 20rem; --spacing-96: 24rem; --spacing-120: 30rem; --spacing-224: 56rem;
-  --fd-layout-width: 1440px;
+  --fd-layout-width: 100vw;
   --color-fd-background: #fafafa;
   --color-fd-foreground: #202020;
   --color-fd-card: #f2f2f2;
@@ -101,3 +101,63 @@ html.docs-mode, .docs-mode body, .docs-mode #root { background: var(--color-fd-b
 .docs-diagram-remote .docs-diagram-node{min-height:0;display:grid;grid-template-columns:22px 1fr;background:color-mix(in srgb,var(--color-fd-primary) 4%,var(--color-fd-background));}.docs-diagram-remote .docs-diagram-node span{grid-column:2;}
 @media(max-width:1100px){.docs-diagram .docs-flow{grid-template-columns:1fr;gap:13px;}.docs-flow-number{display:none;}.docs-diagram .docs-flow .docs-diagram-node{min-height:0;display:grid;grid-template-columns:20px 1fr;gap:6px 12px;}.docs-diagram .docs-flow .docs-diagram-node span{grid-column:2;}.docs-flow-arrow{transform:rotate(90deg);top:auto;bottom:-13px;right:calc(50% - 7px);}}
 @media(max-width:640px){.docs-diagram{padding:16px;border-radius:12px;}.docs-architecture-grid{grid-template-columns:1fr;}.docs-diagram-boundary{padding:12px;}.docs-architecture-grid .docs-diagram-node{min-height:0;}.docs-diagram-outbound{padding-inline:0;}.docs-shell article .prose{font-size:15px;}.docs-shell article .prose h2{font-size:21px;}.docs-shell article .prose td,.docs-shell article .prose th{padding:10px;}}
+
+.docs-shell article .prose details { border:1px solid var(--color-fd-border);border-radius:12px;padding:14px 18px;margin:16px 0;background:var(--color-fd-card); }
+.docs-shell article .prose summary { cursor:pointer;font-weight:600;font-size:14px; }
+.docs-shell article .prose details[open] summary { margin-bottom:12px; }
+
+/* Compact navigation headings without changing document paragraphs. */
+.docs-shell #nd-sidebar p:has(> .docs-nav-heading) { margin-top:18px;margin-bottom:4px;font-size:11px;letter-spacing:.03em;color:var(--color-fd-muted-foreground); }
+.docs-shell #nd-sidebar p:has(> .docs-nav-heading):first-child { margin-top:4px; }
+.docs-shell #nd-sidebar p:has(> .docs-nav-upcoming) { margin-top:3px;margin-bottom:3px;font-size:12px;font-weight:400;color:var(--color-fd-muted-foreground); }
+.docs-nav-upcoming { display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%; }
+.docs-nav-upcoming small { font-size:10px; }
+.docs-sidebar-footer { width:100%;display:flex;flex-direction:column;gap:2px; }
+.docs-footer-version { font-size:10px;color:var(--color-fd-muted-foreground);padding-top:5px; }
+.docs-shell article .prose { font-size:15px;line-height:1.75; }
+.docs-shell article .prose p { margin-block:14px; }
+.docs-shell article .prose h2 { margin-top:36px;margin-bottom:16px; }
+.docs-shell article .prose h3 { margin-top:26px;margin-bottom:12px; }
+.docs-shell article .prose pre { overflow-x:auto; }
+.docs-shell article .prose table { min-width:460px; }
+.docs-shell article .prose details summary { line-height:1.5; }
+
+/* Use the native Fumadocs tree for disclosure, focus and active-page state. */
+.docs-shell #nd-sidebar a,.docs-shell #nd-sidebar button { font-size:13px; }
+.docs-shell #nd-sidebar [data-active="true"] { background:var(--color-fd-accent);color:var(--color-fd-accent-foreground);font-weight:500; }
+.docs-shell #nd-sidebar svg { flex-shrink:0; }
+.docs-shell #nd-page { border:1px solid var(--color-fd-border);border-radius:18px;background:var(--color-fd-background);margin-block:8px;min-height:calc(100vh - 16px); }
+.docs-shell article h1 { font-size:30px;letter-spacing:-.7px; }
+.docs-page-meta { margin-top:8px;padding-bottom:18px; }
+@media(max-width:767px){.docs-shell #nd-page{border:0;border-radius:0;margin-block:0;}.docs-shell article h1{font-size:27px;}}
+
+/* Let the three-column layout use the window; constrain only the reading text. */
+.docs-shell #nd-page { max-width:none;width:calc(100% - 24px);margin-inline:12px;padding-inline:clamp(24px,3vw,56px); }
+.docs-shell #nd-page > * { max-width:960px;width:100%;margin-inline:auto; }
+.docs-shell #nd-toc { padding-inline:24px 16px; }
+@media(max-width:1279px){.docs-shell #nd-page{width:calc(100% - 16px);margin-inline:8px;padding-inline:28px;}}
+@media(max-width:767px){.docs-shell #nd-page{width:100%;margin-inline:0;padding-inline:20px;}}
+
+/* Code cards retain native Shiki highlighting, copy controls and keyboard scrolling. */
+.docs-shell article figure.shiki { border-radius:12px;border-color:var(--color-fd-border);background:var(--color-fd-card);box-shadow:none;margin-block:20px; }
+.docs-shell article figure.shiki > div:first-child:has(figcaption) { min-height:42px;background:var(--color-fd-muted);padding-inline:16px; }
+.docs-shell article figure.shiki figcaption { font-size:12px;line-height:1.4; }
+.docs-shell article figure.shiki pre { font-size:12px;line-height:1.8;tab-size:2; }
+.docs-shell article figure.shiki [role="region"] { max-height:420px; }
+.docs-shell article [role="tablist"] { overflow-x:auto;scrollbar-width:thin; }
+.docs-shell article [role="tab"] { white-space:nowrap; }
+.docs-shell article .fd-step { padding-bottom:16px; }
+.docs-shell article .fd-step h3 { margin-top:0; }
+@media(prefers-reduced-motion:no-preference){
+ .docs-shell article figure.shiki,.docs-shell article .not-prose a,.docs-shell #nd-sidebar a,.docs-shell #nd-sidebar button { transition:background-color 140ms ease,border-color 140ms ease,color 140ms ease; }
+ .docs-shell article figure.shiki:hover { border-color:var(--color-fd-muted-foreground); }
+}
+
+/* One shared frame for code tabs: tab strip and code form a single surface. */
+.docs-shell article .docs-code-tabs { overflow:hidden;border:1px solid var(--color-fd-border);border-radius:12px;background:var(--color-fd-card);margin-block:20px; }
+.docs-shell article .docs-code-tabs [role="tablist"] { margin:0;border-bottom:1px solid var(--color-fd-border);padding-inline:8px;background:var(--color-fd-muted); }
+.docs-shell article .docs-code-tabs [role="tabpanel"] { padding:0;margin:0; }
+.docs-shell article .docs-code-tabs figure.shiki { border:0;border-radius:0;margin:0; }
+.docs-shell article .prose > div:has(> div[role="none"]) { box-shadow:none;padding-block:14px;border-color:var(--color-fd-border); }
+.docs-shell article .prose > div:has(> div[role="none"]) p { margin-block:0; }
+.docs-shell #nd-toc a { border-radius:6px;line-height:1.55; }

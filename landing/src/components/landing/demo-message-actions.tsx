@@ -7,10 +7,11 @@ import { Copy01Icon, Delete02Icon, Edit03Icon, Tick02Icon, Download01Icon, HelpC
 import { RefreshCw, MoreHorizontal, GitBranch, X, Clock } from 'lucide-react';
 import { Button } from './desktop-demo-button';
 
-export function DemoMessageActions({ text, model, onRegenerate, onEdit, onDelete, onFork, theme }: {
+export function DemoMessageActions({ text, model, onRegenerate, onEdit, onDelete, onFork, theme, readOnly = false }: {
   text: string; model: string; onRegenerate: () => void;
   onEdit: (text: string) => void; onDelete: () => void; onFork: () => void;
   theme: string;
+  readOnly?: boolean;
 }) {
   const { style, prefs } = useDemoPreferences();
   const [copied, setCopied] = useState(false);
@@ -27,9 +28,11 @@ export function DemoMessageActions({ text, model, onRegenerate, onEdit, onDelete
           reset.current = setTimeout(() => setCopied(false), 2000);
         } catch { setNotice('No se pudo copiar. Selecciona el texto para copiarlo.'); }
       }}><HugeiconsIcon icon={copied ? Tick02Icon : Copy01Icon} strokeWidth={1.75} /></Button>
+      {!readOnly && <>
       <Button variant="ghost" size="icon" title="Editar" aria-label="Editar respuesta" onClick={() => { setDraft(text); setDialog('edit'); }}><HugeiconsIcon icon={Edit03Icon} strokeWidth={1.75} /></Button>
       <Button variant="ghost" size="icon" title="Regenerar" aria-label="Regenerar respuesta" onClick={onRegenerate}><RefreshCw strokeWidth={1.75} /></Button>
       <Button variant="ghost" size="icon" title="Eliminar" aria-label="Eliminar respuesta de ejemplo" onClick={onDelete}><HugeiconsIcon icon={Delete02Icon} strokeWidth={1.75} /></Button>
+      </>}
       <Menu.Root><Menu.Trigger className="demo-message-more" title="Más acciones" aria-label="Más acciones de respuesta"><MoreHorizontal strokeWidth={1.75} /></Menu.Trigger>
         <Menu.Portal><Menu.Positioner side="top" align="start" sideOffset={6}><Menu.Popup className="sparta-preview demo-sidebar-popover demo-response-menu" data-demo-theme={theme} style={style}>
           <Menu.Item onClick={onFork}><GitBranch />Bifurcar en un nuevo chat</Menu.Item>

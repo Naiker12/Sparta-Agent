@@ -19,8 +19,6 @@ export default defineConfig({
     dedupe: ["react", "react-dom", "streamdown", "remend", "mdast-util-from-markdown", "mdast-util-gfm", "mdast-util-math", "micromark-extension-gfm", "micromark-extension-math"],
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@blobatar/react': demoRequire.resolve('@blobatar/react'),
-      'blobatar/expression': demoRequire.resolve('blobatar/expression'),
       '@radix-ui/react-slot': path.resolve(__dirname,'node_modules/@radix-ui/react-slot/dist/index.mjs'),
       'class-variance-authority': demoRequire.resolve('class-variance-authority'),
     },

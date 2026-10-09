@@ -3,17 +3,31 @@ title: "Configurar MCP"
 description: "Añade una conexión, verifica sus herramientas y prueba una operación de lectura."
 ---
 
-## Añade el servidor
+## Conecta y comprueba
 
-Abre la configuración de MCP e introduce la URL o el comando que requiera el servidor. Utiliza la documentación de su mantenedor para conocer transporte, argumentos y variables necesarias.
+<Steps>
+<Step>
 
-## Introduce las credenciales
+### Añade el servidor
 
-Completa el método de autenticación que soporte la integración. Evita incluir claves en comandos que se copien a logs o capturas.
+Abre la configuración de MCP. Introduce la URL o el comando del servidor; consulta a su mantenedor para transporte, argumentos y variables.
 
-## Verifica la conexión
+</Step>
+<Step>
 
-Comprueba el estado y la lista de herramientas. Empieza con una consulta de lectura que tenga un resultado conocido antes de solicitar escrituras.
+### Configura la autenticación
+
+Completa el método que soporte la integración. Introduce las claves en campos protegidos; evita incluirlas en comandos que puedan aparecer en logs o capturas.
+
+</Step>
+<Step>
+
+### Prueba una lectura
+
+Comprueba el estado y la lista de herramientas. Empieza con una operación de lectura cuyo resultado conozcas antes de solicitar escrituras.
+
+</Step>
+</Steps>
 
 ## Resuelve errores
 

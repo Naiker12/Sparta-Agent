@@ -1,3 +1,4 @@
+import { DemoChannelsMenu, DemoTelegramPanel } from "./demo-channels";
 import { DemoProfileAvatar } from './demo-profile-avatar';
 import { DemoAttachmentInput, DemoAttachmentTray } from './demo-attachments';
 import { useEffect, useRef, useState } from "react";
@@ -23,7 +24,6 @@ import {
 import { Button } from "./desktop-demo-button";
 import { cn } from "@/lib/utils";
 import { WorkspaceSheet, WorkspaceRail, type SheetTab } from './workspace-sheet';
-import { ThinkingAvatar } from "../../../../desktop/frontend-spartan/src/components/ui/blobatar-avatar";
 import { DesktopStreamingMessage } from './desktop-streaming-message';
 import { DemoReasoning } from './demo-reasoning';
 import { DemoMessageActions } from './demo-message-actions';
@@ -34,7 +34,7 @@ import { DemoMoreMenu, DemoChatRow, DemoPinnedNavigation } from './demo-sidebar-
 import { DemoSettingsDialog, type DemoSettingsTab } from './demo-settings-dialog';
 import { DEFAULT_DEMO_PREFERENCES, DemoPreferencesProvider, demoAppearanceStyle, type DemoPreferences } from './demo-preferences';
 import "streamdown/styles.css";
-import "blobatar/motion.css";
+
 import { SpartaMark } from "./sparta-mark";
 import desktopLogo from '../../../../desktop/frontend-spartan/public/spartan-logo.svg?url';
 import { DemoModelSelector } from './demo-model-selector';
@@ -56,6 +56,7 @@ import {
 } from "@hugeicons/core-free-icons";
 
 const workspaceSections = [
+  { id: "channels", label: "Canales", icon: BubbleChatIcon },
   { id: "projects", label: "Proyectos", icon: Folder01Icon },
   { id: "recipes", label: "Recetas", icon: ChefHatIcon },
   { id: "api", label: "Monitor API", icon: Globe02Icon },
@@ -126,6 +127,16 @@ const examples = [
     ],
   },
 ];
+examples.push({
+  title: "Revisión semanal · sparta-demo",
+  prompt: "Resume las instrucciones guardadas del proyecto y prepara los siguientes pasos.",
+  files: [],
+  tool: "Consultando las instrucciones del proyecto",
+  reply: "**Revisión semanal del proyecto**\n\nLas instrucciones guardadas indican simplificar el formulario y mantener una sola acción principal.\n\n1. Revisar los mensajes de error.\n2. Probar el recorrido completo.\n3. Revisar la propuesta antes de aplicar cambios.\n\nEsta ejecución de ejemplo usa las instrucciones guardadas; no ha leído ni modificado archivos.",
+  result: "Automatización completada · Ejemplo",
+  file: "revision-semanal.md",
+  lines: ["# Revisión semanal", "Proyecto: sparta-demo", "Contexto: instrucciones guardadas", "Estado: completada en la demostración"],
+});
 const stages = [
   "Preparado",
   "Escribiendo solicitud",
@@ -171,7 +182,7 @@ export default function SpartaPreview() {
   const [demoTheme, setDemoTheme] = useState<'light' | 'dark'>('light');
   const [settingsTab, setSettingsTab] = useState<DemoSettingsTab | null>(null);
   const [profileName, setProfileName] = useState('Spartan Agent');
-  const [profileAvatar, setProfileAvatar] = useState('Spartan Agent');
+  const [profileAvatar, setProfileAvatar] = useState('mascot:fox');
   const [collapseThinking, setCollapseThinking] = useState(false);
   const [enterSends, setEnterSends] = useState(true);
   const [preferences, setPreferences] = useState<DemoPreferences>(DEFAULT_DEMO_PREFERENCES);
@@ -185,7 +196,7 @@ export default function SpartaPreview() {
   const [fileOpenRequest,setFileOpenRequest] = useState(0);
   const [streamChars,setStreamChars] = useState(0);
   const [temporary,setTemporary] = useState(false);
-  const [avatarVariant,setAvatarVariant] = useState(1);
+
   const [permission,setPermission] = useState("auto");
   const [replyOverride, setReplyOverride] = useState<string | null>(null);
   const [replyRound, setReplyRound] = useState(0);
@@ -224,7 +235,6 @@ export default function SpartaPreview() {
     onSelect={() => chooseExample(index)} onPin={() => setPinnedChats(value => value.includes(index) ? value.filter(id => id !== index) : [...value, index])}
     onRename={name => setChatNames(value => value.map((old, id) => id === index ? name : old))} onArchive={() => setArchivedChats(value => [...value, index])} />;
   const chatVisible = (index: number) => !archivedChats.includes(index) && chatNames[index].toLocaleLowerCase().includes(search.toLocaleLowerCase());
-  useEffect(()=>{if(reducedMotion||reduceDemoMotion||!visible||!pageVisible)return;const timer=window.setInterval(()=>setAvatarVariant(value=>value%8+1),4000);return ()=>window.clearInterval(timer);},[reducedMotion,reduceDemoMotion,visible,pageVisible]);
   useEffect(()=>{setStreamChars(0);},[stage,example,customPrompt]);
   useEffect(()=>{
     if(stage!==3||!playing||!visible||!pageVisible||reducedMotion||view!=='chat')return;
@@ -416,7 +426,7 @@ export default function SpartaPreview() {
             >
               <button type="button" title="Chat temporal" aria-label="Chat temporal" aria-pressed={temporary} onClick={()=>{restart();setTemporary(value=>!value);}}><HugeiconsIcon icon={BubbleChatIcon} strokeWidth={1.75} /><span>Chat temporal</span></button>
               <DemoPinnedNavigation active={view} onNavigate={id => { takeControl(); setView(id); setMobileSidebarOpen(false); setFolderOpen(false); }} onExport={exportDemoChat} />
-              <button type="button" disabled className="demo-channels" aria-label="Canales, próximamente"><HugeiconsIcon icon={BubbleChatIcon} strokeWidth={1.75} /><span>Canales</span><small>Próximo</small></button>
+              <DemoChannelsMenu active={view === "channels"} onTelegram={() => { takeControl(); setView("channels"); setMobileSidebarOpen(false); setFolderOpen(false); }} />
               <DemoMoreMenu theme={demoTheme} onNavigate={id => { takeControl(); setView(id); setMobileSidebarOpen(false); }} onExport={exportDemoChat} onCustomize={() => { takeControl(); setSettingsTab('appearance'); }} />
             </nav>
             {preferences.showProjects && <><p className="sidebar-label">Proyectos</p>
@@ -499,7 +509,7 @@ export default function SpartaPreview() {
                   >
                     {stage < 2 ? (
                       <div className="preview-welcome">
-                        {showWelcomeAvatar && <DemoProfileAvatar image={preferences.avatarImage} shape={preferences.avatarShape} seed={profileAvatar === 'Spartan Agent' ? (temporary ? "sparta-temporary-chat" : "sparta-agent")+"-0"+(reduceDemoMotion ? 1 : avatarVariant) : profileAvatar} size={152} />}
+                        {showWelcomeAvatar && <DemoProfileAvatar image={preferences.avatarImage} shape={preferences.avatarShape} seed={profileAvatar} interactive={!reduceDemoMotion && !reducedMotion} size={152} />}
                         <h3>{temporary ? "Chat temporal" : greetingName ? `Qué bueno verte, ${greetingName}` : "Qué bueno verte"}</h3>
 
                       </div>
@@ -522,13 +532,13 @@ export default function SpartaPreview() {
                                 recorrido.
                               </p>
                             )}
-                            {stage === 2 && !(runConfig.reasoning && demoModels[runConfig.model].reasoning) && <div className="demo-thinking"><ThinkingAvatar name="sparta-assistant" size={24} fallback={<span />} /><span>{playing ? 'Revisando el contexto…' : 'Revisión en pausa'}</span></div>}
+                            {stage === 2 && !(runConfig.reasoning && demoModels[runConfig.model].reasoning) && <div className="demo-thinking"><DemoProfileAvatar seed={profileAvatar} image={preferences.avatarImage} shape={preferences.avatarShape} size={24} /><span>{playing ? 'Revisando el contexto…' : 'Revisión en pausa'}</span></div>}
                             {runConfig.reasoning && demoModels[runConfig.model].reasoning && <DemoReasoning key={`${example}:${replyRound}`} messageId={`${example}:${replyRound}`}
                               pending={stage === 2}
                               collapseByDefault={collapseThinking}
                               active={stage === 2 && playing && visible && pageVisible}
                               text={`${data.tool}. Revisaré ${data.files.map(file => `\`${file}\``).join(' y ')} para preparar una respuesta con el contexto de este proyecto. La propuesta se mostrará antes de aplicar cualquier cambio.`} />}
-                            {stage >= 3 && <DemoToolCall key={`tool:${example}:${replyRound}`} path={`${runConfig.folder}/${data.files[0]}`} content={example === 1 ? '# Brief del proyecto\n\nSimplificar el formulario y mantener una acción principal.' : 'const emailError = validateEmail(email);\n<span>Entrada inválida</span>\nreturn <ContactForm errors={errors} />;'} running={stage === 3 && streamChars === 0 && playing} cancelled={stage === 3 && streamChars === 0 && cancelled} />}
+                            {stage >= 3 && data.files.length > 0 && <DemoToolCall key={`tool:${example}:${replyRound}`} path={`${runConfig.folder}/${data.files[0]}`} content={example === 1 ? '# Brief del proyecto\n\nSimplificar el formulario y mantener una acción principal.' : 'const emailError = validateEmail(email);\n<span>Entrada inválida</span>\nreturn <ContactForm errors={errors} />;'} running={stage === 3 && streamChars === 0 && playing} cancelled={stage === 3 && streamChars === 0 && cancelled} />}
                             {stage >= 3 && <>
                             <DesktopStreamingMessage messageId={`${example}:${replyRound}:${customPrompt}:reply`}
                               running={stage === 3 && playing && visible && pageVisible && view === 'chat'}
@@ -555,7 +565,7 @@ export default function SpartaPreview() {
                               </span>
                               <Code2 />
                             </button>}
-                            {stage === 4 && <DemoMessageActions theme={demoTheme} text={reply} model={demoModels[runConfig.model].name}
+                            {stage === 4 && <DemoMessageActions readOnly={example === 3} theme={demoTheme} text={reply} model={demoModels[runConfig.model].name}
                               onRegenerate={() => { captureRun(); setApproved(false); setDenied(false); setCancelled(false); setReplyOverride(null); setReplyRound(value => value + 1); setStage(reducedMotion ? 4 : 2); setStreamChars(0); setPlaying(!reducedMotion); setPanel('chat'); }}
                               onEdit={setReplyOverride}
                               onDelete={() => { takeControl(); setStage(0); setPanel('chat'); setCustomPrompt(''); }}
@@ -587,7 +597,7 @@ export default function SpartaPreview() {
                           </article>
                         ) : (
                           <div className="demo-thinking">
-                            {playing ? <ThinkingAvatar name="sparta-assistant" size={24} fallback={<span />} /> : <Square size={16} />}
+                            {playing ? <DemoProfileAvatar seed={profileAvatar} image={preferences.avatarImage} shape={preferences.avatarShape} size={24} /> : <Square size={16} />}
                             {playing ? "Generando respuesta…" : "Generación detenida"}
                           </div>
                         )}
@@ -719,7 +729,7 @@ export default function SpartaPreview() {
                 {preferences.showDisclaimer && <p className="demo-model-disclaimer">Los LLM pueden cometer errores.</p>}
               </>
             ) : (
-              <WorkspaceExplorer view={view} onChat={() => chooseExample(0)} />
+              view === "channels" ? <DemoTelegramPanel onSettings={() => setSettingsTab("channels")} /> : <WorkspaceExplorer view={view} onChat={() => chooseExample(0)} onAutomationChat={() => { chooseExample(3); setFolder("sparta-demo"); }} />
             )}
           </div>
           {view==='chat' && panel==='file' && <WorkspaceSheet tab={sheetTab} folder={stage >= 2 ? runConfig.folder : folder || 'sparta-demo'} file={data.file} sourceFiles={data.files} lines={data.lines} approved={approved} fileRequest={fileOpenRequest} onClose={()=>{takeControl();setPanel('chat');}} />}

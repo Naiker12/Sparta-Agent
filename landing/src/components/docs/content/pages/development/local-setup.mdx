@@ -9,7 +9,7 @@ El frontend declara Node.js 20.19 o posterior en la rama 20, o Node.js 22.12 o p
 
 ## Inicia el escritorio
 
-```bash
+```bash title="Terminal · iniciar escritorio"
 git clone https://github.com/Naiker12/Sparta-Agent.git
 cd Sparta-Agent
 npm ci
@@ -23,7 +23,7 @@ El script de desarrollo raíz prepara la integración de assistant-ui e inicia V
 
 Desde la raíz:
 
-```bash
+```bash title="Terminal · iniciar landing"
 npm --prefix landing ci
 npm --prefix landing run dev
 ```
@@ -32,14 +32,43 @@ La landing tiene su propia configuración Vite, dependencias y build. Los MDX se
 
 ## Ejecuta comprobaciones por superficie
 
-| Cambio | Comprobación inicial |
-| --- | --- |
-| Tipos de escritorio | `npm run typecheck` desde la raíz |
-| Comportamiento del frontend | `npm --prefix desktop/frontend-spartan test` |
-| Traducciones | `npm run i18n:check` |
-| MDX y enlaces | `npm --prefix landing run docs:check` |
-| Landing y documentación | `npm --prefix landing run build:gh` |
-| Distribución de escritorio | `npm run build`; incluye empaquetado y validaciones |
+Los comandos se ejecutan desde la raíz del repositorio. Elige la superficie que modificaste.
+
+<CodeBlockTabs className="docs-code-tabs" defaultValue="Documentación">
+<CodeBlockTabsList>
+<CodeBlockTabsTrigger value="Documentación">Documentación</CodeBlockTabsTrigger>
+<CodeBlockTabsTrigger value="Frontend">Frontend</CodeBlockTabsTrigger>
+<CodeBlockTabsTrigger value="Distribución">Distribución</CodeBlockTabsTrigger>
+</CodeBlockTabsList>
+<CodeBlockTab value="Documentación">
+
+```bash title="Terminal · documentación y landing"
+npm --prefix landing run docs:check
+npm --prefix landing run build:gh
+```
+
+</CodeBlockTab>
+<CodeBlockTab value="Frontend">
+
+```bash title="Terminal · tipos, pruebas y traducciones"
+npm run typecheck
+npm --prefix desktop/frontend-spartan test
+npm run i18n:check
+```
+
+</CodeBlockTab>
+<CodeBlockTab value="Distribución">
+
+```bash title="Terminal · empaquetado del escritorio"
+npm run build
+```
+
+</CodeBlockTab>
+</CodeBlockTabs>
+
+<Callout type="info" title="Elige la comprobación adecuada">
+Documentación comprueba MDX y enlaces; Frontend revisa tipos, comportamiento y traducciones. Distribución genera artefactos del escritorio. Estos comandos no publican una versión.
+</Callout>
 
 El empaquetado tiene dependencias y efectos distintos de un build de la landing. Ejecuta las comprobaciones correspondientes al cambio; una compilación de documentación no prueba el motor de escritorio.
 

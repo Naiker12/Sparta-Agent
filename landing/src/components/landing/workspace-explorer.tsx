@@ -14,8 +14,10 @@ import {
 import { useState } from "react";
 import { Button } from "./desktop-demo-button";
 import { getPublicUrl } from "@/lib/utils";
+import { DemoAutomationRun } from './demo-automations';
 
 export type WorkspaceView =
+  | "channels"
   | "chat"
   | "projects"
   | "memory"
@@ -58,9 +60,11 @@ const screens = {
 export default function WorkspaceExplorer({
   view,
   onChat,
+  onAutomationChat,
 }: {
-  view: Exclude<WorkspaceView, "chat">;
+  view: Exclude<WorkspaceView, "chat" | "channels">;
   onChat: () => void;
+  onAutomationChat: () => void;
 }) {
   const [reviewed, setReviewed] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -130,30 +134,7 @@ export default function WorkspaceExplorer({
           </Button>
         </div>
       )}
-      {view === "automations" && (
-        <div className="explorer-card">
-          <div className="explorer-card-title">
-            <CalendarClock />
-            <strong>Revisión semanal del proyecto</strong>
-            <span>{paused ? "En pausa" : "Activa"}</span>
-          </div>
-          <p>Resumir cambios y preparar los siguientes pasos para revisión.</p>
-          <div className="explorer-meta">
-            Lunes · 09:00 · Programación de ejemplo
-          </div>
-          <Button
-            variant="outline"
-            onClick={() => setPaused((value) => !value)}
-          >
-            {paused ? (
-              <Play data-icon="inline-start" />
-            ) : (
-              <Pause data-icon="inline-start" />
-            )}
-            {paused ? "Reanudar ejemplo" : "Pausar ejemplo"}
-          </Button>
-        </div>
-      )}
+      {view === "automations" && <DemoAutomationRun onChat={onAutomationChat} />}
       {view === "api" && (
         <>
           <div className="explorer-stats">

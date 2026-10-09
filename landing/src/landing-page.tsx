@@ -281,6 +281,35 @@ export default function LandingPage({
             </a>
           </div>
         </section>
+        <section className="benefits-section site-container" aria-labelledby="channels-title">
+          <div className="section-heading">
+            <span className="eyebrow">CANALES · EN DESARROLLO</span>
+            <h2 id="channels-title">Consulta Spartan desde Telegram.</h2>
+            <p>Bot privado, usuarios autorizados y tu proveedor de IA. Estas funciones están implementadas en la rama de Canales; la descarga publicada puede incluir una versión anterior.</p>
+          </div>
+          <div className="benefits-grid">
+            <article>
+              <MessageSquare aria-hidden="true" />
+              <h3>Conecta tu bot y elige tu proyecto.</h3>
+              <p>Autoriza tu cuenta, elige proyectos con botones y cancela consultas en curso. El asistente de canales muestra el progreso en Spartan. La aplicación debe permanecer abierta.</p>
+            </article>
+            <article>
+              <FileText aria-hidden="true" />
+              <h3>Texto, fuentes y documentos.</h3>
+              <p>Pide búsquedas públicas, recibe enlaces e imágenes de referencia o resume documentos de texto. Cambia tu nombre de Spartan desde Telegram con un vínculo de perfil guardado.</p>
+            </article>
+            <article>
+              <ShieldCheck aria-hidden="true" />
+              <h3>Voz con una conexión elegida.</h3>
+              <p>Whisper local o transcripción por API. Configuración implementada; validación real de voz pendiente. Discord, WhatsApp y Slack vendrán después.</p>
+            </article>
+          </div>
+          <div className="integration-note">
+            <BookOpen aria-hidden="true" />
+            Guía con ejemplos, diagramas, límites y funciones pendientes.
+            <a href={getPublicUrl("?docs=features/channels")}>Ver Canales y Telegram <ArrowUpRight /></a>
+          </div>
+        </section>
         <section
           id="descargas"
           className="downloads-section site-container"

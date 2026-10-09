@@ -1,14 +1,16 @@
 import { Component, lazy, Suspense, useEffect, useMemo, type ComponentType, type ReactNode, type ComponentProps } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FrameworkProvider } from 'fumadocs-core/framework';
-import type { Root } from 'fumadocs-core/page-tree';
+import { docsTree as tree } from './docs-navigation';
 import { RootProvider } from 'fumadocs-ui/provider/base';
 import { DocsBody, DocsDescription, DocsPage as FumadocsPage, DocsTitle } from 'fumadocs-ui/page';
 import defaultMdxComponents from 'fumadocs-ui/mdx';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Steps, Step } from 'fumadocs-ui/components/steps';
 import { DocsLayout } from 'fumadocs-ui/layouts/docs';
-import { BookOpen, ExternalLink, FileText, ChevronRight } from 'lucide-react';
+import { ExternalLink, FileText, ChevronRight } from 'lucide-react';
 import { catalog } from './lib/catalog.generated';
-import { canonicalSlug, docsHref, docsPath, groups } from './lib/navigation';
+import { canonicalSlug, docsHref, docsPath } from './lib/navigation';
 import './docs.css';
 import type { SharedProps } from 'fumadocs-ui/components/dialog/search';
 
@@ -21,17 +23,7 @@ function SearchDialog(props: SharedProps) {
   return <Suspense fallback={null}><LazySearchDialog {...props} /></Suspense>;
 }
 const documents = import.meta.glob('./content/pages/**/*.mdx');
-const mdxComponents = { ...defaultMdxComponents, DocsVideo, DocsDiagram };
-const tree: Root = {
-  name: 'Documentación',
-  children: groups.flatMap(group => [
-    { type: 'separator' as const, name: group.title },
-    ...group.pages.flatMap(slug => {
-      const page = catalog.find(item => item.slug === slug);
-      return page ? [{ type: 'page' as const, name: page.title, url: docsPath(slug) }] : [];
-    }),
-  ]),
-};
+const mdxComponents = { ...defaultMdxComponents, Tabs, Tab, Steps, Step, DocsVideo, DocsDiagram };
 
 function DocsLink({ href = '', prefetch: _prefetch, onClick, ...props }: ComponentProps<'a'> & { prefetch?: boolean }) {
   const navigate = useNavigate();
@@ -61,8 +53,7 @@ export function DocsPage({ slug }: { slug: string }) {
     if (!loader) return { default: () => <p>La guía no existe. Elige una página de la navegación o utiliza la búsqueda.</p> };
     const module = await loader() as { default: ComponentType<{ components?: unknown }>; toc?: { title: string; url: string; depth: number }[] };
     return { default: () => <FumadocsPage toc={module.toc?.filter(item => item.depth > 1)} tableOfContent={{ style: 'clerk' }}
-      editOnGithub={{ owner: 'Naiker12', repo: 'Sparta-Agent', sha: 'main', path: `landing/src/components/docs/content/pages/${current}.mdx` }}>
-      <div className="docs-eyebrow"><span className="docs-status-dot" /> {groups.find(group=>group.pages.includes(current))?.title ?? "DOCUMENTACIÓN"}</div>
+      >
       <DocsTitle>{page?.title}</DocsTitle>
       <DocsDescription>{page?.description}</DocsDescription>
       <div className="docs-page-meta"><span><FileText size={13} /> Lectura: {Math.max(1, Math.ceil((page?.text.split(' ').length ?? 0) / 220))} min</span><span>Escritorio · v{release.version}</span></div>
@@ -99,7 +90,7 @@ export function DocsPage({ slug }: { slug: string }) {
 
   return <FrameworkProvider {...framework}>
     <RootProvider theme={{ defaultTheme: 'dark', storageKey: 'sparta-docs-theme' }} search={{ SearchDialog, preload: false }} i18n={{ locale: 'es', translations: {
-      'Search(search trigger)': 'Buscar documentación',
+      'Search(search trigger)': 'Buscar…',
       'Open Search(search trigger)(aria-label)': 'Abrir búsqueda',
       'Collapse Sidebar(sidebar)(aria-label)': 'Contraer navegación',
       'Open Sidebar(sidebar)(aria-label)': 'Abrir navegación',
@@ -107,6 +98,8 @@ export function DocsPage({ slug }: { slug: string }) {
       'Close Search(search dialog)(aria-label)': 'Cerrar búsqueda',
       'Search(search dialog)': 'Buscar documentación',
       'Toggle Theme(theme switcher)(aria-label)': 'Cambiar tema',
+      'Copy Text(code block)(aria-label)': 'Copiar código',
+      'Copied Text(code block)(aria-label)': 'Código copiado',
       'Light(theme switcher)(aria-label)': 'Claro',
       'Dark(theme switcher)(aria-label)': 'Oscuro',
       'System(theme switcher)(aria-label)': 'Sistema',
@@ -121,8 +114,8 @@ export function DocsPage({ slug }: { slug: string }) {
         <a className="docs-skip" href="#nd-page">Saltar al contenido</a>
         <DocsLayout tree={tree} nav={{ title: <span className="docs-brand"><span className="docs-brand-mark"><img src={`${import.meta.env.BASE_URL}brand/sparta-white.png`} alt="" /></span><strong>Sparta</strong><span>docs</span></span>, url: '/' }}
           githubUrl="https://github.com/Naiker12/Sparta-Agent"
-          sidebar={{ defaultOpenLevel: 1, banner: <div className="docs-sidebar-banner"><BookOpen size={16} /><span>Documentación</span><span className="docs-version">v{release.version}</span></div>, footer: <a className="docs-help" href="https://github.com/Naiker12/Sparta-Agent/issues" target="_blank" rel="noreferrer">¿Encontraste un problema?<ExternalLink size={13} /></a> }}
-          links={[{ text: 'Ir al sitio', url: '/', active: 'none' }]}>
+          sidebar={{ defaultOpenLevel: 0, footer: <div className="docs-sidebar-footer"><DocsLink className="docs-help" href="/">Volver al sitio<ChevronRight size={13} /></DocsLink><a className="docs-help" href="https://github.com/Naiker12/Sparta-Agent/issues" target="_blank" rel="noreferrer">Reportar un problema<ExternalLink size={13} /></a><span className="docs-footer-version">Documentación · v{release.version}</span></div> }}
+          links={[]}>
           <DocumentBoundary key={current}><Suspense fallback={<div className="docs-loading" role="status">Cargando guía…</div>}>
             {page ? <Content /> : <FumadocsPage><DocsTitle>Guía no encontrada</DocsTitle><DocsDescription>Esta dirección no corresponde a una página disponible.</DocsDescription><DocsLink href="/docs/index">Volver a la introducción <ChevronRight size={16} /></DocsLink></FumadocsPage>}
           </Suspense></DocumentBoundary>

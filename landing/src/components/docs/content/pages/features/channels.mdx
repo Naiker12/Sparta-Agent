@@ -1,0 +1,322 @@
+---
+title: "Canales y Telegram"
+description: "Conecta tu bot, autoriza usuarios y consulta Spartan desde Telegram."
+---
+
+## Estado de la integración
+
+Telegram es la primera integración implementada. Discord, WhatsApp y Slack están previstos. Las capacidades descritas aquí corresponden al desarrollo de Canales; la instalación publicada puede tener una versión anterior.
+
+## Qué está implementado
+
+| Función | Estado en el desarrollo de Canales |
+| --- | --- |
+| Bot privado, vinculación y autorización en Spartan | Implementado |
+| Texto, indicador de escritura y cancelación | Implementado |
+| Búsqueda pública, enlaces e imágenes de referencia | Implementado |
+| Documentos TXT, Markdown, CSV y JSON | Implementado con límites |
+| Whisper local | Preparación implementada; arranque pendiente de validar en el equipo afectado |
+| ElevenLabs, Groq y API compatible | Adaptadores implementados; la prueba real de ElevenLabs sigue rechazando el permiso de transcripción |
+| Proyectos | Visibilidad y selección para asociar actividad |
+| Nombre de perfil desde Telegram | Implementado; requiere vínculo de perfil guardado |
+| Botones de proyectos y cancelación | Implementados; validación real pendiente |
+| Archivos del PC y ejecución de skills/MCP | Pendiente |
+| Discord, WhatsApp, Slack y asistente de voz en tiempo real | Pendiente |
+
+## Conecta tu bot
+
+1. Abre [BotFather](https://t.me/BotFather) en Telegram y utiliza `/newbot`.
+2. En Spartan, entra en **Canales → Telegram → Añadir conexión**. Introduce el token, el proveedor y el modelo.
+3. Pulsa **Vincular mi Telegram** y abre el enlace generado. Vuelve a Spartan, compara el código y autoriza la cuenta.
+4. Activa la conexión y escribe al bot en privado. Spartan debe permanecer abierto para recibir mensajes.
+
+<DocsDiagram type="channels" />
+
+El token se guarda cifrado. Los mensajes no conceden permisos y no se aceptan conversaciones de grupos. No publiques el token ni lo incluyas en capturas.
+
+## Qué puedes consultar
+
+Habla con el bot como en un chat normal. Para solicitar una búsqueda, escribe:
+
+<CodeBlockTabs className="docs-code-tabs" defaultValue="Español">
+<CodeBlockTabsList>
+<CodeBlockTabsTrigger value="Español">Español</CodeBlockTabsTrigger>
+<CodeBlockTabsTrigger value="English">English</CodeBlockTabsTrigger>
+</CodeBlockTabsList>
+<CodeBlockTab value="Español">
+
+```text title="Telegram · petición en español"
+Busca en internet noticias de astronomía
+```
+
+</CodeBlockTab>
+<CodeBlockTab value="English">
+
+```text title="Telegram · request in English"
+Search the web astronomy news
+```
+
+</CodeBlockTab>
+</CodeBlockTabs>
+
+Estas peticiones explícitas usan el buscador público aunque el modelo no admita herramientas. Para voz, envía una nota con el micrófono de Telegram; no necesitas `/voice`.
+
+<details>
+<summary>Qué aparece en el menú / y cómo se envían los comandos</summary>
+
+- El menú muestra ayuda, proyectos, consumo, cancelar y reiniciar.
+- Los demás comandos conservan compatibilidad.
+- Telegram puede enviar un comando al seleccionarlo. Si falta un tema, el bot explica cómo completarlo.
+- Spartan no modifica Enter ni el editor de Telegram.
+
+</details>
+
+| Comando | Uso |
+| --- | --- |
+| `/help` | Comandos disponibles |
+| `/status` | Estado de la conexión |
+| `/provider` | Proveedor y modelo elegidos |
+| `/usage` | Tokens reportados y límite local |
+| `/search tema` | Buscar información pública |
+| `/read URL` | Leer texto de una página pública |
+| `/images tema` | Hasta dos imágenes de referencia con enlaces de origen |
+| `/voice` | Estado de la entrada de voz |
+| `/projects` | Proyectos autorizados para tu usuario |
+| `/project ID` | Seleccionar un proyecto |
+| `/project off` | Salir del proyecto |
+| `/tools`, `/skills`, `/mcp` | Consultar inventario y capacidades |
+| `/cancel` | Detener tu consulta en curso |
+| `/reset` | Borrar el contexto reciente de este chat |
+
+- **Progreso:** Telegram muestra el indicador de escritura mientras se procesa la consulta.
+- **Búsqueda automática:** depende del soporte de herramientas del modelo.
+- **Referencias:** incluyen enlaces de origen, incluso si la foto no puede enviarse.
+- **Imágenes:** son referencias recuperadas, no imágenes generadas ni verificadas visualmente.
+
+## Ejemplos para empezar
+
+Estos ejemplos muestran peticiones que puedes enviar; las respuestas dependen del proveedor y de las fuentes disponibles.
+
+| Quiero… | Qué envío al bot |
+| --- | --- |
+| Conversar | «Ayúdame a organizar las tareas de hoy» |
+| Buscar información actual | «Busca en internet noticias de astronomía» |
+| Leer una página | `/read https://core.telegram.org/bots/features` |
+| Encontrar referencias visuales | `/images arquitectura de bibliotecas` |
+| Resumir un documento | Adjunto `notas.md` y escribo «Resume los acuerdos» en la descripción |
+| Consultar consumo | `/usage` |
+| Detener una consulta | `/cancel` |
+| Seleccionar un proyecto | `/projects`, después el `/project ID` que aparece en la respuesta |
+| Enviar una pregunta por voz | Nota con el micrófono de Telegram, después de habilitar la voz del bot |
+
+Seleccionar un proyecto asocia la actividad: pedir «envía un archivo de esa carpeta» todavía no permite leerlo ni exportarlo.
+
+## Voz local
+
+Whisper transcribe en tu PC, sin clave API. El texto reconocido se envía después al proveedor del chat. El archivo de audio no se guarda desde este flujo.
+
+1. Abre **Ajustes → Voz → Preparar voz local**.
+2. Espera la descarga del motor CPU y del modelo base multilingüe.
+3. Comprueba que el estado indique que está listo.
+4. Activa la entrada de voz en el bot y envía una nota breve.
+
+| Característica | Límite o requisito |
+| --- | --- |
+| Descarga inicial | Requiere internet |
+| Idiomas | Español e inglés, detección automática |
+| Audio | Hasta cinco minutos y 20 MB |
+| Respuesta | Texto; el tiempo depende del equipo |
+
+<Callout type="warn" title="Preparación local pendiente de validar">
+El paquete descargado no garantiza que el motor arranque. Hay un fallo de arranque pendiente en el equipo afectado; ese estado no se considera voz lista.
+</Callout>
+
+## Proveedor de transcripción
+
+Abre **Ajustes → Voz**. Esta conexión convierte audio en texto; el proveedor del chat genera la respuesta por separado.
+
+<Cards>
+  <Card title="Whisper local · recomendado">Sin clave API. Requiere preparar el motor y el modelo. El arranque local sigue pendiente de validar en el equipo afectado.</Card>
+  <Card title="Proveedor externo">Elige ElevenLabs, Groq o una API compatible. Introduce tu clave, acepta el envío de audio y guarda.</Card>
+</Cards>
+
+### 1. Consigue la clave
+
+| Proveedor | Panel oficial | Qué necesitas |
+| --- | --- | --- |
+| ElevenLabs | [Obtener clave](https://elevenlabs.io/app/developers/api-keys) | Habilitar **Speech to Text**; modelo inicial `scribe_v2` |
+| Groq | [Obtener clave](https://console.groq.com/keys) | Elegir el proyecto; modelo inicial `whisper-large-v3-turbo` |
+| API compatible | Panel de tu proveedor | Modelo, clave y URL completa de transcripción |
+
+ElevenLabs y Groq ya incluyen la URL inicial en el formulario. No pegues tu clave en Telegram.
+
+### 2. Guarda y comprueba
+
+1. Selecciona el proveedor y completa los campos.
+2. Acepta el envío de audio y pulsa **Guardar y usar proveedor**.
+3. Abre **Probar transcripción** y elige un audio breve.
+4. Revisa el texto; activa **Entrada de voz** en el bot y envía una nota desde Telegram.
+
+<Callout type="info" title="Configurado no significa probado">
+El estado confirma el guardado. La prueba envía audio al servicio elegido y puede generar consumo; no envía mensajes al bot.
+</Callout>
+
+<DocsDiagram type="voice-provider" />
+
+### 3. Ejemplo de API compatible
+
+Estos son ejemplos para completar el formulario, no comandos para ejecutar. Sustituye el dominio y el modelo por los de tu proveedor. La clave se introduce únicamente en el campo protegido de Spartan.
+
+```text title="URL de transcripción · ejemplo"
+https://api.example.com/v1/audio/transcriptions
+```
+
+```text title="Modelo · ejemplo"
+modelo-de-transcripcion
+```
+
+El servicio debe aceptar archivos multipart y responder con un campo `text`:
+
+```json title="Respuesta esperada · ejemplo"
+{
+  "text": "Ayúdame a organizar las tareas de hoy."
+}
+```
+
+<details>
+<summary>Requisitos de conexión y claves guardadas</summary>
+
+- URL pública HTTPS terminada en `/audio/transcriptions`.
+- Sin redirecciones, localhost ni servidores privados.
+- La clave se guarda cifrada; dejar el campo vacío conserva la clave del mismo destino.
+- Cambiar la URL compatible requiere introducir una nueva clave.
+- Puedes sustituir la clave o quitar la configuración desde el panel.
+
+</details>
+
+<details>
+<summary>Privacidad, límites y servicio compartido</summary>
+
+- Máximo **cinco minutos y 20 MB** por audio.
+- En remoto, el audio se valida y convierte a WAV en memoria antes de enviarlo.
+- El servicio de transcripción recibe el audio; el proveedor del chat recibe el texto reconocido.
+- No se cambia automáticamente de Whisper a un servicio externo.
+- Telegram usa esta configuración. Otros canales, la voz del chat y el asistente en tiempo real quedan para después.
+- El servicio `/api/voice` requiere una sesión de la aplicación para configurar y probar.
+
+</details>
+
+### Si algo falla
+
+| Situación | Qué hacer |
+| --- | --- |
+| No carga la configuración | Pulsa **Reintentar** o elige otro proveedor; el selector sigue disponible |
+| Whisper no arranca | Revisa la preparación local o configura un proveedor externo explícitamente |
+| Clave rechazada | Revisa la clave y sus permisos en el panel oficial |
+| Solicitud rechazada | Comprueba el modelo y el audio |
+| Límite o tiempo de espera | Revisa la cuota del proveedor y reintenta cuando esté disponible |
+
+Reintentar no sobrescribe una selección que hayas editado. Elegir un nombre no activa el servicio: hace falta un guardado correcto.
+
+## Ejemplos para copiar
+
+```text title="Telegram · búsqueda pública"
+Busca en internet noticias de astronomía
+```
+
+```text title="Telegram · imágenes de referencia"
+/images arquitectura de bibliotecas
+```
+
+```text title="Telegram · consultar consumo"
+/usage
+```
+
+```text title="Telegram · cancelar consulta"
+/cancel
+```
+
+Envía cada comando por separado. La nota de voz se envía con el micrófono de Telegram; no requiere un comando.
+
+## Documentos
+
+Envía **TXT, Markdown, CSV o JSON en UTF-8**, con tu pregunta en la descripción. Sin pregunta se solicita un resumen. Límites: **256 KB y 24.000 caracteres**. PDF y Word están pendientes.
+
+El archivo se lee en memoria, sin guardarlo en el PC. Su texto se envía al proveedor como datos separados de la pregunta. Esa consulta no habilita búsquedas web ni ejecución. El contenido completo no se añade al historial; la respuesta puede incluir extractos.
+
+<DocsDiagram type="channel-input" />
+
+## Proyectos y permisos
+
+1. Autoriza los proyectos para cada usuario en la configuración del bot.
+2. Envía `/projects` para ver esa selección.
+3. Elige un proyecto con los botones de Telegram o usa `/project ID` para asociar la actividad futura; su nombre aparecerá en **Trabajos**. Se muestran hasta 20 proyectos por lista.
+
+Cambiar de proyecto reinicia el contexto. Revocar la autorización o archivar el proyecto retira su disponibilidad.
+
+Esta selección todavía no incorpora instrucciones ni archivos del proyecto, ni crea un chat enlazado dentro de Spartan. Lectura y envío de archivos del PC, acciones remotas y ejecución de skills/MCP están pendientes de permisos específicos. Autorizar un usuario de Telegram no concede acceso a carpetas.
+
+## Tu nombre desde Telegram
+
+<Steps>
+
+### Guarda el vínculo de perfil
+
+En **Canales → Telegram → Perfil de Spartan**, selecciona tu usuario y pulsa **Guardar vinculación**. El estado debe indicar **Vinculado**; seleccionar el usuario por sí solo no guarda el permiso.
+
+### Pide el nombre nuevo
+
+```text title="Telegram · cambiar tu nombre"
+Me quiero llamar Naiker Codes
+```
+
+El nombre visible y el apodo se actualizan en **Ajustes → Perfil**. Puedes editarlos también desde allí. Tu nombre de cuenta de Telegram no cambia.
+
+### Corrige si lo necesitas
+
+```text title="Telegram · corrección inmediata"
+O Naiker Gomez
+```
+
+Una corrección breve funciona durante dos minutos después del cambio guardado. Si cambias de tema o reinicias Spartan, utiliza de nuevo la frase completa.
+
+</Steps>
+
+## Progreso y cancelación
+
+Las consultas que tardan pueden mostrar **Cancelar** en Telegram. El botón pertenece a esa consulta, caduca y se retira al terminar; un botón antiguo no cancela una consulta nueva. También puedes usar `/cancel`.
+
+El asistente de canales muestra tu nombre y el estado de la tarea arriba en Spartan. Atenúa suavemente el fondo mientras está expandido y restaura la vista al minimizarlo o desaparecer. Puedes desactivarlo en **Ajustes → General**.
+
+## Actividad y consumo
+
+La pestaña **Actividad** muestra los últimos 50 eventos en páginas de ocho, con filtros por categoría y bot. Los contadores corresponden al conjunto de eventos cargados, no a todo el historial. No se registran cuerpos de mensajes, tokens de acceso ni credenciales en los eventos.
+
+| Dato | Cómo interpretarlo |
+| --- | --- |
+| Consumo | Últimas 24 horas, sumando usuarios autorizados del bot |
+| Tokens | Totales parciales si el proveedor no reporta todos los datos |
+| Límite local | 30 consultas por bot en una ventana móvil de una hora |
+| Saldo del proveedor | No disponible aquí; revisa su panel de facturación |
+
+Cada bot mantiene un contexto separado por usuario, hasta 6 intercambios durante 7 días. No se comparte con la memoria ni los chats del escritorio. Una respuesta interrumpida o cuyo envío no se confirma no se añade como un intercambio completado.
+
+## Si algo falla
+
+- **Sin respuesta:** comprueba que Spartan está abierto, la conexión activa y tu usuario autorizado.
+- **Otro consumidor:** detén otro servicio que esté leyendo el mismo bot. Solo debe existir un consumidor.
+- **Voz no preparada:** revisa la descarga de Whisper y el motor en Ajustes → Voz.
+- **Documento rechazado:** revisa formato UTF-8, extensión y límites.
+- **Datos parciales de consumo:** consulta el panel del proveedor para saldo y facturación.
+
+Consulta también [Seguridad y permisos](/docs/core-concepts/security-and-sandbox) y [Proveedores](/docs/core-concepts/models-and-providers).
+
+## Fuentes y alcance
+
+Revisión de esta guía: **6 de octubre de 2026**. El comportamiento de Spartan se documenta a partir del código y las pruebas de la rama `canales`; no equivale a una versión publicada ni a una prueba con todos los proveedores reales.
+
+- [Telegram: creación de bots y enlaces de inicio](https://core.telegram.org/bots/features#deep-linking).
+- [ElevenLabs: transcripción Speech to Text](https://elevenlabs.io/docs/overview/capabilities/speech-to-text).
+- [Groq: transcripción Speech to Text](https://console.groq.com/docs/speech-to-text).
+
+Los límites indicados aquí son los de Spartan. Consulta al proveedor para sus modelos, cuotas, precios y condiciones actuales. La entrada de voz convierte audio en texto; síntesis de voz y conversación en tiempo real son funciones distintas y siguen pendientes. Consulta [Voz y audio](/docs/features/voice-audio).

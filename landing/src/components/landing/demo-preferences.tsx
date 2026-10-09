@@ -5,6 +5,7 @@ import type { DemoNavId } from './demo-navigation-items';
 
 export type DemoPreferences = {
   resetEpoch: number;
+  channelProfile: boolean; channelProject: boolean; channelVoice: boolean;
   nickname: string; avatarImage: string | null; avatarShape: 'circle' | 'rounded';
   themeMode: 'light' | 'dark' | 'system';
   palette: 'standard' | 'classic' | 'minimal';
@@ -18,6 +19,7 @@ export type DemoPreferences = {
   navPins: Record<DemoNavId, boolean>; navOrder: DemoNavId[];
 };
 export const DEFAULT_DEMO_PREFERENCES: DemoPreferences = {
+  channelProfile: true, channelProject: true, channelVoice: false,
   nickname: '', avatarImage: null, avatarShape: 'circle',
   resetEpoch: 0, themeMode: 'light', palette: 'standard', colors: { light: { accent: '', background: '', foreground: '' }, dark: { accent: '', background: '', foreground: '' } },
   uiFont: 'Inter Variable, system-ui, sans-serif', headingFont: 'SpartaHellix, sans-serif', chatFont: 'Inter Variable, system-ui, sans-serif', codeFont: 'ui-monospace, monospace',
