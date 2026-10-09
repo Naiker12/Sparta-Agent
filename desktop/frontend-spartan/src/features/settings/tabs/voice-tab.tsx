@@ -1,1399 +1,663 @@
+import { useEffect, useId, useRef, useState } from "react";
+import { authFetch } from "@/features/auth";
+import { useT } from "@/i18n";
+import { toast } from "@/lib/toast";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+  FieldDescription,
+} from "@/components/ui/field";
 import {
   Select,
-  SelectContent,
-  SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
 } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import { Spinner } from "@/components/ui/spinner";
-import { Switch } from "@/components/ui/switch";
-import {
-  type SttDownloadStatus,
-  StudioModelDictationAdapter,
-  StudioSpeechSynthesisAdapter,
-  cancelSttDownload,
-  createConfiguredUtterance,
-  curateSystemVoices,
-  fetchSttStatus,
-  generateStudioTtsAudio,
-  loadSttModel,
-  startSttDownload,
-  unloadSttModel,
-  validateSttModel,
-} from "@/features/chat";
-import {
-  DownloadProgressBar,
-  hfApiToken,
-  useHfTokenStore,
-  useHubModelSearch,
-} from "@/features/hub";
-import { useDebouncedValue, useWheelScrollRef } from "@/hooks";
-import { useT } from "@/i18n";
-import { isTauri } from "@/lib/api-base";
-import { ChevronDownStandardIcon } from "@/lib/chevron-icons";
-import { MicIcon } from "@/lib/mic-icon";
-import { toast } from "@/lib/toast";
-import {
-  AudioWave01Icon,
-  Search01Icon,
-  VolumeHighIcon,
-} from "@hugeicons/core-free-icons";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { useNavigate } from "@tanstack/react-router";
-import { SquareIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { resetMicrophonePermission } from "../api/microphone-permission";
-import { DictationDictionaryView } from "../components/dictation-dictionary-view";
-import { RecentDictationsView } from "../components/recent-dictations-view";
-import { SettingsRow } from "../components/settings-row";
-import { SettingsSection } from "../components/settings-section";
+import { LinkSquare02Icon } from "@hugeicons/core-free-icons";
 import {
-  isTrackingSttDownload,
-  trackSttDownload,
-} from "../lib/stt-download-mirror";
-import { useSettingsDialogStore } from "../stores/settings-dialog-store";
-import {
-  MTMD_STT_MODELS,
-  RECOMMENDED_STT_MODELS,
-  STT_MODELS,
-  type SttModel,
-  getSttModelRepo,
-  isCuratedSttModel,
-  isSttModelId,
-  isSttModelLanguageCompatible,
-  sttModelName,
-  sttModelSize,
-  useVoiceSettingsStore,
-} from "../stores/voice-settings-store";
+  voiceProviderOptions as providers,
+  type VoiceProvider as Provider,
+} from "./voice-provider-options";
+import { LocalVoiceTab } from "./local-voice-tab";
 
-/** Backends that report a runtime name where a device would go. */
-const STT_RUNTIME_NAMES = new Set(["whisper.cpp", "llama.cpp"]);
-
-// Languages shared by browser speech recognition and local STT.
-const DICTATION_LANGUAGES: { value: string; label: string }[] = [
-  { value: "auto", label: "" }, // label rendered via i18n
-  { value: "en-US", label: "English (US)" },
-  { value: "en-GB", label: "English (UK)" },
-  { value: "zh-CN", label: "中文 (简体)" },
-  { value: "ja-JP", label: "日本語" },
-  { value: "ko-KR", label: "한국어" },
-  { value: "es-ES", label: "Español" },
-  { value: "fr-FR", label: "Français" },
-  { value: "de-DE", label: "Deutsch" },
-  { value: "it-IT", label: "Italiano" },
-  { value: "pt-BR", label: "Português (Brasil)" },
-  { value: "ru-RU", label: "Русский" },
-  { value: "hi-IN", label: "हिन्दी" },
-  { value: "ar-SA", label: "العربية" },
-];
-
-// Keep spoken preview content independent of the interface locale. The system
-// voice and loaded local model may not support the language used by the UI.
-const TTS_PREVIEW_TEXT =
-  "Hello from Unsloth! This is a preview of the selected voice.";
-
-
-
-function sttModelSource(model: SttModel): string {
-  return isCuratedSttModel(model) && !MTMD_STT_MODELS.has(model)
-    ? `unslothai/whisper-${model}-GGUF`
-    : getSttModelRepo(model);
-}
-
-/**
- * Model picker for local transcription. Lists the curated whisper.cpp
- * checkpoints and searches Hugging Face for other Whisper repos (safetensors via
- * Transformers). The trigger is a plain button so the selection never renders
- * inside a text input.
- */
-function SttModelPicker({
-  value,
-  language,
-  onChange,
-}: {
-  value: SttModel;
-  language: string;
-  onChange: (model: SttModel) => void;
-}) {
-  const t = useT();
-  const hfToken = useHfTokenStore((state) => state.token);
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [validating, setValidating] = useState(false);
-  const resultsRef = useWheelScrollRef<HTMLDivElement>();
-  const debouncedQuery = useDebouncedValue(query.trim());
-
-  const { results, isLoading } = useHubModelSearch(debouncedQuery, {
-    task: "automatic-speech-recognition",
-    accessToken: hfApiToken(hfToken),
-    excludeGguf: true,
-    enabled: debouncedQuery.length >= 2,
-    keepUnsupportedTags: true,
-    ownerScope: "all",
-  });
-
-  const items = useMemo(() => {
-    if (!debouncedQuery) {
-      const defaults: string[] = STT_MODELS.filter((model) =>
-        isSttModelLanguageCompatible(model, language),
-      );
-      if (!defaults.includes(value)) {
-        defaults.push(value);
-      }
-      return defaults;
-    }
-    const ids: string[] = [];
-    for (const result of results) {
-      const tags = result.tags?.map((tag) => tag.toLowerCase()) ?? [];
-      const isWhisper =
-        result.id.toLowerCase().includes("whisper") || tags.includes("whisper");
-      const isExactMatch =
-        result.id.toLowerCase() === debouncedQuery.toLowerCase();
-      if (
-        (isExactMatch ||
-          (isWhisper &&
-            result.pipelineTag === "automatic-speech-recognition")) &&
-        isSttModelLanguageCompatible(result.id, language) &&
-        !ids.includes(result.id)
-      ) {
-        ids.push(result.id);
-      }
-    }
-    return ids;
-  }, [debouncedQuery, language, results, value]);
-
-  const selectModel = async (model: string) => {
-    if (!isSttModelId(model) || validating) {
-      return;
-    }
-    if (!isCuratedSttModel(model)) {
-      setValidating(true);
-      try {
-        await validateSttModel(model, hfApiToken(hfToken));
-      } catch (error) {
-        toast.error(t("settings.voice.dictation.sttModelInvalid"), {
-          description: error instanceof Error ? error.message : undefined,
-        });
-        return;
-      } finally {
-        setValidating(false);
-      }
-    }
-    onChange(model);
-    setOpen(false);
-    setQuery("");
-  };
-
-  return (
-    <Popover
-      open={open}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (!next) {
-          setQuery("");
-        }
-      }}
-    >
-      <PopoverTrigger asChild={true}>
-        <button
-          type="button"
-          data-testid="stt-model-trigger"
-          aria-label={t("settings.voice.dictation.sttModelLabel")}
-          className="border-border bg-background hover:bg-accent/50 dark:border-transparent dark:bg-white/[0.06] dark:hover:bg-white/10 focus-visible:border-ring flex h-8 w-full cursor-pointer items-center justify-between gap-1.5 rounded-full border px-3.5 text-sm outline-none transition-colors"
-        >
-          <span className="truncate">{sttModelName(value)}</span>
-          <HugeiconsIcon
-            icon={ChevronDownStandardIcon}
-            strokeWidth={2}
-            className="text-muted-foreground pointer-events-none size-4 shrink-0"
-          />
-        </button>
-      </PopoverTrigger>
-      <PopoverContent align="start" sideOffset={4} className="w-72 gap-0 p-0">
-        <div className="relative p-1.5 pb-0.5">
-          <HugeiconsIcon
-            icon={Search01Icon}
-            strokeWidth={2}
-            className="text-muted-foreground pointer-events-none absolute top-[calc(50%+2px)] left-4 size-3.5 -translate-y-1/2"
-          />
-          <Input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            data-testid="stt-model-search"
-            placeholder={t(
-              "settings.voice.dictation.sttModelSearchPlaceholder",
-            )}
-            className="h-8 pl-8 text-sm"
-            autoFocus={true}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && items.length > 0) {
-                event.preventDefault();
-                void selectModel(items[0]);
-              }
-            }}
-          />
-        </div>
-        <div
-          ref={resultsRef}
-          data-testid="stt-model-results"
-          className="max-h-64 overflow-y-auto p-1"
-        >
-          {(isLoading && debouncedQuery) || validating ? (
-            <div className="flex items-center gap-2 px-3 py-3 text-xs text-muted-foreground">
-              <Spinner className="size-3.5" />
-              {validating
-                ? t("settings.voice.dictation.sttModelValidating")
-                : t("settings.voice.dictation.sttModelSearching")}
-            </div>
-          ) : items.length === 0 ? (
-            <div className="px-3 py-3 text-xs text-muted-foreground">
-              {t("settings.voice.dictation.sttModelNoResults")}
-            </div>
-          ) : (
-            items.map((model) => {
-              // A custom repo's name is its id: one-line rows keep a pill
-              // shape, two-line rows use a squarer radius. Not rounded-sm: the
-              // theme's --radius makes that 13.6px, too round at this height.
-              const twoLines = sttModelSource(model) !== sttModelName(model);
-              return (
-                <button
-                  key={model}
-                  type="button"
-                  onClick={() => void selectModel(model)}
-                  aria-selected={model === value}
-                  className={`flex w-full items-center justify-between gap-3 px-2.5 py-1.5 text-left transition-colors hover:bg-muted ${
-                    twoLines ? "rounded-[10px]" : "rounded-full"
-                  } ${model === value ? "bg-accent font-medium" : ""}`}
-                >
-                  <span className="min-w-0 flex-1 truncate">
-                    <span className="flex items-center gap-1.5 truncate text-xs">
-                      <span className="truncate">{sttModelName(model)}</span>
-                      {RECOMMENDED_STT_MODELS.has(model) ? (
-                        <span className="shrink-0 rounded-full bg-emerald-500/12 px-1.5 py-px text-ui-9 font-medium text-emerald-600 dark:bg-emerald-400/15 dark:text-emerald-400">
-                          {t("settings.voice.dictation.sttRecommended")}
-                        </span>
-                      ) : null}
-                    </span>
-                    {twoLines ? (
-                      <span className="mt-0.5 block truncate font-mono text-ui-9 leading-tight text-muted-foreground">
-                        {sttModelSource(model)}
-                      </span>
-                    ) : null}
-                  </span>
-                  {sttModelSize(model) ? (
-                    <span className="shrink-0 text-ui-10 tabular-nums text-muted-foreground">
-                      {sttModelSize(model)}
-                    </span>
-                  ) : null}
-                </button>
-              );
-            })
-          )}
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-function useAudioInputDevices() {
-  const t = useT();
-  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
-  const [hasLabels, setHasLabels] = useState(false);
-
-  const refresh = useCallback(async () => {
-    if (!navigator.mediaDevices?.enumerateDevices) {
-      return;
-    }
-    try {
-      const all = await navigator.mediaDevices.enumerateDevices();
-      const inputs = all.filter((d) => d.kind === "audioinput");
-      setDevices(inputs);
-      setHasLabels(inputs.some((d) => d.label));
-    } catch {
-      // Enumeration can fail in insecure contexts; leave the list empty.
-    }
-  }, []);
-
-  useEffect(() => {
-    const media = navigator.mediaDevices;
-    if (!media?.addEventListener) {
-      return;
-    }
-    let cancelled = false;
-    media
-      .enumerateDevices()
-      .then((all) => {
-        if (cancelled) {
-          return;
-        }
-        const inputs = all.filter((device) => device.kind === "audioinput");
-        setDevices(inputs);
-        setHasLabels(inputs.some((device) => device.label));
-      })
-      .catch(() => {
-        // Enumeration can fail in insecure contexts; leave the list empty.
-      });
-    media.addEventListener("devicechange", refresh);
-    return () => {
-      cancelled = true;
-      media.removeEventListener("devicechange", refresh);
-    };
-  }, [refresh]);
-
-  // Labels are hidden until mic permission; open a short stream to get them.
-  const requestAccess = useCallback(async () => {
-    // Insecure contexts (plain http on a LAN address) have no mediaDevices.
-    if (!navigator.mediaDevices?.getUserMedia) {
-      toast.error(t("settings.voice.dictation.micAccessUnsupported"));
-      return;
-    }
-    // Clear a saved deny first: this button is the only way back from one, and WebView2
-    // would otherwise reject the request without ever prompting (#9001).
-    await resetMicrophonePermission();
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-      });
-      for (const track of stream.getTracks()) {
-        track.stop();
-      }
-      await refresh();
-    } catch {
-      // A browser keeps its own saved deny and resetMicrophonePermission cannot
-      // touch it, so only the desktop build can promise another prompt.
-      toast.error(
-        t(
-          isTauri
-            ? "settings.voice.dictation.micAccessBlockedDesktop"
-            : "settings.voice.dictation.micAccessBlocked",
-        ),
-      );
-    }
-  }, [refresh, t]);
-
-  return { devices, hasLabels, requestAccess };
-}
-
-function useSystemVoices() {
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !window.speechSynthesis) {
-      return;
-    }
-    const synth = window.speechSynthesis;
-    const load = () => setVoices(synth.getVoices());
-    load();
-    synth.addEventListener?.("voiceschanged", load);
-    return () => synth.removeEventListener?.("voiceschanged", load);
-  }, []);
-
-  return voices;
-}
-
+type Profile = { model: string; endpoint: string; has_key: boolean };
+type Configuration = {
+  provider: Provider;
+  profiles: Partial<Record<Provider, Profile>>;
+};
 export function VoiceTab() {
   const t = useT();
-  const micDeviceId = useVoiceSettingsStore((s) => s.micDeviceId);
-  const setMicDeviceId = useVoiceSettingsStore((s) => s.setMicDeviceId);
-  const dictationEngine = useVoiceSettingsStore((s) => s.dictationEngine);
-  const setDictationEngine = useVoiceSettingsStore((s) => s.setDictationEngine);
-  const sttModel = useVoiceSettingsStore((s) => s.sttModel);
-  const setSttModel = useVoiceSettingsStore((s) => s.setSttModel);
-  const dictationLanguage = useVoiceSettingsStore((s) => s.dictationLanguage);
-  const setDictationLanguage = useVoiceSettingsStore(
-    (s) => s.setDictationLanguage,
-  );
-  const ttsEnabled = useVoiceSettingsStore((s) => s.ttsEnabled);
-  const setTtsEnabled = useVoiceSettingsStore((s) => s.setTtsEnabled);
-  const ttsEngine = useVoiceSettingsStore((s) => s.ttsEngine);
-  const setTtsEngine = useVoiceSettingsStore((s) => s.setTtsEngine);
-  const ttsVoiceURI = useVoiceSettingsStore((s) => s.ttsVoiceURI);
-  const setTtsVoiceURI = useVoiceSettingsStore((s) => s.setTtsVoiceURI);
-  const ttsRate = useVoiceSettingsStore((s) => s.ttsRate);
-  const setTtsRate = useVoiceSettingsStore((s) => s.setTtsRate);
-  const ttsPitch = useVoiceSettingsStore((s) => s.ttsPitch);
-  const setTtsPitch = useVoiceSettingsStore((s) => s.setTtsPitch);
-  const ttsVolume = useVoiceSettingsStore((s) => s.ttsVolume);
-  const setTtsVolume = useVoiceSettingsStore((s) => s.setTtsVolume);
-
-  const navigate = useNavigate();
-  const { devices, hasLabels, requestAccess } = useAudioInputDevices();
-  const rawVoices = useSystemVoices();
-  const voices = useMemo(
-    () => curateSystemVoices(rawVoices, ttsVoiceURI, dictationLanguage),
-    [rawVoices, ttsVoiceURI, dictationLanguage],
-  );
-  const [previewing, setPreviewing] = useState(false);
-  // A studio preview generates the whole clip before it plays; separate from `previewing`
-  // so the wait shows as work.
-  const [preparingPreview, setPreparingPreview] = useState(false);
-  const [subpage, setSubpage] = useState<"main" | "recents" | "dictionary">(
-    "main",
-  );
-  const [selectedDictationId, setSelectedDictationId] = useState<string | null>(
-    null,
-  );
-
-  const modelSttSupported = StudioModelDictationAdapter.isSupported();
-  const ttsSupported = StudioSpeechSynthesisAdapter.isSupported();
-  const systemTtsSupported =
-    StudioSpeechSynthesisAdapter.systemVoicesSupported();
-  const effectiveTtsEngine = systemTtsSupported ? ttsEngine : "studio";
-
-  // Local STT stays on-demand. Track its phase without fetching model weights.
-  type SttPhase =
-    | "idle"
-    | "checking"
-    | "on-demand"
-    | "unavailable"
-    | "loading"
-    | "ready"
-    | "error";
-  type SttDownloadAvailability =
-    | "checking"
-    | "missing"
-    | "downloaded"
-    | "error";
-  const [sttPhase, setSttPhase] = useState<SttPhase>("idle");
-  const [sttDevice, setSttDevice] = useState<string | null>(null);
-  const [statusNonce, setStatusNonce] = useState(0);
-  const [sttDownloadCancelling, setSttDownloadCancelling] = useState(false);
-  const [sttUnloading, setSttUnloading] = useState(false);
-  const isLocalEngine = dictationEngine === "model";
-  // The model decides the backend: curated ids run GGML through whisper.cpp,
-  // custom repos run through Transformers.
-  const isMtmdModel = MTMD_STT_MODELS.has(sttModel);
-  const isGgufModel = isCuratedSttModel(sttModel) && !isMtmdModel;
-  // Progress of the selected engine's model download, from /stt/status.
-  const [sttDownload, setSttDownload] = useState<SttDownloadStatus | null>(
-    null,
-  );
-  const [downloadBytesPerSec, setDownloadBytesPerSec] = useState(0);
-  // Last observed (bytes, time) so successive polls yield a transfer rate.
-  const downloadRateSampleRef = useRef<{ bytes: number; at: number } | null>(
-    null,
-  );
-  // Model whose download this tab watched; completion auto-loads it.
-  const watchedDownloadRef = useRef<string | null>(null);
-
-  // Selecting a model (or finishing its download) loads it without a Load
-  // click. A model that is not downloaded fails quietly and stays on demand.
-  const autoLoadSttModel = useCallback(async (model: string) => {
-    setSttPhase("loading");
-    try {
-      await loadSttModel(model);
-    } catch {
-      // Not downloaded (or the engine is busy): the status poll resets the phase
-      // and the user still sees the Download button.
-    } finally {
-      setStatusNonce((nonce) => nonce + 1);
-    }
-  }, []);
-  const sttRepoId = getSttModelRepo(sttModel);
-  const hfToken = useHfTokenStore((state) => state.token);
-  const [sttDownloadStarting, setSttDownloadStarting] = useState(false);
-  const [sttDownloadAvailability, setSttDownloadAvailability] = useState<{
-    repoId: string;
-    state: SttDownloadAvailability;
-  }>({ repoId: "", state: "checking" });
-  const effectiveSttDownloadAvailability =
-    sttDownloadAvailability.repoId === sttRepoId
-      ? sttDownloadAvailability.state
-      : "checking";
+  const id = useId();
+  const editRevision = useRef(0);
+  const [pane, setPane] = useState("providers");
+  const [verified, setVerified] = useState(false);
+  const [config, setConfig] = useState<Configuration | null>(null);
+  const [selected, setSelected] = useState<Provider>("local");
+  const [model, setModel] = useState("");
+  const [endpoint, setEndpoint] = useState("");
+  const [key, setKey] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [sample, setSample] = useState<File | null>(null);
+  const [transcript, setTranscript] = useState("");
+  const [failed, setFailed] = useState(false);
+  const [reload, setReload] = useState(0);
+  const [testProblem, setTestProblem] = useState<string | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
+  function choose(provider: Provider, configuration = config) {
+    const profile = configuration?.profiles[provider];
+    setSelected(provider);
+    setVerified(false);
+    setModel(profile?.model ?? providers[provider].model);
+    setEndpoint(profile?.endpoint ?? providers[provider].endpoint);
+    setKey("");
+    setConsent(false);
+    setSample(null);
+    setTranscript("");
+    setProblem(null);
+    setTestProblem(null);
+  }
   useEffect(() => {
-    if (!(isLocalEngine && modelSttSupported)) {
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      // Only surface "checking" on the first poll; background refreshes keep
-      // the last phase so the status line doesn't flicker while polling.
-      setSttPhase((phase) => (phase === "idle" ? "checking" : phase));
-      try {
-        const status = await fetchSttStatus(statusNonce, sttModel);
-        if (cancelled) {
-          return;
-        }
-        // A curated model prefers the GGUF (whisper.cpp) engine, but without
-        // whisper-server the backend serves it through Transformers instead of
-        // failing. Fall back to the Transformers status here too, or the model
-        // shows as unavailable and download is blocked even though it works.
-        // mtmd models run nowhere else, so they never fall back.
-        const engineStatus = isMtmdModel
-          ? status.mtmd
-          : isGgufModel && status.gguf?.available
-            ? status.gguf
-            : status.transformers;
-        if (!engineStatus?.available) {
-          setSttPhase("unavailable");
-          return;
-        }
-        const download = engineStatus.download;
-        setSttDownload(download);
-        setSttDownloadAvailability({
-          repoId: sttRepoId,
-          state: engineStatus.downloaded_models.includes(sttModel)
-            ? "downloaded"
-            : download.error
-              ? "error"
-              : "missing",
-        });
-        if (download.downloading) {
-          // Adopt a transfer that outlived the page that started it, so it
-          // still shows in the download panel.
-          if (download.model && !isTrackingSttDownload(download.model)) {
-            trackSttDownload(download.model);
-          }
-          watchedDownloadRef.current = download.model;
-          const bytes = download.bytes_done ?? 0;
-          const sample = downloadRateSampleRef.current;
-          const now = Date.now();
-          if (sample && bytes > sample.bytes && now > sample.at) {
-            setDownloadBytesPerSec(
-              ((bytes - sample.bytes) * 1000) / (now - sample.at),
-            );
-          }
-          downloadRateSampleRef.current = { bytes, at: now };
-          // Keep the download progress fresh.
-          window.setTimeout(() => {
-            if (!cancelled) {
-              setStatusNonce((n) => n + 1);
-            }
-          }, 800);
-        } else {
-          const finished = watchedDownloadRef.current;
-          watchedDownloadRef.current = null;
-          downloadRateSampleRef.current = null;
-          setDownloadBytesPerSec(0);
-          if (
-            finished === sttModel &&
-            engineStatus.downloaded_models.includes(sttModel) &&
-            engineStatus.loaded_model !== sttModel
-          ) {
-            // The download this tab watched just finished; load the model.
-            void autoLoadSttModel(sttModel);
-            return;
-          }
-        }
-        if (engineStatus.loading) {
-          setSttPhase("loading");
-          window.setTimeout(() => {
-            if (!cancelled) {
-              setStatusNonce((n) => n + 1);
-            }
-          }, 600);
-          return;
-        }
-        if (engineStatus.loaded_model === sttModel && !engineStatus.loading) {
-          setSttDevice(engineStatus.device);
-          setSttPhase("ready");
-          window.setTimeout(
-            () => {
-              if (!cancelled) {
-                setStatusNonce((n) => n + 1);
-              }
-            },
-            Math.max(
-              1000,
-              Math.min(engineStatus.keep_alive_seconds * 1000, 15_000),
-            ),
-          );
-          return;
-        }
-        // Merely opening settings or selecting local STT never downloads or
-        // loads a model. Loading begins from Load or when recording starts.
-        setSttDevice(null);
-        setSttPhase("on-demand");
-      } catch {
-        if (!cancelled) {
-          setSttPhase("error");
-        }
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    isLocalEngine,
-    isGgufModel,
-    isMtmdModel,
-    sttModel,
-    sttRepoId,
-    modelSttSupported,
-    statusNonce,
-    autoLoadSttModel,
-  ]);
-
-  const sttStatusText = (() => {
-    switch (sttPhase) {
-      case "checking":
-        return t("settings.voice.dictation.sttChecking");
-      case "loading":
-        return t("settings.voice.dictation.sttLoadingModel");
-      case "on-demand":
-        return t("settings.voice.dictation.sttOnDemand");
-      case "ready":
-        // whisper.cpp and llama.cpp report a runtime name, not a device; show a
-        // plain "Loaded" rather than surfacing it.
-        return sttDevice && !STT_RUNTIME_NAMES.has(sttDevice)
-          ? t("settings.voice.dictation.sttReady", {
-              device: sttDevice.toUpperCase(),
-            })
-          : t("settings.voice.dictation.sttLoaded");
-      case "unavailable":
-        return t("settings.voice.dictation.sttUnavailable");
-      case "error":
-        return t("settings.voice.dictation.sttModelFailed");
-      default:
-        return "";
-    }
-  })();
-
-  const downloadingThisModel =
-    isLocalEngine &&
-    sttDownload?.downloading === true &&
-    sttDownload.model === sttModel;
-
-  const sttModelStatusText = (() => {
-    if (downloadingThisModel) {
-      const total = sttDownload?.bytes_total ?? 0;
-      const done = sttDownload?.bytes_done ?? 0;
-      return t("settings.voice.dictation.sttDownloading", {
-        progress:
-          total > 0 ? Math.min(99, Math.round((done / total) * 100)) : 0,
-      });
-    }
-    if (sttPhase === "unavailable") {
-      return sttStatusText;
-    }
-    switch (effectiveSttDownloadAvailability) {
-      case "checking":
-        return t("settings.voice.dictation.sttDownloadChecking");
-      case "missing":
-        return t("settings.voice.dictation.sttNotDownloaded");
-      case "error":
-        // This state means the download itself failed, not the status check.
-        return t("settings.voice.dictation.sttDownloadFailed");
-      case "downloaded":
-        return sttStatusText;
-      default:
-        return "";
-    }
-  })();
-
-  // Pressing Download is the confirmation. The prompt is for the paths that
-  // never asked for one, like the mic finding nothing on disk.
-  const beginSttDownload = async () => {
-    setSttDownloadStarting(true);
-    try {
-      await startSttDownload(sttModel, hfApiToken(hfToken));
-      trackSttDownload(sttModel);
-      // The status effect only re-polls while it can see a download. Its last
-      // read was before this one existed, and the on-demand branch schedules
-      // nothing, so without a nudge the tab shows Download for the whole
-      // transfer.
-      setStatusNonce((nonce) => nonce + 1);
-    } catch (error) {
-      toast.error(t("settings.voice.dictation.sttDownloadFailed"), {
-        description: error instanceof Error ? error.message : undefined,
-      });
-    } finally {
-      setSttDownloadStarting(false);
-    }
-  };
-
-  const stopSttDownload = async () => {
-    setSttDownloadCancelling(true);
-    try {
-      await cancelSttDownload(sttDownload?.model ?? sttModel);
-      setSttDownload(null);
-      setStatusNonce((nonce) => nonce + 1);
-    } catch (error) {
-      toast.error(t("settings.voice.dictation.sttCancelDownloadFailed"), {
-        description: error instanceof Error ? error.message : undefined,
-      });
-    } finally {
-      setSttDownloadCancelling(false);
-    }
-  };
-
-  const warmSttModel = async () => {
-    setSttPhase("loading");
-    try {
-      await loadSttModel(sttModel);
-      setStatusNonce((nonce) => nonce + 1);
-    } catch (error) {
-      setSttPhase("error");
-      toast.error(t("settings.voice.dictation.sttModelFailed"), {
-        description: error instanceof Error ? error.message : undefined,
-      });
-    }
-  };
-
-  const releaseSttModel = async () => {
-    setSttUnloading(true);
-    try {
-      await unloadSttModel();
-      setStatusNonce((nonce) => nonce + 1);
-    } catch (error) {
-      toast.error(t("settings.voice.dictation.sttModelFailed"), {
-        description: error instanceof Error ? error.message : undefined,
-      });
-    } finally {
-      setSttUnloading(false);
-    }
-  };
-
-  // Keep an item for an unplugged saved mic so the value stays visible.
-  const knownMic = devices.some((d) => d.deviceId === micDeviceId);
-
-  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
-  const previewAbortRef = useRef<AbortController | null>(null);
-  // Mirrors `previewing` so unmount cleanup can tell whether this tab owns
-  // the current speechSynthesis utterance; read-aloud shares the global
-  // synthesizer and must not be cancelled by merely closing settings.
-  const previewingRef = useRef(false);
-  // Only a system-voice preview owns the shared speechSynthesis channel; a
-  // studio (Audio) preview must not cancel an unrelated chat read-aloud.
-  const ownsSystemPreviewRef = useRef(false);
-  const markPreviewing = useCallback((value: boolean) => {
-    previewingRef.current = value;
-    setPreviewing(value);
-    // Every exit from the generate await clears previewing, so clear both here.
-    if (!value) {
-      setPreparingPreview(false);
-    }
-  }, []);
-
-  const releasePreviewAudio = useCallback(() => {
-    if (previewAudioRef.current) {
-      previewAudioRef.current.pause();
-      previewAudioRef.current.src = "";
-      previewAudioRef.current = null;
-    }
-  }, []);
-
-  const stopPreview = useCallback(() => {
-    if (!previewingRef.current) {
-      return;
-    }
-    if (ownsSystemPreviewRef.current) {
-      window.speechSynthesis?.cancel();
-      ownsSystemPreviewRef.current = false;
-    }
-    previewAbortRef.current?.abort();
-    previewAbortRef.current = null;
-    releasePreviewAudio();
-    markPreviewing(false);
-  }, [markPreviewing, releasePreviewAudio]);
-
-  const previewTts = async () => {
-    if (!ttsSupported) {
-      return;
-    }
-    // Ref, not state: a double-click before rerender still reads previewing
-    // as false and would start a second request that orphans the first.
-    if (previewingRef.current) {
-      stopPreview();
-      return;
-    }
-    if (effectiveTtsEngine === "studio") {
-      const controller = new AbortController();
-      previewAbortRef.current = controller;
-      ownsSystemPreviewRef.current = false;
-      markPreviewing(true);
-      setPreparingPreview(true);
-      try {
-        const url = await generateStudioTtsAudio(
-          TTS_PREVIEW_TEXT,
-          controller.signal,
-        );
-        if (controller.signal.aborted) {
-          return;
-        }
-        setPreparingPreview(false);
-        const audio = new Audio(url);
-        audio.playbackRate = ttsRate;
-        audio.volume = ttsVolume;
-        // Some browsers reset playbackRate once metadata loads.
-        audio.addEventListener("loadedmetadata", () => {
-          audio.playbackRate = ttsRate;
-        });
-        audio.addEventListener("ended", () => {
-          releasePreviewAudio();
-          markPreviewing(false);
-        });
-        audio.addEventListener("error", () => {
-          releasePreviewAudio();
-          markPreviewing(false);
-          toast.error(t("settings.voice.readAloud.previewFailed"));
-        });
-        previewAudioRef.current = audio;
-        await audio.play();
-      } catch (error) {
+    const controller = new AbortController();
+    void authFetch("/api/voice/configuration", {
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error();
+        const value: Configuration = await response.json();
         if (!controller.signal.aborted) {
-          toast.error(
-            error instanceof Error
-              ? error.message
-              : t("settings.voice.readAloud.previewFailed"),
-          );
+          setConfig(value);
+          setFailed(false);
+          if (editRevision.current === 0) choose(value.provider, value);
         }
-        releasePreviewAudio();
-        markPreviewing(false);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setFailed(true);
+      });
+    return () => controller.abort();
+    // Initial settings read; edits must not be overwritten by a locale change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reload]);
+  async function save(remove = false) {
+    if (busy || testing) return;
+    setBusy(true);
+    setProblem(null);
+    try {
+      const response = await authFetch(
+        remove
+          ? `/api/voice/configuration/${selected}`
+          : "/api/voice/configuration",
+        {
+          method: remove ? "DELETE" : "PUT",
+          headers: { "Content-Type": "application/json" },
+          ...(remove
+            ? {}
+            : {
+                body: JSON.stringify({
+                  provider: selected,
+                  model,
+                  endpoint,
+                  api_key: key,
+                  consent,
+                }),
+              }),
+        },
+        { retryNetworkErrors: false },
+      );
+      if (!response.ok) {
+        const value = await response.json().catch(() => ({}));
+        throw new Error(
+          typeof value.detail === "string" ? value.detail : "voice_test_failed",
+        );
       }
+      const value: Configuration = await response.json();
+      setConfig(value);
+      setFailed(false);
+      editRevision.current += 1;
+      choose(value.provider, value);
+      setPane("providers");
+      toast.success(t("channels.voice.configurationSaved"));
+    } catch (error) {
+      const code = error instanceof Error ? error.message : "";
+      const message = t(
+        code === "voice_key_required"
+          ? "channels.voice.keyRequired"
+          : code === "invalid_voice_endpoint"
+            ? "channels.voice.endpointInvalid"
+            : code === "invalid_voice_model"
+              ? "channels.voice.modelInvalid"
+              : "channels.voice.configurationFailed",
+      );
+      setProblem(message);
+      toast.error(message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function test() {
+    if (!sample || testing || busy) return;
+    if (sample.size > 20 * 1024 * 1024) {
+      setTestProblem(t("channels.voice.sampleTooLarge"));
       return;
     }
-    if (!StudioSpeechSynthesisAdapter.systemVoicesSupported()) {
-      toast.error(t("settings.voice.readAloud.notSupported"));
-      return;
+    setTesting(true);
+    setTestProblem(null);
+    setVerified(false);
+    setTranscript("");
+
+    try {
+      const body = new FormData();
+      body.append("file", sample);
+      const response = await authFetch(
+        "/api/voice/test",
+        { method: "POST", body, signal: AbortSignal.timeout(180000) },
+        { retryNetworkErrors: false },
+      );
+      if (!response.ok) {
+        const value = await response.json().catch(() => ({}));
+        throw new Error(
+          typeof value.detail === "string" ? value.detail : "voice_test_failed",
+        );
+      }
+      const value = await response.json();
+      setTranscript(value.text);
+      setVerified(true);
+    } catch (error) {
+      const code = error instanceof Error ? error.message : "";
+      const message = t(
+        code === "voice_decoder_unavailable"
+          ? "channels.voice.decoderUnavailable"
+          : code === "audio_invalid"
+            ? "channels.voice.invalidSample"
+            : code === "audio_empty"
+              ? "channels.voice.emptySample"
+              : code === "voice_network_failed"
+                ? "channels.voice.networkFailed"
+                : code === "audio_unavailable"
+                  ? "channels.voice.providerUnavailable"
+                  : code === "voice_not_ready"
+                    ? "channels.voice.configurationFailed"
+                    : code === "voice_permission_missing"
+                      ? "channels.voice.permissionMissing"
+                      : code === "voice_auth_failed"
+                        ? "channels.voice.authenticationFailed"
+                        : code === "voice_rate_limited"
+                          ? "channels.voice.rateLimited"
+                          : code === "audio_too_large"
+                            ? "channels.voice.sampleTooLarge"
+                            : code === "audio_too_long"
+                              ? "channels.voice.sampleTooLong"
+                              : code === "voice_timeout"
+                                ? "channels.voice.timeout"
+                                : code === "voice_model_failed"
+                                  ? "channels.voice.modelUnavailable"
+                                  : "channels.voice.testFailed",
+      );
+      setTestProblem(message);
+    } finally {
+      setTesting(false);
     }
-    const utterance = createConfiguredUtterance(TTS_PREVIEW_TEXT);
-    utterance.addEventListener("end", () => {
-      ownsSystemPreviewRef.current = false;
-      markPreviewing(false);
-    });
-    utterance.addEventListener("error", () => {
-      ownsSystemPreviewRef.current = false;
-      markPreviewing(false);
-    });
-    ownsSystemPreviewRef.current = true;
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-    markPreviewing(true);
-  };
-
-  // Stop any preview playback when the tab unmounts.
-  useEffect(() => stopPreview, [stopPreview]);
-
-  if (subpage === "recents") {
-    return (
-      <RecentDictationsView
-        selectedId={selectedDictationId}
-        onSelect={setSelectedDictationId}
-        onBack={() => {
-          setSelectedDictationId(null);
-          setSubpage("main");
-        }}
-      />
-    );
   }
-
-  if (subpage === "dictionary") {
-    return <DictationDictionaryView onBack={() => setSubpage("main")} />;
-  }
-
+  const remote = selected !== "local";
+  const saved = config?.profiles[selected];
+  const retainedKey = saved?.has_key && saved.endpoint === endpoint;
+  const matches =
+    config?.provider === selected &&
+    saved?.model === model &&
+    saved?.endpoint === endpoint &&
+    !key;
   return (
-    <div className="flex flex-col gap-6">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold font-heading">
-          {t("settings.voice.title")}
-        </h1>
-        <p className="text-xs text-muted-foreground">
-          {t("settings.voice.description")}
-        </p>
-      </header>
-
-      <SettingsSection title={t("settings.voice.dictation.sectionTitle")}>
-        <SettingsRow
-          label={t("settings.voice.dictation.engineLabel")}
-          description={
-            dictationEngine === "model"
-              ? t("settings.voice.dictation.engineModelDescription")
-              : t("settings.voice.dictation.engineBrowserDescription")
-          }
+    <Tabs value={pane} onValueChange={setPane} className="flex flex-col gap-5">
+      <TabsList className="self-start">
+        <TabsTrigger value="providers" disabled={busy || testing}>
+          {t("channels.voice.providersTab")}
+        </TabsTrigger>
+        <TabsTrigger value="configuration" disabled={busy || testing}>
+          {t("channels.voice.configurationTab")}
+        </TabsTrigger>
+        <TabsTrigger
+          value="test"
+          disabled={busy || testing || !remote || !matches}
         >
-          {isTauri ? (
-            <span className="text-sm text-muted-foreground">
-              {t("settings.voice.dictation.engineModel")}
-            </span>
-          ) : (
-            <Select
-              value={dictationEngine}
-              onValueChange={(value) => {
-                const next = value === "model" ? "model" : "browser";
-                if (next !== dictationEngine) {
-                  // Unload whichever backend was resident for the old engine.
-                  void unloadSttModel().catch(() => {});
-                  if (next === "model") {
-                    setSttPhase("checking");
-                    setSttDevice(null);
-                    setSttDownload(null);
-                  }
-                }
-                setDictationEngine(next);
+          {t("channels.voice.testTab")}
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="providers" className="flex flex-col gap-4">
+        <Card size="sm">
+          <CardHeader>
+            <CardTitle>Whisper</CardTitle>
+            <CardDescription>
+              {t("channels.voice.local")} · {t("channels.voice.recommended")}
+            </CardDescription>
+          </CardHeader>
+          <CardFooter>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                choose("local");
+                setPane("configuration");
               }}
             >
-              <SelectTrigger
-                data-testid="dictation-engine-trigger"
-                aria-label={t("settings.voice.dictation.engineLabel")}
-                className="w-56"
-                size="sm"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="browser">
-                  {t("settings.voice.dictation.engineBrowser")}
-                </SelectItem>
-                <SelectItem value="model" data-testid="dictation-engine-model">
-                  {t("settings.voice.dictation.engineModel")}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-        </SettingsRow>
-
-        {isLocalEngine ? (
-          modelSttSupported ? (
-            <SettingsRow
-              label={t("settings.voice.dictation.sttModelLabel")}
-              description={t("settings.voice.dictation.sttModelDescription")}
-            >
-              <div className="flex w-56 flex-col items-stretch gap-2">
-                <SttModelPicker
-                  value={sttModel}
-                  language={dictationLanguage}
-                  onChange={(next) => {
-                    if (next !== sttModel) {
-                      void unloadSttModel().catch(() => {});
-                      void autoLoadSttModel(next);
-                    }
-                    setSttModel(next);
-                  }}
-                />
-                {downloadingThisModel ? (
-                  <div className="rounded-md border border-border/60 bg-muted/20 px-2.5 pt-2">
-                    <div className="mb-1.5 flex items-center justify-between gap-3">
-                      <span className="text-xs text-muted-foreground">
-                        {sttModelStatusText}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="-mr-1.5 h-7 shrink-0 px-2 text-xs"
-                        disabled={sttDownloadCancelling}
-                        onClick={() => void stopSttDownload()}
-                      >
-                        {sttDownloadCancelling
-                          ? t("settings.voice.dictation.sttCancellingDownload")
-                          : t("settings.voice.dictation.sttCancelDownload")}
-                      </Button>
-                    </div>
-                    <DownloadProgressBar
-                      progress={{
-                        expectedBytes: sttDownload?.bytes_total ?? 0,
-                        downloadedBytes: sttDownload?.bytes_done ?? 0,
-                        fraction:
-                          sttDownload?.bytes_total &&
-                          sttDownload.bytes_total > 0
-                            ? (sttDownload.bytes_done ?? 0) /
-                              sttDownload.bytes_total
-                            : 0,
-                      }}
-                      bytesPerSec={downloadBytesPerSec}
-                    />
-                  </div>
-                ) : (
-                  <div className="flex min-h-7 items-center justify-between gap-3">
-                    <span className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-                      {effectiveSttDownloadAvailability === "checking" ||
-                      sttPhase === "loading" ||
-                      sttPhase === "checking" ? (
-                        <span className="size-1.5 shrink-0 animate-pulse rounded-full bg-current" />
-                      ) : sttPhase === "ready" ||
-                        (effectiveSttDownloadAvailability === "downloaded" &&
-                          sttPhase === "on-demand") ? (
-                        <span className="size-1.5 shrink-0 rounded-full bg-emerald-500" />
-                      ) : effectiveSttDownloadAvailability === "error" ||
-                        sttPhase === "error" ? (
-                        <span className="size-1.5 shrink-0 rounded-full bg-destructive" />
-                      ) : null}
-                      <span>{sttModelStatusText}</span>
-                    </span>
-                    {sttPhase === "unavailable" ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2 text-xs"
-                        onClick={() => setStatusNonce((nonce) => nonce + 1)}
-                      >
-                        {t("settings.voice.dictation.sttRetry")}
-                      </Button>
-                    ) : effectiveSttDownloadAvailability === "error" ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-2 text-xs"
-                        disabled={downloadingThisModel || sttDownloadStarting}
-                        // Restart the download; the sidecar error is sticky until
-                        // a new start(), so re-polling alone never clears it.
-                        onClick={() => void beginSttDownload()}
-                      >
-                        {t("settings.voice.dictation.sttRetry")}
-                      </Button>
-                    ) : effectiveSttDownloadAvailability === "missing" ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 px-2.5 text-xs"
-                        disabled={downloadingThisModel || sttDownloadStarting}
-                        onClick={() => void beginSttDownload()}
-                      >
-                        {downloadingThisModel || sttDownloadStarting ? (
-                          <Spinner className="mr-1.5" />
-                        ) : null}
-                        {t("settings.voice.dictation.sttDownload")}
-                      </Button>
-                    ) : effectiveSttDownloadAvailability === "downloaded" ? (
-                      sttPhase === "ready" ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 px-2.5 text-xs"
-                          disabled={sttUnloading}
-                          onClick={releaseSttModel}
-                        >
-                          {sttUnloading ? <Spinner className="mr-1.5" /> : null}
-                          {sttUnloading
-                            ? t("settings.voice.dictation.sttUnloading")
-                            : t("settings.voice.dictation.sttUnload")}
-                        </Button>
-                      ) : sttPhase === "loading" || sttPhase === "checking" ? (
-                        // The status line already says "Loading model…"; the
-                        // button only needs the spinner.
-                        <Button
-                          variant="outline"
-                          size="icon-sm"
-                          className="size-7"
-                          disabled={true}
-                          aria-label={t(
-                            "settings.voice.dictation.sttLoadingModel",
-                          )}
-                        >
-                          <Spinner />
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 px-2.5 text-xs"
-                          onClick={warmSttModel}
-                        >
-                          {sttPhase === "error"
-                            ? t("settings.voice.dictation.sttRetry")
-                            : t("settings.voice.dictation.sttLoad")}
-                        </Button>
-                      )
-                    ) : null}
-                  </div>
-                )}
-              </div>
-            </SettingsRow>
-          ) : (
-            <SettingsRow
-              label={t("settings.voice.dictation.sttModelLabel")}
-              description={t("settings.voice.dictation.sttModelUnsupported")}
-            />
-          )
-        ) : null}
-
-        <SettingsRow
-          label={t("settings.voice.dictation.microphoneLabel")}
-          description={
-            hasLabels
-              ? micDeviceId !== "default"
-                ? t("settings.voice.dictation.microphoneFallbackHint")
-                : t("settings.voice.dictation.microphoneDescription")
-              : t("settings.voice.dictation.microphoneGrantDescription")
-          }
-        >
-          {hasLabels ? (
-            <Select value={micDeviceId} onValueChange={setMicDeviceId}>
-              <SelectTrigger
-                aria-label={t("settings.voice.dictation.microphoneLabel")}
-                className="min-w-56 max-w-72"
-                size="sm"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="default">
-                  {t("settings.voice.dictation.systemDefault")}
-                </SelectItem>
-                {devices
-                  .filter((d) => d.deviceId && d.deviceId !== "default")
-                  .map((d, i) => (
-                    <SelectItem key={d.deviceId} value={d.deviceId}>
-                      {d.label ||
-                        t("settings.voice.dictation.microphoneFallbackName", {
-                          index: i + 1,
-                        })}
-                    </SelectItem>
-                  ))}
-                {!knownMic && micDeviceId !== "default" ? (
-                  <SelectItem value={micDeviceId}>
-                    {t("settings.voice.dictation.savedMicDisconnected")}
-                  </SelectItem>
-                ) : null}
-              </SelectContent>
-            </Select>
-          ) : (
-            <Button variant="outline" size="sm" onClick={requestAccess}>
-              <MicIcon className="mr-1.5 size-3.5" />
-              {t("settings.voice.dictation.allowMicrophone")}
+              {t("channels.voice.configurationTab")}
             </Button>
+          </CardFooter>
+        </Card>
+        {config &&
+          Object.entries(config.profiles).some(
+            ([, profile]) => profile?.has_key,
+          ) && (
+            <div className="flex flex-col gap-3">
+              <h3 className="font-medium">
+                {t("channels.voice.connectedProviders")}
+              </h3>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {(Object.entries(config.profiles) as [Provider, Profile][])
+                  .filter(([, profile]) => profile.has_key)
+                  .map(([provider, profile]) => (
+                    <Card key={provider} size="sm">
+                      <CardHeader>
+                        <CardTitle>{providers[provider].name}</CardTitle>
+                        <CardDescription>{profile.model}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Badge variant="secondary">
+                          {t(
+                            config.provider === provider
+                              ? "channels.voice.activeProvider"
+                              : "channels.voice.configurationReady",
+                          )}
+                        </Badge>
+                      </CardContent>
+                      <CardFooter>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={busy || testing}
+                          onClick={() => {
+                            editRevision.current += 1;
+                            choose(provider);
+                            setPane("configuration");
+                          }}
+                        >
+                          {t("channels.voice.editProvider")}
+                        </Button>
+                        {config.provider === provider && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            disabled={busy || testing}
+                            onClick={() => {
+                              choose(provider);
+                              setPane("test");
+                            }}
+                          >
+                            {t("channels.voice.testTab")}
+                          </Button>
+                        )}
+                      </CardFooter>
+                    </Card>
+                  ))}
+              </div>
+            </div>
           )}
-        </SettingsRow>
-
-        <SettingsRow
-          label={t("settings.voice.dictation.languageLabel")}
-          description={t("settings.voice.dictation.languageDescription")}
+        <Button
+          className="self-start"
+          variant="outline"
+          onClick={() => {
+            choose(
+              config?.provider === "local"
+                ? "elevenlabs"
+                : (config?.provider ?? "elevenlabs"),
+            );
+            setPane("configuration");
+          }}
         >
-          <Select
-            value={dictationLanguage}
-            onValueChange={setDictationLanguage}
-          >
-            <SelectTrigger
-              aria-label={t("settings.voice.dictation.languageLabel")}
-              className="min-w-56 max-w-72"
-              size="sm"
+          {t("channels.voice.addProvider")}
+        </Button>
+      </TabsContent>
+      <TabsContent value="configuration" className="flex flex-col gap-5">
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor={`${id}-provider`}>
+              {t("channels.voice.transcriptionProvider")}
+            </FieldLabel>
+            <Select
+              value={selected}
+              onValueChange={(value) => {
+                editRevision.current += 1;
+                choose(value as Provider);
+                setPane("configuration");
+              }}
+              disabled={busy || testing}
             >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {DICTATION_LANGUAGES.map(({ value, label }) => (
-                <SelectItem key={value} value={value}>
-                  {value === "auto"
-                    ? t("settings.voice.dictation.languageAuto")
-                    : label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </SettingsRow>
-
-        <SettingsRow
-          label={t("settings.voice.dictionary.manageLabel")}
-          description={t("settings.voice.dictionary.sectionDescription")}
-        >
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setSubpage("dictionary")}
-          >
-            {t("settings.voice.dictionary.manage")}
-          </Button>
-        </SettingsRow>
-
-        <SettingsRow
-          label={t("settings.voice.recents.manageLabel")}
-          description={t("settings.voice.recents.sectionDescription")}
-        >
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setSelectedDictationId(null);
-              setSubpage("recents");
-            }}
-          >
-            {t("settings.voice.recents.manage")}
-          </Button>
-        </SettingsRow>
-      </SettingsSection>
-
-      <SettingsSection title={t("settings.voice.readAloud.sectionTitle")}>
-        {ttsSupported ? (
-          <>
-            <SettingsRow
-              label={t("settings.voice.readAloud.buttonLabel")}
-              description={t("settings.voice.readAloud.buttonDescription")}
-            >
-              <Switch checked={ttsEnabled} onCheckedChange={setTtsEnabled} />
-            </SettingsRow>
-
-            <SettingsRow
-              label={t("settings.voice.readAloud.engineLabel")}
-              description={
-                effectiveTtsEngine === "studio"
-                  ? t("settings.voice.readAloud.engineStudioDescription")
-                  : t("settings.voice.readAloud.engineSystemDescription")
-              }
-            >
-              <Select
-                value={effectiveTtsEngine}
-                onValueChange={(value) =>
-                  setTtsEngine(value === "studio" ? "studio" : "system")
-                }
-              >
-                <SelectTrigger
-                  aria-label={t("settings.voice.readAloud.engineLabel")}
-                  className="min-w-56 max-w-72"
-                  size="sm"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {systemTtsSupported ? (
-                    <SelectItem value="system">
-                      {t("settings.voice.readAloud.engineSystem")}
-                    </SelectItem>
-                  ) : null}
-                  <SelectItem value="studio">
-                    {t("settings.voice.readAloud.engineStudio")}
+              <SelectTrigger id={`${id}-provider`}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectItem value="local">
+                    Whisper · {t("channels.voice.local")} ·{" "}
+                    {t("channels.voice.recommended")}
                   </SelectItem>
-                </SelectContent>
-              </Select>
-            </SettingsRow>
-
-            {effectiveTtsEngine === "studio" ? (
-              <SettingsRow
-                label={t("settings.voice.readAloud.modelLabel")}
-                description={t("settings.voice.readAloud.modelDescription")}
-              >
-                {/* The row named the model selector but offered no way to reach it. */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    useSettingsDialogStore.getState().closeDialog();
-                    // Audio keeps the mode it was left in, so name the TTS task.
-                    void navigate({
-                      to: "/audio",
-                      search: { task: "text-to-speech" },
-                    });
-                  }}
-                >
-                  <HugeiconsIcon
-                    icon={AudioWave01Icon}
-                    className="mr-1.5 size-3.5"
-                  />
-                  {t("settings.voice.readAloud.openAudioAction")}
-                </Button>
-              </SettingsRow>
-            ) : (
-              <SettingsRow
-                label={t("settings.voice.readAloud.voiceLabel")}
-                description={t("settings.voice.readAloud.voiceDescription")}
-              >
-                <Select value={ttsVoiceURI} onValueChange={setTtsVoiceURI}>
-                  <SelectTrigger
-                    aria-label={t("settings.voice.readAloud.voiceLabel")}
-                    className="min-w-56 max-w-72"
-                    size="sm"
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-72">
-                    <SelectItem value="default">
-                      {t("settings.voice.dictation.systemDefault")}
-                    </SelectItem>
-                    {voices.map((voice) => (
-                      <SelectItem key={voice.voiceURI} value={voice.voiceURI}>
-                        {voice.name} ({voice.lang})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </SettingsRow>
-            )}
-
-            <SettingsRow
-              label={t("settings.voice.readAloud.speedLabel")}
-              description={`${ttsRate.toFixed(2)}x`}
-            >
-              <Slider
-                value={[ttsRate]}
-                min={0.5}
-                max={2}
-                step={0.05}
-                onValueChange={([v]) => v !== undefined && setTtsRate(v)}
-                className="w-48"
-                aria-label={t("settings.voice.readAloud.speedLabel")}
-              />
-            </SettingsRow>
-
-            {effectiveTtsEngine === "system" && (
-              <SettingsRow
-                label={t("settings.voice.readAloud.pitchLabel")}
-                description={`${ttsPitch.toFixed(2)}`}
-              >
-                <Slider
-                  value={[ttsPitch]}
-                  min={0}
-                  max={2}
-                  step={0.05}
-                  onValueChange={([v]) => v !== undefined && setTtsPitch(v)}
-                  className="w-48"
-                  aria-label={t("settings.voice.readAloud.pitchLabel")}
-                />
-              </SettingsRow>
-            )}
-
-            <SettingsRow
-              label={t("settings.voice.readAloud.volumeLabel")}
-              description={`${Math.round(ttsVolume * 100)}%`}
-            >
-              <Slider
-                value={[ttsVolume]}
-                min={0}
-                max={1}
-                step={0.05}
-                onValueChange={([v]) => v !== undefined && setTtsVolume(v)}
-                className="w-48"
-                aria-label={t("settings.voice.readAloud.volumeLabel")}
-              />
-            </SettingsRow>
-
-            <SettingsRow
-              label={t("settings.voice.readAloud.previewLabel")}
-              description={t("settings.voice.readAloud.previewDescription")}
-            >
+                  <SelectItem value="elevenlabs">ElevenLabs</SelectItem>
+                  <SelectItem value="groq">Groq</SelectItem>
+                  <SelectItem value="compatible">
+                    {t("channels.voice.compatibleApi")}
+                  </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+            <FieldDescription>
+              {t("channels.voice.providerScope")}
+            </FieldDescription>
+          </Field>
+        </FieldGroup>
+        {!config &&
+          (failed ? (
+            <Alert variant="destructive">
+              <AlertDescription>
+                {t("channels.voice.configurationFailed")}
+              </AlertDescription>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => void previewTts()}
+                onClick={() => {
+                  setFailed(false);
+                  setReload((value) => value + 1);
+                }}
               >
-                {preparingPreview ? (
-                  <>
-                    <Spinner
-                      className="mr-1.5 size-3.5"
-                      label={t("settings.voice.readAloud.preparingAction")}
-                    />
-                    {t("settings.voice.readAloud.preparingAction")}
-                  </>
-                ) : previewing ? (
-                  <>
-                    <SquareIcon className="mr-1.5 size-3 animate-pulse fill-current text-destructive" />
-                    {t("settings.voice.readAloud.stopAction")}
-                  </>
-                ) : (
-                  <>
-                    <HugeiconsIcon
-                      icon={VolumeHighIcon}
-                      className="mr-1.5 size-3.5"
-                    />
-                    {t("settings.voice.readAloud.previewAction")}
-                  </>
-                )}
+                {t("channels.voice.retry")}
               </Button>
-            </SettingsRow>
-          </>
-        ) : (
-          <SettingsRow
-            label={t("settings.voice.readAloud.ttsLabel")}
-            description={t("settings.voice.readAloud.notSupported")}
-          />
+            </Alert>
+          ) : (
+            <Spinner label={t("channels.loading")} />
+          ))}
+        {problem && (
+          <Alert variant="destructive">
+            <AlertDescription>{problem}</AlertDescription>
+          </Alert>
         )}
-      </SettingsSection>
-    </div>
+        {!remote && (
+          <>
+            {config && config.provider !== "local" && (
+              <Button
+                className="self-start"
+                disabled={busy}
+                onClick={() => void save()}
+              >
+                {t("channels.voice.useLocal")}
+              </Button>
+            )}
+            <LocalVoiceTab />
+          </>
+        )}
+        {remote && (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="font-medium">{providers[selected].name}</span>
+                <Badge variant="secondary">
+                  {t(
+                    matches
+                      ? "channels.voice.configurationReady"
+                      : "channels.voice.notSaved",
+                  )}
+                </Badge>
+              </div>
+              {providers[selected].keysUrl && (
+                <Button asChild variant="outline" size="sm">
+                  <a
+                    href={providers[selected].keysUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <HugeiconsIcon
+                      icon={LinkSquare02Icon}
+                      data-icon="inline-start"
+                    />
+                    {t("channels.voice.getApiKey")}
+                  </a>
+                </Button>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {t(
+                selected === "elevenlabs"
+                  ? "channels.voice.elevenlabsKeyHelp"
+                  : selected === "groq"
+                    ? "channels.voice.groqKeyHelp"
+                    : "channels.voice.customKeyHelp",
+              )}
+            </p>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor={`${id}-model`}>
+                  {t("channels.voice.transcriptionModel")}
+                </FieldLabel>
+                <Input
+                  id={`${id}-model`}
+                  value={model}
+                  onChange={(e) => setModel(e.target.value)}
+                  disabled={busy || testing}
+                  maxLength={200}
+                  autoComplete="off"
+                />
+              </Field>
+              {selected === "compatible" ? (
+                <Field>
+                  <FieldLabel htmlFor={`${id}-endpoint`}>
+                    {t("channels.voice.endpoint")}
+                  </FieldLabel>
+                  <Input
+                    id={`${id}-endpoint`}
+                    value={endpoint}
+                    onChange={(e) => {
+                      setEndpoint(e.target.value);
+                      setConsent(false);
+                    }}
+                    readOnly={selected !== "compatible"}
+                    disabled={busy || testing}
+                    placeholder="https://api.example.com/v1/audio/transcriptions"
+                    maxLength={1500}
+                    autoComplete="off"
+                  />
+                  <FieldDescription>
+                    {t("channels.voice.endpointHelp")}
+                  </FieldDescription>
+                </Field>
+              ) : (
+                <details>
+                  <summary className="cursor-pointer text-sm">
+                    {t("channels.voice.connectionDetails")}
+                  </summary>
+                  <p className="break-all pt-2 text-xs text-muted-foreground">
+                    {endpoint}
+                  </p>
+                </details>
+              )}
+              <Field>
+                <FieldLabel htmlFor={`${id}-key`}>
+                  {t("channels.voice.apiKey")}
+                  {retainedKey && !key && (
+                    <Badge variant="secondary">
+                      {t("channels.voice.savedCredential")}
+                    </Badge>
+                  )}
+                </FieldLabel>
+                <Input
+                  id={`${id}-key`}
+                  type="password"
+                  value={key}
+                  onChange={(e) => setKey(e.target.value)}
+                  disabled={busy || testing}
+                  autoComplete="new-password"
+                  maxLength={4096}
+                  placeholder={retainedKey ? t("channels.voice.keySaved") : ""}
+                />
+                <FieldDescription>
+                  {t(
+                    retainedKey && !key
+                      ? "channels.voice.retainedCredentialHelp"
+                      : "channels.voice.keyPrivacy",
+                  )}
+                </FieldDescription>
+              </Field>
+              <Field orientation="horizontal">
+                <Checkbox
+                  id={`${id}-consent`}
+                  checked={consent}
+                  onCheckedChange={(value) => setConsent(value === true)}
+                  disabled={busy || testing}
+                />
+                <FieldLabel htmlFor={`${id}-consent`}>
+                  {t("channels.voice.remoteConsent")}
+                </FieldLabel>
+              </Field>
+            </FieldGroup>
+            <div className="flex flex-wrap gap-2">
+              {config && (
+                <Button
+                  variant="ghost"
+                  disabled={busy || testing}
+                  onClick={() => {
+                    choose(config.provider);
+                    setPane("providers");
+                  }}
+                >
+                  {t("channels.voice.backToProviders")}
+                </Button>
+              )}
+              <Button
+                disabled={
+                  busy ||
+                  testing ||
+                  !consent ||
+                  !model ||
+                  !endpoint ||
+                  (!key && !retainedKey)
+                }
+                onClick={() => void save()}
+              >
+                {busy && <Spinner label={t("channels.loading")} />}
+                {t("channels.voice.saveProvider")}
+              </Button>
+              {saved && (
+                <Button
+                  variant="outline"
+                  disabled={busy || testing}
+                  onClick={() => void save(true)}
+                >
+                  {t("channels.voice.removeProvider")}
+                </Button>
+              )}
+            </div>
+            {providers[selected].helpUrl && (
+              <Button asChild variant="link" size="sm" className="self-start">
+                <a
+                  href={providers[selected].helpUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {t("channels.voice.keyGuide")}
+                </a>
+              </Button>
+            )}
+          </>
+        )}
+      </TabsContent>
+      <TabsContent value="test" className="flex flex-col gap-4">
+        {remote && matches && (
+          <Alert>
+            <AlertDescription>
+              {t(
+                verified
+                  ? "channels.voice.testPassed"
+                  : "channels.voice.savedNotTested",
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
+        {remote && matches && (
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle>{t("channels.voice.testConnection")}</CardTitle>
+              <CardDescription>
+                {providers[selected].name} · {model}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              {testProblem && (
+                <Alert variant="destructive">
+                  <AlertDescription>{testProblem}</AlertDescription>
+                </Alert>
+              )}
+              <FieldGroup>
+                <Field>
+                  <FieldLabel htmlFor={`${id}-sample`}>
+                    {t("channels.voice.sampleAudio")}
+                  </FieldLabel>
+                  <Input
+                    id={`${id}-sample`}
+                    type="file"
+                    accept="audio/*,.ogg,.wav,.mp3,.m4a,.webm,.flac"
+                    disabled={testing}
+                    onChange={(e) => {
+                      setSample(e.target.files?.[0] ?? null);
+                      setTranscript("");
+                    }}
+                  />
+                  <FieldDescription>
+                    {t("channels.voice.testHelp")}
+                  </FieldDescription>
+                </Field>
+                <Button
+                  className="self-start"
+                  disabled={!sample || testing}
+                  onClick={() => void test()}
+                >
+                  {testing && <Spinner label={t("channels.voice.testing")} />}
+                  {t(
+                    testing
+                      ? "channels.voice.testing"
+                      : testProblem
+                        ? "channels.voice.retry"
+                        : "channels.voice.testConnection",
+                  )}
+                </Button>
+              </FieldGroup>
+              {transcript && (
+                <p
+                  className="mt-4 max-h-48 overflow-y-auto whitespace-pre-wrap text-sm"
+                  role="status"
+                >
+                  {transcript}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        )}
+      </TabsContent>
+    </Tabs>
   );
 }
