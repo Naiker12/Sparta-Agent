@@ -1,5 +1,7 @@
 # Vista previa de archivos: implementación y verificación
 
+La [guía de conexiones, documentos y proyectos](desktop-workflow.md) describe cómo crear archivos con Código desactivado y abrir cambios Git o pull requests en este mismo panel.
+
 ## Cambios
 
 - Cabecera compacta con nombre, descarga, ampliación y cierre en una sola fila.
@@ -8,6 +10,8 @@
 - Caché débil por Blob para reutilizar resultados al reabrir el mismo objeto sin mantener archivos vivos indefinidamente.
 - PDF y Markdown se cargan bajo demanda. Texto, código, imágenes, audio y vídeo tienen vistas específicas; Word conserva la conversión a HTML existente.
 - Indicador de carpeta del proyecto activo y acceso al explorador cuando existe una carpeta conectada.
+- Pestañas compartidas para documentos y revisión de Git: cambios de trabajo, preparados, comparación de rama, historial y pull requests disponibles. El código de los diffs se presenta directamente en la superficie del panel, sin una tarjeta envolvente adicional.
+- Los archivos generados muestran un estado de preparación mientras se recuperan sus bytes para abrir la vista previa.
 - El nuevo canal `fs:readPreview` devuelve bytes originales para archivos del explorador, sin convertir primero Excel o PDF a texto. Resuelve rutas reales y rechaza archivos fuera de la raíz conectada, directorios y archivos mayores de 25 MiB.
 
 ## Límites explícitos

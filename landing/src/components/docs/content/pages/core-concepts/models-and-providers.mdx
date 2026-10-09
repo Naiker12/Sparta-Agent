@@ -7,7 +7,7 @@ description: "Configura la conexión adecuada para tu tarea y comprueba sus capa
 
 Sparta Agent usa las APIs oficiales o compatibles de los proveedores configurados. Añade una conexión, guarda su credencial en la aplicación y elige el modelo disponible para esa conexión. La petición se procesa en el servicio seleccionado; el escritorio no descarga, carga ni sirve pesos de modelos.
 
-Para el chat, Sparta no administra motores ni pesos de modelos locales. Si ya tienes un servidor compatible en tu PC o red, elige **Servidor API compatible (local o remoto)**.
+Para el chat, Sparta no administra motores ni pesos de modelos locales. Si ya tienes un servidor compatible en tu PC o red, selecciona su conexión: LM Studio, Ollama, llama.cpp, vLLM o **Servidor API compatible (local o remoto)**.
 
 ```text title="URL de servidor de chat · ejemplo"
 http://localhost:1234/v1
@@ -15,11 +15,22 @@ http://localhost:1234/v1
 
 El servidor debe existir y estar iniciado. Este ejemplo es para chat; la [transcripción de voz](/docs/features/voice-audio) tiene su propia configuración y restricciones.
 
+## URLs iniciales de servidores externos
+
+| Servidor | URL base |
+| --- | --- |
+| LM Studio | `http://localhost:1234/v1` |
+| Ollama | `http://localhost:11434/v1` |
+| llama.cpp | `http://localhost:8080/v1` |
+| vLLM | `http://localhost:8000/v1` |
+
+Adapta host, puerto y ruta a tu instalación. Estas direcciones no indican que el servicio esté iniciado. Guardar una conexión sin modelos tampoco permite conversar hasta seleccionar uno disponible.
+
 ## Configuración segura
 
 1. Abre **Conexiones** y crea o selecciona el proveedor.
-2. Introduce una clave API con los permisos mínimos necesarios.
-3. Elige un modelo y realiza una consulta corta de prueba.
+2. Revisa la URL base y añade la clave si el servidor la exige; en conexiones compatibles puede ser opcional.
+3. Guarda la conexión sin necesidad de introducir IDs de modelos. Usa **Probar conexión y consultar modelos**, selecciona uno disponible y realiza una consulta corta de prueba. Los IDs manuales siguen siendo una alternativa si el servidor no permite descubrirlos.
 4. Activa herramientas o MCP solo si el modelo y el proveedor lo soportan.
 5. Revisa las políticas de uso, retención y residencia de datos del proveedor antes de enviar código o documentos sensibles.
 

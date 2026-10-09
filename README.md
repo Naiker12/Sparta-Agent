@@ -26,7 +26,7 @@
 | Para | Sparta Agent aporta |
 | --- | --- |
 | Trabajar con tu código | Chat orientado a tareas, contexto de proyecto, diffs y una terminal integrada. |
-| Usar IA | Conexiones con proveedores remotos mediante sus APIs y credenciales propias. |
+| Usar IA | Conexiones por API con proveedores remotos o servidores locales externos compatibles con OpenAI. |
 | Conectar servicios | Integraciones mediante Model Context Protocol (MCP), con conectores locales, HTTP y stdio. |
 | Mantener el control | Aprobaciones antes de acciones sensibles y almacenamiento local protegido de credenciales. |
 
@@ -52,7 +52,9 @@ Requisitos: Node.js 20 o posterior y npm 10 o posterior. El motor Python local s
 
 - **Sesiones de trabajo:** chat normal o temporal, selección de modelo y gestión de contexto.
 - **Herramientas con permiso:** revisión de cambios, acciones sobre archivos y terminal con confirmación previa.
-- **Documentos en contexto:** previsualización de Markdown, PDF, imágenes y formatos de oficina compatibles.
+- **Documentos:** creación de PDF, Excel, Word, CSV, TXT y Markdown mediante una herramienta propia, incluso con Código desactivado; previsualización y descarga en el chat. Requiere un modelo compatible con herramientas.
+- **Proyectos y Git:** conexión directa de carpetas, prevención de proyectos duplicados y revisión de cambios, ramas y pull requests en el panel compartido de archivos.
+- **Búsqueda web:** herramienta ejecutada por Sparta cuando la activas y el modelo solicita usarla; disponible también con servidores locales compatibles.
 - **MCP:** Git, sistemas de archivos, bases de datos, navegador y otros servicios configurables.
 - **Modo sin conexión:** los proveedores remotos no se presentan como disponibles cuando no hay conectividad.
 
@@ -84,9 +86,9 @@ La interfaz no recibe acceso directo al sistema operativo: las operaciones de es
 
 ## Qué ocurre cuando envías un mensaje
 
-1. Escribes una consulta, eliges un proveedor y un modelo remoto.
+1. Escribes una consulta y eliges un modelo de un proveedor remoto o de un servidor local externo.
 2. Sparta Agent prepara la conversación, las instrucciones y, solo cuando corresponde, el resultado de herramientas que autorizaste.
-3. La solicitud viaja por HTTPS al proveedor configurado usando su API.
+3. La solicitud se envía a la API configurada: HTTPS para proveedores remotos o la URL del servidor externo que hayas conectado.
 4. La respuesta vuelve a la aplicación, se muestra en el chat y se guarda en el historial local según tus preferencias.
 5. Si el modelo propone una acción sobre archivos, terminal o MCP, la aplicación muestra el alcance para que puedas aprobarla o rechazarla.
 
@@ -94,10 +96,10 @@ El código y los archivos no se envían "por defecto" a todos los proveedores. S
 
 ## Lo que esta edición no incluye
 
-Sparta Agent es **API-only** para la inferencia de IA. No instala ni ejecuta modelos locales y no incluye:
+Sparta Agent es **API-only** para la inferencia de IA. Puede conectarse a LM Studio, Ollama, llama.cpp o vLLM que ya estén ejecutándose fuera de la aplicación, pero no instala ni administra esos servidores, ni carga sus pesos. El paquete no incluye:
 
 - motores de entrenamiento, Torch o Transformers.
-- Ollama, LM Studio, llama.cpp, GGUF, vLLM ni servidores de modelos locales.
+- runtimes de Ollama, LM Studio, llama.cpp o vLLM, ni pesos GGUF o servidores de modelos integrados.
 - Whisper local, transcripción basada en modelos descargados ni exportación de pesos.
 - RAG local, embeddings, índices vectoriales o bases de conocimiento locales.
 
@@ -109,13 +111,13 @@ El runtime Python administrado continúa presente porque las herramientas de pro
 
 Sparta Agent usa el estándar Model Context Protocol para conectar Git, sistemas de archivos, bases de datos, herramientas de navegador y servicios configurables. Los conectores pueden operar por procesos locales, HTTP o stdio.
 
-Los modelos se consumen exclusivamente desde proveedores remotos por API. Configura las credenciales de tu proveedor en la aplicación; Sparta no descarga ni carga pesos de modelos locales.
+Los modelos se consumen por API, desde proveedores remotos o servidores locales externos. Puedes guardar una conexión sin escribir IDs de modelos y consultar los disponibles desde su URL. Sparta no descarga ni carga pesos de modelos. Consulta la [guía de conexiones, documentos y proyectos](docs/desktop-workflow.md).
 
 ## Límites y decisiones operativas
 
 | Situación | Qué esperar | Recomendación |
 | --- | --- | --- |
-| Sin conexión a internet | El chat con modelos no estará disponible. | Trabaja en archivos locales y vuelve a conectar antes de solicitar una respuesta. |
+| Sin conexión a internet | Los proveedores remotos y la búsqueda web necesitan conectividad; un servidor local ya preparado puede seguir atendiendo el chat. | Mantén el servidor externo activo y selecciona una conexión local. |
 | Credencial inválida o cuota agotada | El proveedor devolverá un error de autenticación, permisos o límite. | Renueva la clave, revisa el plan y prueba con un modelo habilitado. |
 | Archivo sensible | Puede terminar incluido en la solicitud si lo adjuntas o permites que una herramienta lo lea. | Aplica revisiones, minimiza el contexto y usa un proveedor aprobado por tu organización. |
 | Cambio sobre el workspace | La acción se detiene para pedir permiso cuando aplica. | Lee la ruta, el diff o el comando antes de aprobar. |
@@ -156,4 +158,4 @@ Los problemas, ideas y propuestas son bienvenidos en los [issues](https://github
 
 ## Licencia
 
-Sparta Agent se distribuye bajo la licencia [MIT](LICENSE)..
+Sparta Agent se distribuye bajo la licencia [MIT](LICENSE).

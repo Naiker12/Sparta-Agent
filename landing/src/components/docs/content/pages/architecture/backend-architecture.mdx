@@ -11,6 +11,8 @@ El backend reside en `desktop/backend-spartan`. Expone rutas FastAPI, integra pr
 
 Electron inicia `desktop_bootstrap.py`, que crea la credencial local antes de ejecutar `run.py`. El backend anuncia el puerto después de completar su arranque. El escritorio utiliza loopback para intercambiar la credencial por una sesión.
 
+El intercambio de autenticación de escritorio se ejecuta en un hilo de FastAPI, fuera del bucle asíncrono. Así, otras peticiones pueden progresar mientras SQLite espera un bloqueo de escritura; esto corrige ese caso de error 500 durante el inicio de sesión. Otros fallos de arranque requieren revisar sus registros.
+
 ## Ciclo de herramientas
 
 `ToolLoopController` decide si una llamada puede ejecutarse y registra el resultado. La deduplicación se invalida después de una posible modificación del workspace; las restricciones de una sola ejecución se conservan durante la respuesta.
