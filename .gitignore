@@ -73,6 +73,7 @@ package.json.*
 
 # Temporary / runtime files
 artifacts/
+output/
 .tmp/
 build-log.txt
 test-workspace-root.txt
