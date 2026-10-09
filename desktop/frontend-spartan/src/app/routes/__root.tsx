@@ -124,7 +124,7 @@ function CredentialBootstrapGate({ children }: { children: ReactNode }) {
     const reconcile = () => {
       const revision = ++runRevision.current;
       if (!hasAuthToken()) {
-        // Sparta Agent intentionally permits local, unauthenticated use.  Do
+        // Spartan intentionally permits local, unauthenticated use.  Do
         // not make the whole shell wait for credentials that do not exist.
         setReady(true);
         return;
@@ -218,7 +218,7 @@ export const Route = createRootRoute({
 const HIDDEN_NAVBAR_ROUTES = ["/login", "/change-password"];
 
 // Fallback when no matched route declares a `staticData.title`.
-const DEFAULT_DOCUMENT_TITLE = "Spartan Agent";
+const DEFAULT_DOCUMENT_TITLE = "Spartan";
 
 function RootLayout() {
   const t = useT();

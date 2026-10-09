@@ -27,7 +27,7 @@ let downloading = false
 
 function appImageEnvironmentError(): string | null {
   if (process.platform !== 'linux' || !app.isPackaged || process.env.APPIMAGE) return null
-  return 'Automatic installation requires running Sparta Agent from its writable AppImage file. Download the latest AppImage from GitHub instead.'
+  return 'Automatic installation requires running Spartan from its writable AppImage file. Download the latest AppImage from GitHub instead.'
 }
 
 const updateMetaPath = (): string => path.join(app.getPath('userData'), 'update-meta.json')
@@ -41,6 +41,9 @@ function rememberDownloadedVersion(version: string): void {
 }
 
 function shouldSkipAutomaticCheck(): boolean {
+  // Directory builds may have no updater metadata. They still run normally;
+  // only configured distributions should start an automatic network check.
+  if (!existsSync(path.join(process.resourcesPath, 'app-update.yml'))) return true
   const metaPath = updateMetaPath()
   try {
     if (!existsSync(metaPath)) return false
@@ -122,6 +125,9 @@ export function setupAutoUpdater(getWindow: () => BrowserWindow | null | undefin
   ipcMain.handle('updater:get-state', () => state)
   ipcMain.handle('updater:check', async () => {
     if (!app.isPackaged) return { ok: false, error: 'Updater disabled in development' }
+    if (!existsSync(path.join(process.resourcesPath, 'app-update.yml'))) {
+      return { ok: false, error: 'Automatic updates are unavailable in this build' }
+    }
     if (checking || downloading) return { ok: false, error: 'An update operation is already in progress' }
     checking = true
     try {
@@ -167,5 +173,10 @@ export function setupAutoUpdater(getWindow: () => BrowserWindow | null | undefin
     return { ok: true }
   })
 
-  if (app.isPackaged && !shouldSkipAutomaticCheck()) void autoUpdater.checkForUpdates()
+  if (app.isPackaged && !shouldSkipAutomaticCheck()) {
+    void autoUpdater.checkForUpdates().catch((error: unknown) => {
+      checking = false
+      emit({ stage: 'error', error: error instanceof Error ? error.message : String(error) }, getWindow)
+    })
+  }
 }

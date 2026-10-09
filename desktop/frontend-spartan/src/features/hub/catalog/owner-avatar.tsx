@@ -1,4 +1,3 @@
-import { GeneratedAvatar } from "@/components/ui/blobatar-avatar";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { useHfOwnerAvatar } from "../lib/hf-owner-avatar";
@@ -62,10 +61,6 @@ export function OwnerAvatar({
   remote = true,
 }: {
   owner: string;
-
-
-
-
 
   repoName?: string;
   size?: AvatarSize;
@@ -262,24 +257,16 @@ function DefaultAvatar({
           }}
         />
       ) : (
-        <GeneratedAvatar
-          name={owned}
-          animate="hover"
+        <span
+          aria-hidden="true"
           className={cn(
-            "hub-avatar-tile inline-block shrink-0 overflow-hidden",
+            "hub-avatar-tile inline-flex shrink-0 items-center justify-center overflow-hidden bg-muted font-medium text-muted-foreground",
             SIZES[size],
             className,
           )}
-          fallback={
-            <span
-              className={cn(
-                "hub-avatar-tile inline-block shrink-0 bg-muted",
-                SIZES[size],
-                className,
-              )}
-            />
-          }
-        />
+        >
+          {owned.slice(0, 2).toUpperCase()}
+        </span>
       )}
     </>
   );

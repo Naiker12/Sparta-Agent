@@ -3,12 +3,12 @@ import asyncio
 import json
 
 
-async def preview_task(client, model: str, prompt: str) -> str:
+async def preview_task(client, model: str, prompt: str, *, on_progress=None, project_instructions: str = '') -> str:
     async def collect():
         parts, size = [], 0
         async for line in client.stream_chat_completion(
             messages=[
-                {"role": "system", "content": "Respond to the task using only the supplied instructions. You have no file, command, browsing or workspace tools. Do not claim to have performed external actions."},
+                {"role": "system", "content": "Respond to the task using only the supplied instructions. You have no file, command, browsing or workspace tools. Do not claim to have performed external actions." + ('\nProject preferences (no file access granted):\n' + project_instructions[:6000] if project_instructions else '')},
                 {"role": "user", "content": prompt},
             ],
             model=model, max_tokens=3000, enabled_tools=[], tools=[], tool_choice="none",
@@ -29,6 +29,8 @@ async def preview_task(client, model: str, prompt: str) -> str:
                         if size > 24000:
                             raise ValueError("Response exceeds limit")
                         parts.append(content)
+                        if on_progress is not None:
+                            await on_progress(''.join(parts))
         output = "".join(parts).strip()
         if not output:
             raise ValueError("Empty response")

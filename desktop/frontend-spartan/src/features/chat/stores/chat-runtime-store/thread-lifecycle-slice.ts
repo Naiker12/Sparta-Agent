@@ -1,5 +1,5 @@
 /**
- * Sparta Agent - Slice de Ciclo de Vida de Hilos de Chat
+ * Spartan - Slice de Ciclo de Vida de Hilos de Chat
  * Gestiona hilos en ejecución, cancelaciones y snapshots de canvas.
  */
 

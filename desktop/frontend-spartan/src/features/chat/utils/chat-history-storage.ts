@@ -1,5 +1,5 @@
 /**
- * Sparta Agent - Chat History Storage Barrel
+ * Spartan - Chat History Storage Barrel
  * Re-exporta la persistencia de historial modularizada:
  * - storage-coordinator: Coordinación de concurrencia y sesiones incógnito.
  * - thread-storage: Consulta y persistencia de hilos (soporta IDs locales y backend).

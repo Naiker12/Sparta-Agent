@@ -1,5 +1,5 @@
 /**
- * Sparta Agent – Sidebar Context Menus
+ * Spartan – Sidebar Context Menus
  *
  * Componentes de menú contextual para la barra lateral:
  * - SidebarHeaderMenu: Menú desplegable "..." de cabecera para listas y proyectos (ordenar por prioridad, fecha o manual; organizar en lista o proyectos).
@@ -83,7 +83,7 @@ export function SidebarHeaderMenu({
         side="bottom"
         align="end"
         sideOffset={2}
-        className="unsloth-plus-menu w-56"
+        className="spartan-plus-menu w-56"
       >
         {includeOrganize && organizeBy && onOrganizeByChange && (
           <>
@@ -163,7 +163,7 @@ export function ProjectContextMenu({
   }
 
   return (
-    <ContextMenuContent className="unsloth-plus-menu menu-flat-destructive w-52">
+    <ContextMenuContent className="spartan-plus-menu menu-flat-destructive w-52">
       {projectSelectionCount > 1 && (
         <ContextMenuLabel>
           {t("shell.selection.countSelected", {
@@ -222,7 +222,7 @@ export function ChatContextMenu({
   }
 
   return (
-    <ContextMenuContent className="unsloth-plus-menu menu-flat-destructive w-52">
+    <ContextMenuContent className="spartan-plus-menu menu-flat-destructive w-52">
       {selectionCount > 1 && (
         <ContextMenuLabel>
           {t("shell.selection.countSelected", { count: selectionCount })}

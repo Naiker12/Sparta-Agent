@@ -1,7 +1,7 @@
 import { translate as uiTranslate } from "@/i18n";
 import { useT as useUiT } from "@/i18n";
 /**
- * Sparta Agent – Shared Composer UI Helpers
+ * Spartan – Shared Composer UI Helpers
  *
  * Componentes y constantes de utilidad para el compositor compartido:
  * - Constantes de adjuntos de imagen

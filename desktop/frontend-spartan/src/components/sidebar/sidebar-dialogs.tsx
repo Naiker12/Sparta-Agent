@@ -1,5 +1,5 @@
 /**
- * Sparta Agent – Sidebar Modals & Dialogs
+ * Spartan – Sidebar Modals & Dialogs
  *
  * Contenedor modular de los modales y diálogos de confirmación de la barra lateral:
  * - Diálogo de eliminación con switch para borrar archivos sandbox del disco

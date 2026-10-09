@@ -5,7 +5,7 @@ import path from "node:path";
 
 const PORT_LINE = /^TAURI_PORT=(\d+)\s*$/m;
 const RUNTIME_MANIFEST = "sparta-runtime.json";
-const RUNTIME_FINGERPRINT_FILES = ["requirements.txt", "run.py", "main.py", "desktop_bootstrap.py"];
+const RUNTIME_FINGERPRINT_FILES = ["requirements.txt", "run.py", "main.py", "desktop_bootstrap.py", "setup_voice.py"];
 
 type RuntimeManifest = { backendFingerprint: string; createdAt: string };
 
@@ -46,7 +46,7 @@ export class BackendManager {
         throw new Error("El entorno del backend de Sparta aún no está preparado. Instálalo para crear su entorno aislado.");
       }
       console.warn("[backend-manager] Python no encontrado en el sistema. Operando en modo Electron agéntico puro.");
-      throw new Error("No se encontró Python. Sparta Agent puede operar directamente con modelos cloud y herramientas locales.");
+      throw new Error("No se encontró Python. Spartan puede operar directamente con modelos cloud y herramientas locales.");
     }
 
     const migrateLegacyRuntime = runtimeDir
@@ -67,6 +67,7 @@ export class BackendManager {
 
 
       childEnv.UNSLOTH_STUDIO_HOME = path.join(runtimeDir ?? backendDir, "studio-data");
+      childEnv.SPARTAN_HOME = childEnv.UNSLOTH_STUDIO_HOME;
       childEnv.UNSLOTH_STUDIO_DESKTOP_OWNER_PID = String(process.pid);
       // Vite can choose a different port when 5173 is occupied. Carry the
       // actual renderer origin; the backend only accepts loopback origins.
@@ -174,6 +175,15 @@ export class BackendManager {
 
     onProgress("Instalando dependencias del backend...");
     await this.run(venvPython, ["-m", "pip", "install", "-r", requirements], backendDir, onProgress);
+
+    onProgress("Preparando voz local con Whisper base...");
+    try {
+      await this.run(venvPython, ["setup_voice.py", "--home", path.join(runtimeDir, "studio-data")], backendDir, onProgress);
+    } catch {
+      // Voice download failures do not make the API backend unusable.
+      // Settings shows readiness and retries the same preparation flow.
+      onProgress("No se pudo completar la voz local. Reintenta en Ajustes → Voz; el backend continuará su instalación.");
+    }
 
     onProgress("Verificando que el backend pueda iniciar...");
     await this.run(

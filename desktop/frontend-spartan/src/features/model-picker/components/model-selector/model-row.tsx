@@ -1,6 +1,6 @@
 import { useT as useUiT } from "@/i18n";
 /**
- * Sparta Agent – Model Selector Model Row Component
+ * Spartan – Model Selector Model Row Component
  *
  * Componente que renderiza una fila de modelo (`ModelRow`):
  * - Metadatos de alineación de columnas fijas (`META_COLUMN`).

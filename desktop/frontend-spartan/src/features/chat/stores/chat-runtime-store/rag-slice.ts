@@ -1,5 +1,5 @@
 /**
- * Sparta Agent - Slice de Recuperación Aumentada (RAG) y Adjuntos
+ * Spartan - Slice de Recuperación Aumentada (RAG) y Adjuntos
  * Gestiona bases de conocimiento, modos de búsqueda híbrida y OCR de documentos.
  */
 

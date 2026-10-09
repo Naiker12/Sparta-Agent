@@ -50,7 +50,7 @@ function GitHubPanel() {
               {
                 id: "faee9be",
                 msg: "feat: improve memory and task persistence, asset routing and packaging checks",
-                author: "Sparta Agent",
+                author: "Spartan",
                 time: "Reciente",
               },
               {

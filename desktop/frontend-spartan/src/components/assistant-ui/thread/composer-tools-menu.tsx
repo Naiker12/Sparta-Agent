@@ -1,7 +1,7 @@
 import { translate as uiTranslate } from "@/i18n";
 import { useT as useUiT } from "@/i18n";
 /**
- * Sparta Agent - Menú de Herramientas y Acciones del Composer (ComposerToolsMenu)
+ * Spartan - Menú de Herramientas y Acciones del Composer (ComposerToolsMenu)
  * Provee el menú desplegable "+" para adjuntar archivos, activar Web Search, Code,
  * Deep Research, Images, MCP, proyectos recientes, prompts guardados y exportación.
  */
@@ -29,18 +29,14 @@ import {
 } from "@/features/chat/api/prompts-api";
 import { BypassPermissionsMenuItem } from "@/features/chat/bypass-permissions-menu-item";
 import { NewProjectDialog } from "@/features/chat/components/new-project-dialog";
+import { ContainersComingSoonItem } from "@/features/chat/components/containers-coming-soon-item";
 import {
   parseExternalModelId,
   providerModelSupportsStudioTools,
 } from "@/features/chat/external-providers";
 import { useChatProjects } from "@/features/chat/hooks/use-chat-projects";
-import {
-  PromptStorageDialog,
-  exportConversationCsv,
-  exportConversationMarkdown,
-  exportConversationRawJsonl,
-  exportConversationShareGPT,
-} from "@/features/chat/prompt-storage/prompt-storage-dialog";
+import { PromptStorageDialog } from "@/features/chat/prompt-storage/prompt-storage-lazy";
+import { exportConversationCsv, exportConversationMarkdown, exportConversationRawJsonl, exportConversationShareGPT } from "@/features/chat/prompt-storage/conversation-exports";
 import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 import { useExternalProvidersStore } from "@/features/chat/stores/external-providers-store";
 import { applyQwenThinkingParams } from "@/features/chat/utils/qwen-params";
@@ -226,7 +222,11 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
       const files = (event.target as HTMLInputElement).files;
       if (files) {
         for (const file of files) {
-          void aui.composer().addAttachment(file);
+          void aui.composer().addAttachment(file).catch((error: unknown) => {
+            toast.error(uiTranslate("ui.could_not_attach_files"), {
+              description: error instanceof Error ? error.message : file.name,
+            });
+          });
         }
       }
       document.body.removeChild(input);
@@ -288,7 +288,7 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
         </DropdownMenuSubTrigger>
         <DropdownMenuSubContent
           collisionPadding={16}
-          className="unsloth-plus-menu w-[208px]"
+          className="spartan-plus-menu w-[208px]"
         >
           {recentPrompts.map((p) => (
             <DropdownMenuItem
@@ -319,7 +319,7 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
         </DropdownMenuSubTrigger>
         <DropdownMenuSubContent
           collisionPadding={16}
-          className="unsloth-plus-menu w-[208px]"
+          className="spartan-plus-menu w-[208px]"
         >
           <DropdownMenuItem
             onSelect={() => {
@@ -402,7 +402,7 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
           <HugeiconsIcon icon={Folder01Icon} strokeWidth={2} />
           {t("chat.composer.projects")}
         </DropdownMenuSubTrigger>
-        <DropdownMenuSubContent className="unsloth-plus-menu w-[232px]">
+        <DropdownMenuSubContent className="spartan-plus-menu w-[232px]">
           <DropdownMenuItem onSelect={() => setNewProjectOpen(true)}>
             <HugeiconsIcon icon={FolderAddIcon} strokeWidth={2} />
             {t("chat.composer.newProject")}
@@ -462,7 +462,7 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
           <button
             type="button"
             aria-label={uiT("ui.tools_and_attachments")}
-            className="unsloth-composer-plus"
+            className="spartan-composer-plus"
             data-tour="chat-plus-menu"
           >
             <PlusIcon className="size-4 stroke-2" />
@@ -473,7 +473,7 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
           align="start"
           sideOffset={0}
           avoidCollisions={true}
-          className="unsloth-plus-menu w-[244px]"
+          className="spartan-plus-menu w-[244px]"
           onCloseAutoFocus={(event) => event.preventDefault()}
         >
           <DropdownMenuItem
@@ -574,6 +574,7 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
+          <ContainersComingSoonItem />
           {pinnedPlusItems.map((id) => (
             <Fragment key={id}>{plusMenuNodes[id]}</Fragment>
           ))}
@@ -583,7 +584,7 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
                 <MoreHorizontalIcon className="size-4" />
                 {t("chat.composer.more")}
               </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent className="unsloth-plus-menu w-[248px]">
+              <DropdownMenuSubContent className="spartan-plus-menu w-[248px]">
                 {overflowPlusItems.map((id) => (
                   <Fragment key={id}>{plusMenuNodes[id]}</Fragment>
                 ))}

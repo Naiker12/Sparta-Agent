@@ -3124,12 +3124,12 @@ const Composer: FC<{
       )}
       {isDictating ? null : <ToolStatusDisplay />}
       <div
-        className="unsloth-composer-line"
+        className="spartan-composer-line"
         data-dictating={isDictating ? "true" : undefined}
       >
         <div
           ref={pillRowRef}
-          className="unsloth-composer-left"
+          className="spartan-composer-left"
           data-pill-compact={pillCompact}
         >
           <ComposerToolsMenu
@@ -3176,7 +3176,7 @@ const Composer: FC<{
                   : t("chat.composer.askAnything"))
               }
               ref={inputRef}
-              className="aui-composer-input unsloth-composer-input"
+              className="aui-composer-input spartan-composer-input"
               minRows={1}
               maxRows={12}
               autoFocus={!disabled}
@@ -3311,11 +3311,11 @@ const Composer: FC<{
           {isTauri ? (
             // Phase 1 native model owns Tauri local-path drops. Restore browser
             // attachment drops in Tauri once Phase 1d adds token bridging.
-            <div className="aui-composer-attachment-dropzone unsloth-composer-surface relative z-10">
+            <div className="aui-composer-attachment-dropzone spartan-composer-surface relative z-10">
               {composerContent}
             </div>
           ) : (
-            <ComposerPrimitive.AttachmentDropzone className="group/dropzone aui-composer-attachment-dropzone unsloth-composer-surface relative z-10">
+            <ComposerPrimitive.AttachmentDropzone className="group/dropzone aui-composer-attachment-dropzone spartan-composer-surface relative z-10">
               {composerContent}
               {/* Gemini-style drop affordance, shown while a file is dragged over
               the composer. Absolute + pointer-events-none so the outline adds

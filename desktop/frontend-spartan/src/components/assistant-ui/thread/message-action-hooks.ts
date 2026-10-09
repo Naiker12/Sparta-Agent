@@ -1,6 +1,6 @@
 import { translate as uiTranslate } from "@/i18n";
 /**
- * Sparta Agent - Hooks de Acciones de Mensajes (message-action-hooks)
+ * Spartan - Hooks de Acciones de Mensajes (message-action-hooks)
  * Maneja operaciones sobre mensajes individuales: bifurcación (fork), conteo de ramas,
  * detección de deep research activo, accesibilidad de foco y exportación a markdown.
  */
@@ -61,6 +61,9 @@ export const useOwnsResearchMessage = () => {
     ).has(messageId);
   });
 };
+
+export const useOwnsAutomationMessage = () =>
+  useAuiState(({ message }) => Boolean(message.metadata.custom?.automationRunId));
 
 export const useThreadResearchActive = (): boolean => {
   const activeThreadId = useChatRuntimeStore((s) => s.activeThreadId);

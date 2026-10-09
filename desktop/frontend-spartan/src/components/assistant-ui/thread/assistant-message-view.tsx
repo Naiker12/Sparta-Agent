@@ -1,6 +1,6 @@
 import { useT as useUiT } from "@/i18n";
 /**
- * Sparta Agent - Vistas de Mensajes del Asistente y Usuario (assistant-message-view)
+ * Spartan - Vistas de Mensajes del Asistente y Usuario (assistant-message-view)
  * Renderizado integral de mensajes: burbujas de texto, editor de etiquetas (<THINK>/<TOOL>),
  * barra de continuación de streaming, indicadores de generación, denoising canvas y slot unificado.
  */
@@ -27,9 +27,8 @@ import { PythonToolUI } from "@/components/assistant-ui/tool-ui-python";
 import { RenderHtmlToolUI } from "@/components/assistant-ui/tool-ui-render-html";
 import { TerminalToolUI } from "@/components/assistant-ui/tool-ui-terminal";
 import { WebSearchToolUI } from "@/components/assistant-ui/tool-ui-web-search";
-import { ThinkingAvatar } from "@/components/ui/blobatar-avatar";
+import { ProfileChatAvatar } from "@/features/profile";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import {
   findLatestUserAudioBase64,
   sentAudioNames,
@@ -116,11 +115,7 @@ export const GeneratingIndicator: FC = () => {
       className="flex items-center gap-2 text-sm text-muted-foreground"
       role="status"
     >
-      <ThinkingAvatar
-        name="sparta-assistant"
-        size={24}
-        fallback={<Spinner className="size-4" />}
-      />
+      <ProfileChatAvatar size={24} className="size-6" />
       {t("chat.actions.generating")}
     </span>
   );
@@ -320,7 +315,7 @@ export const DiffusionCanvas: FC = () => {
         <span className="inline-block size-1.5 animate-pulse rounded-full bg-primary" />
         <span>{uiT("chat.timing.denoising")}</span>
         <span className="opacity-60">
-          {uiT("ui.block")}{" "}{canvas.block + 1} - {stepLabel}
+          {uiT("ui.block")} {canvas.block + 1} - {stepLabel}
         </span>
       </div>
       <pre className="max-h-[60dvh] overflow-auto whitespace-pre-wrap px-3 py-2 font-mono text-ui-12p5 leading-relaxed text-foreground/90">

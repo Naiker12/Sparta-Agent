@@ -499,7 +499,12 @@ class PersonalizationProfile(BaseModel):
     def _validate_avatar(cls, value: Optional[str]) -> Optional[str]:
         if not value:
             return value
-        if not value.startswith("data:image/") and not _is_bundled_avatar_url(value):
+        mascot_names = set(('bear bunny cat deer dino fox frog hamster hedgehog koala mouse otter owl panda penguin pug raccoon redpanda sheep sloth tiger '
+                            'afro astronaut bald ballerina beard builder cap chef glasses grandpa granny hijabi kamran nurse pirate scientist sikh skater wizard '
+                            'clockwork crt cube drone gearbot knight lantern postbot radio rocket scout toaster tv '
+                            'fox-ink fox-sketch fox-riso fox-paper fox-pixel').split())
+        is_mascot = value.startswith('mascot:') and value[7:] in mascot_names
+        if not value.startswith("data:image/") and not _is_bundled_avatar_url(value) and not is_mascot:
             raise ValueError("avatarDataUrl must be an image data URL or bundled avatar.")
         return value
 

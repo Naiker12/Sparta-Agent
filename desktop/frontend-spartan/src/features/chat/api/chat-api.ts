@@ -1,5 +1,5 @@
 /**
- * Sparta Agent - Chat API Barrel
+ * Spartan - Chat API Barrel
  * Re-exporta de forma centralizada todas las APIs de Chat modularizadas:
  * - base: Utilidades de petición, errores y eventos de sincronización.
  * - threads: Gestión y ciclo de vida de conversaciones/hilos.

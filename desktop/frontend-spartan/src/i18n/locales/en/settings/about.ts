@@ -20,7 +20,7 @@ export const about = {
   reportIssue: "Report an issue",
   license: {
     sectionTitle: "License",
-    studioLabel: "Sparta Agent",
+    studioLabel: "Spartan",
     studioLicense: "MIT",
     studioDescription: "Open source under the MIT License.",
     libraryLabel: "Sparta Core",
@@ -28,8 +28,8 @@ export const about = {
     libraryDescription: "Licensed under MIT.",
   },
   dangerZone: "Danger zone",
-  shutDownStudio: "Close Sparta Agent",
-  shutDownStudioDescription: "Closes Sparta Agent and ends your session.",
+  shutDownStudio: "Close Spartan",
+  shutDownStudioDescription: "Closes Spartan and ends your session.",
   shutDown: "Close",
   update: {
     title: "Update Spartan",

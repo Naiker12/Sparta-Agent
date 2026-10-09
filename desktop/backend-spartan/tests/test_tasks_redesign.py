@@ -22,7 +22,10 @@ class TaskRedesignTests(unittest.TestCase):
           thread_id TEXT, owner_subject TEXT, enabled INTEGER, status TEXT DEFAULT 'pending',
           last_run_at INTEGER, next_run_at INTEGER, last_error TEXT, created_at INTEGER, updated_at INTEGER, schedule_config TEXT DEFAULT '{}');
         CREATE TABLE agent_task_runs (id TEXT, task_id TEXT, started_at INTEGER,
-          finished_at INTEGER, status TEXT, output TEXT, error TEXT);
+          finished_at INTEGER, status TEXT, output TEXT, error TEXT, thread_id TEXT, heartbeat_at INTEGER);
+        CREATE TABLE chat_threads(id TEXT PRIMARY KEY,title TEXT,model_type TEXT,model_id TEXT,project_id TEXT,archived INTEGER,created_at INTEGER,updated_at INTEGER);
+        CREATE TABLE chat_messages(id TEXT PRIMARY KEY,thread_id TEXT,parent_id TEXT,role TEXT,content_json TEXT,metadata_json TEXT,created_at INTEGER);
+        CREATE TABLE automation_deliveries(id TEXT PRIMARY KEY,run_id TEXT,event TEXT,owner TEXT,account_id TEXT,user_id TEXT,body TEXT,status TEXT DEFAULT 'pending',created_at INTEGER,updated_at INTEGER,attempts INTEGER DEFAULT 0,locale TEXT DEFAULT 'es',error TEXT,UNIQUE(run_id,event));
         ''')
         conn.close()
         self.mock = patch.object(memory_tasks, 'get_connection', connection)
@@ -32,6 +35,15 @@ class TaskRedesignTests(unittest.TestCase):
     def tearDown(self):
         self.mock.stop()
         self.temp.cleanup()
+
+    def test_active_run_polling_hint_is_owned_and_clears_on_completion(self):
+        task = memory_tasks.upsert_task(self.data, owner_subject='one')
+        self.assertFalse(memory_tasks.has_active_task_run('one'))
+        run_id = memory_tasks.begin_task_preview(task['id'], 'one')
+        self.assertTrue(memory_tasks.has_active_task_run('one'))
+        self.assertFalse(memory_tasks.has_active_task_run('two'))
+        memory_tasks.finish_task_preview(run_id, output='Done')
+        self.assertFalse(memory_tasks.has_active_task_run('one'))
 
     def test_owner_isolation_including_legacy(self):
         owned = memory_tasks.upsert_task(self.data, owner_subject='one')
@@ -107,11 +119,28 @@ class TaskRedesignTests(unittest.TestCase):
             self.assertIsNone(memory_tasks.claim_due_task())
             memory_tasks.finish_task_preview(run_id, output='Result')
             events = memory_tasks.task_notifications('one', 0)
-            self.assertEqual(len(events), 1)
+            self.assertEqual(len(events), 2)
             self.assertEqual(memory_tasks.task_notifications('two', 0), [])
             memory_tasks.upsert_task({**activated, 'enabled': False}, task['id'], 'one')
         with patch.object(memory_tasks, '_now', return_value=999999):
             self.assertIsNone(memory_tasks.claim_due_task())
+
+    def test_weekly_edit_recalculates_due_date_and_keeps_cosmetic_edits(self):
+        from datetime import datetime, timezone
+        now = int(datetime(2026, 9, 30, 13, 0, tzinfo=timezone.utc).timestamp() * 1000)
+        data = {**self.data, 'scheduleType': 'weekly', 'intervalSeconds': None,
+                'timezone': 'America/Bogota', 'localTime': '09:00', 'weekdays': [2]}
+        with patch.object(memory_tasks, '_now', return_value=now):
+            task = memory_tasks.upsert_task(data, owner_subject='one')
+            expected = int(datetime(2026, 9, 30, 14, 0, tzinfo=timezone.utc).timestamp() * 1000)
+            self.assertEqual(task['nextRunAt'], expected)
+            renamed = memory_tasks.upsert_task({**data, 'title': 'Renamed'}, task['id'], 'one')
+            self.assertEqual(renamed['nextRunAt'], expected)
+            for changes in ({'localTime': '10:00'}, {'weekdays': [3]}, {'timezone': 'UTC'}):
+                updated = memory_tasks.upsert_task({**data, **changes}, task['id'], 'one')
+                from core.inference.task_scheduler import next_occurrence
+                self.assertEqual(updated['nextRunAt'], next_occurrence({**data, **changes}, now))
+                self.assertNotEqual(updated['nextRunAt'], expected)
 
     def test_weekly_next_occurrence_uses_timezone(self):
         from core.inference.task_scheduler import next_occurrence

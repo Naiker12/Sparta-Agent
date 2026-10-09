@@ -88,19 +88,6 @@ def _default_project_root(project: dict) -> str:
     return str(project_workspaces_root() / folder_name)
 
 
-class ProjectWorkspaceError(OSError):
-    """Raised when a project's workspace folder cannot be created.
-
-    Tagged, and carrying the folder, so a caller can name it. The same upsert
-    also touches the database directory, and that is a different path with a
-    different fix.
-    """
-
-    def __init__(self, path: str, cause: OSError):
-        super().__init__(str(cause))
-        self.path = path
-
-
 def _ensure_project_workspace(root_path: str) -> str:
     root = Path(root_path).expanduser()
     try:

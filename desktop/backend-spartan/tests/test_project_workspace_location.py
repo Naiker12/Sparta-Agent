@@ -57,13 +57,34 @@ def test_the_override_still_wins(tmp_path, monkeypatch):
     """Whatever Documents resolves to, this is the documented way out."""
     monkeypatch.setenv("UNSLOTH_STUDIO_DOCUMENTS_HOME", str(tmp_path / "elsewhere"))
     assert documents_root() == tmp_path / "elsewhere"
-    assert project_workspaces_root() == (tmp_path / "elsewhere" / "Unsloth Studio" / "Projects")
+    assert project_workspaces_root() == (tmp_path / "elsewhere" / "Spartan" / "Projects")
 
 
 def test_the_projects_override_wins_outright(tmp_path, monkeypatch):
     monkeypatch.setenv("UNSLOTH_STUDIO_DOCUMENTS_HOME", str(tmp_path / "documents"))
     monkeypatch.setenv("UNSLOTH_STUDIO_PROJECTS_HOME", str(tmp_path / "projects"))
     assert project_workspaces_root() == tmp_path / "projects"
+
+
+def test_spartan_project_and_document_overrides_take_precedence(tmp_path, monkeypatch):
+    monkeypatch.setenv("SPARTAN_DOCUMENTS_HOME", str(tmp_path / "documents"))
+    monkeypatch.setenv("UNSLOTH_STUDIO_DOCUMENTS_HOME", str(tmp_path / "legacy-documents"))
+    monkeypatch.delenv("SPARTAN_PROJECTS_HOME", raising=False)
+    monkeypatch.delenv("UNSLOTH_STUDIO_PROJECTS_HOME", raising=False)
+    assert documents_root() == tmp_path / "documents"
+    assert project_workspaces_root() == tmp_path / "documents" / "Spartan" / "Projects"
+    monkeypatch.setenv("SPARTAN_PROJECTS_HOME", str(tmp_path / "projects"))
+    monkeypatch.setenv("UNSLOTH_STUDIO_PROJECTS_HOME", str(tmp_path / "legacy-projects"))
+    assert project_workspaces_root() == tmp_path / "projects"
+
+
+def test_storage_and_hub_use_the_same_spartan_home(tmp_path, monkeypatch):
+    from utils.paths.storage_roots import studio_root
+    from hub.utils.paths import studio_root as hub_studio_root
+    monkeypatch.setenv("SPARTAN_HOME", str(tmp_path / "spartan"))
+    monkeypatch.setenv("UNSLOTH_STUDIO_HOME", str(tmp_path / "legacy"))
+    assert studio_root() == (tmp_path / "spartan").resolve()
+    assert hub_studio_root() == studio_root()
 
 
 def _probe_payload():
@@ -84,8 +105,8 @@ def test_the_workspace_error_carries_the_folder_it_could_not_make(tmp_path, monk
     An existing project keeps a recorded rootPath that can sit anywhere, so the
     configured projects root is not always the folder that failed.
     """
-    from storage import studio_db
-    from storage.studio_db import ProjectWorkspaceError, _ensure_project_workspace
+    from storage.studio import project_workspace
+    from storage.studio.project_workspace import ProjectWorkspaceError, _ensure_project_workspace
 
     blocked = tmp_path / "read-only" / "child"
 
@@ -94,7 +115,7 @@ def test_the_workspace_error_carries_the_folder_it_could_not_make(tmp_path, monk
     def refuse(path):
         raise PermissionError(13, "Permission denied", str(path))
 
-    monkeypatch.setattr(studio_db, "ensure_dir", refuse)
+    monkeypatch.setattr(project_workspace, "ensure_dir", refuse)
     with pytest.raises(ProjectWorkspaceError) as caught:
         _ensure_project_workspace(str(blocked))
     assert caught.value.path == str(blocked)
@@ -108,7 +129,7 @@ def test_creating_a_project_says_which_folder_failed(tmp_path, monkeypatch):
     """
     from fastapi import HTTPException
 
-    from routes import chat_history
+    from routes.chat import router_projects as chat_history
     from storage.studio_db import ProjectWorkspaceError
 
     blocked = tmp_path / "no-entry"
@@ -126,14 +147,14 @@ def test_creating_a_project_says_which_folder_failed(tmp_path, monkeypatch):
     assert caught.value.status_code == 500
     detail = str(caught.value.detail)
     assert str(blocked) in detail
-    assert "UNSLOTH_STUDIO_PROJECTS_HOME" in detail
+    assert "SPARTAN_PROJECTS_HOME" in detail
     # The raw OSError text stays in the log, not in the response.
     assert "Permission denied" not in detail
 
 
 def test_a_database_folder_failure_is_not_blamed_on_the_projects_folder(monkeypatch):
     'The same upsert opens studio.db before it picks a workspace.\n\n    '
-    from routes import chat_history
+    from routes.chat import router_projects as chat_history
 
     monkeypatch.setattr(
         chat_history,

@@ -1,10 +1,10 @@
 import { useT as useUiT } from "@/i18n";
 /**
- * Sparta Agent – Sidebar Header & Brand Component
+ * Spartan – Sidebar Header & Brand Component
  *
  * Renderiza el encabezado del Sidebar:
  * - Soporte para controles de ventana nativos de macOS (DesktopTitlebarNavigation).
- * - Logo Spartan Agent y enlace de navegación rápida a Chat.
+ * - Logo Spartan y enlace de navegación rápida a Chat.
  * - Botón de búsqueda (Ctrl+K / Cmd+K) y botón de fijar/desfijar sidebar.
  * - Botón de colapso en riel de iconos.
  */

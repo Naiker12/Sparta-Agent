@@ -1,4 +1,4 @@
-"""Application-lifetime text-only scheduler; missed occurrences are coalesced."""
+"""Application-lifetime scheduler; missed occurrences are coalesced."""
 import asyncio
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
@@ -42,25 +42,86 @@ def make_client(provider_id, model):
 
 
 async def scheduler_loop():
-    from storage.studio.memory_tasks import claim_due_task, finish_task_preview
-    from core.inference.task_preview import preview_task
-    while True:
+    from core.inference.automation_delivery import delivery_loop
+    worker = asyncio.create_task(delivery_loop())
+    try:
+        await _scheduler_loop()
+    finally:
+        worker.cancel()
         try:
-            claimed = claim_due_task()
-            if claimed:
-                task, run_id = claimed
-                try:
-                    client = make_client(task['providerId'], task['model'])
-                    output = await preview_task(client, task['model'], task['prompt'])
-                    finish_task_preview(run_id, output=output)
-                except asyncio.CancelledError:
-                    finish_task_preview(run_id, error='Execution interrupted at shutdown')
-                    raise
-                except Exception:
-                    finish_task_preview(run_id, error='Scheduled execution failed; check provider configuration')
+            await worker
         except asyncio.CancelledError:
-            raise
-        except Exception:
-            # A transient database failure must not kill scheduling or leak credentials.
             pass
-        await asyncio.sleep(5)
+
+
+async def _scheduler_loop():
+    from storage.studio.memory_tasks import claim_due_task
+    active = set()
+    try:
+        while True:
+            try:
+                # A long agent run must not prevent other due tasks from starting.
+                while len(active) < 3:
+                    claimed = await asyncio.to_thread(claim_due_task)
+                    if not claimed:
+                        break
+                    worker = asyncio.create_task(execute_claimed(*claimed))
+                    active.add(worker)
+                    def completed(finished):
+                        active.discard(finished)
+                        if not finished.cancelled():
+                            finished.exception()  # Retrieve a terminal storage error without exposing it.
+                    worker.add_done_callback(completed)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                # A transient database failure must not kill scheduling.
+                pass
+            await asyncio.sleep(5)
+    finally:
+        pending = list(active)
+        for worker in pending:
+            worker.cancel()
+        await asyncio.gather(*pending, return_exceptions=True)
+
+
+async def execute_claimed(task, run_id):
+    import threading
+    import time
+    from storage.studio.memory_tasks import finish_task_preview, _now
+    from storage.studio.automation_chats import checkpoint, heartbeat
+    from core.inference.automation_executor import execute_automation, AutomationStopped
+    task = {**task, 'runId': run_id}
+    cancel = threading.Event()
+    async def watch_execution():
+        try:
+            while not cancel.is_set():
+                if not await asyncio.to_thread(heartbeat, run_id, _now()):
+                    cancel.set()
+                    return
+                await asyncio.sleep(2)
+        except Exception:
+            cancel.set()
+    watcher = asyncio.create_task(watch_execution())
+    try:
+        client = make_client(task['providerId'], task['model'])
+        last_checkpoint = 0
+        async def progress(text):
+            nonlocal last_checkpoint
+            now = time.monotonic()
+            if now - last_checkpoint >= 0.5:
+                await asyncio.to_thread(checkpoint, run_id, text, _now())
+                last_checkpoint = now
+        output = await execute_automation(client, task, on_progress=progress, cancel_event=cancel)
+        finish_task_preview(run_id, output=output)
+    except AutomationStopped:
+        finish_task_preview(run_id, error='Execution cancelled or chat unavailable')
+    except asyncio.CancelledError:
+        finish_task_preview(run_id, error='Execution interrupted at shutdown')
+        raise
+    except Exception:
+        finish_task_preview(run_id, error='Scheduled execution failed; check provider, capabilities and project folder permissions')
+    finally:
+        cancel.set()
+        watcher.cancel()
+        await asyncio.gather(watcher, return_exceptions=True)

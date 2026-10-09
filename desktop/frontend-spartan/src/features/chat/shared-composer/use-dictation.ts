@@ -1,5 +1,5 @@
 /**
- * Sparta Agent – useDictation
+ * Spartan – useDictation
  *
  * Hook de dictado para el compositor compartido (modo compare).
  * Gestiona el ciclo de vida de la sesión de dictado STT, incluyendo

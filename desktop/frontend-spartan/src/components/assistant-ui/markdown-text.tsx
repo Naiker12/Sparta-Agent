@@ -64,10 +64,10 @@ function loadCodePlugin(): Promise<CodeRenderer> {
   codePluginPromise ??= Promise.all([
     import("./code-plugin"),
     import("./code-themes"),
-  ]).then(([{ createCodePlugin }, { unslothDarkTheme, unslothLightTheme }]) => {
+  ]).then(([{ createCodePlugin }, { spartanDarkTheme, spartanLightTheme }]) => {
     const shikiTheme = [
-      unslothLightTheme,
-      unslothDarkTheme,
+      spartanLightTheme,
+      spartanDarkTheme,
     ] satisfies ShikiTheme;
     return {
       plugin: createCodePlugin({ themes: shikiTheme }),

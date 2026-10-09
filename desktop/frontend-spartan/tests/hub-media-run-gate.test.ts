@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { routableToMediaPage } from "../src/features/hub/lib/local-path.ts";
-import { studioPageForTask } from "../src/features/hub/lib/unsloth-support.ts";
+import { studioPageForTask } from "../src/features/hub/lib/model-support.ts";
 
 // What the inspector must decide before enabling Run, and what runSelectedModel requires
 // before navigating. They have to agree: the handler falls through to the chat loader for a

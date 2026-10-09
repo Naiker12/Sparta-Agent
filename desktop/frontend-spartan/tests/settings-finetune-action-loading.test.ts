@@ -13,9 +13,14 @@ const RECIPE_MODULE = /finetune-recipe/;
 const ACTION_FINE_TUNE_IMPORT =
   /await import\(\s*"\.\.\/components\/finetune-recipe"\s*\)/g;
 
-test("both Data tab fine-tuning actions defer their workflow import", async () => {
+test("Data tab recipe creation defers its workflow and export uses the deferred API", async () => {
   const source = await readFile(DATA_TAB, "utf8");
-  assert.equal(source.match(ACTION_FINE_TUNE_IMPORT)?.length, 2);
+  assert.equal(source.match(ACTION_FINE_TUNE_IMPORT)?.length, 1);
+  assert.match(source, /await exportFineTuneJsonl\(fineTuneFormat\)/);
+  const exports = await readFile(path.join(SRC, "features/chat/prompt-storage/conversation-exports.ts"), "utf8");
+  assert.match(exports, /export function exportFineTuneJsonl[\s\S]*?return import\("\.\/prompt-storage-dialog"\)/);
+  assert.equal(staticSpecifiers("conversation-exports.ts", exports)
+    .some((specifier) => specifier.endsWith("prompt-storage-dialog")), false);
 });
 
 async function* walk(dir: string): AsyncGenerator<string> {
@@ -44,6 +49,8 @@ const staticSpecifiers = (file: string, text: string): string[] => {
   const specifiers: string[] = [];
   const visit = (node: ts.Node): void => {
     if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) {
+      if (ts.isImportDeclaration(node) && node.importClause?.isTypeOnly) return;
+      if (ts.isExportDeclaration(node) && node.isTypeOnly) return;
       // `export { x }` with no `from` has no specifier and adds no edge.
       const specifier = node.moduleSpecifier;
       if (specifier && ts.isStringLiteral(specifier))

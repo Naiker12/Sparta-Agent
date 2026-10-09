@@ -183,8 +183,6 @@
         "src/components/app-sidebar.tsx",
         "src/components/electron/**",
         "src/components/floating-monitor.tsx",
-        "src/components/image-dropzone.tsx",
-        "src/components/llama-update-banner.tsx",
         "src/components/markdown/**",
         "src/components/sidebar/**",
         "src/lib/release-body-links.ts",

@@ -7,7 +7,7 @@ import { downloadFile, isDownloadCancelled } from "@/lib/native-files";
 import { Tick02Icon } from "@/lib/tick-icon";
 import { toast } from "@/lib/toast";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { code as codePlugin } from "@streamdown/code";
+import type { code as CodePlugin } from "@streamdown/code";
 import { CopyIcon, DownloadIcon, Maximize2Icon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Streamdown } from "streamdown";
@@ -180,6 +180,15 @@ export function HighlightedCode({
   // Skip shiki while the model is writing (it re-tokenizes every fragment) and on payloads too big.
   const highlight =
     nearViewport && !plain && source.length <= MAX_HIGHLIGHT_CHARS;
+  const [codePlugin, setCodePlugin] = useState<typeof CodePlugin | null>(null);
+  useEffect(() => {
+    if (!highlight) return;
+    let cancelled = false;
+    void import("@streamdown/code").then(({ code }) => {
+      if (!cancelled) setCodePlugin(code);
+    }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [highlight]);
 
   return (
     <div
@@ -214,7 +223,7 @@ export function HighlightedCode({
               : "min-w-0 flex-1 [&_pre]:!m-0 [&_pre]:!bg-transparent [&_pre]:!p-0 [&_pre]:!text-xs [&_[data-streamdown=code-block]]:!my-0 [&_[data-streamdown=code-block]]:!border-0 [&_[data-streamdown=code-block]]:!p-3"
           }
         >
-          {highlight ? (
+          {highlight && codePlugin ? (
             <Streamdown
               mode="static"
               plugins={{ code: codePlugin }}

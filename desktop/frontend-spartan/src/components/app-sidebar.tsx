@@ -96,6 +96,7 @@ import {
   ArrowUp01Icon,
   BookOpen01Icon,
   BubbleChatIcon,
+  CubeIcon,
   ChefHatIcon,
   Delete02Icon,
   Edit03Icon,
@@ -1088,7 +1089,7 @@ export function AppSidebar() {
     resetNewChatWorkspace();
     setActiveThreadId(null);
     useChatRuntimeStore.getState().setActiveProjectId(projectId);
-    // Normal new chats are saved; the adjacent temporary action is explicit.
+    // Normal new chats are saved; temporary chats are opened from the chat toolbar.
     useChatRuntimeStore.getState().setIncognito(false);
     navigate({ to: "/chat", search: chatSearchForProject(projectId) });
     closeMobileIfOpen();
@@ -1582,20 +1583,6 @@ export function AppSidebar() {
                   openNewChat(null);
                 }}
               />
-              <NavItem
-                icon={BubbleChatIcon}
-                label={uiT("chat.toolbar.temporaryChatActive")}
-                active={incognito && isChatRoute}
-                onClick={() => {
-                  clearNewChatDraft();
-                  resetNewChatWorkspace();
-                  setActiveThreadId(null);
-                  useChatRuntimeStore.getState().setActiveProjectId(null);
-                  useChatRuntimeStore.getState().setIncognito(true);
-                  navigate({ to: "/chat", search: { new: createNavigationNonce() } });
-                  closeMobileIfOpen();
-                }}
-              />
               {connectedScope && incognito && (
                 <NavItem
                   icon={Folder01Icon}
@@ -1691,6 +1678,15 @@ export function AppSidebar() {
                   active={pathname === "/channels"}
                   onClick={() => navigate({ to: "/channels" })}
                   testId="nav-row-channels"
+                />
+                <NavItem
+                  icon={CubeIcon}
+                  label={t("shell.navigation.containers")}
+                  badge={t("shell.navigation.comingSoon")}
+                  active={false}
+                  disabled
+                  onClick={() => {}}
+                  testId="nav-row-containers"
                 />
                 {/* Unpinned destinations, behind one row. */}
                 {overflowNavIds.length > 0 && (
@@ -2037,7 +2033,7 @@ export function AppSidebar() {
                                         side="right"
                                         align="start"
                                         sideOffset={10}
-                                        className="unsloth-plus-menu menu-flat-destructive w-72"
+                                        className="spartan-plus-menu menu-flat-destructive w-72"
                                       >
                                         <DropdownMenuGroup>
                                         <DropdownMenuLabel>

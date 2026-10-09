@@ -6,6 +6,12 @@ from pathlib import Path
 
 
 def main():
+    # An older managed environment may still boot the API while these lazy
+    # readers are missing. Fail before the ready handshake so repair is offered.
+    from importlib.util import find_spec
+    missing = [module for module in ('pymupdf', 'docx', 'openpyxl') if find_spec(module) is None]
+    if missing:
+        raise RuntimeError('Faltan lectores de documentos: ' + ', '.join(missing) + '. Actualiza el entorno del backend desde Spartan.')
     from auth.storage import create_desktop_secret
 
     # Electron captures this pipe; never forward this line to diagnostics/UI.

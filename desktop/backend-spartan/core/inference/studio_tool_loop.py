@@ -339,6 +339,9 @@ class ToolLoopPolicy:
     rag_scope: dict[str, Any] | None
     # None means "follow the process default"; False disables text-form healing.
     auto_heal: bool | None = None
+    # Per-run executors keep background jobs confined without changing global tools.
+    executor: Any = None
+    autoinject: bool = True
 
 
 @dataclass
@@ -748,7 +751,7 @@ async def stream_with_studio_tools(
     )
     autoinject = (
         None
-        if skip_autoinject
+        if skip_autoinject or not policy.autoinject
         else await asyncio.to_thread(build_rag_autoinject, conversation, rag_scope)
     )
     if autoinject:
@@ -1214,9 +1217,10 @@ async def stream_with_studio_tools(
                     "rag_scope": rag_scope,
                     "disable_sandbox": bypass_permissions,
                 }
-                if accepts_output_callback(execute_tool):
+                executor = policy.executor or execute_tool
+                if accepts_output_callback(executor):
                     kwargs["output_callback"] = output_callback
-                return execute_tool(call.tool_name, call.arguments, **kwargs)
+                return executor(call.tool_name, call.arguments, **kwargs)
 
             # The same wrapper the local loops run tools through: live stdout for
             # the card, and a heartbeat so a long call cannot idle the stream out.

@@ -532,7 +532,7 @@ export function useTauriUpdate(isExternalServer = false) {
       return true;
     }
     setError(
-      "Crash cleanup could not be re-armed. Restart Unsloth before continuing.",
+      "Crash cleanup could not be re-armed. Restart Spartan before continuing.",
     );
     setStatus("error");
     return false;

@@ -1,6 +1,6 @@
 import { useT as useUiT } from "@/i18n";
 /**
- * Sparta Agent - Pila Visual de la Cola de Prompts (PromptQueueStack)
+ * Spartan - Pila Visual de la Cola de Prompts (PromptQueueStack)
  * Renderiza la lista flotante de turnos encolados con soporte para edición,
  * eliminación, drag-and-drop y atajos de teclado.
  */

@@ -1,5 +1,5 @@
 /**
- * Sparta Agent - Gestión de Decodificación Especulativa
+ * Spartan - Gestión de Decodificación Especulativa
  * Normalización de modos de sampling especulativo (MTP, DSpark, DFlash, NGram).
  */
 

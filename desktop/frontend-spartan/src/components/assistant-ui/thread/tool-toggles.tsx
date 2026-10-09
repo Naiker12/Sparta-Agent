@@ -1,6 +1,6 @@
 import { useT as useUiT } from "@/i18n";
 /**
- * Sparta Agent - Toggles de Herramientas y Estado Visual (ToolToggles)
+ * Spartan - Toggles de Herramientas y Estado Visual (ToolToggles)
  * Provee pills interactivos para Web Search, Code Execution, Image Generation,
  * Canvas (Artifacts) y el indicador dinámico de estado de herramientas (ToolStatusDisplay).
  */

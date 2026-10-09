@@ -1,6 +1,6 @@
 import { translate as uiTranslate } from "@/i18n";
 /**
- * Sparta Agent – Sidebar Constants and Types
+ * Spartan – Sidebar Constants and Types
  *
  * Centralización de tipos, constantes de ordenamiento, límites,
  * atajos de teclado y opciones de exportación para la barra lateral.

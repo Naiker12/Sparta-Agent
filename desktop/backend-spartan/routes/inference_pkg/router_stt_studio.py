@@ -489,27 +489,9 @@ async def _transcribe_audio_result(
         # timers fired, which is what OOMs a device that fits either alone. A no-op once
         # the model is resident, so the steady state costs a residency check.
         load_stt, _ = _stt_lifecycle()
-        await asyncio.to_thread(load_stt, model, serving_engine, cancel_event)
-        if cancel_event is None:
-            result = await asyncio.to_thread(sidecar.transcribe, raw, model, language, fast)
-        else:
-            result = await asyncio.to_thread(
-                sidecar.transcribe,
-                raw,
-                model,
-                language,
-                fast,
-                cancel_event,
-            )
-    except asyncio.CancelledError:
-        if cancel_event is not None:
-            # cancel_transcription takes a lock a load can hold, so inline would stall the loop.
-            threading.Thread(
-                target = sidecar.cancel_transcription,
-                args = (cancel_event,),
-                daemon = True,
-            ).start()
-        raise
+        from core.inference.stt_service import transcribe_local
+        result = await transcribe_local(raw, model, language, fast, serving_engine,
+            sidecar=sidecar, load_stt=load_stt, cancel_event=cancel_event)
     except SttTranscriptionCancelledError as e:
         raise HTTPException(status_code = 499, detail = str(e))
     except SttUnavailableError as e:

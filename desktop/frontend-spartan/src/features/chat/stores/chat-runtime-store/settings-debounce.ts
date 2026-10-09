@@ -1,6 +1,6 @@
 import { translate as uiTranslate } from "@/i18n";
 /**
- * Sparta Agent - Debounce y Coalescencia de Parches de Configuración
+ * Spartan - Debounce y Coalescencia de Parches de Configuración
  * Agrupa escrituras de configuración para evitar llamadas HTTP excesivas.
  */
 

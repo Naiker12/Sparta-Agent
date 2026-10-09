@@ -186,7 +186,14 @@ def _confine_prequant_registration_memo():
     Restored rather than cleared, so nothing re-registers 22k times and a test that sets the memo
     deliberately still sees its own value.
     """
-    from core.inference import diffusion_prequant
+    import importlib
+    try:
+        diffusion_prequant = importlib.import_module("core.inference.diffusion_prequant")
+    except ModuleNotFoundError as error:
+        if error.name != "core.inference.diffusion_prequant":
+            raise
+        yield
+        return
 
     registered = diffusion_prequant._SAFE_GLOBALS_REGISTERED
     resolved = set(diffusion_prequant._RESOLVED_SAFE_GLOBALS)

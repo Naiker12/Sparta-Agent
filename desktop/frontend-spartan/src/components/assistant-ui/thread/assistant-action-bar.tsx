@@ -1,5 +1,5 @@
 /**
- * Sparta Agent - Barras de Acción y Bifurcación de Mensajes (assistant-action-bar)
+ * Spartan - Barras de Acción y Bifurcación de Mensajes (assistant-action-bar)
  * Componentes de acciones flotantes para mensajes de usuario y asistente:
  * copiar, editar, bifurcar (fork), reintentar, síntesis de voz (TTS) y selector de ramas.
  */
@@ -61,6 +61,7 @@ import {
   exportMessageMarkdown,
   useForkMessageAction,
   useOwnsResearchMessage,
+  useOwnsAutomationMessage,
   useResearchMessageRunId,
   useThreadResearchActive,
 } from "./message-action-hooks";
@@ -124,8 +125,10 @@ export const DeleteMessageButton: FC = () => {
   const isRunning = useAuiState(({ thread }) => thread.isRunning);
   const researchRunId = useResearchMessageRunId();
   const ownsResearchMessage = useOwnsResearchMessage();
+  const ownsAutomationMessage = useOwnsAutomationMessage();
 
   const handleDelete = async () => {
+    if (ownsAutomationMessage) return;
     const thread = aui.thread();
     const speakingId = thread.getState().speech?.messageId;
     if (speakingId) {
@@ -161,7 +164,7 @@ export const DeleteMessageButton: FC = () => {
     }
   };
 
-  if (researchRunId || ownsResearchMessage) {
+  if (researchRunId || ownsResearchMessage || ownsAutomationMessage) {
     return null;
   }
 
@@ -224,11 +227,12 @@ export const EditAssistantMessageButton: FC = () => {
   const t = useT();
   const messageId = useAuiState(({ message }) => message.id);
   const researchRunId = useResearchMessageRunId();
+  const ownsAutomationMessage = useOwnsAutomationMessage();
   const isRunning = useAuiState(({ thread }) => thread.isRunning);
   const researchActive = useThreadResearchActive();
   const setEditingId = useChatRuntimeStore((s) => s.setEditingMessageId);
 
-  if (researchRunId) {
+  if (researchRunId || ownsAutomationMessage) {
     return null;
   }
 
@@ -253,6 +257,7 @@ export const AssistantActionBar: FC = () => {
   const aui = useAui();
   const { forkMessage, forkDisabled } = useForkMessageAction();
   const researchRunId = useResearchMessageRunId();
+  const ownsAutomationMessage = useOwnsAutomationMessage();
   const researchActive = useThreadResearchActive();
   const activeProjectId = useChatRuntimeStore((s) => s.activeProjectId);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -268,7 +273,7 @@ export const AssistantActionBar: FC = () => {
       >
         <CopyButton />
         <EditAssistantMessageButton />
-        {!(researchRunId || researchActive) && (
+        {!(researchRunId || researchActive || ownsAutomationMessage) && (
           <ActionBarPrimitive.Reload asChild={true}>
             <TooltipIconButton
               tooltip={t("chat.actions.refresh")}
@@ -409,6 +414,7 @@ export const AssistantActionBar: FC = () => {
 export const UserActionBar: FC = () => {
   const t = useT();
   const ownsResearchMessage = useOwnsResearchMessage();
+  const ownsAutomationMessage = useOwnsAutomationMessage();
   const researchActive = useThreadResearchActive();
   return (
     <ActionBarPrimitive.Root
@@ -416,7 +422,7 @@ export const UserActionBar: FC = () => {
       className="aui-user-action-bar-root flex gap-1 text-chat-icon-fg [&_button]:size-8 [&_button]:!rounded-full [&_button:hover]:bg-chat-icon-bg-hover [&_button:hover]:text-chat-icon-fg-hover"
     >
       <CopyButton />
-      {!(ownsResearchMessage || researchActive) && (
+      {!(ownsResearchMessage || researchActive || ownsAutomationMessage) && (
         <ActionBarPrimitive.Edit asChild={true}>
           <TooltipIconButton
             tooltip={t("chat.actions.edit")}

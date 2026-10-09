@@ -220,7 +220,7 @@ export function ModelRowMenu({
           side="bottom"
           align="end"
           sideOffset={2}
-          className="unsloth-plus-menu menu-flat-destructive w-48"
+          className="spartan-plus-menu menu-flat-destructive w-48"
         >
           {settings && (
             <DropdownMenuItem

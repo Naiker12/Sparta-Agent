@@ -278,7 +278,7 @@ export const ChatDictationBar: FC<{
           {transcribing === "send" ? (
             <Spinner className="size-[18px]" />
           ) : (
-            <ArrowUpIcon className="unsloth-send-icon aui-composer-send-icon size-[21px] stroke-2" />
+            <ArrowUpIcon className="spartan-send-icon aui-composer-send-icon size-[21px] stroke-2" />
           )}
         </TooltipIconButton>
       </div>

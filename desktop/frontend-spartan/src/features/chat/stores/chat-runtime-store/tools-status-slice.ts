@@ -1,5 +1,5 @@
 /**
- * Sparta Agent - Slice de Estado y Streaming de Herramientas
+ * Spartan - Slice de Estado y Streaming de Herramientas
  * Controla el streaming de salidas live, confirmaciones de herramientas y estatus visual.
  */
 

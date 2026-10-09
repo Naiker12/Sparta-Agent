@@ -38,7 +38,7 @@ export function BypassPermissionsMenuItem() {
         <HugeiconsIcon icon={ShieldBanIcon} strokeWidth={2} />
         {t("chat.composer.permissions.toolPermissions")}
       </DropdownMenuSubTrigger>
-      <DropdownMenuSubContent className="unsloth-plus-menu w-[300px]">
+      <DropdownMenuSubContent className="spartan-plus-menu w-[300px]">
         <PermissionModeMenuItems
           // Defer past Radix's menu-close focus restoration: opening the
           // dialog synchronously here lets the dropdown grab focus back and

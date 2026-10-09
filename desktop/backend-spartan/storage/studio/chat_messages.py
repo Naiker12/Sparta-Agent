@@ -115,7 +115,12 @@ def _recompute_chat_thread_updated_at(conn: sqlite3.Connection, thread_id: str) 
 
 
 def _research_message_ids(conn: sqlite3.Connection, thread_id: str) -> set[str]:
-    return {
+    automation_ids = {
+        str(row['id']) + suffix
+        for row in conn.execute('SELECT id FROM agent_task_runs WHERE thread_id=?', (thread_id,)).fetchall()
+        for suffix in ('-prompt', '-answer')
+    }
+    return automation_ids | {
         str(message_id)
         for row in conn.execute(
             "SELECT user_message_id, assistant_message_id FROM research_runs WHERE thread_id = ?",
@@ -213,7 +218,7 @@ def _guard_research_messages(
             conn, thread_id, message, pruned
         ):
             raise ChatMessageProtectedError(
-                "Research prompts and responses are server-managed and cannot be edited"
+                "Scheduled and research messages are server-managed and cannot be edited"
             )
 
 

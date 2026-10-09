@@ -5,6 +5,7 @@ export const tabs = {
   resources: "Sistema",
   chat: "Chat",
   connections: "Conexiones",
+  channelsPermissions: "Canales y permisos",
   apiKeys: "API",
   about: "Acerca de",
   data: "Datos",

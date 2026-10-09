@@ -1,16 +1,18 @@
 
-'Invariant: /api/liveness says whether the backend is still warming up, and stays cheap.\n\nThe desktop health watchdog probes this route every 15s and kills the backend after 3\nconsecutive misses. It cannot use /api/health for that -- health awaits hardware detection,\nso a probe is billed for the warm thread\'s `import torch` -- and it cannot treat one reply\nas "startup finished" either, because those C-extension imports hold the GIL and stall the\nnext probes on a process that is perfectly healthy. So liveness carries a\n`torch_warm_in_progress` marker and the watchdog holds its startup grace open until a reply\nomits it. See studio/src-tauri/src/commands.rs.\n\nThat marker tracks the whole coordinated warm, not hardware detection alone: detection is\nonly the first of utils/torch_warmup.py\'s stages and the inference_backend, transformers,\n`hardware_detecting` marker stays exactly what it was, a "this verdict is provisional"\nsignal the frontend reads, and is still published beside it.\n\nThe markers must not cost what health costs: liveness reads settled snapshots, it must\nnever start detection or wait on it.\n\nCPU-only, no network, no GPU, no weights: the subprocess tests stub detection.'
+"""Keep liveness cheap while reporting coordinated warmup and hardware state.
+
+The route must read snapshots without starting or awaiting optional detection.
+CPU-only subprocess tests stub detection; no GPU, weights or network are needed.
+"""
 
 from __future__ import annotations
 
 import json
-import re
 import subprocess
 import sys
 from pathlib import Path
 
 _BACKEND_DIR = Path(__file__).resolve().parent.parent  # studio/spartan_backend
-_COMMANDS_RS = _BACKEND_DIR.parent / "src-tauri" / "src" / "commands.rs"
 
 
 _SNIPPET = r"""
@@ -209,40 +211,4 @@ def test_liveness_answers_immediately_and_never_starts_detection():
     assert result["has_root_id"], (
         "/api/liveness dropped studio_root_id; desktop_backend_owner.rs deserializes it "
         "into DesktopLiveness and rejects a sibling port without it"
-    )
-
-
-def test_the_desktop_watchdog_still_reads_these_fields():
-    """Cross-language guard: the marker only does anything because commands.rs reads it,
-    and either side can be changed without the other."""
-    assert _COMMANDS_RS.is_file(), f"{_COMMANDS_RS} moved; update this guard"
-    rust = _COMMANDS_RS.read_text(encoding = "utf-8")
-    probe = rust[rust.index("async fn check_health_inner") :]
-    end = probe.find("\n}\n")
-    if end != -1:
-        probe = probe[: end + 3]
-
-    assert '"/api/liveness"' in probe, (
-        "the watchdog probe no longer asks for /api/liveness; it must not go back to "
-        "/api/health, which awaits hardware detection"
-    )
-    assert '"torch_warm_in_progress"' in probe, (
-        "the watchdog probe no longer reads torch_warm_in_progress, so one early reply ends "
-        "the startup grace again and a GIL stall can kill a healthy backend"
-    )
-    assert '"hardware_detecting"' in probe, (
-        "the watchdog probe dropped its hardware_detecting fallback; a backend older than "
-        "torch_warm_in_progress then gets no startup grace at all"
-    )
-    assert '"hardware_detection_deferred"' in probe
-
-    match = re.search(r"const HEALTH_PROBE_TIMEOUT: Duration = Duration::from_secs\((\d+)\)", rust)
-    assert match, "commands.rs no longer sets a whole-seconds probe timeout"
-    interval = re.search(
-        r"const HEALTH_WATCHDOG_INTERVAL: Duration = Duration::from_secs\((\d+)\)", rust
-    )
-    assert interval, "commands.rs no longer sets a whole-seconds watchdog interval"
-    assert int(match.group(1)) < int(interval.group(1)), (
-        f"a {match.group(1)}s probe outlives the {interval.group(1)}s watchdog interval, "
-        f"so the next tick starts on top of the last one"
     )

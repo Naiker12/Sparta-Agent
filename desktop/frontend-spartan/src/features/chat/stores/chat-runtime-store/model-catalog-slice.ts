@@ -1,5 +1,5 @@
 /**
- * Sparta Agent - Slice de Catálogo de Modelos y LoRAs
+ * Spartan - Slice de Catálogo de Modelos y LoRAs
  * Gestiona el inventario de modelos, variantes GGUF, estado residente y errores de carga.
  */
 

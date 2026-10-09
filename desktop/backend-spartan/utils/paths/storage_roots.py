@@ -33,7 +33,7 @@ def _infer_studio_home_from_venv() -> Path | None:
 
 def studio_root() -> Path:
     '\n    both are set (specific signal beats generic alias).\n    '
-    override = (os.environ.get("UNSLOTH_STUDIO_HOME") or "").strip()
+    override = (os.environ.get("SPARTAN_HOME") or os.environ.get("UNSLOTH_STUDIO_HOME") or "").strip()
     if not override:
         override = (os.environ.get("STUDIO_HOME") or "").strip()
     if override:
@@ -44,7 +44,8 @@ def studio_root() -> Path:
     inferred = _infer_studio_home_from_venv()
     if inferred is not None:
         return inferred
-    return Path.home() / ".unsloth" / "studio"
+    legacy = Path.home() / ".unsloth" / "studio"
+    return legacy if legacy.exists() else Path.home() / ".spartan"
 
 
 def cache_root() -> Path:
@@ -166,7 +167,7 @@ def _windows_documents_dir() -> Path | None:
 
 
 def documents_root() -> Path:
-    override = (os.environ.get("UNSLOTH_STUDIO_DOCUMENTS_HOME") or "").strip()
+    override = (os.environ.get("SPARTAN_DOCUMENTS_HOME") or os.environ.get("UNSLOTH_STUDIO_DOCUMENTS_HOME") or "").strip()
     if override:
         return Path(override).expanduser()
     return (
@@ -177,14 +178,14 @@ def documents_root() -> Path:
 
 
 def project_workspaces_root() -> Path:
-    override = (os.environ.get("UNSLOTH_STUDIO_PROJECTS_HOME") or "").strip()
+    override = (os.environ.get("SPARTAN_PROJECTS_HOME") or os.environ.get("UNSLOTH_STUDIO_PROJECTS_HOME") or "").strip()
     if override:
         return Path(override).expanduser()
-    return documents_root() / "Unsloth Studio" / "Projects"
+    return documents_root() / "Spartan" / "Projects"
 
 
 def tmp_root() -> Path:
-    return Path(tempfile.gettempdir()) / "unsloth-studio"
+    return Path(tempfile.gettempdir()) / "spartan"
 
 
 def seed_uploads_root() -> Path:

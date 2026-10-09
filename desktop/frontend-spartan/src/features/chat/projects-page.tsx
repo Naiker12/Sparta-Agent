@@ -28,14 +28,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  type ProjectRecord,
-  deleteChatProject,
-  renameChatProject,
-  useChatProjects,
-  useChatRuntimeStore,
-  usePinnedProjectsStore,
-} from "@/features/chat";
+import { type ProjectRecord } from "@/features/chat/types";
+import { deleteChatProject, renameChatProject, useChatProjects } from "@/features/chat/hooks/use-chat-projects";
+import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
+import { usePinnedProjectsStore } from "@/features/chat/stores/pinned-projects-store";
 import { useT } from "@/i18n";
 import { isTauri } from "@/lib/api-base";
 import { isDownloadCancelled, pickNativeChatImport } from "@/lib/native-files";
@@ -56,13 +52,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { MoreHorizontalIcon } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { NewProjectDialog } from "./components/new-project-dialog";
-import {
-  type ConvExportFormat,
-  EXPORT_FORMATS_LIST,
-  exportBulkConversationsMerged,
-  exportBulkConversationsSeparate,
-  exportProjectConversations,
-} from "./prompt-storage/prompt-storage-dialog";
+import { type ConvExportFormat, EXPORT_FORMATS_LIST, exportBulkConversationsMerged, exportBulkConversationsSeparate, exportProjectConversations } from "./prompt-storage/conversation-exports";
 import { listStoredChatThreads } from "./utils/chat-history-storage";
 import {
   type ImportSource,

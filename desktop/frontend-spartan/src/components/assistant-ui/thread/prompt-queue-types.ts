@@ -1,5 +1,5 @@
 /**
- * Sparta Agent - Tipos y Constantes de la Cola de Prompts
+ * Spartan - Tipos y Constantes de la Cola de Prompts
  * Define contratos para targets de ejecución, ítems encolados y parámetros de sondeo.
  */
 import type { QueuedChatRunSettings } from "@/features/chat/utils/queued-chat-run-settings";

@@ -1,5 +1,5 @@
 /**
- * Sparta Agent - Chat Adapter Barrel
+ * Spartan - Chat Adapter Barrel
  * Re-exporta todos los submódulos modulares del adaptador de chat:
  * - autosave-handle: Gestión del guardado en background.
  * - context-limits: Detección de límites de tokens y URLs seguras.

@@ -1,5 +1,5 @@
 export const update = {
-  newVersionTitle: "New Sparta Agent Version",
+  newVersionTitle: "New Spartan Version",
   updateAvailable: "Version {version} is available to install.",
   downloadUpdate: "Download & Install",
   downloadInBackground: "Download update",

@@ -1,5 +1,5 @@
 /**
- * Sparta Agent - Hook de Manejo de Entrada de Texto e IME (useImeComposer)
+ * Spartan - Hook de Manejo de Entrada de Texto e IME (useImeComposer)
  * Previene pérdidas de texto o envíos prematuros durante composición con IME
  * (japonés, chino, coreano) y maneja atajos de teclado Enter / Mod+Enter.
  */

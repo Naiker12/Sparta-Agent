@@ -1,5 +1,5 @@
 /**
- * Sparta Agent - Utilidades de Identificación y Formato de Modelos
+ * Spartan - Utilidades de Identificación y Formato de Modelos
  */
 
 export function hasGgufSource(x: {

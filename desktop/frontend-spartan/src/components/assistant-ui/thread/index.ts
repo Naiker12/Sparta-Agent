@@ -1,5 +1,5 @@
 /**
- * Sparta Agent - Barril de Exportación del Submódulo Thread
+ * Spartan - Barril de Exportación del Submódulo Thread
  */
 
 export * from "./prompt-queue-types";

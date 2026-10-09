@@ -1,5 +1,5 @@
 /**
- * Sparta Agent - Gestión y Asignación de Memoria GPU para Chat Runtime
+ * Spartan - Gestión y Asignación de Memoria GPU para Chat Runtime
  * Funciones de particionamiento, split y reconciliación de IDs de GPU.
  */
 

@@ -1,5 +1,5 @@
 /**
- * Sparta Agent – Model Selector Keyboard Navigation Hook
+ * Spartan – Model Selector Keyboard Navigation Hook
  *
  * Hook de navegación por teclado accesible (roving tabindex) para las listas de modelos:
  * - Soporte para flechas Arriba/Abajo, Inicio/Fin y callbacks para traspaso entre listas.

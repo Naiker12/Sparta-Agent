@@ -1,12 +1,11 @@
 /**
- * Sparta Agent - Pantalla de Bienvenida del Hilo (ThreadWelcome)
+ * Spartan - Pantalla de Bienvenida del Hilo (ThreadWelcome)
  * Renderiza el saludo personalizado del usuario según la hora del día,
- * avatar animado rotativo y contenedor del composer inicial.
+ * mascota compartida con el perfil y contenedor del composer inicial.
  */
 
-import { GeneratedAvatar } from "@/components/ui/blobatar-avatar";
-import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
-import { useUserProfileStore } from "@/features/profile/stores/user-profile-store";
+import { ProfileChatAvatar, useUserProfileStore } from "@/features/profile";
+import { useChatRuntimeStore } from "@/features/chat";
 import { type TranslationKey, useT } from "@/i18n";
 import { type FC, type ReactNode, useEffect, useState } from "react";
 
@@ -68,46 +67,6 @@ export function buildWelcome(
   return pickRandom(base);
 }
 
-export const WELCOME_AVATAR_VARIANTS = [
-  "01",
-  "02",
-  "03",
-  "04",
-  "05",
-  "06",
-  "07",
-  "08",
-] as const;
-export const WELCOME_AVATAR_INTERVAL_MS = 4_000;
-
-export const RotatingWelcomeAvatar: FC<{ prefix: string }> = ({ prefix }) => {
-  const [variant, setVariant] = useState(0);
-
-  useEffect(() => {
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    if (reducedMotion.matches) {
-      return;
-    }
-    const timer = window.setInterval(
-      () =>
-        setVariant((current) => (current + 1) % WELCOME_AVATAR_VARIANTS.length),
-      WELCOME_AVATAR_INTERVAL_MS,
-    );
-    return () => window.clearInterval(timer);
-  }, []);
-
-  const seed = `${prefix}-${WELCOME_AVATAR_VARIANTS[variant]}`;
-  return (
-    <GeneratedAvatar
-      name={seed}
-      className="aui-thread-welcome-logo size-[152px] shrink-0"
-      fallback={
-        <span className="aui-thread-welcome-logo size-[152px] shrink-0 rounded-full bg-muted" />
-      }
-    />
-  );
-};
-
 export interface ThreadWelcomeProps {
   hideComposer?: boolean;
   threadId?: string | null;
@@ -130,7 +89,8 @@ export const ThreadWelcome: FC<ThreadWelcomeProps> = ({
   useEffect(() => {
     const raw = nickname.trim() || (displayName.trim().split(/\s+/)[0] ?? "");
     const name = raw.length > 20 ? `${raw.slice(0, 20)}…` : raw;
-    setWelcome(buildWelcome(t, new Date().getHours(), name));
+    const frame = requestAnimationFrame(() => setWelcome(buildWelcome(t, new Date().getHours(), name)));
+    return () => cancelAnimationFrame(frame);
   }, [t, displayName, nickname]);
 
   return (
@@ -139,10 +99,16 @@ export const ThreadWelcome: FC<ThreadWelcomeProps> = ({
         <div className="aui-thread-welcome-message flex w-full flex-col justify-center gap-9 px-4">
           <div className="flex flex-col items-center justify-center gap-4">
             {showGreetingSloth && !incognito && (
-              <RotatingWelcomeAvatar prefix="sparta-agent" />
+              <ProfileChatAvatar
+                interactive
+                className="aui-thread-welcome-logo size-[152px] shrink-0"
+              />
             )}
             {incognito && (
-              <RotatingWelcomeAvatar prefix="sparta-temporary-chat" />
+              <ProfileChatAvatar
+                interactive
+                className="aui-thread-welcome-logo size-[152px] shrink-0"
+              />
             )}
             <h1 className="aui-thread-welcome-message-inner sparta-welcome-title fade-in slide-in-from-bottom-1 animate-in text-3xl tracking-[-0.02em] duration-200">
               {incognito ? t("chat.welcome.temporaryChat") : welcome.text}

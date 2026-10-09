@@ -1,4 +1,7 @@
+import { ChannelAssistantActivity } from "@/features/channels";
 import { ElectronUpdateBanner } from "@/components/electron/update-banner";
+import { OfficeComponentBanner } from "@/features/rag/components/office-component-banner";
+import { syncNativeTitlebar } from "@/features/settings/stores/theme-store";
 import {
   ClosingScreen,
   StartupScreen,
@@ -783,7 +786,7 @@ function TauriWrapper({ children }: { children: ReactNode }) {
         window.dispatchEvent(
           new CustomEvent("tauri-auth-failed", {
             detail:
-              "Desktop authentication did not become ready. Restart Spartan Agent and try again.",
+              "Desktop authentication did not become ready. Restart Spartan and try again.",
           }),
         );
       }
@@ -867,6 +870,7 @@ function TauriWrapper({ children }: { children: ReactNode }) {
             zIndex: Z_LAYER.OVERLAY_STACK,
           }}
         >
+          {isElectron && <OfficeComponentBanner />}
           {isElectron ? (
             <ElectronUpdateBanner
               enabled={!WEB_UPDATE_HIDDEN_ROUTES.has(pathname)}
@@ -997,6 +1001,7 @@ function AppearanceCustomizationEffect() {
   const customization = useAppearanceCustomStore((s) => s.customization);
   useEffect(() => {
     applyCustomizationToDocument(customization, resolved);
+    requestAnimationFrame(syncNativeTitlebar);
   }, [customization, resolved]);
   useEffect(() => {
     if (!isTauri) {
@@ -1026,8 +1031,8 @@ export function AppProvider({ children }: AppProviderProps) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const toastOffsets = getToastOffsets(
     pathname,
-    isTauri,
-    shouldUseCustomWindowTitlebar(),
+    isTauri || isElectron,
+    shouldUseCustomWindowTitlebar() || (isElectron && !getClientPlatform().includes("mac")),
   );
   const reduceMotion = useAppearanceCustomStore(
     (s) => s.customization.reduceMotion,
@@ -1038,6 +1043,7 @@ export function AppProvider({ children }: AppProviderProps) {
         <AppearanceCustomizationEffect />
         <WorkspaceRelayEffect />
         <AutomationNotifications />
+        <ChannelAssistantActivity />
         <DeepLinkHandler />
         <TauriWrapper>{children}</TauriWrapper>
         <Toaster

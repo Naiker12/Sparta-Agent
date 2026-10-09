@@ -11,7 +11,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { classifyUnslothSupport } from "@/features/hub/hooks/use-hub-model-search";
+import { classifyModelSupport } from "@/features/hub/hooks/use-hub-model-search";
 import {
   formatRelativeLong,
   formatRelativeShort,
@@ -568,7 +568,7 @@ function useResultRowModel(
     () =>
       isDataset
         ? null
-        : classifyUnslothSupport({
+        : classifyModelSupport({
             modelId: row.id,
             pipelineTag: row.result.pipelineTag,
             tags: row.result.tags,

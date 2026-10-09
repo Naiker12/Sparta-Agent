@@ -1,10 +1,11 @@
-import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, shell, Notification } from 'electron'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import path from 'node:path'
 import { BackendManager } from './backend-manager'
 import { isDesktopAuthOrigin } from './desktop-auth-origin'
 import { setupAutoUpdater } from './auto-updater'
-import { registerAllIPC } from 'ia-sparta-ipc-bridge'
+import { configureDesktopIdentity, DESKTOP_APP_ID } from './desktop-identity'
+import { registerAllIPC, installOfficeComponent, officeComponentStatus } from 'ia-sparta-ipc-bridge'
 
 // Suppress noisy Chromium GPU/cache errors on Windows dev hot-reloads and optimize performance & RAM usage
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache')
@@ -25,6 +26,13 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
   ? path.join(process.env.APP_ROOT, 'public')
   : RENDERER_DIST
+
+// Chromium initializes Windows notification identity during startup.
+// Explicit Chromium profile override also scopes backend/component data. This
+// enables a packaged validation run without touching the normal user profile.
+const userDataOverride = app.commandLine.getSwitchValue('user-data-dir')
+if (userDataOverride && path.isAbsolute(userDataOverride)) app.setPath('userData', userDataOverride)
+configureDesktopIdentity(process.env.APP_ROOT!, process.env.VITE_PUBLIC!)
 
 let win: BrowserWindow | null
 const backend = new BackendManager()
@@ -52,7 +60,7 @@ function createWindow() {
     },
     backgroundColor: '#F2EBE0',
     show: false,
-    icon: path.join(process.env.VITE_PUBLIC!, 'sparta-escritorio.png'),
+    icon: path.join(process.env.VITE_PUBLIC!, process.platform === 'win32' ? 'spartan.ico' : 'sparta-escritorio.png'),
     webPreferences: {
       // vite-plugin-electron writes the preload entry under this filename.
       // Loading the old `preload.mjs` leaves the renderer without electronAPI,
@@ -61,8 +69,18 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
     },
-    title: 'Sparta Agent',
+    title: 'Spartan',
   })
+
+  if (process.platform === 'win32') {
+    win.setAppDetails({
+      appId: DESKTOP_APP_ID,
+      appIconPath: path.join(process.env.VITE_PUBLIC!, 'spartan.ico'),
+      appIconIndex: 0,
+      relaunchDisplayName: 'Spartan',
+      relaunchCommand: app.isPackaged ? `"${process.execPath}"` : `"${process.execPath}" "${process.env.APP_ROOT}"`,
+    })
+  }
 
   win.once('ready-to-show', () => {
     win?.show()
@@ -114,6 +132,23 @@ app.whenReady().then(async () => {
   // Register all system, terminal, filesystem, security and core IPC channels
   registerAllIPC()
 
+  const notificationKeys = new Set<string>()
+  ipcMain.handle('notifications:show', (event, payload: { key?: string; title?: string; body?: string }) => {
+    if (!win || event.sender !== win.webContents || event.senderFrame !== win.webContents.mainFrame) return false
+    const rendererUrl = VITE_DEV_SERVER_URL ?? pathToFileURL(path.join(RENDERER_DIST, 'index.html')).href
+    if (!isDesktopAuthOrigin(event.senderFrame.url, rendererUrl)) return false
+    if (!payload || typeof payload.key !== 'string' || typeof payload.title !== 'string' ||
+      payload.key.length > 256 || payload.title.length > 200 ||
+      (payload.body !== undefined && (typeof payload.body !== 'string' || payload.body.length > 200))) return false
+    if (notificationKeys.has(payload.key) || !Notification.isSupported()) return false
+    notificationKeys.add(payload.key)
+    if (notificationKeys.size > 500) notificationKeys.delete(notificationKeys.values().next().value!)
+    const notice = new Notification({ title: payload.title, body: payload.body ?? '', icon: path.join(process.env.VITE_PUBLIC!, 'sparta-escritorio.png') })
+    notice.on('click', () => { win?.restore(); win?.show(); win?.focus() })
+    notice.show()
+    return true
+  })
+
   // Window control IPC handlers
   ipcMain.on('win:minimize', () => win?.minimize())
   ipcMain.on('win:maximize', () => {
@@ -145,6 +180,13 @@ app.whenReady().then(async () => {
     const emitProgress = (message: string) => win?.webContents.send('backend:install-progress', message)
     try {
       await backend.bootstrap(backendDirectory(), backendRuntimeDirectory(), emitProgress)
+      if (process.platform === 'win32' && process.arch === 'x64') {
+        const office = await officeComponentStatus()
+        if (!office.installed) {
+          try { await installOfficeComponent(emitProgress) }
+          catch { emitProgress('LibreOffice: preparación pendiente. Puedes reintentar desde el panel de documentos.') }
+        }
+      }
       emitProgress('Iniciando backend de Sparta...')
       const port = await backend.start(backendDirectory(), backendRuntimeDirectory())
       backendStartupError = undefined
@@ -178,7 +220,7 @@ app.whenReady().then(async () => {
 
   // App metadata IPC handlers
   ipcMain.handle('app:getVersion', () => app.getVersion())
-  ipcMain.handle('app:getName', () => app.getName() || 'Sparta Agent')
+  ipcMain.handle('app:getName', () => app.getName() || 'Spartan')
 })
 
 app.on('before-quit', () => backend.stop())

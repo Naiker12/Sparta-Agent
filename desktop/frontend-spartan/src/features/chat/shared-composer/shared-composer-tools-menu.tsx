@@ -1,7 +1,7 @@
 import { translate as uiTranslate } from "@/i18n";
 import { useT as useUiT } from "@/i18n";
 /**
- * Sparta Agent – Shared Composer Tools Menu
+ * Spartan – Shared Composer Tools Menu
  *
  * Menú "+" desplegable del SharedComposer (modo compare).
  * Centraliza las acciones para adjuntar archivos/audio, toggles de búsqueda web,
@@ -20,13 +20,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { PromptEntry } from "@/features/chat/api/prompts-api";
+import { ContainersComingSoonItem } from "@/features/chat/components/containers-coming-soon-item";
 import { BypassPermissionsMenuItem } from "@/features/chat/bypass-permissions-menu-item";
-import {
-  exportConversationCsv,
-  exportConversationMarkdown,
-  exportConversationRawJsonl,
-  exportConversationShareGPT,
-} from "@/features/chat/prompt-storage/prompt-storage-dialog";
+import { exportConversationCsv, exportConversationMarkdown, exportConversationRawJsonl, exportConversationShareGPT } from "@/features/chat/prompt-storage/conversation-exports";
 import {
   PLUS_MENU_ORDER,
   type PlusMenuItemId,
@@ -152,7 +148,7 @@ export const SharedComposerToolsMenu: FC<SharedComposerToolsMenuProps> = ({
         </DropdownMenuSubTrigger>
         <DropdownMenuSubContent
           collisionPadding={16}
-          className="unsloth-plus-menu w-[208px]"
+          className="spartan-plus-menu w-[208px]"
         >
           {recentPrompts.map((p) => (
             <DropdownMenuItem
@@ -190,7 +186,7 @@ export const SharedComposerToolsMenu: FC<SharedComposerToolsMenuProps> = ({
         </DropdownMenuSubTrigger>
         <DropdownMenuSubContent
           collisionPadding={16}
-          className="unsloth-plus-menu w-[208px]"
+          className="spartan-plus-menu w-[208px]"
         >
           {[
             { get label() { return uiTranslate("ui.raw_jsonl"); }, fn: exportConversationRawJsonl },
@@ -249,7 +245,7 @@ export const SharedComposerToolsMenu: FC<SharedComposerToolsMenuProps> = ({
           <HugeiconsIcon icon={Folder01Icon} strokeWidth={2} />
           {t("chat.composer.projects")}
         </DropdownMenuSubTrigger>
-        <DropdownMenuSubContent className="unsloth-plus-menu w-[232px]">
+        <DropdownMenuSubContent className="spartan-plus-menu w-[232px]">
           <DropdownMenuItem onSelect={() => setNewProjectOpen(true)}>
             <HugeiconsIcon icon={FolderAddIcon} strokeWidth={2} />
             {t("chat.composer.newProject")}
@@ -290,7 +286,7 @@ export const SharedComposerToolsMenu: FC<SharedComposerToolsMenuProps> = ({
         <button
           type="button"
           aria-label={uiT("ui.tools_and_attachments")}
-          className="unsloth-composer-plus"
+          className="spartan-composer-plus"
         >
           <PlusIcon className="size-[22px] stroke-[1.75px]" />
         </button>
@@ -300,7 +296,7 @@ export const SharedComposerToolsMenu: FC<SharedComposerToolsMenuProps> = ({
         align="start"
         sideOffset={0}
         avoidCollisions={true}
-        className="unsloth-plus-menu w-[244px]"
+        className="spartan-plus-menu w-[244px]"
         onCloseAutoFocus={(event) => event.preventDefault()}
       >
         <DropdownMenuItem onSelect={onSelectImageFiles}>
@@ -375,6 +371,7 @@ export const SharedComposerToolsMenu: FC<SharedComposerToolsMenuProps> = ({
           </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
+        <ContainersComingSoonItem />
         {pinnedPlusItems.map((id) => (
           <Fragment key={id}>{plusMenuNodes[id]}</Fragment>
         ))}
@@ -384,7 +381,7 @@ export const SharedComposerToolsMenu: FC<SharedComposerToolsMenuProps> = ({
               <MoreHorizontalIcon className="size-4" />
               {t("chat.composer.more")}
             </DropdownMenuSubTrigger>
-            <DropdownMenuSubContent className="unsloth-plus-menu w-[248px]">
+            <DropdownMenuSubContent className="spartan-plus-menu w-[248px]">
               {overflowPlusItems.map((id) => (
                 <Fragment key={id}>{plusMenuNodes[id]}</Fragment>
               ))}

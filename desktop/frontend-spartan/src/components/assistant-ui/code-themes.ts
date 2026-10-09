@@ -17,12 +17,12 @@ const withTransparentBg = (
   },
 });
 
-export const unslothLightTheme: ThemeRegistrationAny = {
+export const spartanLightTheme: ThemeRegistrationAny = {
   ...withTransparentBg(oneLight),
-  name: "unsloth-light",
+  name: "spartan-light",
 };
 
-export const unslothDarkTheme: ThemeRegistrationAny = {
+export const spartanDarkTheme: ThemeRegistrationAny = {
   ...withTransparentBg(oneDarkPro),
-  name: "unsloth-dark",
+  name: "spartan-dark",
 };

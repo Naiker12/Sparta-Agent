@@ -224,7 +224,7 @@ function ModelSelectorTrigger({
         type="button"
         data-tour={dataTour}
         className={cn(
-          "unsloth-model-selector-trigger group/trigger flex min-w-0 items-center gap-2 transition-colors",
+          "spartan-model-selector-trigger group/trigger flex min-w-0 items-center gap-2 transition-colors",
           // Suppress the pill's hover background while the eject hit area is hovered.
           variant === "outline" &&
             "rounded-full border border-border/60 hover:bg-accent has-[[data-eject-hit]:hover]:!bg-transparent",
@@ -566,7 +566,7 @@ function ModelSelectorContent({
       data-tour={dataTour}
       onKeyDown={handlePickerEntryKeyDown}
       className={cn(
-        "unsloth-model-selector-menu menu-soft-surface ring-0 max-w-[calc(100vw-1rem)] min-w-0 gap-0",
+        "spartan-model-selector-menu menu-soft-surface ring-0 max-w-[calc(100vw-1rem)] min-w-0 gap-0",
         visibleConfigTarget
           ? "max-h-[var(--radix-popover-content-available-height)] w-[min(468px,calc(100vw-1rem))] overflow-y-auto px-4 pt-4 pb-4"
           : cn(

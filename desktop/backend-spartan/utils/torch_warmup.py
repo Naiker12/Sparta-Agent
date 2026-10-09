@@ -233,7 +233,7 @@ def start_background_warm() -> bool:
     state the same shutdown just cleared.
     """
     global _thread
-    if os.environ.get(DISABLE_ENV_VAR) == "1":
+    if os.environ.get(DISABLE_ENV_VAR) == "1" or os.environ.get("UNSLOTH_API_ONLY") == "1":
         return False
     global _thread_epoch
     # Epoch read before start(): the child may not run for a while, and a shutdown in that

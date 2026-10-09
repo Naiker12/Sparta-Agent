@@ -1,5 +1,5 @@
 /**
- * Sparta Agent – Sidebar Selection Hook
+ * Spartan – Sidebar Selection Hook
  *
  * Hook para la gestión de multi-selección de chats y proyectos en la barra lateral,
  * rangos con Shift/Meta, deselección con Escape y clics contextuales.

@@ -136,7 +136,7 @@ function asTransportFailure(err: unknown): unknown {
   return Object.assign(
     new Error(
       (isElectron || isTauri) && !getApiBase()
-        ? "El motor local de Sparta Agent se está iniciando. Por favor, espera un momento o reintenta."
+        ? "El motor local de Spartan se está iniciando. Por favor, espera un momento o reintenta."
         : "Se perdió la conexión con el servicio de Sparta. Reintenta; si continúa, reinicia la aplicación.",
     ),
     { unslothTransportFailure: true },

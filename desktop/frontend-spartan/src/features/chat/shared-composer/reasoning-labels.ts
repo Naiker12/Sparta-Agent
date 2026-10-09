@@ -1,5 +1,5 @@
 /**
- * Sparta Agent – Reasoning Label Helpers
+ * Spartan – Reasoning Label Helpers
  *
  * Utilidades de formateo de etiquetas para los controles de razonamiento
  * del compositor compartido (modo compare y single).

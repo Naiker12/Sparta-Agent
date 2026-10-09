@@ -1,6 +1,6 @@
 import { translate as uiTranslate } from "@/i18n";
 /**
- * Sparta Agent – Compare Prompt Queue Hook
+ * Spartan – Compare Prompt Queue Hook
  *
  * Hook dedicado a la gestión de la cola de prompts secuenciales
  * durante el modo de comparación entre modelos.

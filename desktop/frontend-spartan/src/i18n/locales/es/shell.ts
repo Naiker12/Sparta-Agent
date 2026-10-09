@@ -1,7 +1,7 @@
 export const shell = {
   beta: "BETA",
-  brand: "spartan agent",
-  product: "Spartan Agent",
+  brand: "Spartan",
+  product: "Spartan",
   accountMenu: "Menú de cuenta de {name}",
   updateAvailable: "Actualización disponible",
   resize: {
@@ -39,6 +39,7 @@ export const shell = {
     recipes: "Recetas",
     images: "Imágenes",
     channels: "Canales",
+    containers: "Contenedores",
     memory: "Memoria",
     tasks: "Tareas",
     comingSoon: "Próximo",
@@ -163,7 +164,7 @@ export const shell = {
   },
   startup: {
     checking: "Comprobando...",
-    installPrompt: "Para instalar Sparta Agent, haz clic en Empezar.",
+    installPrompt: "Para instalar Spartan, haz clic en Empezar.",
     getStarted: "Empezar",
     showInstallDetails: "Mostrar detalles de la instalación",
     hideInstallDetails: "Ocultar detalles de la instalación",
@@ -171,7 +172,7 @@ export const shell = {
     gettingReadyHelp: "No tardará mucho.",
     showSetupDetails: "Mostrar detalles de la configuración",
     hideSetupDetails: "Ocultar detalles de la configuración",
-    closing: "Cerrando Sparta Agent Desktop...",
+    closing: "Cerrando Spartan Desktop...",
     shuttingDown: "Apagando el servicio.",
     setupProblem: "La configuración tuvo un problema",
     updateFailed: "La actualización falló",

@@ -48,7 +48,7 @@ function formatGitHubSourceMessage(execution: RecipeExecutionRecord): string {
   if (source.status === "rate_limited") {
     return (
       source.message ??
-      "Waiting for GitHub rate limit. Unsloth will resume automatically."
+      "Waiting for GitHub rate limit. Spartan will resume automatically."
     );
   }
   return (

@@ -205,7 +205,7 @@ export async function effectiveTransportMode(
     return preferred;
   }
   const reason =
-    capabilities.xet.reason ?? "Unsloth will use HTTP downloads instead.";
+    capabilities.xet.reason ?? "Spartan will use HTTP downloads instead.";
   if (lastXetUnavailableWarningReason !== reason) {
     lastXetUnavailableWarningReason = reason;
     toast.warning(uiTranslate("ui.xet_download_transport_unavailable"), {

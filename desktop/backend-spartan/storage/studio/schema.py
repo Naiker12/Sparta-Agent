@@ -660,7 +660,22 @@ def _ensure_schema(conn: sqlite3.Connection) -> None:
         )
     """)
     conn.execute("CREATE INDEX IF NOT EXISTS idx_agent_tasks_due ON agent_tasks(enabled, next_run_at)")
+    run_columns = {row[1] for row in conn.execute("PRAGMA table_info(agent_task_runs)").fetchall()}
+    for column, definition in (("thread_id", "TEXT"), ("heartbeat_at", "INTEGER")):
+        if column not in run_columns:
+            conn.execute(f"ALTER TABLE agent_task_runs ADD COLUMN {column} {definition}")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_agent_tasks_owner ON agent_tasks(owner_subject, updated_at DESC)")
+    conn.execute('''CREATE TABLE IF NOT EXISTS automation_deliveries (
+        id TEXT PRIMARY KEY, run_id TEXT NOT NULL REFERENCES agent_task_runs(id) ON DELETE CASCADE,
+        event TEXT NOT NULL, owner TEXT NOT NULL, account_id TEXT NOT NULL, user_id TEXT NOT NULL,
+        body TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending', created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, error TEXT, UNIQUE(run_id,event)
+    )''')
+    delivery_columns = {row[1] for row in conn.execute('PRAGMA table_info(automation_deliveries)').fetchall()}
+    if 'attempts' not in delivery_columns:
+        conn.execute('ALTER TABLE automation_deliveries ADD COLUMN attempts INTEGER NOT NULL DEFAULT 0')
+    if 'locale' not in delivery_columns:
+        conn.execute("ALTER TABLE automation_deliveries ADD COLUMN locale TEXT NOT NULL DEFAULT 'es'")
     inventory_state = conn.execute(
         """
         SELECT inventory_version, dirty
