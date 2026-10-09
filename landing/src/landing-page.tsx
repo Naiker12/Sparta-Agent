@@ -44,11 +44,23 @@ const SpartaPreview = lazy(() => import("./components/landing/sparta-preview"));
 const faqs = [
   [
     "¿Cómo empiezo?",
-    "Descarga Sparta Agent, prepara las herramientas en el primer arranque y conecta un proveedor de IA por API. Después elige una carpeta y empieza una conversación.",
+    "Descarga Sparta Agent, prepara las herramientas en el primer arranque y conecta un proveedor de IA por API o un servidor local compatible. Puedes conversar directamente o elegir una carpeta para trabajar con tu proyecto.",
   ],
   [
     "¿Necesito una suscripción o una API?",
-    "Necesitas una conexión por API con un proveedor compatible. El uso y el coste del modelo dependen de tu proveedor; una suscripción a su aplicación de chat no implica acceso a su API.",
+    "Puedes usar un proveedor por API o un servidor local como LM Studio u Ollama. En una API comercial, el uso y el coste dependen del proveedor; una suscripción a su aplicación de chat no implica acceso a su API. Un servidor local debe estar iniciado y tener modelos disponibles.",
+  ],
+  [
+    "¿Tengo que escribir el ID de un modelo al conectar un servidor local?",
+    "Puedes guardar la conexión con su URL sin añadir IDs. Usa “Probar conexión y consultar modelos” para ver los modelos que expone el servidor y elegir uno. Si el servidor no permite consultarlos, puedes introducir sus IDs manualmente.",
+  ],
+  [
+    "¿Puedo crear PDF y Excel sin activar Código?",
+    "Sí, con un modelo compatible con herramientas. Pide un PDF, Excel, Word, CSV, TXT o Markdown y Sparta usa su herramienta de documentos. Código queda reservado para tareas que necesitan ejecutar código. Los archivos creados aparecen en la conversación para abrirlos o descargarlos.",
+  ],
+  [
+    "¿Los modelos locales pueden buscar en la web?",
+    "Activa Búsqueda web y utiliza un modelo compatible con herramientas. Sparta realiza la consulta y entrega los resultados al modelo. La fiabilidad depende del modelo: uno pequeño puede necesitar una petición más concreta o no emitir correctamente la llamada a la herramienta. La búsqueda necesita conexión a internet.",
   ],
   [
     "¿Dónde están mis archivos y conversaciones?",
@@ -184,7 +196,7 @@ export default function LandingPage({
                   {name}
                 </a>
               ))}
-              <span>y más, por API</span>
+              <span>y servidores locales compatibles</span>
             </div>
             <div className="hero-actions">
               <div className="download-split">
@@ -252,16 +264,16 @@ export default function LandingPage({
               <FolderOpen />
               <h3>Tu contexto, a mano.</h3>
               <p>
-                Conecta una carpeta, adjunta documentos y mantén los archivos
-                junto a la conversación.
+                Conecta una carpeta y consulta su rama Git. Revisa cambios,
+                documentos y pull requests en el panel junto a la conversación.
               </p>
             </article>
             <article>
               <MessageIcon />
               <h3>La IA que tú eliges.</h3>
               <p>
-                Conecta tu proveedor por API y elige el modelo que mejor se
-                adapte a cada tarea.
+                Conecta una API o un servidor local como LM Studio u Ollama.
+                Consulta sus modelos desde la URL y elige uno para tu tarea.
               </p>
             </article>
             <article>
@@ -278,6 +290,57 @@ export default function LandingPage({
             Amplía tu espacio con herramientas MCP y skills.
             <a href={getPublicUrl("?docs=mcp/introduction")}>
               Conoce las conexiones <ArrowUpRight />
+            </a>
+          </div>
+        </section>
+        <section
+          className="benefits-section site-container"
+          aria-labelledby="tools-title"
+        >
+          <div className="section-heading">
+            <span className="eyebrow">DOCUMENTOS · BÚSQUEDA · PROYECTOS</span>
+            <h2 id="tools-title">Del pedido al archivo, en la conversación.</h2>
+            <p>
+              Estas funciones requieren un modelo compatible con herramientas.
+              La descarga publicada puede incluir una versión anterior a los
+              cambios más recientes del proyecto.
+            </p>
+          </div>
+          <div className="benefits-grid">
+            <article>
+              <FileText aria-hidden="true" />
+              <h3>Documentos sin activar Código.</h3>
+              <p>
+                Pide PDF, Excel, Word, CSV, TXT o Markdown. Sigue la generación
+                y abre o descarga el archivo desde el resultado. Puedes dejar
+                Código desactivado para crear estos documentos.
+              </p>
+            </article>
+            <article>
+              <BookOpen aria-hidden="true" />
+              <h3>Consulta fuentes desde tu modelo local.</h3>
+              <p>
+                Activa Búsqueda web para consultar información con fuentes.
+                Sparta ejecuta la búsqueda cuando el modelo solicita la
+                herramienta; la capacidad de hacerlo depende del modelo elegido.
+              </p>
+            </article>
+            <article>
+              <GitBranch aria-hidden="true" />
+              <h3>La carpeta y su rama, a mano.</h3>
+              <p>
+                Abre los cambios desde la rama Git de tu proyecto. Consulta
+                diferencias, historial y pull requests de GitHub en el mismo
+                panel que los documentos. El acceso a repositorios privados
+                requiere autenticar GitHub.
+              </p>
+            </article>
+          </div>
+          <div className="integration-note">
+            <BookOpen aria-hidden="true" />
+            Configura tus conexiones y conoce los límites de cada modelo.
+            <a href={getPublicUrl("?docs=core-concepts/models-and-providers")}>
+              Ver modelos y proveedores <ArrowUpRight />
             </a>
           </div>
         </section>
