@@ -105,7 +105,9 @@ export function WorkInboxPage() {
                 </CardTitle>
                 <CardDescription>
                   {run.source_kind === "telegram"
-                    ? run.request.channelName
+                    ? [run.request.channelName, run.request.projectName]
+                        .filter(Boolean)
+                        .join(" · ")
                     : `${run.project_name || uiT("ui.no_project")} · ${run.thread_title || uiT("ui.standalone_request")}`}
                 </CardDescription>
               </CardHeader>

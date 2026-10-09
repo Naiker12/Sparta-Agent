@@ -97,15 +97,6 @@ export function ApiKeysTab() {
         </h1>
         <p className="text-xs text-muted-foreground">
           {t("settings.apiKeys.description")}{" "}
-          <a
-            href="https://unsloth.ai/docs/basics/api"
-            target="_blank"
-            rel="noreferrer"
-            className="font-medium text-foreground underline decoration-border underline-offset-2 transition-colors hover:decoration-foreground"
-          >
-            {t("settings.apiKeys.readDocs")}
-          </a>
-          .
         </p>
       </header>
 

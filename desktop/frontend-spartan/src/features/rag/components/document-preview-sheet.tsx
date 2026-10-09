@@ -11,7 +11,7 @@ import {
 
 import { Spinner } from "@/components/ui/spinner";
 import { useT } from "@/i18n";
-import { DownloadIcon, Maximize2Icon, Minimize2Icon } from "lucide-react";
+import { DownloadIcon, Maximize2Icon, Minimize2Icon, XIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,9 +25,14 @@ import { getAttachmentIcon } from "@/lib/attachment-file-kind";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Suspense, lazy } from "react";
 import { PreviewWorkspace } from "./preview-workspace";
+import { PreviewToolbar, PreviewToolbarTarget } from "./preview-toolbar";
 import { LocalSpreadsheetPreview } from "./spreadsheet-preview";
+import { OfficeComponentBanner } from "./office-component-banner";
 const PdfPreview = lazy(() =>
   import("./pdf-preview").then((m) => ({ default: m.PdfPreview })),
+);
+const WordPreview = lazy(() =>
+  import("./word-preview").then((m) => ({ default: m.WordPreview })),
 );
 const RichPreview = lazy(() =>
   import("@/components/markdown/markdown-preview").then((m) => ({
@@ -93,11 +98,11 @@ function LocalTextPreview({
       : `${fence}${languages[extension] ?? "text"}\n${text}\n${fence}`;
     return (
       <div className="flex h-full flex-col">
-        <div className="flex justify-end border-b px-3 py-1">
+        <PreviewToolbar>
           <Button size="sm" variant="ghost" onClick={() => setSource(true)}>
             {t("chat.preview.source")}
           </Button>
-        </div>
+        </PreviewToolbar>
         <div className="min-h-0 flex-1">
           <Suspense
             fallback={<p className="p-5">{t("chat.preview.loading")}</p>}
@@ -114,11 +119,11 @@ function LocalTextPreview({
   return (
     <div className="flex h-full flex-col">
       {source && (
-        <div className="flex justify-end border-b px-3 py-1">
+        <PreviewToolbar>
           <Button size="sm" variant="ghost" onClick={() => setSource(false)}>
             {t("chat.files.preview")}
           </Button>
-        </div>
+        </PreviewToolbar>
       )}
       {blob.size > 1024 * 1024 && (
         <p className="border-b p-2 text-xs text-muted-foreground">
@@ -128,58 +133,6 @@ function LocalTextPreview({
       <pre className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-words p-5 font-mono text-xs leading-relaxed">
         {text ?? t("chat.preview.loading")}
       </pre>
-    </div>
-  );
-}
-
-function LocalWordPreview({ blob }: { blob: Blob }) {
-  const t = useT();
-  const [html, setHtml] = useState<string | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      const mammoth = await import("mammoth");
-      const result = await mammoth.convertToHtml({
-        arrayBuffer: await blob.arrayBuffer(),
-      });
-      const document = new DOMParser().parseFromString(
-        result.value,
-        "text/html",
-      );
-      document
-        .querySelectorAll("script, style, iframe, object, embed")
-        .forEach((node) => node.remove());
-      document.querySelectorAll("*").forEach((node) => {
-        for (const attribute of Array.from(node.attributes)) {
-          if (
-            attribute.name.startsWith("on") ||
-            (attribute.name === "href" &&
-              attribute.value.trim().toLowerCase().startsWith("javascript:"))
-          ) {
-            node.removeAttribute(attribute.name);
-          }
-        }
-      });
-      if (!cancelled) {
-        setHtml(document.body.innerHTML);
-      }
-    })().catch(() => !cancelled && setHtml(""));
-    return () => {
-      cancelled = true;
-    };
-  }, [blob, t]);
-  return html === null ? (
-    <div className="p-6 text-sm text-muted-foreground">
-      {t("chat.preview.loading")}
-    </div>
-  ) : html ? (
-    <article
-      className="h-full overflow-auto p-6 text-sm leading-relaxed [&_img]:max-w-full [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:p-2 [&_th]:border [&_th]:bg-muted [&_th]:p-2"
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
-  ) : (
-    <div className="p-6 text-sm text-muted-foreground">
-      {t("chat.preview.wordError")}
     </div>
   );
 }
@@ -222,6 +175,32 @@ function LocalPdfPreview({ blob }: { blob: Blob }) {
   }
 
   return <PdfPreview file={data} initialPage={1} regions={[]} />;
+}
+
+function OfficePdfPreview({ preview }: { preview: LocalPreview }) {
+  const t = useT();
+  const [attempt, setAttempt] = useState(0);
+  const [result, setResult] = useState<ArrayBuffer | string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const bridge = (window as unknown as {
+      electron?: { invoke: (channel: string, request: unknown) => Promise<{ ok: boolean; bytes?: Uint8Array; error?: string }> };
+    }).electron;
+    setResult(null);
+    if (!bridge) { setResult("converter_missing"); return; }
+    void preview.blob.arrayBuffer().then((buffer) => bridge.invoke("document:office-preview", {
+      filename: preview.filename, bytes: new Uint8Array(buffer),
+    })).then((value) => {
+      if (!cancelled) setResult(value.ok && value.bytes ? Uint8Array.from(value.bytes).buffer : value.error ?? "conversion_failed");
+    }).catch(() => { if (!cancelled) setResult("conversion_failed"); });
+    return () => { cancelled = true; };
+  }, [preview, attempt]);
+  if (result instanceof ArrayBuffer) return <PdfPreview file={result} initialPage={1} regions={[]} />;
+  if (result === "converter_missing") return <div className="p-6"><OfficeComponentBanner required onReady={() => setAttempt(value => value + 1)} /></div>;
+  return <p role="status" className="p-6 text-sm text-muted-foreground">{t(
+    result === null ? "chat.preview.convertingOffice" : result === "converter_missing"
+      ? "chat.preview.officeConverterMissing" : "chat.preview.officeConversionError",
+  )}</p>;
 }
 
 function LocalPreviewContent({ preview }: { preview: LocalPreview }) {
@@ -278,7 +257,10 @@ function LocalPreviewContent({ preview }: { preview: LocalPreview }) {
     case "pdf":
       return <LocalPdfPreview blob={preview.blob} />;
     case "word":
-      return <LocalWordPreview blob={preview.blob} />;
+      return /\.docx$/i.test(preview.filename)
+        ? <WordPreview blob={preview.blob} /> : <OfficePdfPreview preview={preview} />;
+    case "powerpoint":
+      return <OfficePdfPreview preview={preview} />;
     case "excel":
     case "csv":
       return <LocalSpreadsheetPreview blob={preview.blob} />;
@@ -375,9 +357,9 @@ const maxPreviewWidth = () => {
   }
 
   const availableContent = getAvailableContentWidth();
-  // Keep at least 340px for the chat column so the chat design is never crushed or hidden,
+  // Keep at least 480px for the chat column so the composer stays usable,
   // and ensure the sheet NEVER expands into or overlaps the left sidebar.
-  const minChatSpace = 340;
+  const minChatSpace = 480;
   const maxAllowed = availableContent - minChatSpace;
 
   return Math.max(MIN_PREVIEW_WIDTH, Math.round(maxAllowed));
@@ -412,6 +394,7 @@ function persistPreviewWidth(w: number) {
 export function DocumentPreviewSheet() {
   const t = useT();
   const isMobile = useIsMobile();
+  const [toolbarTarget, setToolbarTarget] = useState<HTMLDivElement | null>(null);
   const {
     open,
     revision,
@@ -421,6 +404,10 @@ export function DocumentPreviewSheet() {
     page,
     localPreview,
     closePreview,
+    tabs,
+    activeTabId,
+    selectTab,
+    closeTab,
   } = useDocumentPreviewStore();
 
   useEffect(() => {
@@ -429,9 +416,9 @@ export function DocumentPreviewSheet() {
     }
   }, [open]);
 
-  const [wide, setWide] = useState(() => window.innerWidth >= 1400);
+  const [wide, setWide] = useState(() => window.innerWidth >= 1100);
   useEffect(() => {
-    const query = window.matchMedia("(min-width: 1400px)");
+    const query = window.matchMedia("(min-width: 1100px)");
     const update = () => setWide(query.matches);
     query.addEventListener("change", update);
     return () => query.removeEventListener("change", update);
@@ -451,7 +438,7 @@ export function DocumentPreviewSheet() {
       return;
     }
     const root = document.documentElement;
-    root.style.setProperty("--document-preview-width", `${previewWidth}px`);
+    root.style.setProperty("--document-preview-width", `${clampPreviewWidth(previewWidth)}px`);
     return () => {
       root.style.removeProperty("--document-preview-width");
     };
@@ -554,6 +541,7 @@ export function DocumentPreviewSheet() {
   const headerPage = target?.targetPage ?? page ?? null;
 
   return (
+    <PreviewToolbarTarget.Provider value={toolbarTarget}>
     <Sheet modal={!wide} open={open} onOpenChange={(o) => !o && closePreview()}>
       <SheetContent
         side="right"
@@ -569,7 +557,7 @@ export function DocumentPreviewSheet() {
           right: isMobile ? 0 : "3rem",
         }}
         className={cn(
-          "flex w-full flex-col gap-0 p-0 border-r border-border/40",
+          "flex w-full flex-col gap-0 p-0 border-t border-r border-border overflow-hidden bg-background",
           resizing && "select-none",
         )}
         showCloseButton={false}
@@ -607,14 +595,31 @@ export function DocumentPreviewSheet() {
             resizing && "bg-primary/40",
           )}
         />
-        <SheetHeader className="flex-row items-center gap-2 border-b px-3 py-2">
+        <div role="tablist" aria-label={t("chat.preview.openDocuments")} className="flex min-h-11 shrink-0 items-center gap-1 overflow-x-auto border-b border-border bg-background px-2 py-1.5">
+          {tabs.map((tab, index) => (
+            <div key={tab.id} className={cn("flex min-w-0 max-w-64 shrink-0 items-center rounded-md border", activeTabId === tab.id ? "border-border bg-muted" : "border-transparent text-muted-foreground hover:bg-muted/50")}>
+              <button type="button" role="tab" id={`preview-tab-${tab.id}`} aria-selected={activeTabId === tab.id} aria-controls="document-preview-content" tabIndex={activeTabId === tab.id ? 0 : -1} title={tab.filename ?? t("chat.preview.document")} onClick={() => selectTab(tab.id)} onKeyDown={(event) => {
+                if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+                event.preventDefault();
+                const next = event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + tabs.length) % tabs.length;
+                selectTab(tabs[next].id);
+                document.getElementById(`preview-tab-${tabs[next].id}`)?.focus();
+              }} className="flex min-w-0 items-center gap-2 px-3 py-2 text-xs">
+                <HugeiconsIcon icon={getAttachmentIcon(tab.filename ?? "")} className="size-3.5 shrink-0" />
+                <span className="truncate">{tab.filename ?? t("chat.preview.document")}</span>
+              </button>
+              <Button size="icon-sm" variant="ghost" aria-label={t("chat.preview.closeTab", { filename: tab.filename ?? t("chat.preview.document") })} onClick={() => closeTab(tab.id)}><XIcon /></Button>
+            </div>
+          ))}
+        </div>
+        <SheetHeader className="flex-row items-center gap-2 border-b border-border bg-background px-3 py-2">
           <div className="min-w-0 flex-1">
-            <SheetTitle className="flex items-center gap-2 text-sm">
+            <SheetTitle className="flex items-center gap-2 rounded-full bg-muted px-3 py-1.5 text-xs">
               <HugeiconsIcon
                 icon={getAttachmentIcon(headerName)}
                 className="size-4 shrink-0"
               />
-              <span className="min-w-0 truncate">{headerName}</span>
+              <span className="min-w-0 truncate" title={headerName}>{headerName}</span>
               {headerPage != null && (
                 <span className="shrink-0 text-muted-foreground">
                   · {t("chat.preview.page", { page: headerPage })}
@@ -622,6 +627,7 @@ export function DocumentPreviewSheet() {
               )}
             </SheetTitle>
           </div>
+          <div ref={setToolbarTarget} className="flex min-w-0 shrink-0 items-center gap-0.5" />
           <div className="flex shrink-0 items-center gap-1">
             <div className="ml-auto flex items-center gap-1">
               {localPreview && (
@@ -644,7 +650,8 @@ export function DocumentPreviewSheet() {
               <Button
                 variant="ghost"
                 size="icon-sm"
-                aria-label={t("chat.preview.resize")}
+              aria-label={t("chat.preview.resize")}
+              title={t("chat.preview.resize")}
                 onClick={() =>
                   setPreviewWidth((current) =>
                     current >= maxPreviewWidth() - 10
@@ -665,7 +672,7 @@ export function DocumentPreviewSheet() {
         </SheetHeader>
         <PreviewWorkspace />
 
-        <div className="min-h-0 flex-1">
+        <div id="document-preview-content" role="tabpanel" aria-labelledby={activeTabId ? `preview-tab-${activeTabId}` : undefined} className="min-h-0 flex-1">
           <Suspense
             fallback={
               <p className="p-6" role="status">
@@ -697,8 +704,8 @@ export function DocumentPreviewSheet() {
                 regions={target.pdfRegions ?? []}
               />
             ) : target?.text ? (
-              <div className="h-full overflow-auto p-5">
-                <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground/90">
+              <div className="h-full overflow-auto bg-muted/20 p-6">
+                <p className="mx-auto max-w-[48rem] whitespace-pre-wrap break-words rounded-xl border bg-background p-6 text-sm leading-7 sm:p-10">
                   {target.text}
                 </p>
               </div>
@@ -711,5 +718,6 @@ export function DocumentPreviewSheet() {
         </div>
       </SheetContent>
     </Sheet>
+    </PreviewToolbarTarget.Provider>
   );
 }

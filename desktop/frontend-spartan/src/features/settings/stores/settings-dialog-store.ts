@@ -12,6 +12,7 @@ export const SETTINGS_TABS = [
   "chat",
   "voice",
   "connections",
+  "channels-permissions",
   "data",
   "api-keys",
   "agents",
@@ -29,6 +30,7 @@ export type ArchivedShelf = "chats";
 
 interface OpenDialogOptions {
   scrollTarget?: SettingsScrollTarget;
+  channelAccountId?: string;
 }
 
 interface SettingsDialogState {
@@ -44,6 +46,7 @@ interface SettingsDialogState {
   // toast). DataTab uses it as its initial subpage, then clears it. See requestsFor
   // for how long it lives unconsumed.
   archivedRequested: ArchivedShelf | null;
+  channelAccountId: string | null;
   openDialog: (tab?: SettingsTab, options?: OpenDialogOptions) => void;
   openArchivedChats: () => void;
   consumeArchivedChatsRequest: () => void;
@@ -99,6 +102,8 @@ function requestsFor(state: SettingsDialogState, tab: SettingsTab) {
         ? state.scrollTarget
         : null,
     archivedRequested: tab === "data" ? state.archivedRequested : null,
+    channelAccountId:
+      tab === "channels-permissions" ? state.channelAccountId : null,
   };
 }
 
@@ -108,6 +113,7 @@ export const useSettingsDialogStore = create<SettingsDialogState>((set) => ({
   scrollTarget: null,
   opener: null,
   archivedRequested: null,
+  channelAccountId: null,
   openDialog: (tab, options) =>
     set((state) => {
       const next = tab ?? state.activeTab;
@@ -118,6 +124,10 @@ export const useSettingsDialogStore = create<SettingsDialogState>((set) => ({
         // A caller that names a target replaces whatever was still pending.
         scrollTarget: options?.scrollTarget ?? pending.scrollTarget,
         archivedRequested: pending.archivedRequested,
+        channelAccountId:
+          next === "channels-permissions"
+            ? (options?.channelAccountId ?? pending.channelAccountId)
+            : null,
         opener: captureOpener(),
       };
     }),
@@ -127,6 +137,7 @@ export const useSettingsDialogStore = create<SettingsDialogState>((set) => ({
       activeTab: "data",
       scrollTarget: null,
       archivedRequested: "chats",
+      channelAccountId: null,
       opener: captureOpener(),
     }),
   consumeArchivedChatsRequest: () => set({ archivedRequested: null }),
@@ -138,7 +149,12 @@ export const useSettingsDialogStore = create<SettingsDialogState>((set) => ({
   // pass after `open: false` lands, so the opener must still be readable
   // from the store at that point. The next openDialog() overwrites it.
   closeDialog: () =>
-    set({ open: false, scrollTarget: null, archivedRequested: null }),
+    set({
+      open: false,
+      scrollTarget: null,
+      archivedRequested: null,
+      channelAccountId: null,
+    }),
   setActiveTab: (tab) => {
     try {
       window.localStorage.setItem(ACTIVE_TAB_KEY, tab);

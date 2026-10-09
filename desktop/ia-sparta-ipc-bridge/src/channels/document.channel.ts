@@ -5,6 +5,8 @@ import fsPromises from 'node:fs/promises'
 import zlib from 'node:zlib'
 import { createRequire } from 'node:module'
 import { getWorkspaceRoot } from './filesystem.channel'
+import { convertOfficePreview } from './office-preview'
+import { officeComponentStatus, installOfficeComponent } from './office-component'
 
 const reqModule = createRequire(import.meta.url)
 
@@ -400,6 +402,11 @@ export async function convertDocumentToMarkdown(
 }
 
 export function registerDocumentIPC() {
+  ipcMain.handle('document:office-status', async (_event, check) => officeComponentStatus(check === true))
+  ipcMain.handle('document:office-install', async () => {
+    try { await installOfficeComponent(); return { ok: true } } catch { return { ok: false } }
+  })
+  ipcMain.handle('document:office-preview', async (_event, request) => convertOfficePreview(request))
   ipcMain.handle('document:convert-to-markdown', async (_event, req: DocumentConversionRequest) => {
     return convertDocumentToMarkdown(req)
   })

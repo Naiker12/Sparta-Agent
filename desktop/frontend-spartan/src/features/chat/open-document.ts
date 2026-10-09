@@ -1,4 +1,3 @@
-import { strFromU8, unzipSync } from "fflate";
 
 export const OPEN_DOCUMENT_SPREADSHEET_MIME =
   "application/vnd.oasis.opendocument.spreadsheet";
@@ -91,6 +90,7 @@ async function readOpenDocumentXmlFiles(
   file: File,
 ): Promise<OpenDocumentXmlFiles> {
   assertOpenDocumentArchiveSize(file);
+  const { strFromU8, unzipSync } = await import("fflate");
 
   let files: Record<string, Uint8Array>;
   try {

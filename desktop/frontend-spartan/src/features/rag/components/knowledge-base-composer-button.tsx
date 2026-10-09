@@ -148,7 +148,7 @@ export function KnowledgeBaseComposerButton({
           align="start"
           sideOffset={2}
           avoidCollisions={true}
-          className="unsloth-plus-menu mcp-menu w-[232px]"
+          className="spartan-plus-menu mcp-menu w-[232px]"
         >
           <DropdownMenuLabel>{uiT("ui.retrieve_from")}</DropdownMenuLabel>
           <DropdownMenuItem

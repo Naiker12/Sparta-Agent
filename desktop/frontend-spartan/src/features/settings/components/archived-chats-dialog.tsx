@@ -11,15 +11,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  DeleteChatFilesSwitch,
-  type SidebarItem,
-  deleteChatItem,
-  unarchiveChatItem,
-  useChatPreferencesStore,
-  useChatRuntimeStore,
-  useChatSidebarItems,
-} from "@/features/chat";
+import { DeleteChatFilesSwitch } from "@/features/chat/components/delete-chat-files-switch";
+import { type SidebarItem, deleteChatItem, unarchiveChatItem, useChatSidebarItems } from "@/features/chat/hooks/use-chat-sidebar-items";
+import { useChatPreferencesStore } from "@/features/chat/stores/chat-preferences-store";
+import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 import { toast } from "@/lib/toast";
 import { ArchiveRestoreIcon, Delete02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";

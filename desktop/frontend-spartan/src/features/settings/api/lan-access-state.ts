@@ -86,13 +86,13 @@ export function lanAccessBlockMessage(
 ): string | null {
   switch (reason) {
     case "server_starting":
-      return "Unsloth is still starting.";
+      return "Spartan is still starting.";
     case "admin_password_change_required":
       return isDesktop
         ? "Set a remote password before putting this server on the network."
-        : "Change the administrator password before putting this server on the network. In the desktop app, run unsloth studio reset-password.";
+        : "Change the administrator password before putting this server on the network. Update the administrator password in Spartan.";
     case "launch_managed":
-      return "This launch already binds every network interface (-H 0.0.0.0), so Unsloth is on the network already.";
+      return "This launch already binds every network interface (-H 0.0.0.0), so Spartan is on the network already.";
     case "secure_launch":
       return "This launch used --secure, which serves only through the Cloudflare link and keeps the raw port closed. Relaunch without --secure to use LAN access.";
     case "colab":
@@ -107,7 +107,7 @@ export function lanAccessErrorMessage(error: string | null): string | null {
     case "no_lan_address":
       return "No network address found. Connect this machine to Wi-Fi or a wired network, then try again.";
     case "bind_failed":
-      return "Could not open Unsloth's port on this machine's network addresses.";
+      return "Could not open Spartan's port on this machine's network addresses.";
     case "listener_start_failed":
       return "The network listener did not start. Check the logs for details.";
     case "stop_timed_out":

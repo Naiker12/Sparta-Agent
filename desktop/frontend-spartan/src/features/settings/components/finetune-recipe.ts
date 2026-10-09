@@ -2,7 +2,7 @@ import { translate as uiTranslate } from "@/i18n";
 // Settings Data tab glue: turn chat history into a fine-tuning JSONL, stage
 // it as a Data Recipe seed upload, and open a new recipe on that file.
 
-import { type FineTuneFormat, buildFineTuneJsonl } from "@/features/chat";
+import { type FineTuneFormat, buildFineTuneJsonl } from "@/features/chat/prompt-storage/conversation-exports";
 import { saveRecipe } from "@/features/data-recipes/data/recipes-db";
 import { createEmptyRecipePayload } from "@/features/recipe-studio";
 import { inspectSeedUpload } from "@/features/recipe-studio/api";

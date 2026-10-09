@@ -1,3 +1,4 @@
+import { useChannelAssistantStore } from "@/features/channels";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -32,6 +33,7 @@ import { SETTINGS_PANEL_PREFS_STORAGE_KEY } from "../stores/settings-panel-prefs
 
 
 const PREFS_KEYS: string[] = [
+  "sparta-channel-assistant",
   // Appearance
   "theme",
   "palette",
@@ -109,6 +111,8 @@ function resetAllPrefs() {
 }
 
 export function GeneralTab() {
+  const assistantEnabled = useChannelAssistantStore((state) => state.enabled);
+  const setAssistantEnabled = useChannelAssistantStore((state) => state.setEnabled);
   const t = useT();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const launchAtLoginSetting = useDesktopBooleanSetting({
@@ -141,6 +145,11 @@ export function GeneralTab() {
           nothing and the section keeps just the version rows. */}
       <StudioVersionSection />
 
+      <SettingsSection title={t("channels.assistant.title")}>
+        <SettingsRow label={t("channels.assistant.setting")} description={t("channels.assistant.settingHelp")}>
+          <Switch checked={assistantEnabled} onCheckedChange={setAssistantEnabled} aria-label={t("channels.assistant.setting")} />
+        </SettingsRow>
+      </SettingsSection>
       <SettingsSection title={t("settings.appearance.language.title")}>
         <SettingsRow
           label={t("settings.appearance.language.label")}

@@ -1,0 +1,586 @@
+{
+  "revision": "76a44ed9180063bf4852b9dd724b656f4a828ac7",
+  "files": [
+    {
+      "bytes": 143792,
+      "file": "afro-directions.webp",
+      "gitBlob": "9a0fc894f04d45237068ab856bb0cfa7fb8cd876"
+    },
+    {
+      "bytes": 148918,
+      "file": "afro-reactions.webp",
+      "gitBlob": "d594314539895813a04ea596080055baf018e197"
+    },
+    {
+      "bytes": 189490,
+      "file": "astronaut-directions.webp",
+      "gitBlob": "72bbf19b7692b073ec27e2e51ec6ecfffffbe1f8"
+    },
+    {
+      "bytes": 199468,
+      "file": "astronaut-reactions.webp",
+      "gitBlob": "518cb0bb70113dcbb0e7670c6eda4b2a6a487cc7"
+    },
+    {
+      "bytes": 136604,
+      "file": "bald-directions.webp",
+      "gitBlob": "496954d5844d5e63984f52e2c5be1c2abd12619b"
+    },
+    {
+      "bytes": 154754,
+      "file": "bald-reactions.webp",
+      "gitBlob": "e7d532c8310f5e25b6bbdac34367a77d5d02a8e4"
+    },
+    {
+      "bytes": 226620,
+      "file": "ballerina-directions.webp",
+      "gitBlob": "87d28f30e8e112203bf48e8fbb415ff34781f3ab"
+    },
+    {
+      "bytes": 206166,
+      "file": "ballerina-reactions.webp",
+      "gitBlob": "e6cad834db51bd77d0bac320566ebc4e36bb6560"
+    },
+    {
+      "bytes": 148074,
+      "file": "bear-directions.webp",
+      "gitBlob": "acf3f4c5eac63abb821beede4f176195c5715045"
+    },
+    {
+      "bytes": 182752,
+      "file": "bear-reactions.webp",
+      "gitBlob": "7d88d46d1567a0c4e0e920a3d34aed746ba0a818"
+    },
+    {
+      "bytes": 132926,
+      "file": "beard-directions.webp",
+      "gitBlob": "3027a2f9fcd1b50ec8011060355a0d9e59d49327"
+    },
+    {
+      "bytes": 146650,
+      "file": "beard-reactions.webp",
+      "gitBlob": "6c0a624b341767c25cdd245329c4579db330b2fe"
+    },
+    {
+      "bytes": 191396,
+      "file": "builder-directions.webp",
+      "gitBlob": "58d77bdd009dc8835dcb760835e7e8da1bc9d891"
+    },
+    {
+      "bytes": 197794,
+      "file": "builder-reactions.webp",
+      "gitBlob": "ca75a7f2f9df53a4d9319a660735509f53f5a708"
+    },
+    {
+      "bytes": 157694,
+      "file": "bunny-directions.webp",
+      "gitBlob": "dc003b03f049568bb9ec664023b3c37cdadb2e2c"
+    },
+    {
+      "bytes": 173236,
+      "file": "bunny-reactions.webp",
+      "gitBlob": "a09a48aa5ea06186cf372e029777a0888705ba9e"
+    },
+    {
+      "bytes": 174392,
+      "file": "cap-directions.webp",
+      "gitBlob": "027b8edda919fc6d6999f4c78d78a307306cd194"
+    },
+    {
+      "bytes": 196650,
+      "file": "cap-reactions.webp",
+      "gitBlob": "05eae5dff78403a75cc787d7d367fb11c25fa25a"
+    },
+    {
+      "bytes": 129600,
+      "file": "cat-directions.webp",
+      "gitBlob": "509178c942095fe045b2ec32002d6a196338ed37"
+    },
+    {
+      "bytes": 142868,
+      "file": "cat-reactions.webp",
+      "gitBlob": "41719cb0bc58ae3217dd0bf01907e7e481cdc0a8"
+    },
+    {
+      "bytes": 162756,
+      "file": "chef-directions.webp",
+      "gitBlob": "ef40e3f13a6e73fa515137c68ba552f1d2d34662"
+    },
+    {
+      "bytes": 164832,
+      "file": "chef-reactions.webp",
+      "gitBlob": "2200d6a4a39cf1b4a95c84091a19b04b5a8bfae4"
+    },
+    {
+      "bytes": 154012,
+      "file": "clockwork-directions.webp",
+      "gitBlob": "d7795869e5877c658d3806ae99253b2bd32b9c81"
+    },
+    {
+      "bytes": 171954,
+      "file": "clockwork-reactions.webp",
+      "gitBlob": "68748ae1c9802155be444b4a65c23911d4f1ff88"
+    },
+    {
+      "bytes": 143972,
+      "file": "crt-directions.webp",
+      "gitBlob": "11606bd50e9cfe396abe619e25d1a1419bfa3f59"
+    },
+    {
+      "bytes": 145600,
+      "file": "crt-reactions.webp",
+      "gitBlob": "0ac3418ca3df0de2e7714ad1b838eb26bdbe49e8"
+    },
+    {
+      "bytes": 137332,
+      "file": "cube-directions.webp",
+      "gitBlob": "3c2b60012bda4f55e03a9d29d7ef6f4b98180b27"
+    },
+    {
+      "bytes": 116062,
+      "file": "cube-reactions.webp",
+      "gitBlob": "5cbe332cde689a5e23843c7a28c75bafd0c89f55"
+    },
+    {
+      "bytes": 193366,
+      "file": "deer-directions.webp",
+      "gitBlob": "d55b23bff134a87dc42aca4ab5f549ef108f1a62"
+    },
+    {
+      "bytes": 215838,
+      "file": "deer-reactions.webp",
+      "gitBlob": "9c6e9e51d7325fcef2b8e2d8b338bcd2d137bf80"
+    },
+    {
+      "bytes": 122798,
+      "file": "dino-directions.webp",
+      "gitBlob": "57784108ba5ed95af0e7c9ac9e80122afbe42a7c"
+    },
+    {
+      "bytes": 132782,
+      "file": "dino-reactions.webp",
+      "gitBlob": "73617bc0c052c895f6018b4733c35bbd070c2bac"
+    },
+    {
+      "bytes": 206768,
+      "file": "drone-directions.webp",
+      "gitBlob": "397ee13e9c8f8dd054b3c56c9b3d74825e347c48"
+    },
+    {
+      "bytes": 215386,
+      "file": "drone-reactions.webp",
+      "gitBlob": "ed50c98dab321d448fd2aa1e71c380fc9b85fc23"
+    },
+    {
+      "bytes": 191936,
+      "file": "fox-directions.webp",
+      "gitBlob": "ee3e26119789ac05db81ff42a12a5d7314d50f60"
+    },
+    {
+      "bytes": 293258,
+      "file": "fox-ink-directions.webp",
+      "gitBlob": "a3b9f3a8c1cee7550d2595e41e1d30ccf78d22d0"
+    },
+    {
+      "bytes": 293478,
+      "file": "fox-ink-reactions.webp",
+      "gitBlob": "b3ae727f0d992a29f2a40787bd4765d5179743c8"
+    },
+    {
+      "bytes": 193256,
+      "file": "fox-paper-directions.webp",
+      "gitBlob": "d5e9d03491f993db9c08b16a1e2399062047360f"
+    },
+    {
+      "bytes": 222092,
+      "file": "fox-paper-reactions.webp",
+      "gitBlob": "fc3c7f70089b5dfbee69f9f51bd8e71e16513c09"
+    },
+    {
+      "bytes": 181058,
+      "file": "fox-pixel-directions.webp",
+      "gitBlob": "e465c11076a0137572d74f7ff1a76f179e4a48d4"
+    },
+    {
+      "bytes": 200716,
+      "file": "fox-pixel-reactions.webp",
+      "gitBlob": "c5c8cfa35b9f8631743084ca02fcba976f758853"
+    },
+    {
+      "bytes": 190152,
+      "file": "fox-reactions.webp",
+      "gitBlob": "0400c1c397ee1fc7bbf1f5fae1e16024c7b1975d"
+    },
+    {
+      "bytes": 270866,
+      "file": "fox-riso-directions.webp",
+      "gitBlob": "028a985d20b2a48f44fc6f0de74814abae5c2653"
+    },
+    {
+      "bytes": 274104,
+      "file": "fox-riso-reactions.webp",
+      "gitBlob": "65e797dd4fea79edbf15f88ed0d7ae4c07ac0bd5"
+    },
+    {
+      "bytes": 280982,
+      "file": "fox-sketch-directions.webp",
+      "gitBlob": "b4eefbcbe6fe2f0fd8be4bc18e936bd5a70a7502"
+    },
+    {
+      "bytes": 263884,
+      "file": "fox-sketch-reactions.webp",
+      "gitBlob": "f1e43f3f29564656bbb647dbee980608c685e828"
+    },
+    {
+      "bytes": 136190,
+      "file": "frog-directions.webp",
+      "gitBlob": "1118f37cdc3fe2c4de0a1696a32ea71714682ac5"
+    },
+    {
+      "bytes": 151904,
+      "file": "frog-reactions.webp",
+      "gitBlob": "c67407ffe3a3cc7687641e3f1a0054849b1d1515"
+    },
+    {
+      "bytes": 136138,
+      "file": "gearbot-directions.webp",
+      "gitBlob": "8636cd20de99bfa0d432801e3fe05946bec26528"
+    },
+    {
+      "bytes": 160790,
+      "file": "gearbot-reactions.webp",
+      "gitBlob": "013cb8b1bc21f8b526b4d65aaf3595ad88a19eec"
+    },
+    {
+      "bytes": 311948,
+      "file": "glasses-directions.webp",
+      "gitBlob": "d683a8a83d0562c85236d755dd4ecb326c7f05c2"
+    },
+    {
+      "bytes": 303218,
+      "file": "glasses-reactions.webp",
+      "gitBlob": "49e5d82de7bec9f61deda8f75c6cd8ef4b4c178c"
+    },
+    {
+      "bytes": 180412,
+      "file": "grandpa-directions.webp",
+      "gitBlob": "34df75e2dbc60aa689a04669fdaa9c21d4d92672"
+    },
+    {
+      "bytes": 195084,
+      "file": "grandpa-reactions.webp",
+      "gitBlob": "0d8cb0c20255089afaaca7fb593484af02642300"
+    },
+    {
+      "bytes": 165742,
+      "file": "granny-directions.webp",
+      "gitBlob": "8635a48154aeb990578336d24bd91119f7baa755"
+    },
+    {
+      "bytes": 218242,
+      "file": "granny-reactions.webp",
+      "gitBlob": "dbcf628acbc1a6073b09624e9ac6740e46069498"
+    },
+    {
+      "bytes": 224568,
+      "file": "hamster-directions.webp",
+      "gitBlob": "a56326ea107aa425284e9d46809af45ebd72fd54"
+    },
+    {
+      "bytes": 219424,
+      "file": "hamster-reactions.webp",
+      "gitBlob": "834ac0374fcb4230b88e82a11cdde187b380bdd1"
+    },
+    {
+      "bytes": 184736,
+      "file": "hedgehog-directions.webp",
+      "gitBlob": "1223e644abfdefc8ba4984ffa8d960c5c640e599"
+    },
+    {
+      "bytes": 203290,
+      "file": "hedgehog-reactions.webp",
+      "gitBlob": "9ae87d0d3bd53a57e678aec6100fd992bf591dab"
+    },
+    {
+      "bytes": 173528,
+      "file": "hijabi-directions.webp",
+      "gitBlob": "0a020722128c75164b52d21a554b45af85614661"
+    },
+    {
+      "bytes": 187920,
+      "file": "hijabi-reactions.webp",
+      "gitBlob": "cfcf97c7101586ba4e27c543d5532b56324e7d55"
+    },
+    {
+      "bytes": 211890,
+      "file": "kamran-directions.webp",
+      "gitBlob": "8d23ca202c4952b00b648d5d7a8f7757c14704e6"
+    },
+    {
+      "bytes": 201748,
+      "file": "kamran-reactions.webp",
+      "gitBlob": "20d3cbcad050bd0417f2bf6ce43cd9530ca4c8eb"
+    },
+    {
+      "bytes": 212276,
+      "file": "knight-directions.webp",
+      "gitBlob": "fd6eb39da21732f52c042c7572b6509331e602c9"
+    },
+    {
+      "bytes": 208790,
+      "file": "knight-reactions.webp",
+      "gitBlob": "b44580beb2008523b03436f721b2b4f0fec2eb4c"
+    },
+    {
+      "bytes": 255172,
+      "file": "koala-directions.webp",
+      "gitBlob": "a27bd8992088159e37a357ac183031ed751574a7"
+    },
+    {
+      "bytes": 238478,
+      "file": "koala-reactions.webp",
+      "gitBlob": "f555cee23195782497c3c26bfeec9012f4b4c4de"
+    },
+    {
+      "bytes": 136870,
+      "file": "lantern-directions.webp",
+      "gitBlob": "a3bf4e12026dcc6a0b3324d0fab4c955ceec591a"
+    },
+    {
+      "bytes": 147916,
+      "file": "lantern-reactions.webp",
+      "gitBlob": "297b9480c15222c117b30c9d1d47634edcf6dd6b"
+    },
+    {
+      "bytes": 231846,
+      "file": "mouse-directions.webp",
+      "gitBlob": "40376887a2b35be55211506345f467aef0767a1a"
+    },
+    {
+      "bytes": 237546,
+      "file": "mouse-reactions.webp",
+      "gitBlob": "06902ade640b96a446ffbce35009fc570e0e89d3"
+    },
+    {
+      "bytes": 183620,
+      "file": "nurse-directions.webp",
+      "gitBlob": "259643eb93ffa04f1d52c67eb9f41c2c062163b9"
+    },
+    {
+      "bytes": 193764,
+      "file": "nurse-reactions.webp",
+      "gitBlob": "454885bd3a180dfe111ee28d36e3d24cb48431fe"
+    },
+    {
+      "bytes": 139156,
+      "file": "otter-directions.webp",
+      "gitBlob": "279915f7d3f5a3cef9190793cf39108485be5ba5"
+    },
+    {
+      "bytes": 157528,
+      "file": "otter-reactions.webp",
+      "gitBlob": "974b53ddb7be74411691c47a344d78e6c9a06187"
+    },
+    {
+      "bytes": 155100,
+      "file": "owl-directions.webp",
+      "gitBlob": "df559078c6d870c3c5dc0ad9b52e78fe4ea85a83"
+    },
+    {
+      "bytes": 164022,
+      "file": "owl-reactions.webp",
+      "gitBlob": "a3e00149c5afa7153b841850825feba655497275"
+    },
+    {
+      "bytes": 100590,
+      "file": "panda-directions.webp",
+      "gitBlob": "6f3f42dcf066c2b1c01e85913d2ea8828215f474"
+    },
+    {
+      "bytes": 111338,
+      "file": "panda-reactions.webp",
+      "gitBlob": "aaecccbcc7aaeb646aeb2a10145d31701ada5e9e"
+    },
+    {
+      "bytes": 100424,
+      "file": "penguin-directions.webp",
+      "gitBlob": "3a671457df0b75e99a99dca7638575271e2b5166"
+    },
+    {
+      "bytes": 119244,
+      "file": "penguin-reactions.webp",
+      "gitBlob": "64e34e61311e2dd0420799c1116dd9e63d9c54c0"
+    },
+    {
+      "bytes": 182306,
+      "file": "pirate-directions.webp",
+      "gitBlob": "09b762fc8b17732ea889558d967c055e21e7c7a9"
+    },
+    {
+      "bytes": 194554,
+      "file": "pirate-reactions.webp",
+      "gitBlob": "8f0c60fea3a27bac523b7f5066a0b21b36f7621c"
+    },
+    {
+      "bytes": 145494,
+      "file": "postbot-directions.webp",
+      "gitBlob": "00abb3bb818e4916ec7746da98535adddf7564c1"
+    },
+    {
+      "bytes": 156698,
+      "file": "postbot-reactions.webp",
+      "gitBlob": "2b445b409c44c57c9141a3e4c82b500faa0817be"
+    },
+    {
+      "bytes": 159908,
+      "file": "pug-directions.webp",
+      "gitBlob": "511a7c9af010881b33bd782009c5f061249f10bf"
+    },
+    {
+      "bytes": 176670,
+      "file": "pug-reactions.webp",
+      "gitBlob": "b7717c8da2fd5e7b6920c7d58a5b0ed2a5d3018d"
+    },
+    {
+      "bytes": 181796,
+      "file": "raccoon-directions.webp",
+      "gitBlob": "bb1d4378dcb757603bfd8e5c31086598ce6905db"
+    },
+    {
+      "bytes": 207512,
+      "file": "raccoon-reactions.webp",
+      "gitBlob": "4b951c3942c87ea156a73ad094dbcf63191065a4"
+    },
+    {
+      "bytes": 193316,
+      "file": "radio-directions.webp",
+      "gitBlob": "35e0414e1a71aca96c49395d38cd986b09fb71e9"
+    },
+    {
+      "bytes": 183170,
+      "file": "radio-reactions.webp",
+      "gitBlob": "89869cd0e3593eddec16aadbb25d90878948a783"
+    },
+    {
+      "bytes": 160898,
+      "file": "redpanda-directions.webp",
+      "gitBlob": "aefabe04b681dee4f25a83c372bcd3fa80183133"
+    },
+    {
+      "bytes": 174816,
+      "file": "redpanda-reactions.webp",
+      "gitBlob": "22cf635285f13ef55b201608b5f17a0aef57b827"
+    },
+    {
+      "bytes": 158174,
+      "file": "rocket-directions.webp",
+      "gitBlob": "fa8a1059ec88f98f64c963911051f9e09ea9f098"
+    },
+    {
+      "bytes": 179456,
+      "file": "rocket-reactions.webp",
+      "gitBlob": "ef2a75f3595e7479bd2d868c51add6063a6e37e8"
+    },
+    {
+      "bytes": 237184,
+      "file": "scientist-directions.webp",
+      "gitBlob": "240d1f526d68ad69d0bc71364b2137b5c95efb07"
+    },
+    {
+      "bytes": 229654,
+      "file": "scientist-reactions.webp",
+      "gitBlob": "75ce0f76c5ed5f9766cec26beb95f3ef7d5dae50"
+    },
+    {
+      "bytes": 204960,
+      "file": "scout-directions.webp",
+      "gitBlob": "f0b07f06fb03d96c11d391bae2cbc7881c65a44d"
+    },
+    {
+      "bytes": 201118,
+      "file": "scout-reactions.webp",
+      "gitBlob": "dfd5daf9091b999f99178d0c4b9cb5dff6f9630d"
+    },
+    {
+      "bytes": 152940,
+      "file": "sheep-directions.webp",
+      "gitBlob": "2c999297430fb7345f0da7688d11fa492b7fde0c"
+    },
+    {
+      "bytes": 180212,
+      "file": "sheep-reactions.webp",
+      "gitBlob": "c7e81d3ce9f4a6a7daeaeb1e4e4d14240527fde8"
+    },
+    {
+      "bytes": 144460,
+      "file": "sikh-directions.webp",
+      "gitBlob": "ee1995035b00240b47e683a219144e855310ccef"
+    },
+    {
+      "bytes": 157374,
+      "file": "sikh-reactions.webp",
+      "gitBlob": "e975b626ce417deb31f725126f725c353ae55c25"
+    },
+    {
+      "bytes": 257708,
+      "file": "skater-directions.webp",
+      "gitBlob": "ce4c0b741bb41cda7961d57335b2c4d749696323"
+    },
+    {
+      "bytes": 248730,
+      "file": "skater-reactions.webp",
+      "gitBlob": "73e810cd6801ac3ccf09989744d3e6e78c756da9"
+    },
+    {
+      "bytes": 182896,
+      "file": "sloth-directions.webp",
+      "gitBlob": "cda1b09d70f86cdf4899cb6d5affe6c4c6296a9e"
+    },
+    {
+      "bytes": 195924,
+      "file": "sloth-reactions.webp",
+      "gitBlob": "1fde6eb227378d562c9c5199ee2e78f7aab53e32"
+    },
+    {
+      "bytes": 187052,
+      "file": "tiger-directions.webp",
+      "gitBlob": "5154018ecba9d67b4d81ecb6b256252cc2fdbee4"
+    },
+    {
+      "bytes": 204162,
+      "file": "tiger-reactions.webp",
+      "gitBlob": "d59ccc8fd92c2235996ad6611a7bb8225d07ac3c"
+    },
+    {
+      "bytes": 159388,
+      "file": "toaster-directions.webp",
+      "gitBlob": "8f353300e71bacea1427dca898acc5f12131e493"
+    },
+    {
+      "bytes": 168124,
+      "file": "toaster-reactions.webp",
+      "gitBlob": "34806af3f8cfc18c65f56c8e421bcfc1c24451b4"
+    },
+    {
+      "bytes": 155656,
+      "file": "tv-directions.webp",
+      "gitBlob": "ee74295dc90ac625d9998ea3a09cf26ffffebfa9"
+    },
+    {
+      "bytes": 159010,
+      "file": "tv-reactions.webp",
+      "gitBlob": "94f922fb3671caa88b7bed911bd64037033564a7"
+    },
+    {
+      "bytes": 185126,
+      "file": "wizard-directions.webp",
+      "gitBlob": "1ee05ade97e63c62babb4c2cd961fbd88cc3a631"
+    },
+    {
+      "bytes": 194206,
+      "file": "wizard-reactions.webp",
+      "gitBlob": "bd57354873c7ba9ce5fbe4c32b244f59f31ffc0a"
+    }
+  ],
+  "repository": "https://github.com/nilbuild/page-mascot"
+}

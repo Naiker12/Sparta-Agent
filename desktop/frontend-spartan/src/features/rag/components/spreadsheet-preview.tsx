@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useT } from "@/i18n";
 import { useEffect, useState } from "react";
+import { PreviewToolbar } from "./preview-toolbar";
 
 type PreviewResult = { sheets: SheetData[]; limited?: boolean; error?: string };
 const previewCache = new WeakMap<Blob, PreviewResult>();
@@ -146,11 +147,12 @@ export function LocalSpreadsheetPreview({ blob }: { blob: Blob }) {
           </p>
         )}
       </div>
-      <div className="flex items-center justify-between gap-2 border-t px-3 py-2 text-xs text-muted-foreground">
-        <span>
+      <PreviewToolbar>
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <span title={sheet?.truncated || result.limited ? t("chat.preview.spreadsheetLimit") : undefined} aria-label={sheet?.truncated || result.limited ? t("chat.preview.spreadsheetLimit") : undefined} className="whitespace-nowrap tabular-nums">
           {rows.length} × {columns}
           {sheet?.truncated || result.limited
-            ? ` · ${t("chat.preview.spreadsheetLimit")}`
+            ? " *"
             : ""}
         </span>
         <div className="flex items-center gap-1">
@@ -177,6 +179,7 @@ export function LocalSpreadsheetPreview({ blob }: { blob: Blob }) {
           </Button>
         </div>
       </div>
+      </PreviewToolbar>
       <Tabs
         value={selected}
         onValueChange={(value) => {

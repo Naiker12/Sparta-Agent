@@ -19,22 +19,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  type ConvExportFormat,
-  EXPORT_FORMATS_LIST,
-  type SidebarItem,
-  archiveChatItems,
-  deleteChatItems,
-  exportBulkConversationsMerged,
-  exportBulkConversationsSeparate,
-  moveChatItemToProject,
-  rangeBetween,
-  useChatPreferencesStore,
-  useChatProjects,
-  useChatRuntimeStore,
-  useChatSidebarItems,
-  usePinnedChatsStore,
-} from "@/features/chat";
+import { type ConvExportFormat, EXPORT_FORMATS_LIST, exportBulkConversationsMerged, exportBulkConversationsSeparate } from "@/features/chat/prompt-storage/conversation-exports";
+import { type SidebarItem, archiveChatItems, deleteChatItems, useChatSidebarItems } from "@/features/chat/hooks/use-chat-sidebar-items";
+import { moveChatItemToProject, useChatProjects } from "@/features/chat/hooks/use-chat-projects";
+import { rangeBetween } from "@/features/chat/utils/row-selection";
+import { useChatPreferencesStore } from "@/features/chat/stores/chat-preferences-store";
+import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
+import { usePinnedChatsStore } from "@/features/chat/stores/pinned-chats-store";
 import { isDownloadCancelled } from "@/lib/native-files";
 import { toast } from "@/lib/toast";
 import {
