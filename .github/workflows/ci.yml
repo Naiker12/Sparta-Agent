@@ -64,7 +64,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install CPU-only test dependencies
-        run: pip install pytest fastapi==0.141.1 PyJWT httpx structlog cryptography python-multipart pymupdf openpyxl python-docx
+        run: pip install pytest fastapi==0.141.1 PyJWT httpx structlog cryptography python-multipart pymupdf openpyxl python-docx PyYAML
       - name: Authentication boundary and credential rotation
         working-directory: desktop/backend-spartan
         env:
