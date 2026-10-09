@@ -1,5 +1,6 @@
-import { useT as useUiT } from "@/i18n";
 "use client";
+
+import { useT as useUiT } from "@/i18n";
 
 import { Spinner } from "@/components/ui/spinner";
 import { authFetch } from "@/features/auth";
@@ -15,10 +16,11 @@ import {
 import { stringifyToolResult } from "@/lib/strip-ansi";
 import type { ToolCallMessagePartComponent } from "@assistant-ui/react";
 import { useToolArgsStatus } from "@assistant-ui/react";
-import { AlertCircleIcon, CodeIcon, LoaderIcon } from "lucide-react";
+import { AlertCircleIcon, CodeIcon } from "lucide-react";
 import { memo, useEffect, useRef, useState } from "react";
 import { pythonToolImagePath } from "./python-tool-image-path";
 import { type SandboxFile, isSandboxFileList } from "./sandbox-files";
+import { DocumentGenerationStatus } from "./tool-ui-document";
 import { SandboxFiles } from "./sandbox-files-view";
 import { CopyBtn, ToolCodeCell } from "./tool-code-cell";
 import {
@@ -186,15 +188,14 @@ const PythonToolUIImpl: ToolCallMessagePartComponent = ({
   // Document generation should read like a finished result, not a transcript
   // of its implementation. Keep the technical card for ordinary code work,
   // but replace artifact-producing runs with a small status and the final file.
-  if (isRunning) {
-    return (
-      <div className="my-2 flex items-center gap-2 text-sm text-muted-foreground">
-        <LoaderIcon className="size-3.5 animate-spin" />
-        <span>{t("chat.tools.generatingFile")}</span>
-      </div>
+  const createsDocument =
+    /\.(?:pdf|xlsx|docx|csv|pptx)\b|\b(?:openpyxl|reportlab|docx|pymupdf)\b/i.test(
+      code,
     );
+  if (isRunning && createsDocument) {
+    return <DocumentGenerationStatus waiting={awaitingApproval} />;
   }
-  if (status?.type === "incomplete") {
+  if (status?.type === "incomplete" && createsDocument) {
     return (
       <div className="my-2 flex items-center gap-2 text-sm text-destructive">
         <AlertCircleIcon className="size-3.5" />

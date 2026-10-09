@@ -64,7 +64,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install CPU-only test dependencies
-        run: pip install pytest fastapi==0.141.1 PyJWT httpx structlog cryptography python-multipart
+        run: pip install pytest fastapi==0.141.1 PyJWT httpx structlog cryptography python-multipart pymupdf openpyxl python-docx PyYAML numpy Pillow filelock ddgs
       - name: Authentication boundary and credential rotation
         working-directory: desktop/backend-spartan
         env:
@@ -75,3 +75,8 @@ jobs:
         env:
           PYTHONPATH: .
         run: python -m pytest --noconftest tests/test_channels.py tests/test_channels_controls.py tests/test_channels_date.py tests/test_channels_documents.py tests/test_channels_images.py tests/test_channels_intents.py tests/test_channels_permissions_command.py tests/test_channels_personal_pairing.py tests/test_channels_profile.py tests/test_channels_profile_capability.py tests/test_channels_project_context.py tests/test_channels_projects.py tests/test_channels_voice.py tests/test_telegram_delivery_errors.py -q
+      - name: Document generation and unique workspace folders
+        working-directory: desktop/backend-spartan
+        env:
+          PYTHONPATH: .
+        run: python -m pytest --noconftest tests/test_document_generation.py tests/test_project_folder_uniqueness.py -q

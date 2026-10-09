@@ -12,7 +12,7 @@ const { recordedSandboxSessionId } = await import(
 
 type Message = Parameters<typeof recordedSandboxSessionId>[0][number];
 
-function toolMessage(sessionId: string): Message {
+function toolMessage(sessionId: string, toolName = "python"): Message {
   return {
     id: "m2",
     threadId: "thread-1",
@@ -23,7 +23,7 @@ function toolMessage(sessionId: string): Message {
       {
         type: "tool-call",
         toolCallId: "call-1",
-        toolName: "python",
+        toolName,
         result: {
           text: "wrote report.csv",
           images: [],
@@ -39,6 +39,10 @@ test("a chat moved into a project still names the sandbox its files are in", () 
   // Written while the chat was loose, so the id is the thread's, not project-<id>.
   const messages = [toolMessage("thread-1")];
   assert.equal(recordedSandboxSessionId(messages), "thread-1");
+});
+
+test("documents created with Code off retain their original sandbox after moving the chat", () => {
+  assert.equal(recordedSandboxSessionId([toolMessage("thread-1", "generate_document")]), "thread-1");
 });
 
 test("the most recent tool result wins when the scope changed mid-chat", () => {

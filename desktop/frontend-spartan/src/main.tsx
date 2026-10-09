@@ -7,7 +7,7 @@ import { App } from "./app/app";
 import { fetchDeviceType } from "./config/env";
 import { StartupGate } from "./features/setup/startup-gate";
 import { initializeLocale } from "./i18n";
-import { isTauri, setApiBase, setBackendError } from "./lib/api-base";
+import { isElectron, isTauri, setApiBase, setBackendError } from "./lib/api-base";
 import { watchOverlayScrollbarGutter } from "./lib/overlay-scrollbar";
 
 declare global {
@@ -93,6 +93,15 @@ watchOverlayScrollbarGutter(window);
 function renderApp(): void {
   root.render(
     <StrictMode>
+      {/* Keep native window dragging available during setup and error screens too. */}
+      {isElectron && (
+        <div
+          data-slot="electron-window-drag-region"
+          aria-hidden="true"
+          className="fixed top-0 z-[70] h-[38px] select-none [-webkit-app-region:drag]"
+          style={{ left: "48px", right: "112px" }}
+        />
+      )}
       <GlobalErrorBoundary>
         <StartupGate>
           <App />

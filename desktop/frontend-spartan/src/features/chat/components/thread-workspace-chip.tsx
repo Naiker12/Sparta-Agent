@@ -2,17 +2,16 @@ import { useT } from "@/i18n";
 import { Folder01Icon, FolderAddIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useRef, useState } from "react";
-import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
+import { CheckIcon, ChevronDownIcon, XIcon, GitBranchIcon } from "lucide-react";
+import { useDocumentPreviewStore } from "@/features/rag/components/preview-store";
+import {
+  configureGitReview,
+  type GitReviewScope,
+} from "../api/modules/workspace-git-api";
+import { getProjectNativeFilesystem } from "../hooks/use-chat-projects";
+import { useWorkspaceStore } from "../stores/use-workspace-store";
 
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Command,
   CommandEmpty,
@@ -27,7 +26,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/lib/toast";
 import {
   type ThreadWorkspaceBinding,
@@ -85,8 +83,14 @@ export function ThreadWorkspaceChip({
   const [pending, setPending] = useState<PendingWorkspace | null>(
     getPendingWorkspace,
   );
-  const [selectedFolder, setSelectedFolder] = useState<string | null>(null);
-  const [selectedAccess, setSelectedAccess] = useState<WorkspaceAccess>("read");
+  const [gitStatus, setGitStatus] = useState<{
+    isRepository?: boolean;
+    branch?: string;
+    upstream?: string;
+    changed?: number;
+    insertions?: number;
+    deletions?: number;
+  } | null>(null);
 
   useEffect(() => {
     const refresh = () => {
@@ -100,7 +104,6 @@ export function ThreadWorkspaceChip({
 
   useEffect(() => {
     setOpen(false);
-    setSelectedFolder(null);
   }, [threadId]);
 
   useEffect(() => {
@@ -166,23 +169,12 @@ export function ThreadWorkspaceChip({
       if (!folder) {
         return;
       }
-      const previousPath = binding?.canonicalPath ?? pending?.folder;
-      const previousAccess = binding?.access ?? pending?.access;
-      if (previousPath === folder && previousAccess) {
-        await confirmFolderAccess(folder, previousAccess);
-        return;
-      }
-      // Full access was explicitly confirmed in the permission selector.
-      // It applies only to this newly selected root, never to other folders.
       if (
-        !previousPath &&
-        useChatRuntimeStore.getState().permissionMode === "full"
-      ) {
-        await confirmFolderAccess(folder, "write");
+        workspacePathKey(binding?.canonicalPath ?? pending?.folder ?? "") ===
+        workspacePathKey(folder)
+      )
         return;
-      }
-      setSelectedAccess("read");
-      setSelectedFolder(folder);
+      await connectFolder(folder);
     } catch (error) {
       toast.error(t("chat.workspace.errorSelect"), {
         description: error instanceof Error ? error.message : undefined,
@@ -190,15 +182,11 @@ export function ThreadWorkspaceChip({
     }
   }
 
-  async function confirmFolderAccess(
-    folderOverride?: string,
-    accessOverride?: WorkspaceAccess,
-  ) {
-    if (!(folderOverride ?? selectedFolder)) {
-      return;
-    }
-    const folder = (folderOverride ?? selectedFolder)!;
-    const access = accessOverride ?? selectedAccess;
+  async function connectFolder(folder: string) {
+    const access: WorkspaceAccess =
+      useChatRuntimeStore.getState().permissionMode === "full"
+        ? "write"
+        : "write_no_delete";
     setBusy(true);
     try {
       const activeThreadId = threadId;
@@ -209,7 +197,6 @@ export function ThreadWorkspaceChip({
         }
         setPendingWorkspace({ folder, access });
         setPending({ folder, access });
-        setSelectedFolder(null);
         return;
       }
       const next = await bindThreadWorkspace(activeThreadId, folder, access);
@@ -226,7 +213,6 @@ export function ThreadWorkspaceChip({
       if (next.projectId)
         useChatRuntimeStore.getState().setActiveProjectId(next.projectId);
       window.dispatchEvent(new Event("sparta:workspace-changed"));
-      setSelectedFolder(null);
     } catch (error) {
       toast.error(t("chat.workspace.errorConnect"), {
         description: error instanceof Error ? error.message : undefined,
@@ -264,6 +250,82 @@ export function ThreadWorkspaceChip({
   const visibleBinding = binding?.threadId === threadId ? binding : null;
   const currentPath = visibleBinding?.canonicalPath ?? pending?.folder;
   const currentAccess = visibleBinding?.access ?? pending?.access;
+  const currentProject = projects.find(
+    (project) =>
+      currentPath &&
+      project.connectedFolderPath &&
+      workspacePathKey(project.connectedFolderPath) ===
+        workspacePathKey(currentPath),
+  );
+  const scopeId =
+    visibleBinding?.bindingId ??
+    (pending && currentPath
+      ? `sparta-draft:${workspacePathKey(currentPath)}`
+      : currentProject?.id);
+  const isBinding = Boolean(visibleBinding || pending);
+  const scope: GitReviewScope | null =
+    currentPath && scopeId
+      ? {
+          id: scopeId,
+          root: currentPath,
+          access: currentAccess ?? "read",
+          binding: isBinding,
+        }
+      : null;
+  useEffect(() => {
+    let cancelled = false;
+    setGitStatus(null);
+    useWorkspaceStore
+      .getState()
+      .setCapabilities({ hasGit: false, hasGithub: false });
+    if (!currentPath || !scopeId) return;
+    const refresh = async () => {
+      try {
+        await configureGitReview({
+          id: scopeId,
+          root: currentPath,
+          access: currentAccess ?? "read",
+          binding: isBinding,
+        });
+        const result =
+          await getProjectNativeFilesystem()?.getGitStatus?.(scopeId);
+        if (!cancelled) {
+          setGitStatus(result?.success ? result : null);
+          useWorkspaceStore
+            .getState()
+            .setCapabilities({
+              hasGit: Boolean(result?.success && result.isRepository),
+              hasGithub: Boolean(result?.success && result.isRepository),
+            });
+        }
+      } catch {
+        if (!cancelled) setGitStatus(null);
+      }
+    };
+    void refresh();
+    const onFocus = () => {
+      void refresh();
+    };
+    window.addEventListener("focus", onFocus);
+    const timer = window.setInterval(() => {
+      if (!document.hidden) void refresh();
+    }, 15000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [currentPath, scopeId, currentAccess, isBinding, revision]);
+  function openRepository(kind: "changes" | "github") {
+    if (!scope) return;
+    setOpen(false);
+    useDocumentPreviewStore
+      .getState()
+      .openRepositoryPreview(
+        { scope, kind },
+        t(`chat.repository.${kind === "changes" ? "changes" : "pullRequests"}`),
+      );
+  }
 
   const chip = (
     <button
@@ -290,81 +352,6 @@ export function ThreadWorkspaceChip({
     </button>
   );
 
-  const accessDialog = (
-    <Dialog
-      open={selectedFolder !== null}
-      onOpenChange={(open) => !open && setSelectedFolder(null)}
-    >
-      <DialogContent className="max-w-lg" showCloseButton={true}>
-        <DialogHeader>
-          <DialogTitle>{t("chat.workspace.connectTitle")}</DialogTitle>
-          <DialogDescription>
-            {t("chat.workspace.connectDescription")}
-          </DialogDescription>
-        </DialogHeader>
-        <p className="break-all rounded-2xl bg-muted px-4 py-3 text-sm text-foreground">
-          {selectedFolder}
-        </p>
-        <RadioGroup
-          value={selectedAccess}
-          onValueChange={(value) => setSelectedAccess(value as WorkspaceAccess)}
-          aria-label={t("chat.workspace.permissionAria")}
-        >
-          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border px-4 py-3 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5">
-            <RadioGroupItem
-              value="read"
-              aria-label={t("chat.workspace.readOnly")}
-            />
-            <span className="flex flex-col gap-1">
-              <span className="font-medium">
-                {t("chat.workspace.readOnly")}
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {t("chat.workspace.readOnlyDesc")}
-              </span>
-            </span>
-          </label>
-          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border px-4 py-3 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5">
-            <RadioGroupItem
-              value="write_no_delete"
-              aria-label={t("chat.workspace.editNoDelete")}
-            />
-            <span className="flex flex-col gap-1">
-              <span className="font-medium">
-                {t("chat.workspace.editNoDelete")}
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {t("chat.workspace.editNoDeleteDesc")}
-              </span>
-            </span>
-          </label>
-          <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border px-4 py-3 has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5">
-            <RadioGroupItem
-              value="write"
-              aria-label={t("chat.workspace.allowEdits")}
-            />
-            <span className="flex flex-col gap-1">
-              <span className="font-medium">
-                {t("chat.workspace.allowEdits")}
-              </span>
-              <span className="text-sm text-muted-foreground">
-                {t("chat.workspace.allowEditsDesc")}
-              </span>
-            </span>
-          </label>
-        </RadioGroup>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setSelectedFolder(null)}>
-            {t("chat.workspace.cancel")}
-          </Button>
-          <Button disabled={busy} onClick={() => void confirmFolderAccess()}>
-            {t("chat.workspace.connect")}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-
   return (
     <>
       <div
@@ -379,6 +366,36 @@ export function ThreadWorkspaceChip({
             align="start"
             className="w-80 max-w-[calc(100vw-2rem)] p-0"
           >
+            {currentPath && gitStatus?.isRepository && (
+              <div className="flex flex-col gap-2 border-b p-3">
+                <p className="truncate text-sm font-medium">
+                  {label(currentPath!)} · {gitStatus.branch ?? "HEAD"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {gitStatus.upstream ?? t("chat.repository.noUpstream")} ·{" "}
+                  {t("chat.repository.fileCount", {
+                    count: gitStatus.changed ?? 0,
+                  })}{" "}
+                  · +{gitStatus.insertions ?? 0} −{gitStatus.deletions ?? 0}
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => openRepository("changes")}
+                  >
+                    {t("chat.repository.changes")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => openRepository("github")}
+                  >
+                    {t("chat.repository.pullRequests")}
+                  </Button>
+                </div>
+              </div>
+            )}
             <Command>
               <CommandInput placeholder={t("chat.workspace.searchFolders")} />
               <CommandList>
@@ -407,8 +424,7 @@ export function ThreadWorkspaceChip({
                           onSelect={() => {
                             setOpen(false);
                             if (selected) return;
-                            setSelectedAccess("read");
-                            setSelectedFolder(folder);
+                            void connectFolder(folder);
                           }}
                         >
                           <HugeiconsIcon
@@ -458,6 +474,18 @@ export function ThreadWorkspaceChip({
             </Command>
           </PopoverContent>
         </Popover>
+        {currentPath && gitStatus?.isRepository && (
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={busy || isRunning}
+            aria-label={`${t("chat.repository.changes")} · ${gitStatus.branch ?? "HEAD"}`}
+            onClick={() => openRepository("changes")}
+          >
+            <GitBranchIcon />
+            {gitStatus.branch ?? "HEAD"}
+          </Button>
+        )}
         {currentAccess ? (
           <span className="composer-workspace-access" title={currentPath}>
             {busy
@@ -470,7 +498,6 @@ export function ThreadWorkspaceChip({
           </span>
         ) : null}
       </div>
-      {accessDialog}
     </>
   );
 }

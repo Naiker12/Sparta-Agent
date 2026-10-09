@@ -69,8 +69,8 @@ export function ApiProviderLogo({
   title,
 }: ApiProviderLogoProps) {
   const src = apiProviderLogoSrc(providerType);
-  const [failed, setFailed] = useState(false);
-  if ((!src && isCustomProviderType(providerType)) || failed) {
+  const [failedSrc, setFailedSrc] = useState<string>();
+  if ((!src && isCustomProviderType(providerType)) || (src && failedSrc === src)) {
     return (
       <span
         title={title}
@@ -94,7 +94,7 @@ export function ApiProviderLogo({
       alt=""
       title={title}
       aria-hidden={true}
-      onError={() => setFailed(true)}
+      onError={() => setFailedSrc(src)}
       className={cn(
         "shrink-0 object-contain",
         providerType && DARK_INVERT_LOGOS.has(providerType) && "dark:invert",

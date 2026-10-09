@@ -66,7 +66,7 @@ function SandboxFileRow({
 
   const t = useT();
   const [busy, setBusy] = useState(false);
-  const [_previewing, setPreviewing] = useState(false);
+  const [previewing, setPreviewing] = useState(false);
   const openLocalPreview = useDocumentPreviewStore(
     (state) => state.openLocalPreview,
   );
@@ -148,6 +148,7 @@ function SandboxFileRow({
   const isHtmlFile = file.name.endsWith(".html") || file.name.endsWith(".htm");
 
   const handleOpen = useCallback(() => {
+    if (previewing) return;
     const path = sandboxFilePath(sessionId, file.name);
     const targetUrl = apiUrl(path);
     if (isHtmlFile) {
@@ -155,13 +156,15 @@ function SandboxFileRow({
     } else {
       preview();
     }
-  }, [file.name, isHtmlFile, preview, sessionId]);
+  }, [file.name, isHtmlFile, preview, previewing, sessionId]);
 
   return (
     <div
       onClick={handleOpen}
       className="group flex w-full max-w-[42rem] items-center justify-between gap-3 p-3.5 rounded-2xl border border-border/60 bg-card hover:bg-muted/40 hover:border-border hover:shadow-xs transition-all cursor-pointer select-none"
       role="button"
+      aria-busy={previewing}
+      aria-disabled={previewing}
       tabIndex={0}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -173,9 +176,14 @@ function SandboxFileRow({
       <div className="flex min-w-0 items-center gap-3">
         <div
           aria-hidden={true}
-          className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 group-hover:scale-105 transition-transform"
+          className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 motion-safe:group-hover:scale-105 transition-transform"
         >
-          {isHtmlFile ? (
+          {previewing ? (
+            <Spinner
+              label={t("chat.tools.preparingFile")}
+              className="size-5 motion-reduce:animate-none"
+            />
+          ) : isHtmlFile ? (
             <GlobeIcon className="size-5" />
           ) : (
             <HugeiconsIcon icon={File02Icon} className="size-5" />
@@ -186,7 +194,11 @@ function SandboxFileRow({
             {file.name}
           </h4>
           <p className="text-xs text-muted-foreground mt-0.5 truncate">
-            {isHtmlFile ? uiT("ui.created_web_page") : fileTypeLabel(t, file.name)}
+            {previewing
+              ? t("chat.tools.preparingFile")
+              : isHtmlFile
+                ? uiT("ui.created_web_page")
+                : fileTypeLabel(t, file.name)}
           </p>
         </div>
       </div>
@@ -208,7 +220,7 @@ function SandboxFileRow({
             <HugeiconsIcon icon={Download01Icon} className="size-4" />
           )}
         </button>
-        <div className="text-muted-foreground/60 group-hover:text-blue-600 dark:group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all">
+        <div className="text-muted-foreground/60 group-hover:text-blue-600 dark:group-hover:text-blue-400 motion-safe:group-hover:translate-x-0.5 transition-all">
           <ChevronRightIcon className="size-5" />
         </div>
       </div>

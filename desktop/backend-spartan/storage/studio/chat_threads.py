@@ -37,11 +37,6 @@ _OPENING_USER_MESSAGE = """(
     ORDER BY created_at ASC, id ASC LIMIT 1
 ) IS ?"""
 
-_ACTIVE_RESEARCH_RUN_STATUSES = (
-    "planning",
-    "running",
-    "cancelling",
-)
 
 
 def _workspace_from_row(row: sqlite3.Row) -> dict:
@@ -57,46 +52,8 @@ def _workspace_from_row(row: sqlite3.Row) -> dict:
     }
 
 
-def _tombstone_chat_threads(conn: sqlite3.Connection, thread_ids: Iterable[str]) -> None:
-    deleted_at = int(datetime.now(timezone.utc).timestamp() * 1000)
-    conn.executemany(
-        """
-        INSERT INTO chat_thread_tombstones (id, deleted_at)
-        VALUES (?, ?)
-        ON CONFLICT(id) DO UPDATE SET deleted_at = excluded.deleted_at
-        """,
-        [(thread_id, deleted_at) for thread_id in sorted(set(thread_ids))],
-    )
 
 
-def _active_research_run_ids(
-    conn: sqlite3.Connection, thread_ids: set[str] | None = None
-) -> list[str]:
-    status_placeholders = ",".join("?" for _ in _ACTIVE_RESEARCH_RUN_STATUSES)
-    if thread_ids is None:
-        rows = conn.execute(
-            f"""
-            SELECT id, created_at FROM research_runs
-            WHERE status IN ({status_placeholders}) AND lease_owner IS NOT NULL
-            """,
-            _ACTIVE_RESEARCH_RUN_STATUSES,
-        ).fetchall()
-    else:
-        rows = []
-        sorted_thread_ids = sorted(thread_ids)
-        for start in range(0, len(sorted_thread_ids), _SQLITE_IN_CHUNK_SIZE):
-            chunk = sorted_thread_ids[start : start + _SQLITE_IN_CHUNK_SIZE]
-            thread_placeholders = ",".join("?" for _ in chunk)
-            rows.extend(
-                conn.execute(
-                    f"SELECT id, created_at FROM research_runs "
-                    f"WHERE thread_id IN ({thread_placeholders}) "
-                    f"AND status IN ({status_placeholders}) "
-                    f"AND lease_owner IS NOT NULL",
-                    (*chunk, *_ACTIVE_RESEARCH_RUN_STATUSES),
-                ).fetchall()
-            )
-    return [row["id"] for row in sorted(rows, key=lambda row: (row["created_at"], row["id"]))]
 
 
 def _json_loads(value: str | None, fallback):
@@ -507,9 +464,12 @@ def bind_chat_thread_workspace(
         conn.execute("INSERT INTO chat_workspace_bindings(id, thread_id, workspace_id, access, created_at, updated_at) VALUES(?,?,?,?,?,?) ON CONFLICT(thread_id) DO UPDATE SET workspace_id=excluded.workspace_id, access=excluded.access, updated_at=excluded.updated_at", (binding_id, thread_id, workspace_id, access, now, now))
         # Project groups the folder's chats; the binding remains the authority
         # for each chat's access. Never inherit write permission via grouping.
-        project = conn.execute("SELECT id FROM chat_projects WHERE connected_folder_path=? AND archived=0 ORDER BY created_at LIMIT 1", (canonical_path,)).fetchone()
+        project = next((row for row in conn.execute("SELECT id, connected_folder_path FROM chat_projects WHERE connected_folder_path IS NOT NULL ORDER BY created_at")
+                        if os.path.normcase(os.path.realpath(row["connected_folder_path"])) == os.path.normcase(os.path.realpath(canonical_path))), None)
         project_id = project["id"] if project else str(uuid.uuid5(uuid.NAMESPACE_URL, "sparta-workspace:" + workspace_id))
-        if not project:
+        if project:
+            conn.execute("UPDATE chat_projects SET archived=0,updated_at=? WHERE id=?", (now, project_id))
+        else:
             conn.execute("""INSERT INTO chat_projects(id,name,instructions,connected_folder_path,workspace_access,archived,created_at,updated_at)
                 VALUES(?,?,'',?,'read',0,?,?) ON CONFLICT(id) DO UPDATE SET archived=0,updated_at=excluded.updated_at""",
                 (project_id, display_name, canonical_path, now, now))

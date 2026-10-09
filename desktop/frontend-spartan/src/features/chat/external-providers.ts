@@ -250,7 +250,7 @@ export function providerModelSupportsStudioTools(
     return null;
   }
   hydrateProviderModelCapabilities();
-  const capabilities = REGISTRY_MODEL_CAPABILITIES.get(providerType);
+  const capabilities = REGISTRY_MODEL_CAPABILITIES.get(providerType) ?? REGISTRY_MODEL_CAPABILITIES.get(toExternalBackendProviderType(providerType) ?? providerType);
   if (modelId) {
     const value = capabilities?.[modelId]?.studio_tools;
     if (typeof value === "boolean") {
@@ -259,7 +259,7 @@ export function providerModelSupportsStudioTools(
   }
   const providerDefault =
     capabilities?.[PROVIDER_CAPABILITY_WILDCARD]?.studio_tools;
-  return typeof providerDefault === "boolean" ? providerDefault : null;
+  return typeof providerDefault === "boolean" ? providerDefault : isCustomProviderType(providerType) ? true : null;
 }
 
 /** Whether the connection behind an ``external::`` model id runs Studio tools.
@@ -464,6 +464,15 @@ export function customProviderBaseUrlPlaceholder(
   return (
     CUSTOM_PROVIDER_BASE_URL_PLACEHOLDERS[providerType] ??
     CUSTOM_PROVIDER_BASE_URL_PLACEHOLDERS[LEGACY_CUSTOM_PROVIDER_TYPE]
+  );
+}
+
+export function localProviderDefaultBaseUrl(
+  providerType: string | null | undefined,
+): string {
+  return (
+    CUSTOM_PROVIDER_PRESETS.find((preset) => preset.providerType === providerType)
+      ?.baseUrlPlaceholder ?? ""
   );
 }
 

@@ -425,8 +425,10 @@ async def logout(
 
 
 @router.post("/desktop-login", response_model = Token)
-async def desktop_login(payload: DesktopLoginRequest) -> Token:
+def desktop_login(payload: DesktopLoginRequest) -> Token:
     """Exchange the local desktop secret for a desktop-scoped session."""
+    # FastAPI runs synchronous routes in its worker pool. SQLite lock waits and
+    # PBKDF2 must not block the event loop that other startup requests use.
     verified = storage.validate_desktop_secret_with_credential(payload.secret)
     if verified is None:
         raise HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = "Invalid desktop secret")

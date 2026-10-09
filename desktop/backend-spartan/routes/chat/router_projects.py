@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
+from storage.studio.chat_projects import DuplicateProjectFolderError
 from auth.authentication import get_current_subject
 from loggers import get_logger
 from state.project_workspace_link import validate_connectable_folder
@@ -48,6 +49,8 @@ def list_projects(
 def save_project(payload: ChatProject, current_subject: str = Depends(get_current_subject)):
     try:
         return ChatProject(**upsert_chat_project(payload.model_dump()))
+    except DuplicateProjectFolderError as exc:
+        raise HTTPException(status_code = 409, detail = str(exc)) from exc
     except ProjectWorkspaceError as exc:
         # A project is the only thing Studio writes to Documents, so a folder it
         # cannot create there fails here and nowhere else. Only this error, and
@@ -85,7 +88,10 @@ def patch_project(
     for field in ("name", "archived", "createdAt", "updatedAt"):
         if field in patch and patch[field] is None:
             raise HTTPException(status_code = 400, detail = f"{field} cannot be null")
-    project = update_chat_project(project_id, patch)
+    try:
+        project = update_chat_project(project_id, patch)
+    except DuplicateProjectFolderError as exc:
+        raise HTTPException(status_code = 409, detail = str(exc)) from exc
     if project is not None:
         project = ensure_chat_project_workspace(project_id)
     if project is None:
@@ -107,7 +113,10 @@ def patch_project_workspace(
         raise HTTPException(status_code = 400, detail = normalized_path)
     if payload.workspaceAccess not in {"read", "write"}:
         raise HTTPException(status_code = 400, detail = "Invalid workspace access")
-    project = update_chat_project(project_id, {"connectedFolderPath": normalized_path, "workspaceAccess": payload.workspaceAccess})
+    try:
+        project = update_chat_project(project_id, {"connectedFolderPath": normalized_path, "workspaceAccess": payload.workspaceAccess})
+    except DuplicateProjectFolderError as exc:
+        raise HTTPException(status_code = 409, detail = str(exc)) from exc
     if project is None:
         raise HTTPException(status_code = 404, detail = f"Project {project_id} not found")
     return ChatProject(**project)

@@ -414,6 +414,49 @@ def test_desktop_login_mints_admin_token_without_clearing_web_password_change():
     assert payload["desktop"] is True
 
 
+def test_desktop_login_allows_event_loop_to_release_database_writer(monkeypatch):
+    import httpx
+    from auth import authentication
+
+    seed_user()
+    raw = storage.create_desktop_secret()
+    client = auth_client()
+    original_save = authentication.save_refresh_token
+
+    async def scenario():
+        loop = asyncio.get_running_loop()
+        saving = asyncio.Event()
+        writer = storage.get_connection()
+        writer.execute("BEGIN IMMEDIATE")
+
+        def save_while_locked(*args, **kwargs):
+            loop.call_soon_threadsafe(saving.set)
+            return original_save(*args, **kwargs)
+
+        monkeypatch.setattr(authentication, "save_refresh_token", save_while_locked)
+
+        async def release_writer():
+            await asyncio.wait_for(saving.wait(), timeout = 3)
+            writer.rollback()
+
+        try:
+            async with httpx.AsyncClient(
+                transport = httpx.ASGITransport(app = client.app),
+                base_url = "http://testserver",
+            ) as request_client:
+                response, _ = await asyncio.gather(
+                    request_client.post("/api/auth/desktop-login", json = {"secret": raw}),
+                    release_writer(),
+                )
+            assert response.status_code == 200
+            assert response.json()["refresh_token"]
+        finally:
+            writer.rollback()
+            writer.close()
+
+    asyncio.run(scenario())
+
+
 def test_desktop_refresh_preserves_desktop_marker():
     seed_user(must_change_password = True)
     raw = storage.create_desktop_secret()
