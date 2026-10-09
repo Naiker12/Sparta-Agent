@@ -3,8 +3,6 @@ import sqlite3
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.exceptions import RequestValidationError
-from fastapi.routing import APIRoute
 from pydantic import BaseModel, ConfigDict, Field
 
 from auth.authentication import authenticated_via_api_key, get_current_credential
@@ -13,29 +11,16 @@ from storage.channels import repository as repo
 from storage.channels import pairing
 from storage.channels import usage
 from storage.credential_secrets import delete_secret, upsert_secret
-from core.channels import runtime
+from core.channels import runtime, voice
 from core.channels.catalog import inventory
+from core.channels.permissions import project_context_allowed
 from core.channels.telegram import Telegram, TelegramError
 
-class SafeValidationRoute(APIRoute):
-    def get_route_handler(self):
-        original = super().get_route_handler()
-        async def handler(request):
-            try:
-                return await original(request)
-            except RequestValidationError:
-                # FastAPI's default validation response includes the invalid input.
-                # This control plane accepts secrets; never echo request values.
-                raise HTTPException(422, 'invalid_configuration') from None
-        return handler
-
+# Keep prior channel voice URLs as aliases; new consumers use /api/voice.
+from routes.voice.router import router as shared_voice_router, ui_credential, SafeValidationRoute
 
 router = APIRouter(route_class=SafeValidationRoute)
-
-
-async def ui_credential(credential=Depends(get_current_credential), via_api_key=Depends(authenticated_via_api_key)):
-    require_ui_session(via_api_key)
-    return credential
+router.include_router(shared_voice_router, prefix='/voice', include_in_schema=False)
 
 
 class AccountInput(BaseModel):
@@ -53,9 +38,69 @@ class EnabledInput(BaseModel):
     enabled: bool
 
 
+class ProjectGrantInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    user_id: str = Field(min_length=1, max_length=20)
+    project_ids: list[str] = Field(max_length=100)
+    mode: Literal['selected', 'all'] = 'selected'
+    context: bool | None = None
+
+
+@router.get('/{account_id}/projects')
+def project_options(account_id: str, credential=Depends(ui_credential)):
+    account = repo.get_account(account_id, credential[0])
+    if not account:
+        raise HTTPException(404, 'account_not_found')
+    from storage.studio.chat_projects import list_chat_projects
+    return {'projects': [{'id': p['id'], 'name': p['name']} for p in list_chat_projects()],
+            'grants': account.get('project_grants', {}),
+            'access': account.get('project_access', {}),
+            'context': {user: project_context_allowed(account, user) for user in account['allowed_user_ids']}}
+
+
+@router.put('/{account_id}/projects')
+async def project_grants(account_id: str, body: ProjectGrantInput, credential=Depends(ui_credential)):
+    from storage.channels.projects import grant
+    try:
+        async with runtime.control_lock:
+            with current_credential_write(credential):
+                grant(account_id, credential[0], body.user_id, body.project_ids, mode=body.mode, context=body.context)
+                repo.event(account_id, 'project_access_updated')
+            await runtime.stop(account_id)
+    except ValueError as error:
+        raise HTTPException(404 if str(error) == 'account_not_found' else 422, str(error)) from None
+    return {'ok': True}
+
+
 @router.get('')
 def overview(credential=Depends(ui_credential)):
-    return {'accounts': [{**a, 'status': runtime.states.get(a['id'], 'connecting' if a['enabled'] else 'paused'), 'usage': usage.summary(a['id'])} for a in repo.accounts(credential[0])], 'inventory': inventory(), 'events': repo.events(credential[0])}
+    return {'accounts': [{**a, 'status': runtime.states.get(a['id'], 'connecting' if a['enabled'] else 'paused'), 'usage': usage.summary(a['id'])} for a in repo.accounts(credential[0])], 'inventory': inventory(), 'events': repo.events(credential[0]), 'voice': voice.active_status()}
+
+
+@router.patch('/{account_id}/voice')
+def set_voice(account_id: str, body: EnabledInput, credential=Depends(ui_credential)):
+    if not repo.get_account(account_id, credential[0]):
+        raise HTTPException(404, 'account_not_found')
+    if body.enabled and not voice.active_status()['ready']:
+        raise HTTPException(409, 'voice_not_ready')
+    with current_credential_write(credential):
+        if not repo.set_voice_enabled(account_id, credential[0], body.enabled):
+            raise HTTPException(404, 'account_not_found')
+        repo.event(account_id, 'voice_enabled' if body.enabled else 'voice_disabled')
+    return {'ok': True}
+
+
+@router.post('/{account_id}/voice/prepare')
+def prepare_voice(account_id: str, credential=Depends(ui_credential)):
+    if not repo.get_account(account_id, credential[0]):
+        raise HTTPException(404, 'account_not_found')
+    try:
+        with current_credential_write(credential):
+            result = voice.prepare()
+            repo.event(account_id, 'voice_preparation_requested')
+        return result
+    except voice.VoiceError as error:
+        raise HTTPException(409, error.code) from None
 
 
 @router.post('')
@@ -136,14 +181,19 @@ def pairing_status(account_id: str, session_id: str, credential=Depends(ui_crede
     return {**result, 'transport_status': runtime.states.get(account_id, 'connecting')}
 
 
+class PairingApprovalInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    purpose: Literal['self', 'guest'] = 'guest'
+
+
 @router.post('/{account_id}/pairings/{session_id}/approve')
-async def approve_pairing(account_id: str, session_id: str, credential=Depends(ui_credential)):
+async def approve_pairing(account_id: str, session_id: str, body: PairingApprovalInput | None = None, credential=Depends(ui_credential)):
     if not repo.get_account(account_id, credential[0]):
         raise HTTPException(404, 'account_not_found')
     async with runtime.control_lock:
         try:
             with current_credential_write(credential):
-                result = pairing.approve(account_id, session_id, credential[0])
+                result = pairing.approve(account_id, session_id, credential[0], purpose=body.purpose if body else 'guest')
                 repo.event(account_id, 'pairing_approved')
         except ValueError as error:
             raise HTTPException(409, str(error)) from None
@@ -171,4 +221,37 @@ async def remove(account_id: str, credential=Depends(ui_credential)):
             repo.delete_account(account_id, credential[0])
             delete_secret(runtime.TOKEN_KIND, account_id)
     runtime.states.pop(account_id, None)
+    return {'ok': True}
+
+
+@router.delete('/{account_id}/users/{user_id}')
+async def revoke_user(account_id: str, user_id: str, credential=Depends(ui_credential)):
+    async with runtime.control_lock:
+        try:
+            with current_credential_write(credential):
+                repo.revoke_user(account_id, credential[0], user_id)
+                from core.channels.controls import revoke_user as revoke_controls
+                revoke_controls(account_id, user_id)
+                repo.event(account_id, 'user_access_revoked')
+        except ValueError as error:
+            raise HTTPException(404 if str(error) == 'account_not_found' else 422, str(error)) from None
+        await runtime.stop(account_id)
+    return {'ok': True}
+
+
+class ProfileBindingInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    user_id: str | None = Field(default=None, max_length=20)
+
+
+@router.put('/{account_id}/profile-binding')
+async def bind_profile(account_id: str, body: ProfileBindingInput, credential=Depends(ui_credential)):
+    from core.channels.profile import bind
+    async with runtime.control_lock:
+        try:
+            with current_credential_write(credential):
+                bind(account_id, credential[0], body.user_id)
+        except ValueError as error:
+            raise HTTPException(404 if str(error) == 'account_not_found' else 422, str(error)) from None
+        await runtime.stop(account_id)
     return {'ok': True}
