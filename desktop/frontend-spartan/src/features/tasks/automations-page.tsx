@@ -1,11 +1,10 @@
 import { useT as useUiT } from "@/i18n";
 import { getLocale, translate } from "@/i18n";
-import { WORK_STATUS_LABELS } from "@/features/work/work-view-model";
-import type { WorkStatus } from "@/features/work/types";
+import { WORK_STATUS_LABELS, type WorkStatus } from "@/features/work";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { authFetch } from "@/features/auth";
-import { useExternalProvidersStore } from "@/features/chat/stores/external-providers-store";
-import { ApiProviderLogo } from "@/features/chat/api-provider-logo";
+import { useNavigate } from "@tanstack/react-router";
+import { useExternalProvidersStore, ApiProviderLogo } from "@/features/chat";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/lib/toast";
@@ -57,6 +56,10 @@ import {
 } from "@/components/ui/alert-dialog";
 
 type Task = {
+  executionMode?: "text" | "agent";
+  workspaceAccess?: "none" | "read" | "write";
+  webAccess?: boolean;
+  projectId?: string | null;
   id: string;
   title: string;
   prompt: string;
@@ -71,6 +74,18 @@ type Task = {
   nextRunAt: number | null;
   lastError?: string;
   runs?: {
+    threadId?: string | null;
+    deliveries?: {
+      event: "started" | "finished";
+      status:
+        | "pending"
+        | "sending"
+        | "delivered"
+        | "blocked"
+        | "unknown"
+        | "failed";
+      attempts: number;
+    }[];
     id: string;
     startedAt: number;
     status: string;
@@ -79,6 +94,10 @@ type Task = {
   }[];
 };
 type Draft = {
+  executionMode: "text" | "agent";
+  workspaceAccess: "none" | "read" | "write";
+  webAccess: boolean;
+  projectId: string;
   title: string;
   prompt: string;
   scheduleType: "interval" | "once" | "weekly";
@@ -90,6 +109,10 @@ type Draft = {
   date: string;
 };
 const blank: Draft = {
+  executionMode: "agent",
+  workspaceAccess: "none",
+  webAccess: false,
+  projectId: "",
   title: "",
   prompt: "",
   scheduleType: "interval",
@@ -157,10 +180,87 @@ export function AutomationsPage() {
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Task | null>(null);
+  const navigate = useNavigate();
+  const [projects, setProjects] = useState<
+    {
+      id: string;
+      name: string;
+      archived?: boolean;
+      connectedFolderPath?: string | null;
+      sandboxPath?: string | null;
+    }[]
+  >([]);
+  const [destination, setDestination] = useState<{
+    accountId: string | null;
+    botUsername?: string;
+  } | null>(null);
+  useEffect(() => {
+    let stopped = false;
+    void request<{ accountId: string | null; botUsername?: string }>(
+      "/delivery-destination",
+    )
+      .then((next) => {
+        if (!stopped) setDestination(next);
+      })
+      .catch(() => undefined);
+    return () => {
+      stopped = true;
+    };
+  }, []);
+  useEffect(() => {
+    let stopped = false;
+    void authFetch("/api/chat/projects")
+      .then(async (response) => {
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!stopped)
+          setProjects(
+            (data.projects ?? []).filter(
+              (project: { archived?: boolean }) => !project.archived,
+            ),
+          );
+      })
+      .catch(() => undefined);
+    return () => {
+      stopped = true;
+    };
+  }, []);
+  const selectedId = selected?.id;
+  useEffect(() => {
+    if (!selectedId) return;
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout>;
+    async function poll() {
+      let delay = 10000;
+      try {
+        const next = await request<Task>(`/${selectedId}`);
+        delay = next.runs?.some((run) => run.status === "running") ? 2000 : 10000;
+        if (!stopped)
+          setSelected((current) =>
+            current?.id === selectedId ? next : current,
+          );
+      } catch {
+        /* Keep the latest checkpoint while offline. */
+      } finally {
+        if (!stopped) timer = setTimeout(() => void poll(), document.hidden ? 30000 : delay);
+      }
+    }
+    timer = setTimeout(() => void poll(), 2000);
+    return () => {
+      stopped = true;
+      clearTimeout(timer);
+    };
+  }, [selectedId]);
   const [detailLoading, setDetailLoading] = useState(false);
   const [editor, setEditor] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(blank);
+  const [scheduleNow, setScheduleNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!editor || draft.scheduleType !== "once") return;
+    const timer = setInterval(() => setScheduleNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [editor, draft.scheduleType]);
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
   const [deleting, setDeleting] = useState<Task | null>(null);
@@ -184,13 +284,15 @@ export function AutomationsPage() {
     }
   }, []);
   useEffect(() => {
-    void refresh();
+    const frame = requestAnimationFrame(() => void refresh());
     return () => {
+      cancelAnimationFrame(frame);
       listSequence.current++;
       detailSequence.current++;
     };
   }, [refresh]);
   function create() {
+    setScheduleNow(Date.now());
     setEditingId(null);
     setDraft(blank);
     setStep(0);
@@ -198,9 +300,14 @@ export function AutomationsPage() {
     setError(null);
   }
   function edit(task: Task) {
+    setScheduleNow(Date.now());
     const date = task.runAt ? new Date(task.runAt) : null;
     setEditingId(task.id);
     setDraft({
+      executionMode: task.executionMode ?? "text",
+      workspaceAccess: task.workspaceAccess ?? "none",
+      webAccess: task.webAccess ?? false,
+      projectId: task.projectId ?? "",
       title: task.title,
       prompt: task.prompt,
       scheduleType: task.scheduleType,
@@ -242,7 +349,7 @@ export function AutomationsPage() {
       : draft.scheduleType === "weekly"
         ? draft.weekdays.length > 0 &&
           /^([01]\d|2[0-3]):[0-5]\d$/.test(draft.localTime)
-        : Boolean(draft.date) && new Date(draft.date).getTime() > Date.now();
+        : Boolean(draft.date) && new Date(draft.date).getTime() > scheduleNow;
   async function save() {
     if (busy || !validText || !validSchedule) return;
     setBusy(true);
@@ -253,6 +360,10 @@ export function AutomationsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: draft.title.trim(),
+          executionMode: draft.executionMode,
+          workspaceAccess: draft.workspaceAccess,
+          webAccess: draft.webAccess,
+          projectId: draft.projectId || null,
           prompt: draft.prompt.trim(),
           scheduleType: draft.scheduleType,
           intervalSeconds:
@@ -263,7 +374,7 @@ export function AutomationsPage() {
             draft.scheduleType === "once"
               ? new Date(draft.date).getTime()
               : null,
-          enabled: false,
+          ...(editingId ? {} : { enabled: false }),
           weekdays: draft.weekdays.map(Number),
           localTime: draft.localTime,
           timezone: draft.timezone,
@@ -317,11 +428,14 @@ export function AutomationsPage() {
     setBusy(true);
     setError(null);
     try {
-      const next = await request<Task>(`/${taskId}/preview`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ providerId, model }),
-      });
+      const next = await request<Task>(
+        `/${taskId}/${selected.executionMode === "agent" ? "agent-test" : "preview"}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ providerId, model }),
+        },
+      );
       if (sequence === detailSequence.current) setSelected(next);
       if (selected.notify !== false)
         toast.success(
@@ -627,7 +741,9 @@ export function AutomationsPage() {
                   </Select>
                   <FieldDescription>
                     {uiT(
-                      "ui.sends_only_these_instructions_to_the_chosen_provider_and_may_incu",
+                      selected.executionMode === "agent"
+                        ? "ui.automation_agent_consent"
+                        : "ui.sends_only_these_instructions_to_the_chosen_provider_and_may_incu",
                     )}
                   </FieldDescription>
                 </Field>
@@ -642,7 +758,11 @@ export function AutomationsPage() {
                 >
                   {busy
                     ? uiT("ui.processing")
-                    : uiT("ui.send_test_to_provider")}
+                    : uiT(
+                        selected.executionMode === "agent"
+                          ? "ui.automation_agent_test"
+                          : "ui.send_test_to_provider",
+                      )}
                 </Button>
                 {!selected.enabled && (
                   <Button
@@ -667,6 +787,51 @@ export function AutomationsPage() {
               ) : selected.runs?.length ? (
                 selected.runs.map((run) => (
                   <section key={run.id} className="flex flex-col gap-2">
+                    {run.deliveries?.map((delivery) => (
+                      <p
+                        key={delivery.event}
+                        className="text-xs text-muted-foreground"
+                      >
+                        Telegram ·{" "}
+                        {uiT(`ui.automation_delivery_${delivery.event}`)} ·{" "}
+                        {uiT(`ui.automation_delivery_${delivery.status}`)}
+                      </p>
+                    ))}
+                    {run.threadId && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="self-start"
+                        onClick={() => {
+                          setSelected(null);
+                          void navigate({
+                            to: "/chat",
+                            search: {
+                              thread: run.threadId!,
+                              project: selected.projectId ?? undefined,
+                            },
+                          });
+                        }}
+                      >
+                        {uiT("ui.open_chat")}
+                      </Button>
+                    )}
+                    {run.status === "running" && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="self-start"
+                        onClick={() => {
+                          void request(`/runs/${run.id}/cancel`, {
+                            method: "POST",
+                          })
+                            .then(() => detail(selected))
+                            .catch((cause) => setError(message(cause)));
+                        }}
+                      >
+                        {uiT("ui.automation_cancel_run")}
+                      </Button>
+                    )}
                     <p className="text-sm">
                       {dateLabel(run.startedAt)} ·{" "}
                       {WORK_STATUS_LABELS[run.status as WorkStatus] ??
@@ -711,9 +876,133 @@ export function AutomationsPage() {
             }}
           >
             {errorAlert}
+            <p className="text-sm text-muted-foreground">
+              {destination?.accountId
+                ? uiT("ui.automation_channel_destination", {
+                    bot: destination.botUsername || "Telegram",
+                  })
+                : uiT("ui.automation_channel_unavailable")}
+            </p>
             <FieldGroup>
               {step === 0 && (
                 <>
+                  <Field>
+                    <FieldLabel>{uiT("ui.project")}</FieldLabel>
+                    <Select
+                      value={draft.projectId || "none"}
+                      onValueChange={(value) =>
+                        setDraft({
+                          ...draft,
+                          projectId: value === "none" ? "" : value,
+                          workspaceAccess: "none",
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="none">
+                            {uiT("ui.no_project")}
+                          </SelectItem>
+                          {projects.map((project) => (
+                            <SelectItem key={project.id} value={project.id}>
+                              {project.name}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <FieldDescription>
+                      {uiT("ui.automation_project_scope")}
+                    </FieldDescription>
+                  </Field>
+                  <Field>
+                    <FieldLabel>
+                      {uiT("ui.automation_execution_mode")}
+                    </FieldLabel>
+                    <Select
+                      value={draft.executionMode}
+                      onValueChange={(value) =>
+                        setDraft({
+                          ...draft,
+                          executionMode: value as Draft["executionMode"],
+                          workspaceAccess: "none",
+                          webAccess: false,
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectGroup>
+                          <SelectItem value="agent">
+                            {uiT("ui.automation_agent_mode")}
+                          </SelectItem>
+                          <SelectItem value="text">
+                            {uiT("ui.automation_text_mode")}
+                          </SelectItem>
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <FieldDescription>
+                      {uiT("ui.automation_capability_changes")}
+                    </FieldDescription>
+                  </Field>
+                  {draft.executionMode === "agent" && (
+                    <>
+                      <Field>
+                        <FieldLabel>
+                          {uiT("ui.automation_folder_access")}
+                        </FieldLabel>
+                        <Select
+                          disabled={!draft.projectId}
+                          value={draft.workspaceAccess}
+                          onValueChange={(value) =>
+                            setDraft({
+                              ...draft,
+                              workspaceAccess:
+                                value as Draft["workspaceAccess"],
+                            })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              <SelectItem value="none">
+                                {uiT("ui.automation_no_files")}
+                              </SelectItem>
+                              <SelectItem value="read">
+                                {uiT("ui.automation_read_files")}
+                              </SelectItem>
+                              <SelectItem value="write">
+                                {uiT("ui.automation_create_files")}
+                              </SelectItem>
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                        <FieldDescription>
+                          {uiT("ui.automation_file_limits")}
+                        </FieldDescription>
+                      </Field>
+                      <Field orientation="horizontal">
+                        <FieldLabel htmlFor="automation-web">
+                          {uiT("ui.automation_public_web")}
+                        </FieldLabel>
+                        <Switch
+                          id="automation-web"
+                          checked={draft.webAccess}
+                          onCheckedChange={(webAccess) =>
+                            setDraft({ ...draft, webAccess })
+                          }
+                        />
+                      </Field>
+                    </>
+                  )}
                   <Field>
                     <FieldLabel htmlFor="task-title">
                       {uiT("projectsPage.colName")}
@@ -885,7 +1174,7 @@ export function AutomationsPage() {
                       }
                     />
                     <FieldLabel htmlFor="task-notify">
-                      {uiT("ui.notify_me_of_the_result_in_the_application")}
+                      {uiT("ui.automation_notify_start_finish")}
                     </FieldLabel>
                   </Field>
                   <FieldDescription>
@@ -964,7 +1253,39 @@ export function AutomationsPage() {
               {provider?.name} {uiT("ui.using")} {model}{" "}
               {uiT(
                 "ui.on_each_scheduled_run_may_incur_costs_does_not_access_files_or_ru",
+              )}{" "}
+              {uiT(
+                selected?.executionMode === "agent"
+                  ? "ui.automation_agent_consent"
+                  : "ui.automation_text_mode",
               )}
+              {selected?.executionMode === "agent" && (
+                <span className="block">
+                  {uiT("ui.automation_folder_access")}:{" "}
+                  {uiT(
+                    selected.workspaceAccess === "write"
+                      ? "ui.automation_create_files"
+                      : selected.workspaceAccess === "read"
+                        ? "ui.automation_read_files"
+                        : "ui.automation_no_files",
+                  )}{" "}
+                  · {uiT("ui.automation_public_web")}:{" "}
+                  {selected.webAccess
+                    ? uiT("ui.active")
+                    : uiT("ui.automation_no_files")}
+                </span>
+              )}
+              {selected?.workspaceAccess &&
+                selected.workspaceAccess !== "none" && (
+                  <span className="block break-all">
+                    {projects.find(
+                      (project) => project.id === selected.projectId,
+                    )?.connectedFolderPath ||
+                      projects.find(
+                        (project) => project.id === selected.projectId,
+                      )?.sandboxPath}
+                  </span>
+                )}
             </AlertDialogDescription>
           </AlertDialogHeader>
           {errorAlert}
