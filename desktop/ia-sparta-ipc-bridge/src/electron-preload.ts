@@ -2,6 +2,8 @@ import { ipcRenderer, contextBridge, webUtils } from "electron";
 import type { FileTreeNode } from "./channels/filesystem.channel";
 
 contextBridge.exposeInMainWorld("electronAPI", {
+  showNotification: (payload: { key: string; title: string; body?: string }) =>
+    ipcRenderer.invoke("notifications:show", payload) as Promise<boolean>,
   minimize: () => ipcRenderer.send("win:minimize"),
   maximize: () => ipcRenderer.send("win:maximize"),
   close: () => ipcRenderer.send("win:close"),
@@ -102,6 +104,9 @@ const ALLOWED_INVOKE_CHANNELS = new Set([
   "mcp:oauth:discover",
   "fs:readFile",
   "document:convert-to-markdown",
+  "document:office-preview",
+  "document:office-status",
+  "document:office-install",
   "system:get-metrics",
   "system:get-info",
   "harnesses:detect",

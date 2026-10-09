@@ -17,6 +17,8 @@ import {
 } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import type { PdfRegion } from "../types/rag";
+import { PreviewToolbar } from "./preview-toolbar";
+import "react-pdf/dist/Page/TextLayer.css";
 // Serve the pdf.js worker from the app origin.
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -98,6 +100,7 @@ export function PdfPreview({
       return;
     }
     const onWheel = (e: WheelEvent) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
       e.preventDefault();
       setScale((s) => clampZoom(s - Math.sign(e.deltaY) * ZOOM_STEP));
     };
@@ -160,7 +163,7 @@ export function PdfPreview({
   const onPanStart = useCallback(
     (e: React.MouseEvent) => {
       const el = containerRef.current;
-      if (!el || e.button !== 0 || !scrollable) {
+      if (!el || e.button !== 0 || !scrollable || !e.altKey) {
         return;
       }
       panRef.current = {
@@ -196,9 +199,7 @@ export function PdfPreview({
           "flex-1 overflow-auto bg-muted/30 px-4 py-3",
           grabbing
             ? "cursor-grabbing select-none"
-            : scrollable
-              ? "cursor-grab"
-              : "",
+            : "",
         )}
       >
         <Document
@@ -219,8 +220,8 @@ export function PdfPreview({
               <div className="relative w-fit shadow-sm">
                 <Page
                   pageNumber={page}
-                  width={(width - 8) * scale}
-                  renderTextLayer={false}
+                  width={Math.max(1, width - 32) * scale}
+                  renderTextLayer={true}
                   renderAnnotationLayer={false}
                   onRenderSuccess={recheckScrollable}
                   onRenderError={(e) => setError(e.message)}
@@ -231,7 +232,8 @@ export function PdfPreview({
           )}
         </Document>
       </div>
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center border-t px-3 py-2 text-xs">
+      <PreviewToolbar>
+      <div className="flex items-center gap-1 text-xs">
         <div className="flex items-center gap-0.5 justify-self-start">
           <Button
             variant="ghost"
@@ -274,8 +276,8 @@ export function PdfPreview({
             >
               <ChevronLeftIcon className="size-4" />
             </Button>
-            <span className="tabular-nums text-muted-foreground">
-              {t("chat.preview.pageOf", { page, total: numPages })}
+            <span className="tabular-nums text-muted-foreground" aria-label={t("chat.preview.pageOf", { page, total: numPages })} title={t("chat.preview.pageOf", { page, total: numPages })}>
+              {page} / {numPages}
             </span>
             <Button
               variant="ghost"
@@ -291,8 +293,8 @@ export function PdfPreview({
         ) : (
           <span />
         )}
-        <span aria-hidden={true} />
       </div>
+      </PreviewToolbar>
     </div>
   );
 }

@@ -320,7 +320,7 @@ function AttachmentTargetMenu({
           </span>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="unsloth-plus-menu w-64">
+      <DropdownMenuContent align="start" className="spartan-plus-menu w-64">
         <DropdownMenuLabel>{uiT("ui.new_files_go_to")}</DropdownMenuLabel>
         <DropdownMenuItem onSelect={() => onSelect("project")}>
           <HugeiconsIcon
