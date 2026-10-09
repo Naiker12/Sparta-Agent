@@ -23,17 +23,27 @@ La búsqueda permite localizar conversaciones. El perfil y los ajustes están al
 
 Vincular una carpeta no significa que el modelo ya haya leído todos sus archivos. El menú de modelo se abre desde el composer y permite buscar por modelo o proveedor.
 
+## Conectar y gestionar carpetas
+
+Elegir una carpeta desde el composer la conecta directamente, sin un diálogo adicional para escoger permisos: se aplica el modo de acceso vigente. Las confirmaciones correspondientes a acciones posteriores siguen vigentes. Vincular la carpeta no significa leer todos sus archivos.
+
+La misma carpeta no crea un segundo proyecto: se comparan rutas reales y normalizadas, y puede reutilizarse un proyecto existente o archivado. Una asignación incompatible a otro proyecto se rechaza. Al eliminar un proyecto, su estado compartido se actualiza inmediatamente; si la petición falla, se restaura la entrada y se muestra el error.
+
 ## Panel lateral del proyecto
 
 | Vista | Contenido | Disponibilidad |
 | --- | --- | --- |
 | Archivos | Exploración y lectura del contexto de carpeta | Vista básica del workspace |
 | Cambios | Archivos modificados y diferencias | Cuando el contexto habilita Git |
-| GitHub | Información de repositorio | Cuando esa capacidad está habilitada |
+| GitHub | Pull requests del repositorio | Repositorio GitHub y acceso disponible |
 | Subagentes | Vista de agentes especializados | Según las capacidades del proyecto |
 | Vista previa web | Superficie de navegador del proyecto | Cuando está disponible |
 
-El panel empieza cerrado y se abre desde el rail derecho. Pulsar de nuevo la pestaña activa lo colapsa. En escritorio su anchura es ajustable. Un elemento visible de demostración no garantiza que una integración esté conectada o que una acción se haya ejecutado.
+El explorador y otras vistas se abren desde el rail derecho. La rama de una carpeta Git aparece en el composer: pulsa la rama o usa el menú de carpeta para abrir **Cambios** o **Pull requests** en el mismo panel compartido con la vista previa de documentos. Su anchura es ajustable.
+
+Cambios permite revisar trabajo, archivos preparados y comparación de rama con la referencia disponible, en vista unificada o dividida. Una rama sin upstream no tiene automáticamente una referencia remota. Los diffs muestran archivos y líneas reales, directamente sobre la superficie del panel.
+
+Para pull requests privados se utiliza la sesión existente de GitHub CLI (`gh`); la consulta pública puede usar la API de GitHub. Abrir esta vista no crea ni fusiona un pull request. La vista de subagentes muestra un estado vacío si no hay agentes disponibles, y la vista web requiere un contenido o una URL real.
 
 ## Completa una tarea
 

@@ -7,6 +7,14 @@ description: "Añade contexto a una conversación y distingue el archivo de su c
 
 Añade los documentos que necesita la tarea y explica para qué debe utilizarlos el modelo. El tipo de archivo y las capacidades del proveedor determinan cómo se procesa el contenido.
 
+## Crear documentos con Código desactivado
+
+Pide un archivo con su contenido: «Crea un Excel con estas columnas y filas». La herramienta de documentos admite **PDF, XLSX, DOCX, CSV, TXT y Markdown** a partir de texto y tablas, sin ejecutar código escrito por el modelo. Se ofrece aunque **Código** esté desactivado, cuando el modelo y el modo de conversación admiten herramientas.
+
+Durante la generación verás su estado y, al abrir el resultado, un indicador de preparación. El archivo aparece para previsualizarlo o descargarlo después de crearse y validarse. Si su nombre ya existe, se añade un sufijo numérico sin sobrescribirlo. Los permisos de la carpeta determinan si puede usarse o si corresponde el espacio aislado de la sesión.
+
+El generador admite hasta 100.000 caracteres, 10.000 filas y 100 columnas; los datos de tablas tienen un límite de 2 MB. El visor puede mostrar solo parte de una hoja y no sustituye Excel ni reproduce todos sus gráficos, estilos o fórmulas. La descarga conserva el archivo original.
+
 ## Carpeta vinculada y adjunto
 
 Una carpeta de proyecto define un contexto de trabajo. Un adjunto aporta un archivo concreto a una conversación. No asumas que vincular una carpeta significa que todos sus archivos ya están leídos o indexados.
