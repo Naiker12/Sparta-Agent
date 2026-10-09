@@ -3,6 +3,9 @@ import { useEffect } from "react";
 import { authFetch } from "@/features/auth";
 import { notifyNative } from "@/lib/native-notifications";
 import { toast } from "@/lib/toast";
+import { notifyChatHistoryUpdated } from "@/features/chat";
+import { notificationLedger } from "./notification-ledger";
+import { notificationPollDelay } from "./notification-poll-delay";
 
 /** Poll across all app routes, without exposing task prompts/results on the lock screen. */
 export function AutomationNotifications() {
@@ -12,15 +15,21 @@ export function AutomationNotifications() {
     const startup = Date.now();
     let subject: string | null = null;
     let cursor = startup;
-    const seen = new Set<string>();
+    let ledger: ReturnType<typeof notificationLedger> | null = null;
+    let busy = false;
+    let failures = 0;
+    let delay = 2000;
     async function poll() {
+      if (stopped || busy) return;
+      busy = true;
       try {
         const response = await authFetch(
           `/api/tasks/notifications?since=${Math.max(0, cursor - 1)}`,
         );
-        if (!response.ok) return;
+        if (!response.ok) throw new Error(`Notifications: ${response.status}`);
         const data: {
           subject: string;
+          active?: boolean;
           events: {
             id: string;
             status: string;
@@ -29,23 +38,25 @@ export function AutomationNotifications() {
           }[];
         } = await response.json();
         if (stopped) return;
+        failures = 0;
+        delay = notificationPollDelay(data.active, data.events.length, 0);
         if (subject !== data.subject) {
           subject = data.subject;
-          seen.clear();
-          cursor =
-            Number(
-              localStorage.getItem(
-                `sparta.automation-notifications.${subject}`,
-              ),
-            ) || startup;
+          ledger = notificationLedger(localStorage, subject, startup);
+          cursor = ledger.cursor;
+          delay = 2000;
           return;
         }
         for (const event of data.events) {
-          if (seen.has(event.id)) continue;
-          seen.add(event.id);
+          if (stopped) return;
+          if (!ledger?.consume(event.id, event.finishedAt)) continue;
+          cursor = ledger.cursor;
+          notifyChatHistoryUpdated();
           if (event.notify) {
             const title =
-              event.status === "completed"
+              event.status === "started"
+                ? uiTranslate("ui.automation_started")
+                : event.status === "completed"
                 ? uiTranslate("ui.automation_completed")
                 : uiTranslate("ui.the_automation_needs_attention");
             toast(title, {
@@ -62,20 +73,24 @@ export function AutomationNotifications() {
           }
           cursor = Math.max(cursor, event.finishedAt);
         }
-        localStorage.setItem(
-          `sparta.automation-notifications.${subject}`,
-          String(cursor),
-        );
       } catch {
-        /* Retry on the next tick; notifications never block the application. */
+        delay = notificationPollDelay(undefined, 0, ++failures);
       } finally {
-        if (!stopped) timer = setTimeout(() => void poll(), 10000);
+        busy = false;
+        if (!stopped) timer = setTimeout(() => void poll(), delay);
       }
     }
+    const wake = () => {
+      if (document.hidden || stopped || busy) return;
+      clearTimeout(timer);
+      void poll();
+    };
+    document.addEventListener("visibilitychange", wake);
     void poll();
     return () => {
       stopped = true;
       clearTimeout(timer);
+      document.removeEventListener("visibilitychange", wake);
     };
   }, []);
   return null;
