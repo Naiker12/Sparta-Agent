@@ -61,20 +61,18 @@ def arguments(raw):
     return query.strip()
 
 
-async def search(query):
+async def public_lookup(fetch):
+    """Bound both foreground waits and background work across public adapters."""
     cancelled = threading.Event()
-    def fetch():
+    def guarded():
         if not _slot.acquire(blocking=False):
             return []
         try:
-            from core.inference.tools import _web_search
-            if cancelled.is_set():
-                return []
-            return parse_sources(_web_search(query, max_results=3, timeout=10, cancel_event=cancelled))
+            return [] if cancelled.is_set() else fetch(cancelled)
         finally:
             _slot.release()
     try:
-        return await asyncio.wait_for(asyncio.to_thread(fetch), timeout=25)
+        return await asyncio.wait_for(asyncio.to_thread(guarded), timeout=25)
     except asyncio.CancelledError:
         raise
     except Exception:
@@ -83,10 +81,17 @@ async def search(query):
         cancelled.set()
 
 
+async def search(query):
+    def fetch(cancelled):
+        from core.inference.tools import _web_search
+        return parse_sources(_web_search(query, max_results=3, timeout=10, cancel_event=cancelled))
+    return await public_lookup(fetch)
+
+
 def with_sources(output, sources, locale):
     if not sources:
         return output
-    allowed = {source['url'] for source in sources}
+    allowed = {source['url'] for source in sources} | {source['image_url'] for source in sources if source.get('kind') == 'image'}
     def verified(match):
         url = match[0].rstrip(').,;!*]')
         return match[0] if url in allowed else ('[enlace sin verificar]' if locale == 'es' else '[unverified link]')
@@ -94,7 +99,12 @@ def with_sources(output, sources, locale):
     lines = ['Fuentes consultadas (extractos de búsqueda):' if locale == 'es' else 'Sources consulted (search snippets):']
     if any(source.get('kind') == 'page' for source in sources):
         lines = ['Fuente consultada (texto limitado de página):' if locale == 'es' else 'Source consulted (bounded page text):']
+    if any(source.get('kind') == 'image' for source in sources):
+        lines = ['Imágenes de referencia encontradas:' if locale == 'es' else 'Reference images found:']
     for source in sources:
+        if source.get('kind') == 'image':
+            lines += [source['title'], ('Origen: ' if locale == 'es' else 'Source: ') + source['url'], ('Imagen: ' if locale == 'es' else 'Image: ') + source['image_url']]
+            continue
         lines += [source['title'], source['url']]
     return output + '\n\n' + '\n'.join(lines)
 
@@ -124,25 +134,10 @@ async def read_page(url):
         url = page_arguments(json.dumps({'url': url}))
     except (ValueError, TypeError):
         return []
-    cancelled = threading.Event()
-    def fetch():
-        if not _slot.acquire(blocking=False):
+    def fetch(cancelled):
+        from core.inference.tools import _fetch_page_text
+        content = _fetch_page_text(url, max_chars=10000, timeout=15, cancel_event=cancelled)
+        if not isinstance(content, str) or not content.strip() or content.startswith(('Failed', 'Blocked', '(binary content', '(page returned')):
             return []
-        try:
-            from core.inference.tools import _fetch_page_text
-            if cancelled.is_set():
-                return []
-            content = _fetch_page_text(url, max_chars=10000, timeout=15, cancel_event=cancelled)
-            if not isinstance(content, str) or not content.strip() or content.startswith(('Failed', 'Blocked', '(binary content', '(page returned')):
-                return []
-            return [{'title': urlsplit(url).hostname, 'url': url, 'snippet': content[:10000], 'kind': 'page'}]
-        finally:
-            _slot.release()
-    try:
-        return await asyncio.wait_for(asyncio.to_thread(fetch), timeout=25)
-    except asyncio.CancelledError:
-        raise
-    except Exception:
-        return []
-    finally:
-        cancelled.set()
+        return [{'title': urlsplit(url).hostname, 'url': url, 'snippet': content[:10000], 'kind': 'page'}]
+    return await public_lookup(fetch)

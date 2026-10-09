@@ -19,7 +19,7 @@ import { ConnectTelegram } from "./components/connect-telegram";
 import { ChannelNavigation } from "./components/channel-navigation";
 import { platforms, type ChannelPlatform } from "./platforms";
 import { TelegramConnections } from "./components/telegram-connections";
-import { ChannelCapabilities } from "./components/channel-capabilities";
+import { useSettingsDialogStore } from "@/features/settings";
 import { ChannelActivity } from "./components/channel-activity";
 import { useChannels } from "./use-channels";
 
@@ -31,16 +31,16 @@ export function ChannelsPage() {
   const [actionError, setActionError] = useState(false);
   const platform = platforms.find((p) => p.id === selected)!;
   return (
-    <main className="mx-auto flex w-full max-w-7xl flex-col gap-7 px-5 py-7 md:px-8">
+    <main className="mx-auto flex w-full max-w-screen-2xl flex-col gap-5 px-4 pb-8 pt-7 font-heading sm:gap-6 sm:px-6 sm:pb-10 sm:pt-10 lg:px-8 xl:px-10">
       <header>
-        <h1 className="font-heading text-2xl font-semibold tracking-tight">
+        <h1 className="text-ui-30 font-semibold leading-[1.04] tracking-[-0.028em] text-foreground sm:text-ui-34">
           {t("channels.title")}
         </h1>
-        <p className="text-muted-foreground mt-2 text-sm">
+        <p className="text-muted-foreground mt-1 text-sm">
           {t("channels.pageDescription")}
         </p>
       </header>
-      <div className="grid items-start gap-7 md:grid-cols-[210px_minmax(0,1fr)]">
+      <div className="grid items-start gap-5 md:grid-cols-[190px_minmax(0,1fr)] lg:gap-6">
         <ChannelNavigation
           selected={selected}
           onSelect={setSelected}
@@ -52,7 +52,7 @@ export function ChannelsPage() {
           className="flex min-w-0 flex-col gap-5"
           aria-label={platform.name}
         >
-          <header className="flex items-start justify-between gap-4">
+          <header className="flex items-start justify-between gap-4 rounded-xl border border-border/60 bg-card px-4 py-3">
             <div className="flex items-center gap-3">
               <div className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-xl">
                 <HugeiconsIcon icon={platform.icon} size={22} />
@@ -131,20 +131,27 @@ export function ChannelsPage() {
                 ) : null
               ) : (
                 <Tabs defaultValue="connections">
-                  <TabsList
-                    aria-label={t("channels.sections")}
-                    className="mb-5"
-                  >
-                    <TabsTrigger value="connections">
-                      {t("channels.connections")}
-                    </TabsTrigger>
-                    <TabsTrigger value="capabilities">
-                      {t("channels.capabilities")}
-                    </TabsTrigger>
-                    <TabsTrigger value="activity">
-                      {t("channels.activity")}
-                    </TabsTrigger>
-                  </TabsList>
+                  <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                    <TabsList aria-label={t("channels.sections")}>
+                      <TabsTrigger value="connections">
+                        {t("channels.connections")}
+                      </TabsTrigger>
+                      <TabsTrigger value="activity">
+                        {t("channels.activity")}
+                      </TabsTrigger>
+                    </TabsList>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        useSettingsDialogStore
+                          .getState()
+                          .openDialog("channels-permissions")
+                      }
+                    >
+                      {t("channels.settings.title")}
+                    </Button>
+                  </div>
                   <TabsContent value="connections">
                     <TelegramConnections
                       accounts={data.accounts}
@@ -155,9 +162,6 @@ export function ChannelsPage() {
                       }}
                       onError={() => setActionError(true)}
                     />
-                  </TabsContent>
-                  <TabsContent value="capabilities">
-                    <ChannelCapabilities inventory={data.inventory} />
                   </TabsContent>
                   <TabsContent value="activity">
                     <ChannelActivity data={data} />

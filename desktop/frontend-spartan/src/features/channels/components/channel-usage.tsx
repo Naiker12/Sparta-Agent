@@ -6,7 +6,6 @@ import {
   Card,
   CardHeader,
   CardTitle,
-  CardDescription,
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
@@ -18,10 +17,9 @@ export function ChannelUsage({ accounts }: { accounts: ChannelAccount[] }) {
   const number = new Intl.NumberFormat(locale);
   if (!accounts.length) return null;
   return (
-    <Card>
+    <Card className="gap-3 rounded-xl border-border/60 shadow-none">
       <CardHeader>
         <CardTitle>{t("channels.usage.title")}</CardTitle>
-        <CardDescription>{t("channels.usage.description")}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
         {accounts.map((account) => {
@@ -72,30 +70,36 @@ export function ChannelUsage({ accounts }: { accounts: ChannelAccount[] }) {
                       </div>
                     ))}
                   </dl>
-                  <p className="text-muted-foreground text-xs">
-                    {t("channels.usage.coverage")} {value.complete_requests}/
-                    {value.requests} · {t("channels.usage.remaining")}{" "}
-                    {value.hourly_requests_remaining}/
-                    {value.hourly_request_limit}
-                  </p>
-                  {value.complete_requests < value.requests && (
-                    <p className="text-muted-foreground text-xs">
-                      {t("channels.usage.partial")}
+                  <details className="text-muted-foreground text-xs">
+                    <summary className="cursor-pointer">
+                      {t("channels.compact.usageDetails")}
+                      {value.complete_requests < value.requests
+                        ? ` · ${t("channels.compact.partial")}`
+                        : ""}
+                    </summary>
+                    <p className="mt-2">
+                      {t("channels.usage.coverage")} {value.complete_requests}/
+                      {value.requests} · {t("channels.usage.remaining")}{" "}
+                      {value.hourly_requests_remaining}/
+                      {value.hourly_request_limit}
                     </p>
-                  )}
-                  {!value.reported_requests && (
-                    <p className="text-muted-foreground text-xs">
-                      {t("channels.usage.noReports")}
-                    </p>
-                  )}
+                    {value.complete_requests < value.requests && (
+                      <p className="text-muted-foreground text-xs">
+                        {t("channels.usage.partial")}
+                      </p>
+                    )}
+                    {!value.reported_requests && (
+                      <p className="text-muted-foreground text-xs">
+                        {t("channels.usage.noReports")}
+                      </p>
+                    )}
+                    <p className="mt-2">{t("channels.usage.balance")}</p>
+                  </details>
                 </>
               )}
             </section>
           );
         })}
-        <p className="text-muted-foreground text-xs">
-          {t("channels.usage.balance")}
-        </p>
       </CardContent>
       <CardFooter>
         <Button variant="outline" size="sm" asChild>

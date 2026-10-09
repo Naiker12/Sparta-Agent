@@ -19,6 +19,8 @@ def ledger():
 
 
 def start(account_id, update_id, message):
+    from .projects import selected
+    project = selected(account_id, message['user_id'])
     with ledger() as db:
         account = db.execute('SELECT owner,config,enabled FROM channel_accounts WHERE id=?', (account_id,)).fetchone()
         if not account or not account['enabled']:
@@ -29,14 +31,43 @@ def start(account_id, update_id, message):
         key = f'channel:{account_id}:{update_id}'
         if db.execute('SELECT id FROM work_runs WHERE owner_subject=? AND request_key=?', (account['owner'], key)).fetchone():
             raise ValueError('channel_work_already_observed')
-        request = {'origin': 'telegram', 'promptPreview': message['text'][:1000],
+        preview = message['text'][:1000] or ('Nota de voz de Telegram' if config['locale'] == 'es' else 'Telegram voice note')
+        request = {'origin': 'telegram', 'promptPreview': preview,
                    'modelId': config['model'], 'channelName': config['name']}
+        if project and project['id'] in config.get('project_grants', {}).get(message['user_id'], []):
+            request.update(projectId=project['id'], projectName=project['name'])
         raw = json.dumps(request, ensure_ascii=False, sort_keys=True)
         run_id, now = str(uuid.uuid4()), int(time.time() * 1000)
         db.execute("INSERT INTO work_runs(id,owner_subject,request_key,request_hash,request_json,status,attempt,created_at,updated_at,source_kind,source_channel_id,source_item_id) VALUES(?,?,?,?,?,'running',1,?,?,'telegram',?,?)",
                    (run_id, account['owner'], key, hashlib.sha256(raw.encode()).hexdigest(), raw, now, now, account_id, str(update_id)))
         append_work_event(db, run_id, 'telegram.started', now)
         return run_id
+
+
+def set_stage(run_id, account_id, stage):
+    if stage not in ('transcribing', 'reading_document', 'responding', 'searching_web', 'reading_page', 'updating_profile'):
+        raise ValueError('invalid_channel_stage')
+    with ledger() as db:
+        row = db.execute("SELECT request_json FROM work_runs WHERE id=? AND source_channel_id=? AND source_kind='telegram' AND status='running'", (run_id, account_id)).fetchone()
+        if not row:
+            return
+        request = json.loads(row['request_json'])
+        request['activityStage'] = stage
+        raw = json.dumps(request, ensure_ascii=False, sort_keys=True)
+        db.execute('UPDATE work_runs SET request_json=?,request_hash=? WHERE id=?', (raw, hashlib.sha256(raw.encode()).hexdigest(), run_id))
+        append_work_event(db, run_id, 'telegram.stage', int(time.time() * 1000), {'stage': stage})
+
+
+def update_prompt(run_id, account_id, text, *, input_kind='audio'):
+    with ledger() as db:
+        row = db.execute("SELECT request_json FROM work_runs WHERE id=? AND source_channel_id=? AND source_kind='telegram' AND status='running'", (run_id, account_id)).fetchone()
+        if not row:
+            return
+        request = json.loads(row['request_json'])
+        request['promptPreview'] = text[:1000]
+        request['inputKind'] = input_kind
+        raw = json.dumps(request, ensure_ascii=False, sort_keys=True)
+        db.execute('UPDATE work_runs SET request_json=?,request_hash=? WHERE id=?', (raw, hashlib.sha256(raw.encode()).hexdigest(), run_id))
 
 
 def finish(run_id, status, summary='', reason=''):

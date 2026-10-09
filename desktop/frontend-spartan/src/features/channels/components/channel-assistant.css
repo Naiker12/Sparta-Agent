@@ -1,0 +1,111 @@
+.channel-assistant-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+}
+.channel-assistant-backdrop {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--background) 45%, transparent);
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+.channel-assistant-layer[data-expanded="true"] .channel-assistant-backdrop {
+  opacity: 1;
+}
+.channel-assistant {
+  position: fixed;
+  top: max(72px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.channel-assistant-content {
+  width: min(280px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  color: var(--foreground);
+}
+.channel-assistant-content > div:first-child {
+  padding: 4px 14px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--background) 92%, transparent);
+  backdrop-filter: blur(12px);
+}
+.channel-assistant-content [role="status"] {
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--background) 94%, transparent);
+  backdrop-filter: blur(12px);
+  max-width: 100%;
+}
+.channel-assistant-content button {
+  pointer-events: auto;
+  background: var(--background);
+}
+.channel-assistant-orb {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  color: var(--primary);
+}
+.channel-assistant-orbit {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.channel-assistant-core {
+  position: absolute;
+  inset: 27px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    var(--background),
+    var(--primary)
+  );
+  box-shadow: 0 0 24px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+.channel-assistant-orb[data-active="true"] .channel-assistant-orbit {
+  animation: spartan-channel-orbit 5s linear infinite;
+}
+.channel-assistant-orb[data-active="true"] .channel-assistant-core {
+  animation: spartan-channel-pulse 2.4s ease-in-out infinite;
+}
+@keyframes spartan-channel-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes spartan-channel-pulse {
+  50% {
+    transform: scale(0.92);
+  }
+}
+@media (max-width: 640px) {
+  .channel-assistant {
+    top: 64px;
+  }
+}
+@media (max-height: 500px) {
+  .channel-assistant-orb {
+    width: 64px;
+    height: 64px;
+  }
+  .channel-assistant-core {
+    inset: 20px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .channel-assistant-orbit,
+  .channel-assistant-core {
+    animation: none !important;
+  }
+  .channel-assistant-backdrop {
+    transition: none;
+  }
+}

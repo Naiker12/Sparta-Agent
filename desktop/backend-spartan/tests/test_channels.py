@@ -369,7 +369,7 @@ def test_worker_history_only_commits_after_acknowledged_delivery(monkeypatch, de
     provider.assert_awaited_once_with(saved, 'follow-up', history=[
         {'role': 'user', 'content': 'previous question'},
         {'role': 'assistant', 'content': 'previous answer'},
-    ], on_usage=ANY)
+    ], on_usage=ANY, on_stage=ANY, user_id='123')
     turns = history.messages(saved['id'], '123')
     assert len(turns) == (2 if delivery_fails else 4)
     assert turns[-1]['content'] == ('previous answer' if delivery_fails else 'follow-up answer')
@@ -1161,3 +1161,11 @@ def test_page_reader_does_not_forward_fetch_errors(monkeypatch, error):
     from core.inference import tools
     monkeypatch.setattr(tools, '_fetch_page_text', lambda *args, **kwargs: error)
     assert asyncio.run(web.read_page('https://example.com/page')) == []
+
+
+def test_old_cancel_button_does_not_cancel_new_request():
+    saved = account()
+    payload = {'user_id': '123', 'chat_id': 123, 'text': '/cancel', 'media': None, 'cancel_for': 1}
+    repo.ingest(saved['id'], [{'update_id': 10}], lambda _: payload)
+    assert not repo.take_cancel(saved['id'], '123', 5)
+    assert repo.take_cancel(saved['id'], '123', 1)

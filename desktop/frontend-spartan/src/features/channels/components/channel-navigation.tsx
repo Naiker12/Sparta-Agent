@@ -20,15 +20,21 @@ export function ChannelNavigation({
   return (
     <nav
       aria-label={t("channels.platforms")}
-      className="flex flex-col gap-5 md:sticky md:top-6"
+      className="flex flex-col gap-3 md:gap-5 md:sticky md:top-6"
     >
       <div className="flex items-center gap-2 px-3">
         <HugeiconsIcon icon={BubbleChatIcon} size={18} />
         <h2 className="text-sm font-semibold">{t("channels.platforms")}</h2>
       </div>
       {[true, false].map((available) => (
-        <div key={String(available)} className="flex flex-col gap-1">
-          <p className="text-muted-foreground mb-1 px-3 text-xs font-medium">
+        <div
+          key={String(available)}
+          className={cn(
+            "grid gap-1 md:flex md:flex-col",
+            !available && "grid-cols-3",
+          )}
+        >
+          <p className="text-muted-foreground col-span-full mb-1 px-3 text-xs font-medium">
             {t(
               available
                 ? "channels.readyChannels"
@@ -43,14 +49,22 @@ export function ChannelNavigation({
                 variant={selected === platform.id ? "secondary" : "ghost"}
                 aria-current={selected === platform.id ? "page" : undefined}
                 className={cn(
-                  "h-auto min-h-12 justify-start gap-3 rounded-xl px-3 py-3",
+                  "h-auto min-h-10 justify-start gap-2 rounded-xl px-3 py-2 md:min-h-12 md:gap-3 md:py-3",
+                  !platform.available &&
+                    "max-md:flex-col max-md:justify-center max-md:text-xs",
                   selected === platform.id && "ring-border ring-1",
                 )}
                 onClick={() => onSelect(platform.id)}
               >
                 <HugeiconsIcon icon={platform.icon} size={20} />
                 <span className="flex-1 text-left">{platform.name}</span>
-                <Badge variant="outline" className="text-[10px]">
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "text-[10px]",
+                    !platform.available && "max-md:hidden",
+                  )}
+                >
                   {platform.available
                     ? connected
                       ? String(connected)
@@ -61,7 +75,7 @@ export function ChannelNavigation({
             ))}
         </div>
       ))}
-      <p className="text-muted-foreground px-3 text-xs leading-relaxed">
+      <p className="text-muted-foreground hidden px-3 text-xs leading-relaxed md:block">
         {t("channels.navigationHelp")}
       </p>
     </nav>

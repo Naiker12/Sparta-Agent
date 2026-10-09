@@ -7,6 +7,11 @@ export type ChannelStatus =
   | "rate_limited"
   | "transport_error";
 export type ChannelAccount = {
+  owner_user_id?: string | null;
+  project_access?: Record<string, "all" | "selected">;
+  project_context?: Record<string, boolean>;
+  voice_enabled?: boolean;
+  profile_user_id?: string | null;
   usage?: ChannelUsage;
   id: string;
   name: string;
@@ -34,11 +39,13 @@ export type ChannelUsage = {
   hourly_requests_remaining: number;
 };
 export type ChannelInventory = {
+  capabilities?: { id: string; status: "available" | "pending" }[];
   providers: { id: string; name: string; models: string[] }[];
   skills: { name: string }[];
   mcp: { name: string; enabled: boolean }[];
 };
 export type ChannelOverview = {
+  voice?: ChannelVoiceStatus;
   accounts: ChannelAccount[];
   inventory: ChannelInventory;
   events: {
@@ -47,6 +54,25 @@ export type ChannelOverview = {
     code: string;
     created_at: number;
   }[];
+};
+export type ChannelVoiceStatus = {
+  provider?: string;
+  provider_name?: string;
+  installing?: boolean;
+  setup_failed?: boolean;
+  downloading?: boolean;
+  download_failed?: boolean;
+  bytes_done?: number | null;
+  bytes_total?: number | null;
+  ready: boolean;
+  model: string;
+  engine: "gguf" | "transformers" | "remote" | null;
+  reason:
+    | "needs_model"
+    | "needs_runtime"
+    | "unavailable"
+    | "needs_configuration"
+    | null;
 };
 export type ChannelDraft = Pick<
   ChannelAccount,

@@ -1,11 +1,10 @@
-import { useT as useUiT } from "@/i18n";
 /**
- * Sparta Agent – Sidebar Footer Component
+ * Spartan – Sidebar Footer Component
  *
  * Renderiza el pie de página de la barra lateral:
  * - Indicador de gradiente superior con fade dinámico para scroll.
  * - Tarjeta de actualización pendiente de versión (WebUpdateCheck).
- * - Perfil de usuario con avatar, nombre Spartan Agent y menú de configuración.
+ * - Perfil de usuario con avatar, nombre Spartan y menú de configuración.
  * - Botón de acceso directo a Ajustes / Settings cog.
  */
 
@@ -82,8 +81,6 @@ export function SidebarUserFooter({
   closeMobileIfOpen,
   onOpenShutdown,
 }: SidebarUserFooterProps): ReactElement {
-  const uiT = useUiT();
-
   const t = useT();
 
   return (
@@ -180,7 +177,7 @@ export function SidebarUserFooter({
                     {displayTitle}
                   </span>
                   <span className="truncate text-ui-11p5 tracking-nav text-muted-foreground">
-                    {uiT("settings.about.license.studioLabel")}</span>
+                    {t("settings.about.license.studioLabel")}</span>
                 </div>
               </button>
             </DropdownMenuTrigger>

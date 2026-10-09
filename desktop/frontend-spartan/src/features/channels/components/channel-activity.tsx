@@ -15,6 +15,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Select,
@@ -32,6 +33,7 @@ import {
 } from "@/components/ui/empty";
 import {
   activityCounts,
+  activityPage,
   activityType,
   filterActivity,
   type ActivityFilter,
@@ -49,34 +51,38 @@ export function ChannelActivity({ data }: { data: ChannelOverview }) {
   const locale = useLocale();
   const [category, setCategory] = useState<ActivityFilter>("all");
   const [account, setAccount] = useState("all");
+  const [requestedPage, setPage] = useState(0);
   const selected = data.accounts.some((item) => item.id === account)
     ? account
     : "all";
   const counts = activityCounts(filterActivity(data.events, selected, "all"));
-  const events = filterActivity(data.events, selected, category);
+  const filtered = filterActivity(data.events, selected, category);
+  const { page, pages, events } = activityPage(filtered, requestedPage);
   const date = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
   const time = new Intl.DateTimeFormat(locale, { timeStyle: "short" });
   return (
     <div className="flex flex-col gap-5">
-      <ChannelUsage accounts={data.accounts.filter((item) => selected === "all" || item.id === selected)} />
-      <div className="grid gap-3 sm:grid-cols-3">
+      <ChannelUsage
+        accounts={data.accounts.filter(
+          (item) => selected === "all" || item.id === selected,
+        )}
+      />
+      <dl className="grid grid-cols-3 gap-3">
         {(["responses", "errors", "connections"] as const).map((kind) => (
-          <Card key={kind} size="sm">
-            <CardHeader>
-              <CardDescription className="flex items-center gap-2">
-                <HugeiconsIcon
-                  icon={icons[kind]}
-                  size={17}
-                  aria-hidden="true"
-                />
-                {t(`channels.activityView.${kind}`)}
-              </CardDescription>
-              <CardTitle>{counts[kind]}</CardTitle>
-            </CardHeader>
-          </Card>
+          <div
+            key={kind}
+            className="flex min-w-0 flex-col gap-1 rounded-xl border border-border/60 bg-card px-3 py-3 sm:px-4"
+          >
+            <dt className="truncate text-ui-11 font-medium uppercase tracking-wider text-muted-foreground">
+              {t(`channels.activityView.${kind}`)}
+            </dt>
+            <dd className="text-ui-22 font-semibold leading-tight tabular-nums tracking-[-0.02em]">
+              {counts[kind].toLocaleString(locale)}
+            </dd>
+          </div>
         ))}
-      </div>
-      <Card>
+      </dl>
+      <Card className="gap-3 rounded-xl border-border/60 shadow-none">
         <CardHeader>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <CardTitle>{t("channels.activityView.recent")}</CardTitle>
@@ -93,7 +99,10 @@ export function ChannelActivity({ data }: { data: ChannelOverview }) {
               value={category}
               aria-label={t("channels.activityView.filter")}
               onValueChange={(value) => {
-                if (value) setCategory(value as ActivityFilter);
+                if (value) {
+                  setCategory(value as ActivityFilter);
+                  setPage(0);
+                }
               }}
             >
               {(["all", "responses", "errors", "connections"] as const).map(
@@ -105,7 +114,13 @@ export function ChannelActivity({ data }: { data: ChannelOverview }) {
               )}
             </ToggleGroup>
             {data.accounts.length > 1 && (
-              <Select value={selected} onValueChange={setAccount}>
+              <Select
+                value={selected}
+                onValueChange={(value) => {
+                  setAccount(value);
+                  setPage(0);
+                }}
+              >
                 <SelectTrigger aria-label={t("channels.activityView.bot")}>
                   <SelectValue />
                 </SelectTrigger>
@@ -125,7 +140,7 @@ export function ChannelActivity({ data }: { data: ChannelOverview }) {
             )}
           </div>
           {events.length ? (
-            <ol className="flex flex-col gap-1">
+            <ol className="max-h-[560px] overflow-y-auto flex flex-col gap-1">
               {events.map((event, index) => {
                 const [kind, label] = activityType(event.code);
                 const instant = new Date(event.created_at * 1000);
@@ -143,8 +158,8 @@ export function ChannelActivity({ data }: { data: ChannelOverview }) {
                         {day}
                       </p>
                     )}
-                    <div className="flex items-start gap-3 rounded-xl px-2 py-3">
-                      <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-full">
+                    <div className="flex items-start gap-3 rounded-xl px-2 py-2">
+                      <span className="bg-muted text-muted-foreground flex size-7 shrink-0 items-center justify-center rounded-full">
                         <HugeiconsIcon
                           icon={icons[kind]}
                           size={18}
@@ -205,6 +220,38 @@ export function ChannelActivity({ data }: { data: ChannelOverview }) {
                 </EmptyDescription>
               </EmptyHeader>
             </Empty>
+          )}
+          {filtered.length > 0 && (
+            <nav
+              aria-label={t("channels.compact.pagination")}
+              className="flex items-center justify-between gap-3 border-t pt-3"
+            >
+              <span
+                className="text-muted-foreground text-xs"
+                aria-live="polite"
+              >
+                {page + 1} / {pages} · {filtered.length}{" "}
+                {t("channels.compact.events")}
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page === 0}
+                  onClick={() => setPage(page - 1)}
+                >
+                  {t("channels.compact.previous")}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={page + 1 >= pages}
+                  onClick={() => setPage(page + 1)}
+                >
+                  {t("channels.compact.next")}
+                </Button>
+              </div>
+            </nav>
           )}
         </CardContent>
       </Card>

@@ -94,6 +94,39 @@ def set_enabled(account_id: str, owner: str, enabled: bool):
         db.execute('UPDATE channel_accounts SET enabled=? WHERE id=? AND owner=?', (int(enabled), account_id, owner))
 
 
+def set_voice_enabled(account_id: str, owner: str, enabled: bool):
+    with connection() as db:
+        db.execute('BEGIN IMMEDIATE')
+        row = db.execute('SELECT config FROM channel_accounts WHERE id=? AND owner=?', (account_id, owner)).fetchone()
+        if not row:
+            return False
+        config = json.loads(row['config'])
+        config['voice_enabled'] = enabled
+        db.execute('UPDATE channel_accounts SET config=? WHERE id=? AND owner=?', (json.dumps(config), account_id, owner))
+        return True
+
+
+def revoke_user(account_id: str, owner: str, user_id: str):
+    with connection() as db:
+        db.execute('BEGIN IMMEDIATE')
+        row = db.execute('SELECT config FROM channel_accounts WHERE id=? AND owner=?', (account_id, owner)).fetchone()
+        if not row:
+            raise ValueError('account_not_found')
+        config = json.loads(row['config'])
+        if user_id not in config.get('allowed_user_ids', []):
+            raise ValueError('user_not_authorized')
+        config['allowed_user_ids'] = [value for value in config['allowed_user_ids'] if value != user_id]
+        for key in ('project_grants', 'project_access', 'project_context', 'history_project_scope', 'selected_projects'):
+            config.get(key, {}).pop(user_id, None)
+        for key in ('profile_user_id', 'owner_user_id'):
+            if config.get(key) == user_id:
+                config[key] = None
+        db.execute('UPDATE channel_accounts SET config=?,enabled=CASE WHEN ?=0 THEN 0 ELSE enabled END WHERE id=? AND owner=?', (json.dumps(config), len(config['allowed_user_ids']), account_id, owner))
+        db.execute('DELETE FROM channel_history WHERE account_id=? AND user_id=?', (account_id, user_id))
+        db.execute("UPDATE channel_inbox SET status='failed' WHERE account_id=? AND json_extract(payload,'$.user_id')=? AND status IN ('queued','processing')", (account_id, user_id))
+        db.execute("UPDATE channel_pairings SET status='cancelled' WHERE account_id=? AND user_id=? AND status IN ('waiting','review')", (account_id, user_id))
+
+
 def delete_account(account_id: str, owner: str):
     with connection() as db:
         if not db.execute('DELETE FROM channel_accounts WHERE id=? AND owner=?', (account_id, owner)).rowcount:
@@ -163,7 +196,7 @@ def take_cancel(account_id: str, user_id: str, after: int):
         for row in rows:
             payload = json.loads(row['payload'])
             parts = payload['text'].split()
-            if not payload['media'] and parts and parts[0].split('@')[0].lower() == '/cancel':
+            if not payload['media'] and parts and parts[0].split('@')[0].lower() == '/cancel' and payload.get('cancel_for', after) == after:
                 db.execute("UPDATE channel_inbox SET status='completed' WHERE account_id=? AND update_id=?", (account_id, row['update_id']))
                 return True
         return False

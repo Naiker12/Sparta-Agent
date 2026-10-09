@@ -31,6 +31,9 @@ jobs:
       - name: Electron frontend regression tests
         run: npm --prefix desktop/frontend-spartan run test:electron
 
+      - name: Desktop frontend unit and channel tests
+        run: npm --prefix desktop/frontend-spartan test
+
   test:
     runs-on: ubuntu-latest
     steps:
@@ -53,17 +56,22 @@ jobs:
       - name: Unit and browser regression tests
         run: npm test
 
-  auth:
+  backend-contracts:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - name: Install CPU-only auth test dependencies
+      - name: Install CPU-only test dependencies
         run: pip install pytest fastapi==0.141.1 PyJWT httpx structlog cryptography python-multipart
       - name: Authentication boundary and credential rotation
         working-directory: desktop/backend-spartan
         env:
           PYTHONPATH: .
         run: python -m pytest --noconftest tests/test_auth_access_boundary.py tests/test_credential_rotation_race.py tests/test_api_only_contract.py -q
+      - name: Channel security and integration contract
+        working-directory: desktop/backend-spartan
+        env:
+          PYTHONPATH: .
+        run: python -m pytest --noconftest tests/test_channels.py tests/test_channels_controls.py tests/test_channels_date.py tests/test_channels_documents.py tests/test_channels_images.py tests/test_channels_intents.py tests/test_channels_permissions_command.py tests/test_channels_personal_pairing.py tests/test_channels_profile.py tests/test_channels_profile_capability.py tests/test_channels_project_context.py tests/test_channels_projects.py tests/test_channels_voice.py tests/test_telegram_delivery_errors.py -q

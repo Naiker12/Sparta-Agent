@@ -30,11 +30,14 @@ export function useChannels() {
     }
   }, []);
   useEffect(() => {
+    const onChanged = () => void refresh();
+    window.addEventListener("spartan:channels-changed", onChanged);
     const initial = window.setTimeout(() => void refresh(), 0);
     const interval = window.setInterval(() => {
       if (!document.hidden) void refresh();
     }, 10000);
     return () => {
+      window.removeEventListener("spartan:channels-changed", onChanged);
       window.clearTimeout(initial);
       window.clearInterval(interval);
       controller.current?.abort();

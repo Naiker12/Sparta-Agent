@@ -1,10 +1,20 @@
 # Plan de evolución de Telegram
 
-Fecha: 2026-10-05. Rama: `canales`. Estado: propuesta para revisión; las capacidades futuras descritas aquí todavía no están implementadas.
+Fecha inicial: 2026-10-05. Revisión de estado: 2026-10-06. Rama: `canales`.
+
+## Estado actualizado
+
+Este documento conserva la propuesta original y sus criterios futuros. Para el comportamiento actual, consulta [Canales](README.md) y la [guía de usuarios](../../landing/src/components/docs/content/pages/features/channels.mdx).
+
+Ya están implementados el indicador de escritura, cancelación, consumo, actividad paginada, investigación pública, imágenes con enlaces, documentos UTF-8, selección de proyectos para asociar actividad y el servicio compartido de transcripción local/externa. El selector de voz permite cambiar de proveedor aun cuando falle la carga de configuración.
+
+La voz requiere validación real: el arranque de Whisper CPU falla en el equipo afectado y los adaptadores externos todavía necesitan una prueba con una clave real. La selección de proyectos no abre archivos. Sincronización del perfil, exportación de archivos locales, ejecución de skills/MCP, Discord y asistente de voz en tiempo real siguen pendientes. Los cambios no se han publicado.
+
+## Propuesta original
 
 Avance de implementación: indicador nativo renovable, `/cancel` durante generación, recepción de nuevos mensajes durante la consulta, eventos de inicio/cancelación en Actividad y descripciones ES/EN. La cancelación interrumpe la espera local y descarta la respuesta; no garantiza que el proveedor remoto deje de facturar una solicitud ya recibida.
 
-Segundo bloque: `/usage` con tokens reportados por usuario durante las últimas 24 horas y límite local compartido del bot; resumen por bot en Actividad; proyección de consultas en Tareas → Bandeja de trabajo. La proyección muestra origen, ejecución, respuesta entregada, cancelación, error o necesidad de revisión. No agrega un segundo ejecutor ni da acceso a proyectos/carpetas. Las consultas completadas conservan una vista previa y su respuesta en esa bandeja hasta eliminar el bot, independientemente del contexto conversacional de siete días; los registros de consumo se conservan durante 30 días y el resumen utiliza 24 horas. La vinculación con un chat/proyecto, el ejecutor de herramientas compartido, web, voz, archivos y perfil siguen pendientes. Falta comprobar ambos bloques con Telegram real después de reiniciar Spartan.
+Segundo bloque: `/usage` con tokens reportados por usuario durante las últimas 24 horas y límite local compartido del bot; resumen por bot en Actividad; proyección de consultas en Tareas → Bandeja de trabajo. La proyección muestra origen, ejecución, respuesta entregada, cancelación, error o necesidad de revisión. No agrega un segundo ejecutor ni da acceso a proyectos/carpetas. Las consultas completadas conservan una vista previa y su respuesta en esa bandeja hasta eliminar el bot, independientemente del contexto conversacional de siete días; los registros de consumo se conservan durante 30 días y el resumen utiliza 24 horas. La vinculación con un chat de escritorio, el ejecutor de herramientas compartido, archivos locales y perfil siguen pendientes. Web y transcripción se implementaron después; consulta el estado actualizado de arriba. Falta comprobar ambos bloques con Telegram real después de reiniciar Spartan.
 
 ## Objetivo y punto de partida
 
@@ -137,7 +147,7 @@ Después incorporar el contrato de trabajo y `/usage`; cerrar esa base antes de 
 
 ## Avance de búsqueda pública
 
-Tercer bloque implementado: búsqueda pública por `/search` para proveedores de texto y una herramienta `search_public_web` que los modelos compatibles pueden solicitar automáticamente. Reutiliza el buscador existente, con una búsqueda de hasta tres fuentes por consulta y dos llamadas máximas al modelo. Las fuentes se añaden desde resultados reales y se identifican como extractos; todavía no se descargan imágenes ni se leen páginas completas. Se rechazan credenciales identificables, rutas locales y URLs internas conocidas; no se transmiten automáticamente historiales privados como consulta. La cancelación descarta el resultado y señala al buscador que se detenga; la petición bloqueante en curso puede terminar hasta su timeout. El uso de las llamadas al modelo se agrega sin duplicar informes acumulados y marca los datos incompletos. La búsqueda automática depende del soporte de herramientas del modelo; `/search` no requiere ese soporte. Permanece pendiente conectar chat/proyectos, voz, archivos y perfil.
+Tercer bloque implementado: búsqueda pública por `/search` para proveedores de texto y una herramienta `search_public_web` que los modelos compatibles pueden solicitar automáticamente. Reutiliza el buscador existente, con una búsqueda de hasta tres fuentes por consulta y dos llamadas máximas al modelo. Las fuentes de búsqueda se añaden desde resultados reales y se identifican como extractos. Los avances posteriores de lectura de páginas y fotos se describen al final de este documento. Se rechazan credenciales identificables, rutas locales y URLs internas conocidas; no se transmiten automáticamente historiales privados como consulta. La cancelación descarta el resultado y señala al buscador que se detenga; la petición bloqueante en curso puede terminar hasta su timeout. El uso de las llamadas al modelo se agrega sin duplicar informes acumulados y marca los datos incompletos. La búsqueda automática depende del soporte de herramientas del modelo; `/search` no requiere ese soporte. Permanece pendiente conectar chat/proyectos, voz, archivos y perfil.
 
 ## Fuentes primarias consultadas
 
@@ -156,4 +166,66 @@ Los límites externos se comprobarán de nuevo al implementar. La arquitectura p
 - Reutiliza el lector existente con protección DNS/IP y redirecciones; bloquea URLs locales, credenciales, puertos no estándar y parámetros de autenticación. Límite de 10 000 caracteres y tiempo de lectura acotado.
 - El contenido externo se trata como evidencia no confiable. Cada respuesta incluye la URL consultada y declara el límite de texto; no se presenta como lectura íntegra.
 - Conserva cancelación, indicador de escritura, medición de tokens y registro de trabajo. No añade dependencias.
-- Pendiente: búsqueda y envío de imágenes de referencia, voz local, proyectos y carpetas autorizadas.
+- La búsqueda y el envío de imágenes se incorporan en el siguiente avance local. Siguen pendientes voz local, proyectos y carpetas autorizadas.
+
+
+## Avance local: flujo de imágenes de referencia
+
+Solicitud del usuario: conservar los cambios locales; no subirlos hasta cerrar el flujo completo. Este avance no se ha enviado a GitHub ni fusionado a `main`.
+
+- `/images tema` valida una consulta pública, busca con la biblioteca DDGS ya instalada y recupera hasta dos referencias. No agrega dependencias ni guarda fotos en la PC. Cada referencia conserva título, URL original de imagen y página de origen; se descartan destinos privados, URLs con credenciales, duplicados y geometrías incompatibles conocidas.
+- Los modelos con herramientas pueden solicitar `search_reference_images`. Los proveedores sin herramientas usan el comando explícito. La consulta sigue limitada a una operación pública y dos llamadas al modelo; las imágenes se presentan como metadatos no verificados visualmente, sin atribuir generación ni licencia.
+- `images.py` conserva el contrato de respuesta de texto mediante `ChannelReply` y adjunta solo referencias obtenidas por el adaptador. Un enlace escrito por el modelo no autoriza un envío de foto.
+- `delivery.py` coordina texto, fotos, comprobaciones de acceso y enlaces de respaldo. `telegram.py` envía fotos nativas por `sendPhoto` usando URL pública y pie de foto sin formato. Telegram descarga la foto; Spartan no utiliza rutas locales ni sube archivos privados.
+- Durante la búsqueda permanece el indicador de escritura; al entregar referencias aparece `upload_photo`. `/cancel` se recibe sin duplicar el consumidor de actualizaciones. Una cancelación durante el envío no borra partes ya entregadas: detiene lo pendiente, no guarda el turno en contexto y marca el trabajo para revisión.
+- Cada foto requiere acceso vigente. Una foto rechazada explícitamente (HTTP 400) conserva enlaces y añade un aviso; una respuesta HTTP ambigua, error de credenciales o límite de peticiones no se reintenta como foto. El historial y el resultado del trabajo se guardan tras confirmar toda la entrega o su respaldo explícito.
+- Capacidades y Actividad muestran comandos, lectura de páginas, imágenes, envíos y fallos en español e inglés, dentro de la aplicación real.
+
+Comprobación pendiente fuera de pruebas automatizadas: recibir `/images paisaje de montaña` desde el bot real y comprobar las fotos en el cliente de Telegram. Voz, archivos, proyectos y sincronización del perfil siguen siendo etapas separadas; este avance no las habilita.
+
+
+## Avance local: entrada de voz de Telegram
+
+Se mantiene la instrucción de no subir cambios. La entrada de voz se activa por conexión y está apagada para cuentas anteriores hasta que su propietario la habilite.
+
+- Canales ofrece `Preparar Whisper base`, progreso de descarga, aviso de fallo, acceso a Ajustes → Voz e interruptor de entrada de voz. Reutiliza el descargador y la caché de Whisper existentes. El modelo es multilingüe; la transcripción usa detección automática del idioma. Un modelo incompleto o un motor ausente nunca se presenta como preparado.
+- Las notas de voz y los mensajes de audio autorizados conservan solo `file_id`, tamaño y duración de Telegram. No se acepta una URL de descarga, nombre de archivo ni ruta desde el mensaje. Los documentos siguen pendientes.
+- El transporte usa `getFile` y el host fijo de Telegram, no sigue redirecciones y limita el cuerpo real a 20 MB. El audio permanece en memoria; no se escribe como archivo temporal.
+- Límite de cinco minutos, comprobado tanto en los metadatos como durante la decodificación. Se rechazan notas vacías, audios demasiado grandes y resultados sin palabras, con mensajes en español e inglés.
+- `core/inference/stt_service.py` comparte carga mediante el registro de motores, transcripción y cancelación entre la ruta de dictado y Canales. Los motores conservan el límite anterior para clientes que no especifican uno. Una operación de transcripción ocupa un cupo hasta que termina su trabajador, incluso si su espera fue cancelada.
+- `/cancel`, pausa del bot, revocación del usuario o desactivación de la voz impiden continuar el flujo. La cancelación se asocia al evento de esa petición y no cancela trabajos de otro propietario del motor.
+- La transcripción se convierte en entrada del mismo ejecutor de conversación y actualiza la vista de trabajo con su texto. El historial se guarda tras confirmar la respuesta. El texto reconocido se envía al proveedor configurado; el audio no se envía a un proveedor STT remoto. Las respuestas de este avance son de texto.
+- `/voice` informa del estado sin modificar la configuración. Los permisos de voz y la preparación del modelo solo se cambian desde el plano de control autenticado de Spartan.
+
+### Reparación necesaria del descargador compartido
+
+Las pruebas detectaron que `hub/utils/download_registry.py`, `hf_cache_state.py`, `state_dir.py` y `paths.py` habían sido eliminados en un cambio anterior, aunque el descargador de Whisper seguía importándolos. Se recuperaron sus versiones originales de Git para conservar reservas de repositorio, procedencia de descargas y protección de caché. No se sustituyeron sus controles por una descarga directa ni se añadieron dependencias nuevas. Dos fallos de la descarga heredada quedaron corregidos con esa restauración.
+
+### Verificación y límites actuales
+
+Las pruebas del flujo cubren aislamiento de remitentes, permisos del propietario, límites de descarga y duración decodificada, ausencia de redirecciones, preparación única, identidad de una descarga fallida, cancelación, desactivación durante transcripción, historial y trabajo. También se verifica que el dictado HTTP utiliza el servicio compartido sin cambiar su respuesta.
+
+La suite STT amplia conserva ocho fallos previos: pruebas que requieren privilegios de enlaces simbólicos o paquetes ROCm de Linux en Windows, y referencias antiguas a rutas/guardas que ya no existen. Se reprodujeron los mismos ocho casos cargando el código anterior de Git en un proceso aislado; no se eliminaron pruebas ni se debilitó su validación para ocultarlos.
+
+No se descargó ni cargó el modelo base en la PC durante esta implementación. Falta probar notas reales en español e inglés y medir los clips de 15, 60 y 180 segundos después de prepararlo. La aplicación local no estaba escuchando en el puerto 5173 al intentar la revisión visual, por lo que no se presenta el diseño como validado en la sesión real de escritorio.
+# Consulta local de documentos de Telegram (sin publicar)
+
+## Preparación de voz con la instalación del backend
+
+El bootstrap de escritorio ejecuta `setup_voice.py` en la misma carpeta de datos escribible del backend. Prepara whisper.cpp para CPU mediante el instalador vendorizado y el modelo base multilingüe mediante el gestor HF existente. No instala modelos LLM ni requiere Torch para esta ruta. La descarga inicial necesita internet; un fallo de voz no bloquea la instalación del backend y puede reintentarse desde Ajustes → Voz.
+
+La pestaña de voz vuelve a estar visible y tiene un panel específico de preparación y estado; abrirla desde Canales no se redirige a General. Los endpoints de preparación exigen sesión UI y credencial vigente. La entrada del bot continúa desactivada hasta que su propietario la active y el modelo esté preparado. Pendiente: validar una instalación limpia completa y transcribir audio real en español e inglés.
+
+## Selección de proyectos (sin publicar)
+
+La tarjeta de cada bot permite al propietario autorizar visibilidad de proyectos por usuario de Telegram. Los comandos `/projects` y `/project ID` consultan únicamente esos proyectos; `/project off` sale. La selección se persiste y al cambiar reinicia el contexto de conversación. Revocar la autorización o archivar el proyecto elimina su disponibilidad. El registro de Trabajos muestra el nombre del proyecto elegido.
+
+Este bloque concede visibilidad y asociación de actividad. No envía instrucciones del proyecto, rutas ni archivos al proveedor y no crea todavía un chat de proyecto en Spartan. El acceso a carpetas y el chat enlazado necesitan el siguiente bloque; no debe presentarse esta selección como ejecución dentro del workspace.
+
+Entrada de TXT, Markdown, CSV y JSON UTF-8 desde usuarios autorizados. El adaptador reutiliza la descarga acotada de Telegram, con host fijo, sin redirecciones ni escritura a disco. Límites: 256 KB y 24.000 caracteres; rechaza contenido binario, nombres con rutas y formatos no admitidos. La descripción del envío se utiliza como pregunta; sin descripción se solicita un resumen.
+
+El contenido se pasa al proveedor como datos separados, sin herramientas web, ejecución ni acceso a carpetas. El archivo original y su texto completo no se añaden al historial; se conserva la pregunta y la respuesta. La respuesta puede contener extractos. El trabajo y la actividad reflejan lectura, fallos y cancelación. La interfaz explica límites y envío del texto al proveedor en español e inglés.
+
+Pendientes: PDF/Word, prueba real de un envío Telegram, y permisos explícitos por usuario/proyecto para consultar o exportar archivos del PC. La autorización del chat no concede acceso al sistema de archivos. Todo permanece en la rama `canales`, sin push ni despliegue.
+
+Validación: suite conjunta de canales, trabajos y STT HTTP con 225 aprobados y 2 omitidos; una prueba de cancelación excedió su plazo de dos segundos. Al repetir documentos y los dos casos de esa prueba, 20 aprobados. Typecheck, paridad de traducciones, ESLint de los componentes modificados y diff-check correctos. No se ha probado un envío real al bot en este bloque.

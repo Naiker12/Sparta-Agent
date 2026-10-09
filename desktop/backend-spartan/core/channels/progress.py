@@ -12,11 +12,11 @@ async def delay(seconds):
         pass
 
 
-async def _typing(transport, chat_id, interval):
+async def _typing(transport, chat_id, interval, action):
     while True:
         pause = interval
         try:
-            await asyncio.wait_for(transport.action(chat_id, 'typing'), timeout=10)
+            await asyncio.wait_for(transport.action(chat_id, action), timeout=10)
         except TelegramError as error:
             if error.code == 'credentials_error':
                 return
@@ -28,8 +28,8 @@ async def _typing(transport, chat_id, interval):
 
 
 @asynccontextmanager
-async def typing(transport, chat_id, *, interval=4):
-    task = asyncio.create_task(_typing(transport, chat_id, interval))
+async def typing(transport, chat_id, *, interval=4, action='typing'):
+    task = asyncio.create_task(_typing(transport, chat_id, interval, action))
     try:
         yield
     finally:

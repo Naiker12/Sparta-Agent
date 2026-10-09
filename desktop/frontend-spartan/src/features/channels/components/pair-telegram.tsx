@@ -23,11 +23,13 @@ export function PairTelegram({
   initialSession,
   onClose,
   onDone,
+  purpose = "self",
 }: {
   accountId: string;
   initialSession: PairingLink;
   onClose: () => void;
   onDone: () => void;
+  purpose?: "self" | "guest";
 }) {
   const t = useT();
   const [session, setSession] = useState(initialSession);
@@ -68,17 +70,19 @@ export function PairTelegram({
       if (kind === "renew")
         setSession(await channelsApi.startPairing(accountId));
       else if (kind === "approve") {
-        await channelsApi.approvePairing(accountId, session.id);
+        await channelsApi.approvePairing(accountId, session.id, purpose);
         onDone();
       } else {
         if (session.status === "waiting" || session.status === "review")
           await channelsApi
             .cancelPairing(accountId, session.id)
             .catch((cause) => {
-              if (!(
-                cause instanceof ChannelApiError &&
-                cause.code === "pairing_not_found"
-              ))
+              if (
+                !(
+                  cause instanceof ChannelApiError &&
+                  cause.code === "pairing_not_found"
+                )
+              )
                 throw cause;
             });
         onClose();
@@ -119,7 +123,13 @@ export function PairTelegram({
           <HugeiconsIcon icon={Cancel01Icon} aria-hidden="true" />
         </Button>
         <DialogHeader>
-          <DialogTitle>{t("channels.pairing.title")}</DialogTitle>
+          <DialogTitle>
+            {t(
+              purpose === "self"
+                ? "channels.pairing.title"
+                : "channels.pairing.guestTitle",
+            )}
+          </DialogTitle>
           <DialogDescription>
             {t("channels.pairing.description")}
           </DialogDescription>
@@ -193,7 +203,11 @@ export function PairTelegram({
               </AlertDescription>
             </Alert>
             <p className="text-muted-foreground text-sm">
-              {t("channels.pairing.approveHelp")}
+              {t(
+                purpose === "self"
+                  ? "channels.pairing.selfHelp"
+                  : "channels.pairing.guestHelp",
+              )}
             </p>
           </>
         )}
@@ -247,7 +261,11 @@ export function PairTelegram({
               onClick={() => void action("approve")}
             >
               {busy && <Spinner label={t("channels.working")} />}
-              {t("channels.pairing.approve")}
+              {t(
+                purpose === "self"
+                  ? "channels.pairing.selfApprove"
+                  : "channels.pairing.guestApprove",
+              )}
             </Button>
           ) : (
             <Button

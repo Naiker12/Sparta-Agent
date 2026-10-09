@@ -103,7 +103,9 @@ def capture(account_id, update):
     return {'chat_id': chat_id, 'confirmation': confirmation} if changed else None
 
 
-def approve(account_id, session_id, owner):
+def approve(account_id, session_id, owner, *, purpose='guest'):
+    if purpose not in ('self', 'guest'):
+        raise ValueError('invalid_pairing_purpose')
     with connection() as db:
         db.execute('BEGIN IMMEDIATE')
         row = db.execute('SELECT p.* FROM channel_pairings p JOIN channel_accounts a ON a.id=p.account_id '
@@ -117,6 +119,16 @@ def approve(account_id, session_id, owner):
         account = db.execute('SELECT config FROM channel_accounts WHERE id=? AND owner=?',
                              (account_id, owner)).fetchone()
         config = json.loads(account['config'])
+        if purpose == 'self':
+            existing_owner = config.get('owner_user_id')
+            if existing_owner and existing_owner != row['user_id']:
+                raise ValueError('owner_already_linked')
+            # One atomic approval establishes the personal link and dynamic
+            # project visibility. Existing approvals remain guest-only.
+            config['owner_user_id'] = row['user_id']
+            config['profile_user_id'] = row['user_id']
+            config.setdefault('project_access', {})[row['user_id']] = 'all'
+            config['permissions_version'] = 2
         ids = set(config['allowed_user_ids']) | {row['user_id']}
         if len(ids) > 20:
             raise ValueError('user_limit')

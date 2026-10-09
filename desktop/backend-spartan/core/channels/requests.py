@@ -5,6 +5,8 @@ from storage.channels import repository as repo
 from storage.channels import pairing
 from .policy import normalize_private_message
 from .progress import delay, typing
+from . import controls
+from .telegram import TelegramError
 
 
 class RequestCancelled(Exception):
@@ -18,7 +20,7 @@ def command(text):
 
 async def receive(transport, account_id, *, timeout=25):
     updates = await transport.call('getUpdates', offset=repo.offset(account_id),
-                                   timeout=timeout, limit=20, allowed_updates=['message'])
+                                   timeout=timeout, limit=20, allowed_updates=['message', 'callback_query'])
     # Revalidate after long polling: a revoked sender must not enter the inbox.
     account = repo.get_account(account_id)
     if not account:
@@ -26,11 +28,16 @@ async def receive(transport, account_id, *, timeout=25):
     captures = [candidate for update in updates if (candidate := pairing.capture(account_id, update))]
     accepted = []
     def normalize(update):
-        message = normalize_private_message(update, account['allowed_user_ids']) if account['enabled'] and not pairing.is_link(update) else None
+        message = (controls.consume(account, update) if 'callback_query' in update else normalize_private_message(update, account['allowed_user_ids'])) if account['enabled'] and not pairing.is_link(update) else None
         if message:
             accepted.append((update['update_id'], message))
         return message
     repo.ingest(account_id, updates, normalize)
+    for update in updates:
+        query = update.get('callback_query')
+        if isinstance(query, dict) and isinstance(query.get('id'), str):
+            await transport.call('answerCallbackQuery', callback_query_id=query['id'],
+                text=('Solicitud recibida' if account['locale'] == 'es' else 'Request received') if any(identifier == update.get('update_id') for identifier, _ in accepted) else ('El botón ha caducado o no está disponible.' if account['locale'] == 'es' else 'This button expired or is unavailable.'))
     for candidate in captures:
         prefix = 'Vuelve a Spartan para autorizar tu cuenta. Comprueba este código: ' if account['locale'] == 'es' else 'Return to Spartan to authorize your account. Check this code: '
         await transport.send(candidate['chat_id'], prefix + candidate['confirmation'])
@@ -42,6 +49,9 @@ async def _listen(transport, account_id, update_id, message, response):
     # getUpdates consumer: the worker transfers ownership here during inference.
     await delay(0.2)
     while not response.done():
+        if message['media'] in ('voice', 'audio'):
+            from .voice import check_voice_access
+            check_voice_access({'id': account_id}, message)
         if repo.take_cancel(account_id, message['user_id'], update_id):
             response.cancel()
             raise RequestCancelled()
@@ -50,6 +60,7 @@ async def _listen(transport, account_id, update_id, message, response):
             if (not response.done() and control_id > update_id
                     and control['user_id'] == message['user_id']
                     and not control['media'] and command(control['text']) == '/cancel'
+                    and control.get('cancel_for', update_id) == update_id
                     and repo.consume_control(account_id, control_id)):
                 response.cancel()
                 raise RequestCancelled()
@@ -57,10 +68,24 @@ async def _listen(transport, account_id, update_id, message, response):
         await delay(0.1)
 
 
-async def respond_with_progress(transport, account, update_id, message, invoke):
-    async with typing(transport, message['chat_id']):
+async def respond_with_progress(transport, account, update_id, message, invoke, *, action='typing'):
+    async with typing(transport, message['chat_id'], action=action):
         response = asyncio.create_task(invoke())
         listener = asyncio.create_task(_listen(transport, account['id'], update_id, message, response))
+        async def show_cancel():
+            await delay(1)
+            if response.done() or not hasattr(transport, 'send_controls'):
+                return None
+            token = controls.issue(account['id'], message['user_id'], message['chat_id'], '/cancel', cancel_for=update_id)
+            try:
+                identifier = await transport.send_controls(message['chat_id'],
+                    'Procesando tu consulta…' if account['locale'] == 'es' else 'Processing your request…',
+                    {'inline_keyboard': [[{'text': 'Cancelar' if account['locale'] == 'es' else 'Cancel', 'callback_data': token}]]})
+                return identifier, token
+            except TelegramError:
+                controls.revoke([token])
+                return None
+        cancel_button = asyncio.create_task(show_cancel())
         try:
             done, _ = await asyncio.wait((response, listener), return_when=asyncio.FIRST_COMPLETED)
             # Cancellation or transport failure takes priority over an unfinished
@@ -72,3 +97,13 @@ async def respond_with_progress(transport, account, update_id, message, invoke):
             listener.cancel()
             response.cancel()
             await asyncio.gather(listener, response, return_exceptions=True)
+            # Let an in-flight control send finish so its token can be revoked.
+            shown = await cancel_button
+            if shown:
+                identifier, token = shown
+                controls.revoke([token])
+                try:
+                    await transport.clear_controls(message['chat_id'], identifier,
+                        text='Consulta finalizada.' if account['locale'] == 'es' else 'Request finished.')
+                except TelegramError:
+                    pass

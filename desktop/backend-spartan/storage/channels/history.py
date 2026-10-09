@@ -1,5 +1,6 @@
 """Bounded Telegram context; never reads desktop conversations or graph memory."""
 import time
+import json
 
 from .repository import connection
 
@@ -13,8 +14,18 @@ def _prune(db):
                (int(time.time()) - RETENTION_SECONDS,))
 
 
-def messages(account_id: str, user_id: str):
+def messages(account_id: str, user_id: str, *, project_scope=None):
     with connection() as db:
+        if project_scope is not None:
+            db.execute('BEGIN IMMEDIATE')
+            row = db.execute('SELECT config FROM channel_accounts WHERE id=?', (account_id,)).fetchone()
+            if row:
+                config = json.loads(row['config'])
+                scopes = config.setdefault('history_project_scope', {})
+                if scopes.get(user_id) != project_scope:
+                    db.execute('DELETE FROM channel_history WHERE account_id=? AND user_id=?', (account_id, user_id))
+                    scopes[user_id] = project_scope
+                    db.execute('UPDATE channel_accounts SET config=? WHERE id=?', (json.dumps(config), account_id))
         _prune(db)
         rows = db.execute(
             'SELECT user_text,assistant_text FROM channel_history '

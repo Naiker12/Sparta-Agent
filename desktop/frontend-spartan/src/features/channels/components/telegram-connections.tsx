@@ -45,14 +45,16 @@ export function TelegramConnections({
               {t("channels.add")}
             </Button>
           </div>
-          {accounts.map((account) => (
-            <AccountCard
-              key={account.id}
-              account={account}
-              onChanged={onChanged}
-              onError={onError}
-            />
-          ))}
+          <div className="grid items-start gap-3 xl:grid-cols-2">
+            {accounts.map((account) => (
+              <AccountCard
+                key={account.id}
+                account={account}
+                onChanged={onChanged}
+                onError={onError}
+              />
+            ))}
+          </div>
         </div>
       ) : (
         <Card className="@container">
@@ -114,42 +116,44 @@ export function TelegramConnections({
           </CardContent>
         </Card>
       )}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card size="sm">
-          <CardHeader>
-            <CardTitle>{t("channels.whatYouCanDo")}</CardTitle>
-            <CardDescription>
-              {t("channels.whatYouCanDoDescription")}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {["/help", "/provider", "/skills", "/mcp"].map((command) => (
-                <code
-                  key={command}
-                  className="bg-muted rounded-md px-2 py-1 text-xs"
-                >
-                  {command}
-                </code>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-        <Card size="sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <HugeiconsIcon icon={Shield01Icon} size={17} />
-              {t("channels.accessUnderControl")}
-            </CardTitle>
-            <CardDescription>{t("channels.simpleSafety")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground text-xs leading-relaxed">
-              {t("channels.desktopRequired")}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      {!accounts.length && (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle>{t("channels.whatYouCanDo")}</CardTitle>
+              <CardDescription>
+                {t("channels.whatYouCanDoDescription")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {["/help", "/provider", "/skills", "/mcp"].map((command) => (
+                  <code
+                    key={command}
+                    className="bg-muted rounded-md px-2 py-1 text-xs"
+                  >
+                    {command}
+                  </code>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+          <Card size="sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <HugeiconsIcon icon={Shield01Icon} size={17} />
+                {t("channels.accessUnderControl")}
+              </CardTitle>
+              <CardDescription>{t("channels.simpleSafety")}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground text-xs leading-relaxed">
+                {t("channels.desktopRequired")}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

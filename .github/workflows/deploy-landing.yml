@@ -8,6 +8,13 @@ on:
       - 'desktop/frontend-spartan/src/**'
       - 'package.json'
       - '.github/workflows/deploy-landing.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'landing/**'
+      - 'desktop/frontend-spartan/src/**'
+      - 'package.json'
+      - '.github/workflows/deploy-landing.yml'
   workflow_dispatch:
 
 permissions:
@@ -18,7 +25,28 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
+  validate:
+    name: Validate Landing Site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm --prefix desktop/frontend-spartan ci
+      - run: npm --prefix landing ci
+      - name: Validate and build static site
+        run: |
+          npm --prefix landing run docs:check
+          npm --prefix landing run build:gh
+
+  deploy:
+    name: Publish to GitHub Pages
+    needs: validate
+    # Manual dispatch only: Integrating changes into main must not publish the site automatically.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
