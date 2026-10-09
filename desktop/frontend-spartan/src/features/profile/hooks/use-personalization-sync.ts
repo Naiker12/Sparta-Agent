@@ -29,6 +29,7 @@ import {
   useUserProfileStore,
 } from "../stores/user-profile-store";
 import type { AvatarShape } from "../stores/user-profile-store";
+import { normalizeAvatarValue } from "../mascot-catalog";
 
 const PUSH_DEBOUNCE_MS = 800;
 
@@ -65,6 +66,7 @@ function normalizeProfile(profile: ProfileSnapshot): ProfileSnapshot {
     ...profile,
     displayName: profileText(profile.displayName),
     nickname: profileText(profile.nickname),
+    avatarDataUrl: normalizeAvatarValue(profile.avatarDataUrl),
   };
 }
 
@@ -171,14 +173,14 @@ function hasLocalSettings(
 ): boolean {
   return Boolean(
     profile.displayName ||
-      profile.nickname ||
-      profile.avatarDataUrl ||
-      profile.avatarShape !== "circle" ||
-      !profile.showGreetingSloth ||
-      theme !== "light" ||
-      palette !== "standard" ||
-      !isDefaultCustomization(customization) ||
-      language !== DEFAULT_LOCALE_PREFERENCE,
+    profile.nickname ||
+    profile.avatarDataUrl ||
+    profile.avatarShape !== "circle" ||
+    !profile.showGreetingSloth ||
+    theme !== "light" ||
+    palette !== "standard" ||
+    !isDefaultCustomization(customization) ||
+    language !== DEFAULT_LOCALE_PREFERENCE,
   );
 }
 
@@ -257,7 +259,9 @@ export function usePersonalizationSync(enabled: boolean): void {
           const nextProfile: ProfileSnapshot = {
             displayName: remote.profile.displayName ?? "",
             nickname: remote.profile.nickname ?? "",
-            avatarDataUrl: remote.profile.avatarDataUrl ?? null,
+            avatarDataUrl: normalizeAvatarValue(
+              remote.profile.avatarDataUrl ?? null,
+            ),
             avatarShape:
               remote.profile.avatarShape === "rounded" ? "rounded" : "circle",
             showGreetingSloth: keepLocalGreeting
@@ -347,7 +351,11 @@ export function usePersonalizationSync(enabled: boolean): void {
           // values.
           lastSavedRef.current = serialized({
             ...payload(
-              { ...nextProfile, showGreetingSloth: remoteGreeting },
+              {
+                ...nextProfile,
+                avatarDataUrl: remote.profile.avatarDataUrl ?? null,
+                showGreetingSloth: remoteGreeting,
+              },
               nextTheme,
               remotePalette,
               storedRemoteCustomization,
@@ -447,4 +455,70 @@ export function usePersonalizationSync(enabled: boolean): void {
     language,
     drainSaveQueue,
   ]);
+  useEffect(() => {
+    if (!enabled || hydratedGeneration !== authGenerationRef.current) return;
+    let disposed = false;
+    let reading = false;
+    const currentPayload = () => {
+      const state = useUserProfileStore.getState();
+      return payload(
+        state,
+        latestThemeRef.current,
+        latestPaletteRef.current,
+        latestCustomizationRef.current,
+        latestLanguageRef.current,
+      );
+    };
+    const pullName = async () => {
+      if (
+        disposed ||
+        reading ||
+        document.visibilityState !== "visible" ||
+        saveInFlightRef.current ||
+        queuedSaveRef.current
+      )
+        return;
+      const before = currentPayload();
+      const baseline = serialized(before);
+      if (baseline !== lastSavedRef.current) return;
+      reading = true;
+      try {
+        const remote = await loadPersonalization();
+        if (
+          disposed ||
+          !remote.saved ||
+          saveInFlightRef.current ||
+          queuedSaveRef.current ||
+          serialized(currentPayload()) !== baseline
+        )
+          return;
+        const profile = {
+          ...before.profile,
+          displayName: profileText(remote.profile.displayName),
+          nickname: profileText(remote.profile.nickname),
+        };
+        if (
+          profile.displayName === before.profile.displayName &&
+          profile.nickname === before.profile.nickname
+        )
+          return;
+        lastSavedRef.current = serialized({ ...before, profile });
+        useUserProfileStore.setState({
+          displayName: profile.displayName,
+          nickname: profile.nickname,
+        });
+      } catch {
+        /* A failed refresh must not erase locally edited preferences. */
+      } finally {
+        reading = false;
+      }
+    };
+    const timer = window.setInterval(() => void pullName(), 3_000);
+    window.addEventListener("focus", pullName);
+    return () => {
+      disposed = true;
+      clearInterval(timer);
+      window.removeEventListener("focus", pullName);
+    };
+  }, [enabled, hydratedGeneration]);
 }

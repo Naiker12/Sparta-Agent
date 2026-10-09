@@ -1,8 +1,10 @@
 import { getAuthToken } from "@/features/auth";
+import { useT } from "@/i18n";
 import { useUserProfileStore } from "../stores/user-profile-store";
 import { decodeJwtSubject } from "../utils/jwt-subject";
 
 export function useEffectiveProfile() {
+  const t = useT();
   const displayName = useUserProfileStore((s) => s.displayName);
   const nickname = useUserProfileStore((s) => s.nickname);
   const avatarDataUrl = useUserProfileStore((s) => s.avatarDataUrl);
@@ -13,7 +15,7 @@ export function useEffectiveProfile() {
   const addressName = nickname.trim() || dn.split(/\s+/)[0] || sessionSub || "";
   return {
     sessionSub,
-    displayTitle: dn || "Spartan Agent",
+    displayTitle: dn || t("channels.profileBinding.unnamedProfile"),
     addressName,
     avatarDataUrl,
   };

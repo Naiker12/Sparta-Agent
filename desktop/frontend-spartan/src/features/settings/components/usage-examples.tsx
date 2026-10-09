@@ -1,8 +1,8 @@
 import { translate as uiTranslate } from "@/i18n";
 import { createCodePlugin } from "@/components/assistant-ui/code-plugin";
 import {
-  unslothDarkTheme,
-  unslothLightTheme,
+  spartanDarkTheme,
+  spartanLightTheme,
 } from "@/components/assistant-ui/code-themes";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -92,7 +92,7 @@ const JAVASCRIPT_TYPES = new Set<ExampleType>([
   "javascriptAdvanced",
 ]);
 
-const PROMPT = "What is Unsloth?";
+const PROMPT = "What is Spartan?";
 // web_search + python + terminal are the reliable built-in tools.
 const TOOLS = ["web_search", "python", "terminal"];
 const ADV = {
@@ -326,7 +326,7 @@ function buildSnippets(
   };
 }
 
-const KEY_PLACEHOLDER = "sk-unsloth-YOUR_KEY";
+const KEY_PLACEHOLDER = "YOUR_SPARTAN_API_KEY";
 const USE_TUNNEL_KEY = "unsloth_api_use_tunnel";
 // Slow retry while /v1 has nothing to name: a download or load moves no store state.
 const CATALOG_RETRY_MS = 15000;
@@ -497,9 +497,9 @@ function canUseLocalAgentDetection(base: string): boolean {
   }
 }
 
-const SHIKI_THEMES = [unslothLightTheme, unslothDarkTheme] as [
-  typeof unslothLightTheme,
-  typeof unslothDarkTheme,
+const SHIKI_THEMES = [spartanLightTheme, spartanDarkTheme] as [
+  typeof spartanLightTheme,
+  typeof spartanDarkTheme,
 ];
 const codePlugin = createCodePlugin({ themes: SHIKI_THEMES });
 

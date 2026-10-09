@@ -88,10 +88,24 @@ function applyToDocument(resolved: ResolvedTheme) {
   el.style.colorScheme = resolved;
 
   if (typeof window !== "undefined") {
-    const isDark = resolved === "dark";
-    const colors = isDark
-      ? { color: "#1E1E22", symbolColor: "#FFFFFF" }
-      : { color: "#F2EBE0", symbolColor: "#352D40" };
+    requestAnimationFrame(syncNativeTitlebar);
+  }
+}
+
+export function syncNativeTitlebar() {
+    const probe = document.createElement("span");
+    probe.style.cssText = "position:fixed;visibility:hidden;background:var(--background);color:var(--foreground)";
+    document.documentElement.appendChild(probe);
+    const computed = getComputedStyle(probe);
+    const hex = (value: string) => {
+      const channels = value.match(/[\d.]+/g)?.slice(0, 3);
+      return channels?.length === 3 ? "#" + channels.map((channel) => Math.round(Number(channel)).toString(16).padStart(2, "0")).join("") : null;
+    };
+    const color = hex(computed.backgroundColor);
+    const symbolColor = hex(computed.color);
+    probe.remove();
+    if (!color || !symbolColor) return;
+    const colors = { color, symbolColor };
     try {
       const electron = window as unknown as {
         electron?: { send: (channel: string, data: unknown) => void };
@@ -105,7 +119,6 @@ function applyToDocument(resolved: ResolvedTheme) {
     } catch {
       // ignore
     }
-  }
 }
 
 function applyPaletteToDocument(palette: Palette) {
@@ -120,6 +133,7 @@ function applyPaletteToDocument(palette: Palette) {
   } else {
     el.setAttribute("data-palette", palette);
   }
+  requestAnimationFrame(syncNativeTitlebar);
 }
 
 const listeners = new Set<() => void>();

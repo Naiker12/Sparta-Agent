@@ -1,7 +1,11 @@
-import { GeneratedAvatar } from "@/components/ui/blobatar-avatar";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
-import { blobatarSeedFromValue } from "../blobatar-avatars";
+import {
+  isProfilePhoto,
+  mascotCharacter,
+  normalizeAvatarValue,
+} from "../mascot-catalog";
+import { MascotAvatar } from "./mascot-avatar";
 import {
   type AvatarShape,
   useUserProfileStore,
@@ -36,12 +40,12 @@ export function UserAvatar({
   className,
   shape,
 }: UserAvatarProps) {
-  const [imageFailed, setImageFailed] = useState(false);
+  const [failedImage, setFailedImage] = useState<string | null>(null);
   const storedShape = useUserProfileStore((s) => s.avatarShape);
   const shapeClass = SHAPE[shape ?? storedShape];
-  const selectedSeed = blobatarSeedFromValue(imageUrl);
+  const value = normalizeAvatarValue(imageUrl);
 
-  if (imageUrl && !selectedSeed) {
+  if (isProfilePhoto(value)) {
     return (
       <span
         className={cn(
@@ -53,32 +57,22 @@ export function UserAvatar({
       >
         <img
           src={
-            imageFailed
-              ? `${import.meta.env.BASE_URL}spartan-logo.svg`
-              : imageUrl
+            failedImage === value ? `${import.meta.env.BASE_URL}spartan-logo.svg` : value
           }
           alt=""
           className="size-full object-cover"
-          onError={() => setImageFailed(true)}
+          onError={() => setFailedImage(value)}
         />
       </span>
     );
   }
 
   return (
-    <GeneratedAvatar
-      name={selectedSeed ?? (name.trim() || "sparta-user")}
+    <span
       className={cn("inline-block shrink-0", shapeClass, SIZE[size], className)}
-      fallback={
-        <span
-          className={cn(
-            "inline-block shrink-0 bg-muted",
-            shapeClass,
-            SIZE[size],
-            className,
-          )}
-        />
-      }
-    />
+      title={name}
+    >
+      <MascotAvatar character={mascotCharacter(value)} />
+    </span>
   );
 }

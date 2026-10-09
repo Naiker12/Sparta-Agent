@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { normalizeAvatarValue } from "../mascot-catalog";
 
 export type AvatarShape = "circle" | "rounded";
 export const PROFILE_TEXT_MAX_LENGTH = 200;
@@ -27,14 +28,25 @@ export const useUserProfileStore = create<UserProfileState>()(
       showGreetingSloth: true,
       setDisplayName: (displayName) => set({ displayName }),
       setNickname: (nickname) => set({ nickname }),
-      setAvatarDataUrl: (avatarDataUrl) => set({ avatarDataUrl }),
+      setAvatarDataUrl: (avatarDataUrl) =>
+        set({ avatarDataUrl: normalizeAvatarValue(avatarDataUrl) }),
       setAvatarShape: (avatarShape) => set({ avatarShape }),
       setShowGreetingSloth: (showGreetingSloth) => set({ showGreetingSloth }),
     }),
     {
-
       // the product name saved as the person's visible name.
       name: "sparta_user_profile",
+      merge: (persisted, current) => {
+        const saved =
+          persisted && typeof persisted === "object"
+            ? (persisted as Partial<UserProfileState>)
+            : {};
+        return {
+          ...current,
+          ...saved,
+          avatarDataUrl: normalizeAvatarValue(saved.avatarDataUrl ?? null),
+        };
+      },
     },
   ),
 );

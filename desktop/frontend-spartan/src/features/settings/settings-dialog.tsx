@@ -20,6 +20,7 @@ import {
   HelpCircleIcon,
   KeyboardIcon,
   Message01Icon,
+  Mic01Icon,
   PaintBrush02Icon,
   Search01Icon,
   Settings02Icon,
@@ -59,10 +60,17 @@ const TAB_LOADERS = {
     import("./tabs/appearance-tab").then((m) => ({ default: m.AppearanceTab })),
   resources: () => Promise.resolve({ default: ApiOnlyUnavailableTab }),
   chat: () => import("./tabs/chat-tab").then((m) => ({ default: m.ChatTab })),
-  voice: () => Promise.resolve({ default: ApiOnlyUnavailableTab }),
+  voice: () =>
+    import("./tabs/voice-tab").then((m) => ({
+      default: m.VoiceTab,
+    })),
   connections: () =>
     import("./tabs/connections-tab").then((m) => ({
       default: m.ConnectionsTab,
+    })),
+  "channels-permissions": () =>
+    import("./tabs/channels-permissions-tab").then((m) => ({
+      default: m.ChannelsPermissionsTab,
     })),
   data: () => import("./tabs/data-tab").then((m) => ({ default: m.DataTab })),
   "keyboard-shortcuts": () =>
@@ -180,6 +188,7 @@ const TABS: TabDef[] = [
     labelKey: "settings.tabs.chat",
     icon: Message01Icon,
   },
+  { id: "voice", labelKey: "settings.tabs.voice", icon: Mic01Icon },
   {
     id: "api-keys",
     labelKey: "settings.tabs.apiKeys",
@@ -189,6 +198,11 @@ const TABS: TabDef[] = [
     id: "connections",
     labelKey: "settings.tabs.connections",
     icon: CloudIcon,
+  },
+  {
+    id: "channels-permissions",
+    labelKey: "settings.tabs.channelsPermissions",
+    icon: Message01Icon,
   },
   {
     id: "data",
@@ -364,6 +378,7 @@ export function SettingsDialog() {
     chat: null,
     voice: null,
     connections: null,
+    "channels-permissions": null,
     "keyboard-shortcuts": null,
     data: null,
     "api-keys": null,

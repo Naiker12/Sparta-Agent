@@ -65,7 +65,7 @@ export function ApiKeyRow({
 }) {
   const t = useT();
   const locale = useLocale();
-  const prefix = `sk-unsloth-${apiKey.key_prefix}…`;
+  const prefix = `${apiKey.key_prefix}…`;
   return (
     <div className="group flex items-center gap-3 border-b border-border/60 px-1 py-3 last:border-b-0 transition-colors hover:bg-accent/40">
       <span

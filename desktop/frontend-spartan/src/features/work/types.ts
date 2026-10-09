@@ -24,6 +24,9 @@ export type WorkRun = {
     promptPreview?: string;
     modelId?: string;
     channelName?: string;
+    activityStage?: "transcribing" | "reading_document" | "responding" | "searching_web" | "reading_page" | "updating_profile";
+    projectId?: string;
+    projectName?: string;
     selection?: { modelId?: string };
   };
   result: {

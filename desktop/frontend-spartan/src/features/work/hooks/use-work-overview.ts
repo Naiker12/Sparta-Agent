@@ -4,7 +4,7 @@ import { AUTH_SESSION_CLEARED_EVENT } from "@/features/auth";
 import { readWorkOverview } from "../api/work-runs-api";
 import type { WorkOverview } from "../types";
 
-export function useWorkOverview(offset: number) {
+export function useWorkOverview(offset: number, pollInterval = 5_000) {
   const [data, setData] = useState<WorkOverview>({
     runs: [],
     hasMore: false,
@@ -59,13 +59,13 @@ export function useWorkOverview(offset: number) {
     void load(true);
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") void load();
-    }, 5_000);
+    }, pollInterval);
     return () => {
       disposed = true;
       controller?.abort();
       clearInterval(interval);
       window.removeEventListener(AUTH_SESSION_CLEARED_EVENT, clear);
     };
-  }, [offset, refreshVersion]);
+  }, [offset, refreshVersion, pollInterval]);
   return { ...data, loading, error, refresh };
 }

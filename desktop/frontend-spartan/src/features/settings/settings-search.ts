@@ -132,6 +132,14 @@ export const SETTINGS_SEARCH_INDEX: Record<SettingsTab, TranslationKey[]> = {
     "settings.agents.dryRun.title",
   ],
   connections: [],
+  "channels-permissions": [
+    "channels.settings.title",
+    "channels.settings.people",
+    "channels.profileBinding.title",
+    "channels.projects.title",
+    "channels.voice.title",
+    "channels.capabilities",
+  ],
   voice: [
     "settings.voice.dictation.sectionTitle",
     "settings.voice.dictation.microphoneLabel",
@@ -215,6 +223,7 @@ export function createSettingsSearchIndex({
 export const SETTINGS_SEARCH_KEYWORDS: Partial<
   Record<TranslationKey, TranslationKey>
 > = {
+  "channels.settings.title": "channels.settings.keywords",
   "settings.resources.storage.modelsFolder":
     "settings.resources.storage.modelsFolderKeywords",
   // mlock, vram, ulimit and pin are in none of these labels, so search

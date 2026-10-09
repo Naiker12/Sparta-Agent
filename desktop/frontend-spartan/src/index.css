@@ -6,7 +6,6 @@
 @import "@fontsource-variable/space-grotesk";
 @import "@fontsource-variable/inter";
 @import "tw-shimmer";
-@import "blobatar/motion.css";
 @plugin "@toolwind/corner-shape";
 @source "../node_modules/streamdown/dist/*.js";
 
@@ -737,7 +736,7 @@ html.force-reduced-motion .loading-bar-slide {
   animation-duration: 1.3s !important;
   animation-iteration-count: infinite !important;
 }
-html.force-reduced-motion .unsloth-composer-plus svg {
+html.force-reduced-motion .spartan-composer-plus svg {
   transition-duration: 250ms !important;
 }
 
@@ -1730,13 +1729,13 @@ html[data-chat-font] .aui-root {
   }
 
   /* Model selector: pointer cursor on every clickable element. */
-  .unsloth-model-selector-trigger,
-  .unsloth-model-selector-menu button {
+  .spartan-model-selector-trigger,
+  .spartan-model-selector-menu button {
     cursor: pointer;
   }
 
-  .unsloth-model-selector-trigger:disabled,
-  .unsloth-model-selector-menu button:disabled {
+  .spartan-model-selector-trigger:disabled,
+  .spartan-model-selector-menu button:disabled {
     cursor: not-allowed;
   }
 
@@ -1791,13 +1790,13 @@ html[data-chat-font] .aui-root {
 
   /* Model selector: drop the inset edge ring, keep the soft drop shadow.
 	   Pin --radius to the light value so the corners match in both themes. */
-  .unsloth-model-selector-menu.menu-soft-surface {
+  .spartan-model-selector-menu.menu-soft-surface {
     --radius: 1.25rem;
     box-shadow: 0 var(--menu-soft-offset-y) var(--menu-soft-blur)
       var(--menu-soft-spread) var(--menu-soft-shadow);
   }
 
-  .dark .unsloth-model-selector-menu.menu-soft-surface {
+  .dark .spartan-model-selector-menu.menu-soft-surface {
     /* Match the left sidebar background. */
     background-color: var(--sidebar);
     box-shadow: none;
@@ -1838,7 +1837,7 @@ html[data-chat-font] .aui-root {
 
   /* Model selector: shadow in the page-bg color so it lifts off the
 	   composer it overlaps (chatbox geometry). Account menu stays flat. */
-  .dark .unsloth-model-selector-menu {
+  .dark .spartan-model-selector-menu {
     box-shadow: 0 2px 8px -2px var(--background) !important;
   }
   .dark .app-user-menu.menu-soft-surface-up {
@@ -1871,17 +1870,17 @@ html[data-chat-font] .aui-root {
   }
 
   @container (max-width: 700px) {
-    .unsloth-composer-left .composer-pill-workspace,
-    .unsloth-composer-left .composer-pill-permissions {
+    .spartan-composer-left .composer-pill-workspace,
+    .spartan-composer-left .composer-pill-permissions {
       width: 30px;
       height: 30px;
       padding: 0;
       justify-content: center;
       flex-shrink: 0;
     }
-    .unsloth-composer-left .composer-pill-workspace > span:not(.composer-pill-glyph),
-    .unsloth-composer-left .composer-pill-permissions > span:not(.composer-pill-glyph),
-    .unsloth-composer-left .composer-pill-permissions .composer-pill-caret {
+    .spartan-composer-left .composer-pill-workspace > span:not(.composer-pill-glyph),
+    .spartan-composer-left .composer-pill-permissions > span:not(.composer-pill-glyph),
+    .spartan-composer-left .composer-pill-permissions .composer-pill-caret {
       display: none;
     }
   }
@@ -2036,7 +2035,7 @@ html[data-chat-font] .aui-root {
   .composer-pill-btn[data-active="true"]:has(.composer-pill-x):hover
     .composer-pill-glyph
     > :not(.composer-pill-x),
-  .unsloth-thinking-pill[data-active="true"]:hover
+  .spartan-thinking-pill[data-active="true"]:hover
     .composer-pill-glyph
     > :not(.composer-pill-x) {
     @apply opacity-0;
@@ -2044,7 +2043,7 @@ html[data-chat-font] .aui-root {
 
   .composer-pill-btn[data-active="true"]:has(.composer-pill-x):hover
     .composer-pill-x,
-  .unsloth-thinking-pill[data-active="true"]:hover .composer-pill-x {
+  .spartan-thinking-pill[data-active="true"]:hover .composer-pill-x {
     @apply opacity-100;
   }
 
@@ -2080,7 +2079,7 @@ html[data-chat-font] .aui-root {
   /* Pill composer; own classes so compare-mode keeps its stacked layout. py
 	   12px matches the send circle's gap to the right edge, so it sits evenly
 	   inside the 32px corner. */
-  .unsloth-composer-surface {
+  .spartan-composer-surface {
     @apply relative flex w-full flex-col rounded-[22px] bg-background dark:bg-card px-3 py-2 outline-none transition-shadow;
     container-type: inline-size;
     font-family: var(--font-sans);
@@ -2091,11 +2090,11 @@ html[data-chat-font] .aui-root {
     transition: box-shadow 0.1s;
   }
 
-  .unsloth-composer-surface:focus-within {
+  .spartan-composer-surface:focus-within {
     box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.16);
   }
 
-  .dark .unsloth-composer-surface {
+  .dark .spartan-composer-surface {
     background-color: var(--card);
     box-shadow: none;
   }
@@ -2103,39 +2102,39 @@ html[data-chat-font] .aui-root {
   /* Keep the expand/collapse width swap instant. A transition on width (e.g.
 	   the reduced-motion blanket rule) makes getComputedStyle().width lag a
 	   frame, so autosize measures the stale width and leaves a stray blank row. */
-  .unsloth-composer-line,
-  .unsloth-composer-line .unsloth-composer-input,
-  .unsloth-composer-left {
+  .spartan-composer-line,
+  .spartan-composer-line .spartan-composer-input,
+  .spartan-composer-left {
     transition-property: none !important;
   }
 
   /* Keep the prompt above the toolbar, including the empty state. */
-  .unsloth-composer-line {
+  .spartan-composer-line {
     @apply flex w-full flex-wrap items-center gap-0.5 px-0.5;
     row-gap: 0.5rem;
   }
 
   /* Recording is a dedicated one-line mode. Active tool pills must not force
 	   the composer back into the normal two-row layout. */
-  .unsloth-composer-line[data-dictating="true"] {
+  .spartan-composer-line[data-dictating="true"] {
     @apply flex-nowrap;
   }
 
-  .unsloth-composer-left {
+  .spartan-composer-left {
     @apply flex min-w-0 flex-wrap items-center gap-1;
     order: 2;
     /* Pull the plus button closer to the composer edge. */
     margin-left: -0.25rem;
   }
 
-  .unsloth-composer-line .unsloth-composer-input {
+  .spartan-composer-line .spartan-composer-input {
     order: 1;
     flex-basis: 100%;
     width: 100%;
     padding: 0.25rem;
   }
 
-  .unsloth-composer-line .aui-composer-action-wrapper {
+  .spartan-composer-line .aui-composer-action-wrapper {
     order: 3;
     margin-left: auto;
     /* 12px surface + 4px line padding minus this = 12px edge gap. */
@@ -2149,20 +2148,20 @@ html[data-chat-font] .aui-root {
   /* Empty (placeholder shown): clamp back to one row. max-height beats the
 	   autosize textarea's inline !important height, so a cleared message leaves
 	   no stale tall box or stray scrollbar. */
-  .unsloth-composer-input:placeholder-shown {
+  .spartan-composer-input:placeholder-shown {
     max-height: 40px !important;
     overflow-y: hidden !important;
   }
 
-  .unsloth-composer-input {
+  .spartan-composer-input {
     @apply min-h-10 min-w-0 flex-1 resize-none overflow-y-auto bg-transparent pl-0.5 pr-2 py-1 text-ui-14 font-[450] leading-5 outline-none placeholder:text-muted-foreground focus-visible:ring-0;
   }
 
-  .unsloth-composer-plus {
+  .spartan-composer-plus {
     @apply flex size-7.5 shrink-0 cursor-pointer items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted-foreground/15 disabled:cursor-not-allowed disabled:opacity-40;
   }
 
-  .unsloth-composer-plus[data-state="open"] {
+  .spartan-composer-plus[data-state="open"] {
     @apply bg-muted-foreground/15;
     /* Radix's modal menu sets body pointer-events:none; re-enable on the open
 		   trigger so the cursor and click-to-close work. */
@@ -2172,20 +2171,20 @@ html[data-chat-font] .aui-root {
 
   /* Open menu rotates the plus 45deg into an x. Ease-in-out for a smooth
 	   spin; keep it at 45deg so it never passes back through a "+". */
-  .unsloth-composer-plus svg {
+  .spartan-composer-plus svg {
     transition: transform 250ms cubic-bezier(0.65, 0, 0.35, 1);
     will-change: transform;
   }
 
-  .unsloth-composer-plus[data-state="open"] svg {
+  .spartan-composer-plus[data-state="open"] svg {
     transform: rotate(45deg);
   }
 
   /* Keyboard focus shows a subtle brand ring, not the browser's blue outline;
 	   mouse clicks (no :focus-visible) stay ring-free. */
   .composer-pill-btn:focus-visible,
-  .unsloth-thinking-pill:focus-visible,
-  .unsloth-composer-plus:focus-visible {
+  .spartan-thinking-pill:focus-visible,
+  .spartan-composer-plus:focus-visible {
     outline: none;
     box-shadow: 0 0 0 1px var(--ring-soft);
   }
@@ -2233,18 +2232,18 @@ html[data-chat-font] .aui-root {
 
   /* Right-side Thinking pill (toggle or dropdown). pl-2 matches the left
 	   pills so the hover X is not pushed in too far. */
-  .unsloth-thinking-pill {
+  .spartan-thinking-pill {
     @apply inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-full py-0.5 pl-1.5 pr-2 text-ui-12 font-medium text-muted-foreground transition-colors hover:bg-primary/10 dark:hover:bg-white/[0.1] disabled:cursor-not-allowed disabled:opacity-40;
     /* Reserve a text line so the icon-only (inactive) pill matches the
 		   text pills' height instead of collapsing to the icon. */
     min-height: 1.5rem;
   }
 
-  .unsloth-thinking-pill[data-active="true"] {
+  .spartan-thinking-pill[data-active="true"] {
     color: var(--primary);
   }
 
-  .unsloth-thinking-pill[data-state="open"] {
+  .spartan-thinking-pill[data-state="open"] {
     @apply bg-muted-foreground/10;
 
     pointer-events: auto;
@@ -2253,21 +2252,21 @@ html[data-chat-font] .aui-root {
 
   /* Keep Thinking on the control row in narrow split layouts. */
   @container (max-width: 36rem) {
-    .unsloth-thinking-pill {
+    .spartan-thinking-pill {
       @apply size-8 justify-center gap-0 px-0;
       min-height: 2rem;
     }
 
-    .unsloth-thinking-label,
-    .unsloth-thinking-caret {
+    .spartan-thinking-label,
+    .spartan-thinking-caret {
       display: none;
     }
 
-    .unsloth-thinking-pill[data-pill-label] {
+    .spartan-thinking-pill[data-pill-label] {
       position: relative;
     }
 
-    .unsloth-thinking-pill[data-pill-label]:not(
+    .spartan-thinking-pill[data-pill-label]:not(
         [data-state="open"]
       ):hover::after {
       content: attr(data-pill-label);
@@ -2276,7 +2275,7 @@ html[data-chat-font] .aui-root {
   }
 
   /* Smaller tick for selected Thinking options. */
-  .unsloth-tick {
+  .spartan-tick {
     width: min(
       calc(0.8rem * var(--ui-font-scale, 1)),
       calc(0.4rem + 0.4rem * var(--ui-font-scale, 1))
@@ -2288,7 +2287,7 @@ html[data-chat-font] .aui-root {
   }
 
   /* Soft elevation; [data-slot] outranks the component ring-1, dropping the border. */
-  .unsloth-plus-menu[data-slot] {
+  .spartan-plus-menu[data-slot] {
     /* Concentric with the item hover boxes: container radius =
 		   item radius (12px) + side gutter (9px), so the curves run parallel.
 		   !important beats the global 14px dropdown radius. */
@@ -2304,21 +2303,21 @@ html[data-chat-font] .aui-root {
 
   /* Width does not change the concentric radius; the MCP menu uses the same
 	   item radius + gutter, so it keeps the same container radius. */
-  .unsloth-plus-menu.mcp-menu[data-slot] {
+  .spartan-plus-menu.mcp-menu[data-slot] {
     border-radius: 22px !important;
   }
 
   /* One-line menus keep the standard menu shape (same radius as multi-line),
 	   so a lone row doesn't balloon into a fully rounded pill. */
 
-  .dark .unsloth-plus-menu[data-slot] {
+  .dark .spartan-plus-menu[data-slot] {
     background-color: var(--card);
     /* Shadow tinted to the page bg so it blends, not a dark halo. */
     box-shadow: 0 4px 14px var(--background);
   }
 
   /* Compact items; also applied to portaled sub-content. */
-  .unsloth-plus-menu
+  .spartan-plus-menu
     :is(
       [data-slot="dropdown-menu-item"],
       [data-slot="dropdown-menu-sub-trigger"]
@@ -2330,19 +2329,19 @@ html[data-chat-font] .aui-root {
     border-radius: 12px;
   }
 
-  .unsloth-plus-menu [data-slot="dropdown-menu-label"] {
+  .spartan-plus-menu [data-slot="dropdown-menu-label"] {
     @apply pl-3 pr-3 py-1.5 text-ui-12;
   }
 
   /* Active (green) items keep their primary text and icon color on hover. */
-  .unsloth-plus-menu
+  .spartan-plus-menu
     [data-slot="dropdown-menu-item"].text-primary:is(
       :hover,
       :focus,
       :focus-visible,
       [data-highlighted]
     ),
-  .unsloth-plus-menu
+  .spartan-plus-menu
     [data-slot="dropdown-menu-item"].text-primary:is(
       :hover,
       :focus,
@@ -2354,7 +2353,7 @@ html[data-chat-font] .aui-root {
   }
 
   /* Light hover: neutral grey, not the green accent. */
-  .unsloth-plus-menu
+  .spartan-plus-menu
     :is(
       [data-slot="dropdown-menu-item"],
       [data-slot="dropdown-menu-sub-trigger"]
@@ -2370,7 +2369,7 @@ html[data-chat-font] .aui-root {
 
   /* Dark hover: the accent nearly matches the surface, so use a clear overlay. */
   .dark
-    .unsloth-plus-menu
+    .spartan-plus-menu
     :is(
       [data-slot="dropdown-menu-item"],
       [data-slot="dropdown-menu-sub-trigger"]
@@ -2387,7 +2386,7 @@ html[data-chat-font] .aui-root {
   /* Hover tints only the background; the item and every descendant (text, icons,
 	   labels) keep their resting color, overriding Radix's focus:**:text-accent-
 	   foreground. The active green rule above still wins via higher specificity. */
-  .unsloth-plus-menu
+  .spartan-plus-menu
     :is(
       [data-slot="dropdown-menu-item"],
       [data-slot="dropdown-menu-sub-trigger"]
@@ -2398,7 +2397,7 @@ html[data-chat-font] .aui-root {
       [data-highlighted],
       [data-state="open"]
     ),
-  .unsloth-plus-menu
+  .spartan-plus-menu
     :is(
       [data-slot="dropdown-menu-item"],
       [data-slot="dropdown-menu-sub-trigger"]
@@ -2413,25 +2412,25 @@ html[data-chat-font] .aui-root {
     color: inherit !important;
   }
 
-  .unsloth-plus-menu
+  .spartan-plus-menu
     :is(
       [data-slot="dropdown-menu-item"],
       [data-slot="dropdown-menu-sub-trigger"]
     )
-    svg:not(.unsloth-tick) {
+    svg:not(.spartan-tick) {
     width: var(--ui-icon-size) !important;
     height: var(--ui-icon-size) !important;
   }
 
   /* Destructive items keep red text and a red-tinted hover, not the grey one. */
-  .unsloth-plus-menu
+  .spartan-plus-menu
     [data-slot="dropdown-menu-item"][data-variant="destructive"],
-  .unsloth-plus-menu
+  .spartan-plus-menu
     [data-slot="dropdown-menu-item"][data-variant="destructive"]
     * {
     color: var(--destructive) !important;
   }
-  .unsloth-plus-menu
+  .spartan-plus-menu
     [data-slot="dropdown-menu-item"][data-variant="destructive"]:is(
       :hover,
       :focus,
@@ -2443,7 +2442,7 @@ html[data-chat-font] .aui-root {
 
   /* Thinking menu: tighter gap; nowrap keeps "Preserve thinking" on one line
 	   so the menu sizes to its content. */
-  .unsloth-thinking-menu
+  .spartan-thinking-menu
     :is(
       [data-slot="dropdown-menu-item"],
       [data-slot="dropdown-menu-sub-trigger"]
@@ -2996,36 +2995,36 @@ html[data-chat-font] .aui-root {
 /* Composer textarea: keep the scroll thumb faint until the user hovers or
    drags the thumb itself, so a tall draft never shows a heavy dark rail. */
 .composer-input,
-.unsloth-composer-input {
+.spartan-composer-input {
   scrollbar-color: oklch(0.5 0 0 / 0.16) transparent;
 }
 
 .composer-input::-webkit-scrollbar-thumb,
-.unsloth-composer-input::-webkit-scrollbar-thumb {
+.spartan-composer-input::-webkit-scrollbar-thumb {
   background: oklch(0.5 0 0 / 0.16);
 }
 
 .composer-input::-webkit-scrollbar-thumb:hover,
-.unsloth-composer-input::-webkit-scrollbar-thumb:hover,
+.spartan-composer-input::-webkit-scrollbar-thumb:hover,
 .composer-input::-webkit-scrollbar-thumb:active,
-.unsloth-composer-input::-webkit-scrollbar-thumb:active {
+.spartan-composer-input::-webkit-scrollbar-thumb:active {
   background: oklch(0.5 0 0 / 0.45);
 }
 
 .dark .composer-input,
-.dark .unsloth-composer-input {
+.dark .spartan-composer-input {
   scrollbar-color: oklch(0.72 0 0 / 0.18) transparent;
 }
 
 .dark .composer-input::-webkit-scrollbar-thumb,
-.dark .unsloth-composer-input::-webkit-scrollbar-thumb {
+.dark .spartan-composer-input::-webkit-scrollbar-thumb {
   background: oklch(0.72 0 0 / 0.18);
 }
 
 .dark .composer-input::-webkit-scrollbar-thumb:hover,
-.dark .unsloth-composer-input::-webkit-scrollbar-thumb:hover,
+.dark .spartan-composer-input::-webkit-scrollbar-thumb:hover,
 .dark .composer-input::-webkit-scrollbar-thumb:active,
-.dark .unsloth-composer-input::-webkit-scrollbar-thumb:active {
+.dark .spartan-composer-input::-webkit-scrollbar-thumb:active {
   background: oklch(0.72 0 0 / 0.5);
 }
 
@@ -3265,7 +3264,7 @@ html[data-chat-font] .aui-root {
 
   /* Keep the plus/x morph animating under reduced motion (small rotation,
 	   like the spinners above). */
-  html:not(.force-motion) .unsloth-composer-plus svg {
+  html:not(.force-motion) .spartan-composer-plus svg {
     transition-duration: 250ms !important;
   }
 }
@@ -3524,17 +3523,17 @@ html[data-chat-font] .aui-root {
   /* Mic and send arrow sit above the shared glyph size: both fill their
 	   viewBox, so they read smaller than the stroked icons beside them. Keep
 	   after the size-[NN] rules they override. */
-  & svg.unsloth-dictate-icon {
+  & svg.spartan-dictate-icon {
     width: calc(var(--ui-icon-size) * 1.2);
     height: calc(var(--ui-icon-size) * 1.2);
   }
-  & svg.unsloth-send-icon {
+  & svg.spartan-send-icon {
     width: calc(var(--ui-icon-size) * 1.15);
     height: calc(var(--ui-icon-size) * 1.15);
   }
   /* Composer plus keeps its pre-#7400 22px base (1.375x the token is the same
 	   curve a 22px glyph would follow), so only its scaling changed. */
-  & .unsloth-composer-plus svg {
+  & .spartan-composer-plus svg {
     width: calc(var(--ui-icon-size) * 1.375);
     height: calc(var(--ui-icon-size) * 1.375);
   }
@@ -3588,7 +3587,7 @@ html[data-chat-font] .aui-root {
 	   close button keeps its compact 12px glyph inside a fixed control. */
   &
     button:not([class*=":size-3"], [data-close-button])
-    svg:not([class*="size-"], [class*="w-"], [class*="h-"], .unsloth-tick) {
+    svg:not([class*="size-"], [class*="w-"], [class*="h-"], .spartan-tick) {
     width: var(--ui-icon-size);
     height: var(--ui-icon-size);
   }

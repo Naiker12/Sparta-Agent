@@ -1,4 +1,5 @@
-import { GeneratedAvatar } from "@/components/ui/blobatar-avatar";
+import { MascotAvatar } from "./mascot-avatar";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,10 +21,12 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useRef, useState } from "react";
 import {
-  BLOBATAR_AVATARS,
-  blobatarAvatarValue,
-  blobatarSeedFromValue,
-} from "../blobatar-avatars";
+  MASCOT_GROUPS,
+  mascotValue,
+  mascotCharacter,
+  isProfilePhoto,
+  type MascotGroup,
+} from "../mascot-catalog";
 import {
   PROFILE_TEXT_MAX_LENGTH,
   useUserProfileStore,
@@ -88,6 +91,7 @@ export function ProfilePersonalizationPanel() {
   const [draftName, setDraftName] = useState(displayName);
   const [draftNickname, setDraftNickname] = useState(nickname);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [mascotGroup, setMascotGroup] = useState<MascotGroup>("animals");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const lastDisplayNameRef = useRef(displayName);
   const lastNicknameRef = useRef(nickname);
@@ -196,16 +200,13 @@ export function ProfilePersonalizationPanel() {
   } | null>(null);
   const shownAvatar = pendingAvatar ? pendingAvatar.value : avatarDataUrl;
 
-  useEffect(() => {
-    if (pendingAvatar && avatarDataUrl === pendingAvatar.value) {
-      setPendingAvatar(null);
-    }
-  }, [avatarDataUrl, pendingAvatar]);
-
   const pickAvatarValue = (value: string | null) => {
     setImageError(null);
     setPendingAvatar({ value });
-    requestAnimationFrame(() => applyAvatar(value));
+    requestAnimationFrame(() => {
+      applyAvatar(value);
+      setPendingAvatar(null);
+    });
   };
 
   return (
@@ -264,32 +265,30 @@ export function ProfilePersonalizationPanel() {
             <PopoverContent
               align="start"
               sideOffset={10}
-              className="w-[320px] gap-4 p-4"
+              className="w-[360px] max-w-[calc(100vw-2rem)] gap-4 p-4"
             >
               <div className="flex items-center justify-between gap-3">
                 <span className="text-ui-11 font-medium uppercase tracking-wide text-muted-foreground">
                   {t("settings.profile.avatarShape")}
                 </span>
-                <div className="hub-tab-toggle flex h-8 shrink-0 items-center rounded-full">
+                <ToggleGroup
+                  type="single"
+                  value={avatarShape}
+                  size="sm"
+                  aria-label={t("settings.profile.avatarShape")}
+                  onValueChange={(value) => {
+                    if (value === "circle" || value === "rounded")
+                      setAvatarShape(value);
+                  }}
+                >
                   {(["circle", "rounded"] as const).map((shape) => (
-                    <button
-                      key={shape}
-                      type="button"
-                      onClick={() => setAvatarShape(shape)}
-                      aria-pressed={avatarShape === shape}
-                      className={cn(
-                        "inline-flex h-8 items-center justify-center rounded-full px-3.5 text-ui-13 font-medium transition-colors",
-                        avatarShape === shape
-                          ? "hub-tab-toggle-pill text-foreground"
-                          : "text-muted-foreground hover:text-foreground",
-                      )}
-                    >
+                    <ToggleGroupItem key={shape} value={shape}>
                       {shape === "circle"
                         ? t("settings.profile.avatarShapeCircle")
                         : t("settings.profile.avatarShapeRounded")}
-                    </button>
+                    </ToggleGroupItem>
                   ))}
-                </div>
+                </ToggleGroup>
               </div>
 
               <div className="flex items-center gap-2">
@@ -327,15 +326,39 @@ export function ProfilePersonalizationPanel() {
                 <span className="text-ui-11 font-medium uppercase tracking-wide text-muted-foreground">
                   {t("settings.profile.chooseAvatar")}
                 </span>
-                <div className="grid grid-cols-7 gap-2">
-                  {BLOBATAR_AVATARS.map((seed, index) => {
-                    const value = blobatarAvatarValue(seed);
+                <p className="text-xs text-muted-foreground">
+                  {t("settings.profile.mascots.sharedHelp")}
+                </p>
+                <ToggleGroup
+                  type="single"
+                  size="sm"
+                  value={mascotGroup}
+                  aria-label={t("settings.profile.chooseAvatar")}
+                  onValueChange={(value) => {
+                    if (value in MASCOT_GROUPS)
+                      setMascotGroup(value as MascotGroup);
+                  }}
+                >
+                  {(Object.keys(MASCOT_GROUPS) as MascotGroup[]).map(
+                    (group) => (
+                      <ToggleGroupItem key={group} value={group}>
+                        {t(`settings.profile.mascots.groups.${group}`)}
+                      </ToggleGroupItem>
+                    ),
+                  )}
+                </ToggleGroup>
+                <div className="grid max-h-64 grid-cols-5 gap-2 overflow-y-auto p-1">
+                  {MASCOT_GROUPS[mascotGroup].map((character) => {
+                    const value = mascotValue(character);
                     const selected =
-                      blobatarSeedFromValue(shownAvatar) === seed;
-                    const label = `${t("settings.profile.chooseAvatar")} ${index + 1}`;
+                      !isProfilePhoto(shownAvatar) &&
+                      mascotCharacter(shownAvatar) === character;
+                    const label = t(
+                      `settings.profile.mascots.names.${character}`,
+                    );
                     return (
                       <button
-                        key={seed}
+                        key={character}
                         type="button"
                         onClick={() => pickAvatarValue(value)}
                         aria-pressed={selected}
@@ -347,12 +370,9 @@ export function ProfilePersonalizationPanel() {
                             "ring-2 ring-ring-strong hover:ring-ring-strong",
                         )}
                       >
-                        <GeneratedAvatar
-                          name={seed}
+                        <MascotAvatar
+                          character={character}
                           className="size-full"
-                          fallback={
-                            <span className="block size-full bg-muted" />
-                          }
                         />
                       </button>
                     );
@@ -390,9 +410,14 @@ export function ProfilePersonalizationPanel() {
                 }
               }}
               autoComplete="off"
-              placeholder={sessionSub || "Spartan"}
+              placeholder={t("channels.profileBinding.namePlaceholder")}
               className="h-9 w-full rounded-full text-sm"
             />
+            {!displayName.trim() && !draftName.trim() && (
+              <p className="text-xs text-muted-foreground">
+                {t("channels.profileBinding.emptyNameHelp")}
+              </p>
+            )}
           </div>
 
           <div

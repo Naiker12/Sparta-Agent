@@ -8,13 +8,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  type PlusMenuItemId,
-  useChatPreferencesStore,
-  useChatRuntimeStore,
-  usePlusMenuPrefsStore,
-  useSidebarOrganizationStore,
-} from "@/features/chat";
+import { type PlusMenuItemId, usePlusMenuPrefsStore } from "@/features/chat/stores/plus-menu-prefs-store";
+import { useChatPreferencesStore } from "@/features/chat/stores/chat-preferences-store";
+import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
+import { useSidebarOrganizationStore } from "@/features/chat/stores/sidebar-organization-store";
 import { DEFAULT_INFERENCE_PARAMS } from "@/features/chat/types/runtime";
 import { PASTED_TEXT_THRESHOLD_CHOICES } from "@/features/chat/utils/pasted-text";
 import { useUserProfileStore } from "@/features/profile";

@@ -19,26 +19,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
-import {
-  DeleteChatFilesSwitch,
-  EXPORT_FORMATS_LIST,
-  type FineTuneFormat,
-  type ImportSource,
-  archiveAllChatItems,
-  bulkExportConversationsByScope,
-  clearAllChats,
-  countAllChats,
-  downloadArchivedChatExport,
-  downloadChatExport,
-  exportFineTuneJsonl,
-  fileImportSource,
-  importConversationsFromSource,
-  nativeImportSource,
-  offerToDeleteKeptSandboxes,
-  useChatPreferencesStore,
-  useChatRuntimeStore,
-  useChatSidebarItems,
-} from "@/features/chat";
+import { DeleteChatFilesSwitch } from "@/features/chat/components/delete-chat-files-switch";
+import { EXPORT_FORMATS_LIST, type FineTuneFormat, bulkExportConversationsByScope, exportFineTuneJsonl } from "@/features/chat/prompt-storage/conversation-exports";
+import { type ImportSource, fileImportSource, importConversationsFromSource, nativeImportSource } from "@/features/chat/utils/chat-import";
+import { archiveAllChatItems, useChatSidebarItems } from "@/features/chat/hooks/use-chat-sidebar-items";
+import { clearAllChats, countAllChats } from "@/features/chat/utils/clear-all-chats";
+import { downloadArchivedChatExport, downloadChatExport } from "@/features/chat/utils/export-chat-history";
+import { offerToDeleteKeptSandboxes } from "@/features/chat/utils/offer-kept-sandbox-files";
+import { useChatPreferencesStore } from "@/features/chat/stores/chat-preferences-store";
+import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 import {
   LinkedFoldersManager,
   listKnowledgeBases,
