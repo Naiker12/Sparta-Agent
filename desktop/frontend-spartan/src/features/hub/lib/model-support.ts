@@ -124,10 +124,10 @@ const UNSUPPORTED_QUANT_METHODS: Record<string, string> = {
   fp_quant: "FP-Quant quantization",
 };
 
-export type UnslothSupportStatus = "supported" | "unsupported";
+export type ModelSupportStatus = "supported" | "unsupported";
 
-export interface UnslothSupport {
-  status: UnslothSupportStatus;
+export interface ModelSupport {
+  status: ModelSupportStatus;
   reason: string | null;
   /** Set when Studio runs this model on a dedicated page rather than in chat. The status stays "unsupported" because the chat pickers gate on it, but the UI must not call it unsupported: the Images and Video pages load it. */
   supportedIn?: "images" | "video";
@@ -212,7 +212,7 @@ function detectFormatKey(
   return null;
 }
 
-export function classifyUnslothSupport({
+export function classifyModelSupport({
   modelId,
   pipelineTag,
   tags,
@@ -226,7 +226,7 @@ export function classifyUnslothSupport({
   libraryName?: string | null;
   deviceType?: string | null;
   quantMethod?: string | null;
-}): UnslothSupport {
+}): ModelSupport {
   const pipeline = pipelineTag?.toLowerCase().trim() || null;
   const lowerTags = new Set(
     (tags ?? []).map((tag) => tag.toLowerCase().trim()).filter(Boolean),

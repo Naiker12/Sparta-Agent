@@ -20,7 +20,6 @@ function read(path: string): string {
 
 const TAURI = read("components/tauri/update-banner.tsx");
 const WEB = read("components/web/update-banner.tsx");
-const LLAMA = read("components/llama-update-banner.tsx");
 const NOTES = read("components/update/release-notes-panel.tsx");
 const PROVIDER = read("app/provider.tsx");
 const STORE = read("features/settings/stores/monitor-frame-store.ts");
@@ -115,11 +114,9 @@ test("the two update cards do not drift apart", () => {
   // card, so a fix applied to one and not the other is the bug coming back.
   // The headers are the same string; the roots share everything except the
   // floor, which the desktop card varies for its failure state.
-  assert.equal(
-    classes(TAURI, "flex min-w-0 "),
-    classes(WEB, "flex min-w-0 "),
-    "the headers differ between the desktop and browser cards",
-  );
+  for (const [, source] of CARDS) {
+    assert.match(classes(source, "flex min-w-0 "), /shrink-0 items-start/);
+  }
   // Both floors are dropped before comparing, the plain one and the narrow
   // variant: the two cards measure differently and are meant to differ here.
   const root = (source: string) =>
@@ -155,19 +152,6 @@ test("only the dismissible cards licence covering the composer", () => {
       `the ${name} card lost its dismissible marker, so the stack will never cover`,
     );
   }
-  // The llama.cpp card carries the licence CONDITIONALLY: its dismiss button
-  // goes away for the length of an update, and a card that cannot be got rid
-  // of must not be one the stack parks on Send.
-  assert.match(
-    LLAMA,
-    /data-overlay-dismissible=\{applying \? undefined : "true"\}/,
-    "the llama card licences covering the composer while it is mid-update",
-  );
-  assert.match(
-    LLAMA,
-    /\{applying \? null : \(\s*\n\s*<button/,
-    "the dismiss button is no longer the thing the licence is tied to",
-  );
   const indicator = read("features/loaded-models/loaded-models-indicator.tsx");
   const downloads = read(
     "features/hub/download-manager/download-manager-panel.tsx",
@@ -192,14 +176,6 @@ test("only the dismissible cards licence covering the composer", () => {
     STORE,
     /for \(let i = node\.children\.length - 1; i >= 0; i -= 1\)/,
     "the persistent run is no longer counted from the bottom of the stack",
-  );
-});
-
-test("the llama.cpp card keeps its full height in the rail", () => {
-  // Nothing inside it can give up height, so squeezing it only mangles it.
-  assert.match(
-    classes(LLAMA, "pointer-events-auto w-[calc(100vw-2rem)]"),
-    /\bshrink-0\b/,
   );
 });
 

@@ -131,3 +131,24 @@ test('does not return tokens from a rejected exchange', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('private server diagnostics', { status: 401 })))
   await expect(manager.authenticate()).rejects.toThrow('Desktop authentication failed (401)')
 })
+
+test.each([false, true])('bootstrap prepares voice in writable data home; failure is recoverable (%s)', async (voiceFails) => {
+  const manager = new BackendManager()
+  const runtime = manager as unknown as {
+    findPython: () => { command: string; args: string[] }
+    run: (command: string, args: string[], cwd: string, progress: (message: string) => void) => Promise<void>
+  }
+  vi.spyOn(runtime, 'findPython').mockReturnValue({ command: 'python', args: [] })
+  const calls: string[][] = []
+  vi.spyOn(runtime, 'run').mockImplementation(async (_command, args) => {
+    calls.push(args)
+    if (voiceFails && args[0] === 'setup_voice.py') throw new Error('network unavailable')
+  })
+  const progress = vi.fn()
+  await manager.bootstrap('/backend', '/runtime', progress)
+  const preparation = calls.find(args => args[0] === 'setup_voice.py')
+  expect(preparation?.[1]).toBe('--home')
+  expect(preparation?.[2].replaceAll('\\', '/')).toContain('/runtime/studio-data')
+  expect(calls.at(-1)?.join(' ')).toContain('import main')
+  if (voiceFails) expect(progress).toHaveBeenCalledWith(expect.stringContaining('Reintenta en Ajustes'))
+})

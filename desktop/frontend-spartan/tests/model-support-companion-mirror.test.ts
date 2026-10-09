@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { classifyUnslothSupport } from "../src/features/hub/lib/unsloth-support.ts";
+import { classifyModelSupport } from "../src/features/hub/lib/model-support.ts";
 
 // The sd.cpp companion mirrors are published as ComfyUI single-file repos: library
 // "diffusion-single-file", no pipeline tag, and nothing inside but a VAE or a text encoder. The
@@ -22,7 +22,7 @@ test("a taskless companion mirror is not offered as a chat model", () => {
       libraryName: "diffusion-single-file",
     },
   ]) {
-    const support = classifyUnslothSupport({ ...mirror, pipelineTag: null });
+    const support = classifyModelSupport({ ...mirror, pipelineTag: null });
     assert.equal(support.status, "unsupported", mirror.modelId);
   }
 });
@@ -30,7 +30,7 @@ test("a taskless companion mirror is not offered as a chat model", () => {
 test("a real single-file checkpoint keeps its Images routing", () => {
   // Same library tag, but a pipeline task -- these load on the Images page, so they must stay
   // routed there rather than becoming a blanket "unsupported".
-  const support = classifyUnslothSupport({
+  const support = classifyModelSupport({
     modelId: "unsloth/FLUX.2-klein-9B-GGUF",
     pipelineTag: "image-to-image",
     tags: ["gguf", "flux", "diffusion-single-file", "image-to-image"],
@@ -44,7 +44,7 @@ test("a chat GGUF that sd.cpp borrows as a text encoder stays supported", () => 
 
   // encoder) yet is a perfectly good chat model: filtering the picker on that set would take it
   // away from a user who downloaded it to chat with.
-  const support = classifyUnslothSupport({
+  const support = classifyModelSupport({
     modelId: "unsloth/Qwen2.5-VL-7B-Instruct-GGUF",
     pipelineTag: "image-text-to-text",
     tags: ["transformers", "gguf", "qwen2_5_vl", "image-text-to-text", "multimodal"],

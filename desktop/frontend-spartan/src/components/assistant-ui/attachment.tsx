@@ -5,7 +5,6 @@ import { useT as useUiT } from "@/i18n";
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogTitle,
   DialogTrigger,
@@ -86,68 +85,6 @@ const useAttachmentSrc = (): string | undefined => {
   );
 
   return useFileSrc(file) ?? src;
-};
-
-type AttachmentPreviewProps = {
-  src: string;
-};
-
-const AttachmentPreview: FC<AttachmentPreviewProps> = ({ src }) => {
-  const uiT = useUiT();
-
-  const [isLoaded, setIsLoaded] = useState(false);
-  return (
-    <img
-      src={src}
-      alt={uiT("chat.files.preview")}
-      className={cn(
-        "block h-auto max-h-[90dvh] w-auto max-w-[92vw] object-contain",
-        isLoaded
-          ? "aui-attachment-preview-image-loaded"
-          : "aui-attachment-preview-image-loading invisible",
-      )}
-      onLoad={() => setIsLoaded(true)}
-    />
-  );
-};
-
-const AttachmentPreviewDialog: FC<PropsWithChildren> = ({ children }) => {
-  const uiT = useUiT();
-
-  const src = useAttachmentSrc();
-
-  if (!src) {
-    return children;
-  }
-
-  return (
-    <Dialog>
-      <DialogTrigger
-        className="aui-attachment-preview-trigger cursor-pointer transition-colors hover:bg-accent/50"
-        asChild={true}
-      >
-        {children}
-      </DialogTrigger>
-      {/* Chrome-free lightbox: the image floats on the dimmed backdrop with
-          no dialog panel, and the close button sits in the screen corner. */}
-      <DialogContent
-        overlayClassName="bg-black/70"
-        className="aui-attachment-preview-dialog-content top-0 left-0 grid h-dvh w-screen max-h-none max-w-none translate-x-0 translate-y-0 place-items-center overflow-hidden rounded-none border-0 bg-transparent p-0 shadow-none ring-0 sm:max-w-none [&>button]:fixed [&>button]:top-4 [&>button]:right-4 [&>button]:z-20 [&>button]:size-9 [&>button]:rounded-full [&>button]:bg-transparent [&>button]:text-white [&>button]:opacity-100 [&>button]:ring-0! [&>button]:hover:bg-white/25 [&>button]:hover:text-white [&_svg]:text-white"
-      >
-        <DialogTitle className="aui-sr-only sr-only">
-          {uiT("ui.image_attachment_preview")}</DialogTitle>
-        {/* Clicking the backdrop (anywhere off the image) closes the preview. */}
-        <DialogClose asChild={true}>
-          <div aria-hidden="true" className="absolute inset-0" />
-        </DialogClose>
-        <div className="aui-attachment-preview pointer-events-none relative z-10 flex items-center justify-center">
-          <span className="pointer-events-auto">
-            <AttachmentPreview src={src} />
-          </span>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
 };
 
 const AttachmentThumb: FC = () => {
@@ -394,13 +331,24 @@ const AttachmentUI: FC = () => {
 
   const isImage = useAuiState(({ attachment }) => attachment.type === "image");
   const name = useAuiState(({ attachment }) => attachment.name);
-  const previewAttachment = useAuiState(({ attachment }) => ({
-    file: (attachment as { file?: File }).file,
-    content: attachment.content?.find((part) => part.type === "file") as
+  // External-store snapshots must keep their identity between updates.
+  // Subscribe to existing references rather than allocating a preview object
+  // on every read (which makes useSyncExternalStore rerender indefinitely).
+  const previewFile = useAuiState(
+    ({ attachment }) => (attachment as { file?: File }).file,
+  );
+  const previewAttachmentId = useAuiState(({ attachment }) => attachment.id);
+  const previewContent = useAuiState(
+    ({ attachment }) => attachment.content?.find((part) => part.type === "file") as
       | { type: "file"; data: string; mimeType?: string }
       | undefined,
-    contentType: (attachment as { contentType?: string }).contentType ?? "",
-  }));
+  );
+  const previewContentType = useAuiState(
+    ({ attachment }) => (attachment as { contentType?: string }).contentType ?? "",
+  );
+  const previewImageSrc = useAuiState(
+    ({ attachment }) => attachment.content?.find((part) => part.type === "image")?.image,
+  );
   const openLocalPreview = useDocumentPreviewStore(
     (state) => state.openLocalPreview,
   );
@@ -428,28 +376,29 @@ const AttachmentUI: FC = () => {
     ? `${typeLabel} attachment: ${name}`
     : `${typeLabel} attachment`;
   const handlePreview = useCallback(() => {
-    if (isImage || !name) {
+    if (!name) {
       return;
     }
     const kind = getAttachmentFileKind(
       name,
-      previewAttachment.file?.type ??
-        previewAttachment.content?.mimeType ??
-        previewAttachment.contentType,
+      previewFile?.type ?? previewContent?.mimeType ?? previewContentType,
     );
-    if (previewAttachment.file) {
-      openLocalPreview({ blob: previewAttachment.file, filename: name, kind });
+    if (previewFile) {
+      openLocalPreview({ blob: previewFile, filename: name, kind, attachmentId: previewAttachmentId });
       return;
     }
-    const data = previewAttachment.content?.data;
+    const data = previewContent?.data ?? previewImageSrc;
     if (!data) {
       return;
     }
     fetch(data)
       .then((response) => response.blob())
-      .then((blob) => openLocalPreview({ blob, filename: name, kind }))
+      .then((blob) => {
+        if (isComposer && !aui.composer().getState().attachments.some((item) => item.id === previewAttachmentId)) return;
+        openLocalPreview({ blob, filename: name, kind, attachmentId: previewAttachmentId });
+      })
       .catch(() => undefined);
-  }, [isImage, name, openLocalPreview, previewAttachment]);
+  }, [name, openLocalPreview, previewFile, previewContent, previewContentType, previewImageSrc, isComposer, previewAttachmentId, aui]);
 
   if (pastedText) {
     return (
@@ -471,7 +420,7 @@ const AttachmentUI: FC = () => {
         )}
       >
         {isImage ? (
-          <AttachmentPreviewDialog>
+          <>
             <TooltipTrigger asChild={true}>
               <button
                 className={cn(
@@ -487,7 +436,7 @@ const AttachmentUI: FC = () => {
                 <AttachmentThumb />
               </button>
             </TooltipTrigger>
-          </AttachmentPreviewDialog>
+          </>
         ) : (
           <TooltipTrigger asChild={true}>
             <button
@@ -516,6 +465,7 @@ const AttachmentUI: FC = () => {
 
 const AttachmentRemove: FC = () => {
   const t = useT();
+  const attachmentId = useAuiState(({ attachment }) => attachment.id);
   return (
     <AttachmentPrimitive.Remove asChild={true}>
       <TooltipIconButton
@@ -523,6 +473,7 @@ const AttachmentRemove: FC = () => {
         aria-label={t("chat.composer.removeFile")}
         className="aui-attachment-tile-remove absolute top-1.5 right-1.5 size-3.5 rounded-full bg-white text-muted-foreground opacity-100 shadow-sm hover:bg-white! [&_svg]:text-black hover:[&_svg]:text-destructive"
         side="top"
+        onClick={() => useDocumentPreviewStore.getState().removeAttachmentPreview(attachmentId)}
       >
         <XIcon className="aui-attachment-remove-icon size-3 dark:stroke-[2.5px]" />
       </TooltipIconButton>
@@ -539,6 +490,15 @@ export const UserMessageAttachments: FC = () => {
 };
 
 export const ComposerAttachments: FC = () => {
+  const attachments = useAuiState(({ composer }) => composer.attachments);
+  const previousIds = useRef(new Set<string>());
+  useEffect(() => {
+    const current = new Set(attachments.map((attachment) => attachment.id));
+    for (const id of previousIds.current) {
+      if (!current.has(id)) useDocumentPreviewStore.getState().removeAttachmentPreview(id);
+    }
+    previousIds.current = current;
+  }, [attachments]);
   return (
     <div className="aui-composer-attachments mb-2 flex w-full flex-row items-center gap-2 overflow-x-auto px-1.5 pt-0.5 pb-1 empty:hidden">
       <ComposerPrimitive.Attachments

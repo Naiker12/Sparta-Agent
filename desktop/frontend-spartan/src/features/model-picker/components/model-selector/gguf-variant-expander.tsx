@@ -1,6 +1,6 @@
 import { useT as useUiT } from "@/i18n";
 /**
- * Sparta Agent – GGUF Variant Expander Component
+ * Spartan – GGUF Variant Expander Component
  *
  * Componente que gestiona y visualiza variantes de cuantización para repositorios GGUF:
  * - Listado y normalización de variantes locales y remotas de Hugging Face.

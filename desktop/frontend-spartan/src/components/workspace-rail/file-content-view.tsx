@@ -2,12 +2,10 @@ import { useT as useUiT } from "@/i18n";
 import { useState } from "react";
 import { Streamdown } from "streamdown";
 import { MarkdownPreview } from "@/components/markdown/markdown-preview";
-import { createCodePlugin } from "@/components/assistant-ui/code-plugin";
-import { unslothDarkTheme, unslothLightTheme } from "@/components/assistant-ui/code-themes";
+import { useLazyCodeHighlighter } from "@/components/assistant-ui/use-lazy-code-highlighter";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { fileLanguage, sourceFence } from "./file-source";
 
-const code = createCodePlugin({ themes: [unslothLightTheme, unslothDarkTheme] });
 
 export function FileContentView({ path, content, onClose }: { path: string; content: string; onClose: () => void }) {
   const uiT = useUiT();
@@ -16,6 +14,7 @@ export function FileContentView({ path, content, onClose }: { path: string; cont
   const [copied, setCopied] = useState(false);
   const language = fileLanguage(path);
   const canPreview = language === "markdown" || /\.(pdf|docx|xlsx|pptx)$/i.test(path);
+  const highlighter = useLazyCodeHighlighter(!canPreview || source);
   const filename = path.split(/[\\/]/).pop() ?? path;
   return <section className="flex h-full min-h-0 flex-col bg-background" aria-label={uiT("ui.file_value0", { value0: String(filename) })}>
     <header className="flex shrink-0 flex-col gap-2 border-b p-3">
@@ -27,7 +26,7 @@ export function FileContentView({ path, content, onClose }: { path: string; cont
       </div>
     </header>
     <div className="min-h-0 flex-1 overflow-auto p-4 text-xs">
-      {canPreview && !source ? <MarkdownPreview markdown={content} /> : <Streamdown mode="static" plugins={{code}} controls={{code:false}} shikiTheme={[unslothLightTheme, unslothDarkTheme]}>{sourceFence(content, language)}</Streamdown>}
+      {canPreview && !source ? <MarkdownPreview markdown={content} /> : highlighter ? <Streamdown mode="static" plugins={{code: highlighter.code}} controls={{code:false}} shikiTheme={highlighter.themes}>{sourceFence(content, language)}</Streamdown> : <pre className="whitespace-pre-wrap font-mono">{content}</pre>}
     </div>
     <footer className="shrink-0 border-t px-3 py-2 text-xs text-muted-foreground">{uiT("ui.read_only")}{" "}{content.length.toLocaleString()} {" "}{uiT("ui.characters_preview_limit_100_000")}</footer>
   </section>;

@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { ReleaseNotesPanel } from "@/components/update/release-notes-panel";
 import { useElectronUpdate } from "@/hooks/use-electron-update";
 import { useT } from "@/i18n";
-import { Download, RefreshCcw, RotateCw, Sparkles, X } from "lucide-react";
+import { Download, RefreshCcw, RotateCw, X } from "lucide-react";
 import { type ReactElement, useEffect, useState } from "react";
 
 interface ElectronUpdateBannerProps {
@@ -38,6 +38,7 @@ export function ElectronUpdateBanner({
   }
 
   if (dismissedVersion === (state.version ?? "unknown")) {
+    if (state.stage === "error") return null;
     return (
       <button
         type="button"
@@ -64,12 +65,11 @@ export function ElectronUpdateBanner({
       data-testid="electron-update-banner"
     >
       <div className="flex min-w-0 items-start gap-3.5">
-        <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Sparkles className="size-5" />
-        </div>
         <div className="min-w-0 flex-1">
           <p className="font-heading text-base font-semibold text-foreground">
-            {state.stage === "downloaded"
+            {state.stage === "error"
+              ? t("update.screen.updateFailed")
+              : state.stage === "downloaded"
               ? t("update.readyToInstall", { version: state.version ?? "" })
               : state.stage === "installing"
                 ? t("update.installing")
@@ -151,7 +151,7 @@ export function ElectronUpdateBanner({
       {state.stage === "error" && (
         <div className="mt-4 flex items-center justify-between gap-2 border-t border-border/40 pt-3">
           <p className="text-xs text-destructive">
-            {state.error ?? t("update.updateFailed")}
+            {t("update.updateFailed")}
           </p>
           <Button
             size="sm"

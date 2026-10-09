@@ -19,11 +19,11 @@ import { detectBaseModel } from "../lib/model-capabilities";
 import { isGgufLike } from "../lib/model-identifiers";
 import { fetchWithTimeout } from "../lib/network";
 import {
-  type UnslothSupport,
-  type UnslothSupportStatus,
-  classifyUnslothSupport,
+  type ModelSupport,
+  type ModelSupportStatus,
+  classifyModelSupport,
   excludedFormatTagsForDevice,
-} from "../lib/unsloth-support";
+} from "../lib/model-support";
 import { pullBatch, useHubPaginatedSearch } from "./use-hub-paginated-search";
 
 // "gguf" is not in the @huggingface/hub expandable-key type, but the listing supports
@@ -46,8 +46,8 @@ const ALL_FIELDS = [
   | "downloadsAllTime"
 )[];
 
-export { classifyUnslothSupport };
-export type { UnslothSupport, UnslothSupportStatus };
+export { classifyModelSupport };
+export type { ModelSupport, ModelSupportStatus };
 
 export type HfSortKey =
   | "trendingScore"
@@ -216,7 +216,7 @@ function makeMapModel(
     // Drop runtime-unloadable models before they reach the row list. Discover opts out via
     // keepUnsupportedTags. Embeddings skip the gate: unsupported for chat but trainable.
     if (!(keepUnsupportedTags || isEmbedding)) {
-      const support = classifyUnslothSupport({
+      const support = classifyModelSupport({
         modelId: m.name,
         pipelineTag,
         tags: m.tags,

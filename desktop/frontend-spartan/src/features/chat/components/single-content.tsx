@@ -1,11 +1,12 @@
 /**
- * Sparta Agent – Single Content Component
+ * Spartan – Single Content Component
  *
  * Vista principal de un solo hilo con soporte integrado para panel/overlay
  * de artefactos y panel lateral de ejecución de investigación (Deep Research).
  */
 
 import { Thread } from "@/components/assistant-ui/thread";
+import { AutomationRunControls } from './automation-run-controls';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -155,6 +156,7 @@ export const SingleContent = memo(function SingleContent({
 
   const threadPane = (
     <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col overflow-hidden">
+      <AutomationRunControls threadId={threadId ?? activeThreadId} />
       <Thread hideWelcome={Boolean(threadId)} targetThreadId={threadId} />
     </div>
   );

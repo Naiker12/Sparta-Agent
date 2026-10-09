@@ -1,6 +1,7 @@
 """Chat threads storage, workspace bindings, listings, settings snapshots, and deletions."""
 
 import json
+import os
 import logging
 import sqlite3
 import uuid
@@ -167,10 +168,6 @@ def _chat_message_from_row(row: sqlite3.Row) -> dict:
     return message
 
 
-class ChatThreadDeletedError(RuntimeError):
-    """Raised when a stale writer tries to recreate a deleted thread id."""
-
-
 def _raise_if_chat_thread_deleted(conn: sqlite3.Connection, thread_id: str) -> None:
     row = conn.execute(
         "SELECT 1 FROM chat_thread_tombstones WHERE id = ?",
@@ -230,10 +227,6 @@ def upsert_chat_thread(thread: dict) -> dict:
         raise
     finally:
         conn.close()
-
-
-class ChatThreadPreconditionFailed(Exception):
-    """The thread changed between the caller reading it and writing it."""
 
 
 # Same order the title migration picks its opening message in.

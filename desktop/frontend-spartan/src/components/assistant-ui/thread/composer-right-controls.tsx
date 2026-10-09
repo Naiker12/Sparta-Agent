@@ -1,6 +1,6 @@
 import { translate as uiTranslate } from "@/i18n";
 /**
- * Sparta Agent - Controles Derechos del Composer (ComposerRightControls)
+ * Spartan - Controles Derechos del Composer (ComposerRightControls)
  * Gestiona los botones de envío, dictado por voz, parada de generación,
  * control de cola de mensajes y selección de esfuerzo de pensamiento.
  */
@@ -147,7 +147,7 @@ export const ComposerRightControls: FC<ComposerRightControlsProps> = ({
           className="size-7.5 rounded-full text-foreground"
           onClick={startDictation}
         >
-          <MicIcon className="unsloth-dictate-icon size-[17px]" />
+          <MicIcon className="spartan-dictate-icon size-[17px]" />
         </TooltipIconButton>
       </ComposerPrimitive.If>
       <AuiIf
@@ -174,7 +174,7 @@ export const ComposerRightControls: FC<ComposerRightControlsProps> = ({
             {pendingSend ? (
               <Spinner className="size-3.5" />
             ) : (
-              <ArrowUpIcon className="unsloth-send-icon aui-composer-send-icon size-4 stroke-2" />
+              <ArrowUpIcon className="spartan-send-icon aui-composer-send-icon size-4 stroke-2" />
             )}
           </TooltipIconButton>
         </ComposerPrimitive.Send>
@@ -204,7 +204,7 @@ export const ComposerRightControls: FC<ComposerRightControlsProps> = ({
               className="aui-composer-send ml-1 size-7.5 rounded-full"
               aria-label={t("chat.composer.queueMessage")}
             >
-              <ArrowUpIcon className="unsloth-send-icon aui-composer-send-icon size-4 stroke-2" />
+              <ArrowUpIcon className="spartan-send-icon aui-composer-send-icon size-4 stroke-2" />
             </TooltipIconButton>
           )}
         </AuiIf>
@@ -257,7 +257,7 @@ export const ComposerRightControls: FC<ComposerRightControlsProps> = ({
                 className="aui-composer-send size-7.5 rounded-full"
                 aria-label={t("chat.composer.queueMessage")}
               >
-                <ArrowUpIcon className="unsloth-send-icon aui-composer-send-icon size-4 stroke-2" />
+                <ArrowUpIcon className="spartan-send-icon aui-composer-send-icon size-4 stroke-2" />
               </TooltipIconButton>
             )}
           </div>

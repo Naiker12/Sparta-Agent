@@ -1,6 +1,6 @@
 import { translate as uiTranslate } from "@/i18n";
 import { localizeUiMessage } from "@/i18n/localize-message";
-export const INITIAL_STARTUP_MESSAGE = "Starting Spartan Agent...";
+export const INITIAL_STARTUP_MESSAGE = "Starting Spartan...";
 export const MODELS_STARTUP_MESSAGE = "Preparing API connections...";
 export const SERVER_STARTUP_MESSAGE = "Nearly done...";
 export const STATUS_MESSAGE_ROTATION_MS = 5_000;

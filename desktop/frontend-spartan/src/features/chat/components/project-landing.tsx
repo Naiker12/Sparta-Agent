@@ -1,7 +1,7 @@
 import { translate as uiTranslate } from "@/i18n";
 import { useT as useUiT } from "@/i18n";
 /**
- * Sparta Agent - ProjectLanding Component
+ * Spartan - ProjectLanding Component
  * Vista de aterrizaje para proyectos de chat (Landing con pestañas de chats y fuentes).
  */
 
@@ -527,7 +527,7 @@ export function ProjectLanding({
                   side="bottom"
                   align="end"
                   sideOffset={6}
-                  className="unsloth-plus-menu menu-flat-destructive w-52"
+                  className="spartan-plus-menu menu-flat-destructive w-52"
                 >
                   <DropdownMenuItem
                     onSelect={() => {
@@ -567,7 +567,7 @@ export function ProjectLanding({
                       />
                       <span>{t("projectsPage.export")}</span>
                     </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent className="unsloth-plus-menu w-48">
+                    <DropdownMenuSubContent className="spartan-plus-menu w-48">
                       {PROJECT_CHAT_EXPORT_OPTIONS.map(({ label, format }) => (
                         <DropdownMenuItem
                           key={format}
@@ -732,7 +732,7 @@ export function ProjectLanding({
                           side="bottom"
                           align="end"
                           sideOffset={4}
-                          className="unsloth-plus-menu menu-flat-destructive w-56"
+                          className="spartan-plus-menu menu-flat-destructive w-56"
                         >
                           <DropdownMenuItem onSelect={() => openRename(item)}>
                             <HugeiconsIcon
@@ -769,7 +769,7 @@ export function ProjectLanding({
                               />
                               <span>{uiT("chat.menu.moveToProject")}</span>
                             </DropdownMenuSubTrigger>
-                            <DropdownMenuSubContent className="unsloth-plus-menu w-52">
+                            <DropdownMenuSubContent className="spartan-plus-menu w-52">
                               <DropdownMenuItem
                                 disabled={item.projectId !== projectId}
                                 onSelect={() =>
@@ -805,7 +805,7 @@ export function ProjectLanding({
                               />
                               <span>{uiT("tour.export.ctaTitle")}</span>
                             </DropdownMenuSubTrigger>
-                            <DropdownMenuSubContent className="unsloth-plus-menu w-52">
+                            <DropdownMenuSubContent className="spartan-plus-menu w-52">
                               {PROJECT_CHAT_EXPORT_OPTIONS.map(
                                 ({ label, format }) => (
                                   <DropdownMenuItem

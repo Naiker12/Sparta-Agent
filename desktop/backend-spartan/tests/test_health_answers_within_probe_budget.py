@@ -2,13 +2,9 @@
 """Invariant: /api/health answers inside the desktop launcher's probe timeout,
 detected hardware or not.
 
-studio/src-tauri/src/preflight/backend.rs probes with a 2s client timeout right after
-TAURI_PORT is emitted, and a timeout is not retried: it falls through to
-"desktop_owned_backend_starting", a dead end the user has to clear by hand. That was safe
-while the lifespan detected inline, since TAURI_PORT came after detection; detection runs on
-the warm thread now and TAURI_PORT precedes it, so an unbounded wait inside health puts a
-cold `import torch` in front of that deadline. Nothing the launcher reads from health
-depends on detection, only chat_only does.
+An unbounded wait inside health can put a cold ML import in front of the desktop's
+readiness check. These tests preserve a bounded reply even when optional hardware
+detection is deferred. API-only behavior is checked in test_api_only_cold_start.py.
 
 CPU-only, no network, no GPU, no weights: the subprocess tests stub detection.
 """
@@ -17,14 +13,12 @@ from __future__ import annotations
 
 import ast
 import json
-import re
 import subprocess
 import sys
 from pathlib import Path
 
 _BACKEND_DIR = Path(__file__).resolve().parent.parent  # studio/spartan_backend
 _MAIN_SRC = _BACKEND_DIR / "main.py"
-_PROBE_RS = _BACKEND_DIR.parent / "src-tauri" / "src" / "preflight" / "backend.rs"
 
 
 def _run(snippet: str) -> subprocess.CompletedProcess:
@@ -48,38 +42,6 @@ def _main_constant(name: str) -> float:
     raise AssertionError(f"main.py no longer defines {name}")
 
 
-def test_the_budget_stays_under_the_desktop_probe_timeout():
-    """Cross-language guard: the budget is only correct relative to the Rust one, and
-    either side can be changed without the other."""
-    assert _PROBE_RS.is_file(), f"{_PROBE_RS} moved; update this guard"
-    rust = _PROBE_RS.read_text(encoding = "utf-8")
-    probe = rust[rust.index("fn probe_ownerless_spawned_backend") :]
-    # Bound to this function; a later one must not be the source of the number.
-    end = probe.find("\n}\n")
-    if end != -1:
-        probe = probe[: end + 3]
-    # The builder's .timeout() and the shared loopback_http::client() constructor both
-    # take the client timeout as a whole-seconds Duration, and the probe sets exactly
-    # one. Matching the Duration rather than either call site keeps this guard working
-    # across that refactor while still failing if the unit stops being seconds.
-    match = re.search(r"Duration::from_secs\((\d+)\)", probe)
-    assert match, (
-        "probe_ownerless_spawned_backend no longer sets a whole-seconds client "
-        "timeout; re-derive the health budget from whatever replaced it"
-    )
-    probe_timeout = float(match.group(1))
-    budget = _main_constant("_HEALTH_DETECT_BUDGET_S")
-    assert budget < probe_timeout, (
-        f"/api/health waits up to {budget}s for detection but the desktop probe "
-        f"gives up at {probe_timeout}s"
-    )
-    # Connect, routing and JSON share the same 2s, and the budget overruns whenever a
-    # C-extension import holds the GIL past it (0.24s measured at 1.5s). A budget that
-    # only just fits is one slow host away from the dead end.
-    assert probe_timeout - budget >= 0.9, (
-        f"only {probe_timeout - budget}s of headroom between the health budget "
-        f"and the {probe_timeout}s probe timeout"
-    )
 
 
 _SNIPPET = r"""

@@ -65,5 +65,5 @@ export const runSettings = {
   extraArgumentsHint:
     "Additional command line arguments passed to llama-server.",
   autoFitNote:
-    "Unsloth automatically fits the context to your device, using the full context when memory allows.",
+    "Spartan automatically fits the context to your device, using the full context when memory allows.",
 } as const;

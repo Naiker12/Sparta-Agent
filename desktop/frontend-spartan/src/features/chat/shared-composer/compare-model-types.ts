@@ -1,5 +1,5 @@
 /**
- * Sparta Agent – Compare Model Types & Helpers
+ * Spartan – Compare Model Types & Helpers
  *
  * Tipos de selección de modelos para el modo compare y utilidades de
  * configuración espectulativa.

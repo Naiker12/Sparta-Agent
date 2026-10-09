@@ -1,6 +1,6 @@
 import { translate as uiTranslate } from "@/i18n";
 /**
- * Sparta Agent – Compare Handles
+ * Spartan – Compare Handles
  *
  * Contratos de tipo e infraestructura de contexto para el modo
  * de comparación de modelos (compare panes).

@@ -1,5 +1,5 @@
 /**
- * Sparta Agent – Shared Composer Barrel
+ * Spartan – Shared Composer Barrel
  *
  * Punto de entrada unificado para los submódulos del compositor compartido
  * (modo compare). Re-exporta todos los contratos públicos sin romper

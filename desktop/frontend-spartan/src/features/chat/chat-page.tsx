@@ -39,7 +39,7 @@ import { useT } from "@/i18n";
 import { isTauri } from "@/lib/api-base";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
-import { PencilEdit02Icon, Telescope02Icon } from "@hugeicons/core-free-icons";
+import { BubbleChatTemporaryIcon, PencilEdit02Icon, Telescope02Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { Tooltip as TooltipPrimitive } from "radix-ui";
@@ -133,6 +133,7 @@ import {
 } from "./utils/chat-history-storage";
 import { clearNewChatDraft } from "./utils/composer-draft";
 import { isAssistantLocalThreadId } from "./utils/thread-ids";
+import { createNavigationNonce } from "@/components/sidebar/sidebar-types-and-constants";
 
 export function ChatPage({
   search,
@@ -297,6 +298,16 @@ export function ChatPage({
       to: "/chat",
       search: { new: crypto.randomUUID() },
     });
+  }, [navigate]);
+  const handleTemporaryChat = useCallback(() => {
+    clearNewChatDraft();
+    resetNewChatWorkspace();
+    setCurrentProjectId(null);
+    const runtime = useChatRuntimeStore.getState();
+    runtime.setActiveThreadId(null);
+    runtime.setActiveProjectId(null);
+    runtime.setIncognito(true);
+    navigate({ to: "/chat", search: { new: createNavigationNonce() } });
   }, [navigate]);
   const openProjectsList = useCallback(() => {
     navigate({ to: "/projects" });
@@ -1705,6 +1716,29 @@ export function ChatPage({
               ) : null}
             </div>
             <div className="pointer-events-auto ml-auto flex items-center gap-1">
+              {view.mode === "single" && (
+                <Tooltip>
+                  <TooltipPrimitive.Trigger asChild={true}>
+                    <Button
+                      type="button"
+                      variant={incognito ? "secondary" : "ghost"}
+                      size="icon-sm"
+                      aria-label={incognito
+                        ? t("chat.toolbar.turnOffTemporaryChat")
+                        : t("chat.toolbar.turnOnTemporaryChat")}
+                      aria-pressed={incognito}
+                      onClick={incognito ? handleDesktopNewChat : handleTemporaryChat}
+                    >
+                      <HugeiconsIcon icon={BubbleChatTemporaryIcon} strokeWidth={1.75} />
+                    </Button>
+                  </TooltipPrimitive.Trigger>
+                  <TooltipContent side="bottom" sideOffset={6} className="tooltip-compact">
+                    {incognito
+                      ? t("chat.toolbar.turnOffTemporaryChat")
+                      : t("chat.toolbar.temporaryChatActive")}
+                  </TooltipContent>
+                </Tooltip>
+              )}
               {view.mode === "single" &&
               (contextUsage || contextWindowKnown) ? (
                 <ContextUsageBar

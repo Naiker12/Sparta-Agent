@@ -1,5 +1,5 @@
 /**
- * Sparta Agent - Botón de Desplazamiento Inferior (ThreadScrollToBottom)
+ * Spartan - Botón de Desplazamiento Inferior (ThreadScrollToBottom)
  * Botón flotante animado para volver al final de la conversación cuando el usuario
  * se desplaza hacia arriba en el historial.
  */

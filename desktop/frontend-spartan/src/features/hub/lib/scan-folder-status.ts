@@ -34,7 +34,7 @@ function permissionHint(userAgent: string): string {
     case "mac":
       return "Grant access in System Settings > Privacy & Security > Files and Folders, then reopen this dialog.";
     case "windows":
-      return "Check the folder's security permissions, or allow Unsloth in Controlled Folder Access, then reopen this dialog.";
+      return "Check the folder's security permissions, or allow Spartan in Controlled Folder Access, then reopen this dialog.";
     default:
       return "Check the folder's permissions, then reopen this dialog.";
   }
@@ -49,7 +49,7 @@ export function scanFolderStatusCopy(
   switch (status) {
     case "permission_denied":
       return {
-        title: "Unsloth is not allowed to read this folder",
+        title: "Spartan is not allowed to read this folder",
         hint: permissionHint(userAgent),
       };
     case "partial":

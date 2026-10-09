@@ -429,6 +429,7 @@ class _GgmlDownloadState:
             snapshot = {
                 "downloading": downloading,
                 "model": self._model_id if downloading else None,
+                "requested_model": self._model_id,
                 "error": self._error,
                 "cancelled": self._cancelled,
                 # Which model the cancel applies to. "model" goes None once the worker
@@ -1046,6 +1047,8 @@ class GgmlSttSidecar:
         language: Optional[str] = None,
         fast: bool = False,
         cancel_event: Optional[threading.Event] = None,
+        *,
+        max_audio_seconds: Optional[int] = None,
     ) -> dict:
         """Transcribe encoded audio bytes via whisper-server.
 
@@ -1066,7 +1069,8 @@ class GgmlSttSidecar:
         # Reject a missing model before decoding so a long clip does not burn CPU
         # only to 409 (matches the Transformers sidecar's preflight).
         self._ensure_model_downloaded(model_id)
-        decoded_audio = _decode_audio_bounded(audio, cancel_event)
+        decoded_audio = (_decode_audio_bounded(audio, cancel_event) if max_audio_seconds is None
+                         else _decode_audio_bounded(audio, cancel_event, max_seconds=max_audio_seconds))
         if cancel_event is not None and cancel_event.is_set():
             raise SttTranscriptionCancelledError("Transcription cancelled.")
         wav_bytes = _pcm_to_wav_bytes(decoded_audio)

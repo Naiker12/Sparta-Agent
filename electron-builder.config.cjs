@@ -17,7 +17,7 @@ module.exports = {
   asarUnpack: [
     'node_modules/@firecrawl/**/*',
   ],
-  productName: 'Sparta Agent',
+  productName: 'Spartan',
   publish: {
     provider: 'github',
     owner: 'Naiker12',
@@ -41,6 +41,12 @@ module.exports = {
   ],
   extraResources: [
     {
+      // Document tools reuse only the lazy readers, not the RAG/model engines.
+      from: 'desktop/backend-spartan/core/rag',
+      to: 'backend/core/rag',
+      filter: ['__init__.py', 'config.py', 'parsers.py'],
+    },
+    {
       from: 'desktop/backend-spartan',
       to: 'backend',
       filter: [
@@ -51,12 +57,10 @@ module.exports = {
         '!**/.pytest_cache/**',
         '!**/tests/**',
         '!**/.git/**',
-        // API-only distribution: local model engines, offline RAG and model
-        // export are intentionally not shipped. The Python runtime itself is
+        // API chat distribution with CPU Whisper voice. Local LLM engines,
+        // offline RAG and model export are intentionally not shipped. Python is
         // retained because projects, file tools and terminal workflows use it.
-        '!vendor/unsloth-installers/**',
         '!install_llama_prebuilt.py',
-        '!install_whisper_prebuilt.py',
         '!routes/whisper.py',
         '!routes/rag.py',
         '!routes/rag_pkg/**',
@@ -82,6 +86,7 @@ module.exports = {
     entitlementsInherit: 'build/entitlements.mac.plist',
   },
   win: {
+    icon: 'public/spartan.ico',
     requestedExecutionLevel: 'asInvoker',
     target: [
       {

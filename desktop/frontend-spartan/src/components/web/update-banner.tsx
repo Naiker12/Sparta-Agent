@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useWebUpdateCheck } from "@/hooks/use-web-update-check";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
-import { Download, Sparkles, X } from "lucide-react";
+import { Download, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { type ReactElement, useState } from "react";
 
@@ -61,9 +61,6 @@ export function WebUpdateBanner({
 
             {/* Header */}
             <div className="flex min-w-0 shrink-0 items-start gap-3.5 pr-6">
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <Sparkles className="size-5" />
-              </div>
               <div className="min-w-0">
                 <p className="font-heading text-base font-semibold text-foreground">
                   {t("update.newVersionTitle")}

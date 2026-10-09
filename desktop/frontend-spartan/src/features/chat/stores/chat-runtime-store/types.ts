@@ -1,5 +1,5 @@
 /**
- * Sparta Agent - Tipos e Interfaces de Dominio para Chat Runtime
+ * Spartan - Tipos e Interfaces de Dominio para Chat Runtime
  */
 
 import type { ProjectAttachmentTarget } from "../../utils/project-attachment-target";

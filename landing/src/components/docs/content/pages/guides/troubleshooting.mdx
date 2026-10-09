@@ -1,28 +1,45 @@
 ---
 title: "Diagnóstico y reparación"
-description: "Localiza el fallo antes de reinstalar o cambiar de modelo."
+description: "Localiza el fallo y elige una recuperación antes de reinstalar."
 ---
 
-## La aplicación no inicia
+## Identifica dónde falla
 
-Abre los detalles del arranque y conserva el mensaje. Comprueba que el escritorio y sus servicios auxiliares hayan iniciado correctamente. No borres el directorio de datos como primer paso.
+| Síntoma | Primera comprobación | Recuperación |
+| --- | --- | --- |
+| La aplicación no inicia | Mensaje y detalles del arranque | Comprueba escritorio y servicios auxiliares; conserva el error |
+| Autenticación rechazada | Sesión; usuario y contraseña en acceso web | Reinicia el escritorio para renovar su sesión |
+| El modelo no responde | URL, clave, acceso al modelo y cuota | Prueba un mensaje corto sin adjuntos |
+| Una herramienta falla | Argumentos, salida y estado de los archivos | Lee de nuevo los archivos antes de repetir una edición |
+| Telegram no responde | Aplicación abierta, conexión activa y usuario autorizado | Consulta [Canales y Telegram](/docs/features/channels) |
+| Voz no disponible | Preparación local o conexión de transcripción | Consulta [Voz y audio](/docs/features/voice-audio) |
 
-## No se puede autenticar
+<Callout type="warn" title="Conserva la seguridad y los datos">
+No desactives la autenticación para resolver un 401 ni borres los datos como primer paso. Una cancelación no revierte cambios ya aplicados.
+</Callout>
 
-Reinicia el escritorio para renovar la sesión con sus servicios. Para acceso web, revisa usuario y contraseña. No desactives la autenticación para resolver un error 401.
+## Comprueba con una petición pequeña
 
-## El modelo no responde
-
-Comprueba la URL o clave de la conexión, que la cuenta tenga acceso al modelo y que el proveedor no tenga incidencias o cuota agotada. Prueba un mensaje corto sin adjuntos. Si funciona, añade contexto y herramientas de forma gradual.
-
-## Una herramienta falla
-
-Revisa sus argumentos y salida. Si hubo una edición parcial, vuelve a leer los archivos antes de reintentar. Una cancelación puede dejar cambios ya aplicados.
+1. Envía un mensaje sin archivos ni herramientas.
+2. Si funciona, agrega el contexto de forma gradual.
+3. Activa una herramienta cada vez y revisa su resultado.
+4. Guarda los pasos exactos que reproducen el fallo.
 
 ## Reporta el problema
 
-Incluye sistema operativo, versión de Sparta, proveedor/modelo, pasos para reproducir y error visible. Elimina secretos y datos personales del diagnóstico.
+Copia esta plantilla y completa solo datos que puedas compartir. Elimina claves, tokens, contenido privado y datos personales.
 
-## Conserva tus datos
+```text title="Plantilla de diagnóstico"
+Sistema operativo:
+Versión de Sparta:
+Pantalla o función:
+Proveedor y modelo:
+Pasos para reproducir:
+Resultado esperado:
+Resultado observado:
+Error visible sin secretos:
+```
 
-Antes de reinstalar o desinstalar, crea una copia de lo que necesites conservar. La política de borrado del instalador Windows está en revisión y no debe asumirse que conserva todos los datos.
+## Antes de reinstalar
+
+Crea una copia de lo que necesites conservar. La política de borrado del instalador Windows está en revisión; no asumas que conserva todos los datos.

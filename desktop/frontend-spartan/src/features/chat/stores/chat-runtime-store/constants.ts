@@ -1,5 +1,5 @@
 /**
- * Sparta Agent - Constantes y Claves de Persistencia para Chat Runtime
+ * Spartan - Constantes y Claves de Persistencia para Chat Runtime
  * Centraliza todas las claves de localStorage y configuraciones por defecto.
  */
 

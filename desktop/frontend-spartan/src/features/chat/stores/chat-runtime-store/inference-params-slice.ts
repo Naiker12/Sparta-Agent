@@ -1,5 +1,5 @@
 /**
- * Sparta Agent - Slice de Parámetros de Inferencia y Presets
+ * Spartan - Slice de Parámetros de Inferencia y Presets
  * Gestiona temperatura, topP, contextLength, presets de usuario y memoria por modelo.
  */
 

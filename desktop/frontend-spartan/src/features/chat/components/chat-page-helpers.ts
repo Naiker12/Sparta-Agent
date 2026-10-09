@@ -1,5 +1,5 @@
 /**
- * Sparta Agent – Chat Page Utilities & Types
+ * Spartan – Chat Page Utilities & Types
  *
  * Tipos de navegación, validadores de parámetros de búsqueda (ChatSearch)
  * y funciones auxiliares puras para modelos externos, LoRA y detección de imágenes.

@@ -20,16 +20,17 @@ describe("API-only product contract", () => {
   });
 
   test("installs a lightweight API backend rather than local ML runtimes", () => {
-    const requirements = source("desktop/backend-spartan/requirements/studio.txt").toLowerCase();
+    const requirements = source("desktop/backend-spartan/requirements/studio.txt")
+      .toLowerCase().split(/\r?\n/).filter((line) => line.trim() && !line.trim().startsWith("#"))
+      .map((line) => line.trim().split(/[<>=!;\s]/)[0]);
 
     for (const forbidden of [
       "torch",
       "transformers",
-      "huggingface",
       "unsloth",
       "sentence-transformers",
       "sqlite-vec",
-      "whisper",
+      "faster-whisper",
     ]) {
       expect(requirements).not.toContain(forbidden);
     }
@@ -56,8 +57,7 @@ describe("API-only product contract", () => {
     const builder = source("electron-builder.config.cjs");
 
     for (const excluded of [
-      "vendor/unsloth-installers",
-      "install_whisper_prebuilt.py",
+      "!install_llama_prebuilt.py",
       "routes/rag_pkg/**",
       "routes/export.py",
       "core/training/**",
@@ -108,7 +108,7 @@ describe("API-only product contract", () => {
 
     expect(messages).toContain("Preparing API connections");
     expect(messages).not.toContain('MODELS_STARTUP_MESSAGE = "Loading models..."');
-    expect(toasts).toContain("preparando una conexión de proveedor");
+    expect(toasts).toContain("localizeUiMessage");
   });
 
   test("chat startup does not poll retired local-model routes", () => {
@@ -135,7 +135,8 @@ describe("API-only product contract", () => {
     const apiSelector = source(
       "desktop/frontend-spartan/src/features/chat/components/api-provider-model-selector.tsx",
     );
-    expect(apiSelector).toContain("Elegir proveedor");
+    expect(apiSelector).toContain('uiT("ui.choose_provider")');
+    expect(source("desktop/frontend-spartan/src/i18n/locales/es/ui.ts")).toContain('"choose_provider": "Elegir proveedor"');
     expect(apiSelector).not.toContain("En el dispositivo");
     expect(apiSelector).not.toContain("Recomendados");
   });

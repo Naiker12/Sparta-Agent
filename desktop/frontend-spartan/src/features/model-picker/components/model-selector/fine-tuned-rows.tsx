@@ -1,6 +1,6 @@
 import { useT as useUiT } from "@/i18n";
 /**
- * Sparta Agent – Fine Tuned Rows Component
+ * Spartan – Fine Tuned Rows Component
  *
  * Renderiza las filas de modelos adaptadores o fine-tuneados (LoRA, Merged, Full, GGUF exportado):
  * - Detección de subtipos de checkpoint y tags visuales.

@@ -1,5 +1,5 @@
 /**
- * Sparta Agent – Sidebar Navigation Items
+ * Spartan – Sidebar Navigation Items
  *
  * Componentes especializados para renderizar ítems de la barra lateral:
  * - NavBadge (pill indicador "New" o badge genérico)

@@ -92,7 +92,7 @@ import {
   resolveFitMaxSeqLength,
   resolveManualAutoCtxPin,
 } from "./presets/preset-policy";
-import { PromptStorageDialog } from "./prompt-storage/prompt-storage-dialog";
+import { PromptStorageDialog } from "./prompt-storage/prompt-storage-lazy";
 import {
   getExternalReasoningCapabilities,
   providerSupportsBuiltinCodeExecution,
@@ -1729,7 +1729,7 @@ export function SharedComposer({
                   <button
                     type="button"
                     disabled={reasoningDisabled}
-                    className="unsloth-thinking-pill"
+                    className="spartan-thinking-pill"
                     data-pill-label="Thinking settings"
                     data-active={thinkingActiveLook ? "true" : "false"}
                     aria-label={thinkEffortAriaLabel({
@@ -1740,7 +1740,7 @@ export function SharedComposer({
                   >
                     <BulbIcon className="size-[15.5px]" />
                     {thinkingActiveLook ? (
-                      <span className="unsloth-thinking-label">
+                      <span className="spartan-thinking-label">
                         {isEffort
                           ? `Thinking · ${formatReasoningEffortLabel(
                               reasoningEffort,
@@ -1749,14 +1749,14 @@ export function SharedComposer({
                           : uiT("chat.reasoning.thinking")}
                       </span>
                     ) : null}
-                    <ArrowDownStandardIcon className="unsloth-thinking-caret size-[15px]" />
+                    <ArrowDownStandardIcon className="spartan-thinking-caret size-[15px]" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   side="top"
                   align="end"
                   className={cn(
-                    "unsloth-plus-menu",
+                    "spartan-plus-menu",
                     narrowEffortMenu ? "min-w-40" : "min-w-44",
                   )}
                 >
@@ -1775,7 +1775,7 @@ export function SharedComposer({
                             icon={Tick02Icon}
                             strokeWidth={2}
                             className={cn(
-                              "unsloth-tick size-4",
+                              "spartan-tick size-4",
                               effectiveReasoningVisualEnabled && "opacity-0",
                             )}
                           />
@@ -1806,7 +1806,7 @@ export function SharedComposer({
                               icon={Tick02Icon}
                               strokeWidth={2}
                               className={cn(
-                                "unsloth-tick size-4",
+                                "spartan-tick size-4",
                                 !(
                                   effectiveReasoningVisualEnabled &&
                                   reasoningEffort === level
@@ -1841,7 +1841,7 @@ export function SharedComposer({
                           icon={Tick02Icon}
                           strokeWidth={2}
                           className={cn(
-                            "unsloth-tick size-4",
+                            "spartan-tick size-4",
                             !effectiveReasoningEnabled && "opacity-0",
                           )}
                         />
@@ -1866,7 +1866,7 @@ export function SharedComposer({
                         icon={Tick02Icon}
                         strokeWidth={2}
                         className={cn(
-                          "unsloth-tick size-4",
+                          "spartan-tick size-4",
                           !preserveThinking && "opacity-0",
                         )}
                       />
@@ -1897,7 +1897,7 @@ export function SharedComposer({
                     setToolsEnabled(false, { persist: false });
                   }
                 }}
-                className="unsloth-thinking-pill"
+                className="spartan-thinking-pill"
                 data-pill-label="Thinking"
                 data-active={thinkingActiveLook ? "true" : "false"}
                 aria-label={thinkToggleAriaLabel({
@@ -1911,7 +1911,7 @@ export function SharedComposer({
                   <BulbIcon className="size-[15.5px]" />
                 </PillGlyph>
                 {thinkingActiveLook ? (
-                  <span className="unsloth-thinking-label">{uiT("chat.reasoning.thinking")}</span>
+                  <span className="spartan-thinking-label">{uiT("chat.reasoning.thinking")}</span>
                 ) : null}
               </button>
             )
@@ -1946,7 +1946,7 @@ export function SharedComposer({
               onClick={startDictation}
               aria-label={uiT("chat.composer.dictate")}
             >
-              <MicIcon className="unsloth-dictate-icon size-4" />
+              <MicIcon className="spartan-dictate-icon size-4" />
             </TooltipIconButton>
           )}
           {isQueueRunning ? (
@@ -1985,7 +1985,7 @@ export function SharedComposer({
               disabled={!canSend}
               aria-label={uiT("chat.composer.sendMessage")}
             >
-              <ArrowUpIcon className="unsloth-send-icon size-[22px] stroke-2" />
+              <ArrowUpIcon className="spartan-send-icon size-[22px] stroke-2" />
             </TooltipIconButton>
           )}
         </div>

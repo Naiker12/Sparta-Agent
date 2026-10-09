@@ -2,11 +2,7 @@ import { translate as uiTranslate } from "@/i18n";
 import { useT as useUiT } from "@/i18n";
 "use client";
 
-import { createCodePlugin } from "@/components/assistant-ui/code-plugin";
-import {
-  unslothDarkTheme,
-  unslothLightTheme,
-} from "@/components/assistant-ui/code-themes";
+import { useLazyCodeHighlighter } from "@/components/assistant-ui/use-lazy-code-highlighter";
 import { CodeToggleIcon } from "@/components/assistant-ui/code-toggle-icon";
 import { Button } from "@/components/ui/button";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
@@ -31,9 +27,6 @@ import type { ChatArtifact } from "./types";
 import { buildArtifactSourceKey, getArtifactFilename } from "./types";
 
 const COPY_RESET_MS = 2000;
-const artifactSourceCodePlugin = createCodePlugin({
-  themes: [unslothLightTheme, unslothDarkTheme],
-});
 
 function buildHtmlFence(source: string): string {
   const longestBacktickRun = Math.max(
@@ -120,6 +113,7 @@ export function ArtifactSurface({
   const hasArtifactCode = artifact.code.trim().length > 0;
   const isLoadingArtifact = Boolean(artifact.isStreaming);
   const effectiveViewMode = isLoadingArtifact ? "preview" : viewMode;
+  const highlighter = useLazyCodeHighlighter(effectiveViewMode !== "preview");
 
   useEffect(() => {
     return () => {
@@ -367,16 +361,16 @@ export function ArtifactSurface({
           />
         ) : (
           <div className="h-full overflow-auto text-xs leading-relaxed [&_[data-streamdown=code-block]]:!my-0 [&_[data-streamdown=code-block]]:!gap-0 [&_[data-streamdown=code-block]]:!rounded-none [&_[data-streamdown=code-block]]:!border-0 [&_[data-streamdown=code-block]]:!bg-transparent [&_[data-streamdown=code-block]]:!p-0 [&_[data-streamdown=code-block-body]]:!border-0 [&_[data-streamdown=code-block-body]]:!bg-transparent [&_[data-streamdown=code-block-body]]:!p-0 [&_pre]:!m-0 [&_pre]:!bg-transparent [&_pre]:!p-0 [&_pre]:text-xs [&_pre]:leading-relaxed [&_code]:text-xs">
-            <Streamdown
+            {highlighter ? <Streamdown
               // Only computed when the source view is actually on screen.
               key={buildArtifactSourceKey(artifact)}
               mode="streaming"
-              plugins={{ code: artifactSourceCodePlugin }}
+              plugins={{ code: highlighter.code }}
               controls={{ code: false }}
-              shikiTheme={[unslothLightTheme, unslothDarkTheme]}
+              shikiTheme={highlighter.themes}
             >
               {sourceMarkdown}
-            </Streamdown>
+            </Streamdown> : <pre className="whitespace-pre-wrap font-mono">{artifact.code}</pre>}
           </div>
         )}
       </div>

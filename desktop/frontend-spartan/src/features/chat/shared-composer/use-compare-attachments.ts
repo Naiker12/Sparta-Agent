@@ -1,6 +1,6 @@
 import { translate as uiTranslate } from "@/i18n";
 /**
- * Sparta Agent – Compare Attachments Hook
+ * Spartan – Compare Attachments Hook
  *
  * Hook para la gestión de adjuntos multimedia (imágenes y audio)
  * en el compositor compartido (modo compare).

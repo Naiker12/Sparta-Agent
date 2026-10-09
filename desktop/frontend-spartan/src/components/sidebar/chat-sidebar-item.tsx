@@ -1,6 +1,6 @@
 import { useT as useUiT } from "@/i18n";
 /**
- * Sparta Agent – Chat Sidebar Item Component
+ * Spartan – Chat Sidebar Item Component
  *
  * Componente que renderiza un elemento individual de conversación (individual o en modo comparación)
  * en la barra lateral, incluyendo:
@@ -427,7 +427,7 @@ export function ChatSidebarItem({
               side="bottom"
               align="start"
               sideOffset={0}
-              className="unsloth-plus-menu menu-flat-destructive w-56"
+              className="spartan-plus-menu menu-flat-destructive w-56"
             >
               <DropdownMenuItem onSelect={() => openRenameChat(item)}>
                 <HugeiconsIcon
@@ -522,7 +522,7 @@ export function ChatSidebarItem({
                 <DropdownMenuSubContent
                   sideOffset={0}
                   alignOffset={-4}
-                  className="unsloth-plus-menu w-52"
+                  className="spartan-plus-menu w-52"
                 >
                   <DropdownMenuItem
                     onSelect={() => {
@@ -571,7 +571,7 @@ export function ChatSidebarItem({
                 <DropdownMenuSubContent
                   sideOffset={8}
                   alignOffset={-4}
-                  className="unsloth-plus-menu w-52"
+                  className="spartan-plus-menu w-52"
                 >
                   {CHAT_EXPORT_OPTIONS.map(({ label, format }) => (
                     <DropdownMenuItem
@@ -621,7 +621,7 @@ export function ChatSidebarItem({
                 <DropdownMenuSubContent
                   sideOffset={8}
                   alignOffset={-4}
-                  className="unsloth-plus-menu w-52"
+                  className="spartan-plus-menu w-52"
                 >
                   {projects.length === 0 && (
                     <DropdownMenuItem disabled={true}>

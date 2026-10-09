@@ -1,5 +1,5 @@
 /**
- * Sparta Agent – Sidebar Chat Helpers
+ * Spartan – Sidebar Chat Helpers
  *
  * Utilidades para exportación de conversaciones de chat por formato,
  * guardado en fuentes RAG y extracción de IDs de hilos de un SidebarItem.

@@ -9,11 +9,15 @@ La edición API-only de Sparta Agent no incluye RAG local, indexación vectorial
 
 ## Cómo dar contexto al agente
 
-Conecta un proyecto y usa las herramientas de archivos para leer rutas concretas, buscar texto en el workspace o adjuntar los documentos necesarios a una conversación. El modelo recibe solo el contenido que la solicitud y las herramientas aprobadas proporcionan; no se hace una búsqueda semántica automática sobre tu disco.
+1. Conecta el proyecto y delimita su carpeta.
+2. Lee rutas concretas, busca texto o adjunta los documentos necesarios.
+3. Revisa qué contenido incorporan las herramientas aprobadas.
+
+El modelo recibe ese contenido; no hay búsqueda semántica automática sobre tu disco.
 
 ## Formula una consulta verificable
 
-```text
+```text title="Prompt · contexto del proyecto"
 Revisa `src/auth` y `README.md` para explicar cómo se configura la autenticación.
 Indica los archivos leídos y no modifiques nada.
 ```

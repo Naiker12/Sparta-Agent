@@ -1,7 +1,7 @@
 import { translate as uiTranslate } from "@/i18n";
 import { useT as useUiT } from "@/i18n";
 /**
- * Sparta Agent – Model Selector Badges & Chips
+ * Spartan – Model Selector Badges & Chips
  *
  * Componentes visuales atómicos para filas de modelos:
  * - ListLabel: Etiqueta de encabezado de sección con soporte de colapso y dividers.

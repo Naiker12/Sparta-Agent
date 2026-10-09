@@ -1,5 +1,5 @@
 /**
- * Sparta Agent – Sidebar Drag & Drop Hook
+ * Spartan – Sidebar Drag & Drop Hook
  *
  * Hook para la gestión de reordenamiento manual mediante Drag and Drop en HTML5,
  * soporte de indicadores visuales (drop cues) y menú alternativo para teclados/pantallas táctiles.

@@ -682,6 +682,7 @@ class _SnapshotDownloadState:
             snapshot = {
                 "downloading": downloading,
                 "model": self._model_id if downloading else None,
+                "requested_model": self._model_id,
                 "error": self._error,
                 "cancelled": self._cancelled,
                 # Which model the cancel applies to. "model" goes None once the worker
@@ -1055,7 +1056,7 @@ def _close_engine(engine) -> bool:
         return not _engine_is_alive(engine)
 
 
-def _decode_audio_bounded(audio: bytes, cancel_event = None):
+def _decode_audio_bounded(audio: bytes, cancel_event = None, *, max_seconds = None):
     """Decode to 16 kHz mono PCM without buffering unbounded audio.
 
     A small, highly-compressed upload can expand far past the encoded request
@@ -1076,7 +1077,10 @@ def _decode_audio_bounded(audio: bytes, cancel_event = None):
             "Run `unsloth studio update` to install it."
         ) from exc
 
-    max_samples = _MAX_AUDIO_SECONDS * _TARGET_SAMPLE_RATE
+    limit_seconds = _MAX_AUDIO_SECONDS if max_seconds is None else max_seconds
+    if type(limit_seconds) is not int or not 0 < limit_seconds <= _MAX_AUDIO_SECONDS:
+        raise ValueError("Invalid audio duration limit.")
+    max_samples = limit_seconds * _TARGET_SAMPLE_RATE
     sample_count = 0
     raw_buffer = io.BytesIO()
     resampler = av.audio.resampler.AudioResampler(
@@ -1093,7 +1097,9 @@ def _decode_audio_bounded(audio: bytes, cancel_event = None):
         array = frame.to_ndarray()
         sample_count += array.size
         if sample_count > max_samples:
-            max_minutes = _MAX_AUDIO_SECONDS // 60
+            if limit_seconds % 60:
+                raise SttAudioTooLongError(f"Audio must be {limit_seconds} seconds or shorter.")
+            max_minutes = limit_seconds // 60
             unit = "minute" if max_minutes == 1 else "minutes"
             raise SttAudioTooLongError(f"Audio must be {max_minutes} {unit} or shorter.")
         raw_buffer.write(array)
@@ -1650,6 +1656,8 @@ class WhisperSttSidecar:
         language: Optional[str] = None,
         fast: bool = False,
         cancel_event: Optional[threading.Event] = None,
+        *,
+        max_audio_seconds: Optional[int] = None,
     ) -> dict:
         """Transcribe encoded audio bytes to text.
 
@@ -1676,7 +1684,8 @@ class WhisperSttSidecar:
             raise SttLanguageError(
                 f"Language '{language}' is not supported by English-only STT model '{model_id}'."
             )
-        decoded_audio = _decode_audio_bounded(audio, cancel_event)
+        decoded_audio = (_decode_audio_bounded(audio, cancel_event) if max_audio_seconds is None
+                         else _decode_audio_bounded(audio, cancel_event, max_seconds=max_audio_seconds))
         if cancel_event is not None and cancel_event.is_set():
             raise SttTranscriptionCancelledError("Transcription cancelled.")
         # condition_on_prev_tokens=False stops a fresh clip inheriting prior

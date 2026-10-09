@@ -1,6 +1,6 @@
 import { useT as useUiT } from "@/i18n";
 /**
- * Sparta Agent - Dock Inferior del Composer (ThreadComposerDock)
+ * Spartan - Dock Inferior del Composer (ThreadComposerDock)
  * Contenedor flotante fijado a la parte inferior del hilo con gradiente de desvanecimiento,
  * chip de audio pendiente, nota de descargo del modelo y reporte de altura al viewport.
  */

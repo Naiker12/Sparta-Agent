@@ -302,7 +302,7 @@ export function McpComposerButton({
             align="start"
             sideOffset={0}
             avoidCollisions={true}
-            className="unsloth-plus-menu mcp-menu w-[232px]"
+            className="spartan-plus-menu mcp-menu w-[232px]"
           >
             <DropdownMenuGroup>
               <DropdownMenuLabel>{uiT("ui.connected_mcp_servers")}</DropdownMenuLabel>

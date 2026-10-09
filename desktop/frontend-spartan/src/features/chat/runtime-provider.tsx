@@ -1,5 +1,6 @@
 import { translate as uiTranslate } from "@/i18n";
 import { authFetch } from "@/features/auth";
+import { subscribeAutomationRun } from "@/features/tasks/automation-run-polling";
 import { withRunErrorStatus } from "./utils/run-error-status";
 import {
   AssistantRuntimeProvider,
@@ -132,6 +133,12 @@ import {
 import { isAssistantLocalThreadId } from "./utils/thread-ids";
 import { sanitizeThreadScopedSettings } from "./utils/thread-scoped-settings";
 import { VideoAttachmentAdapter } from "./video-attachment-adapter";
+import { SpreadsheetAttachmentAdapter } from "./spreadsheet-attachment-adapter";
+import {
+  DOCX_ATTACHMENT_ACCEPT,
+  HTML_ATTACHMENT_ACCEPT,
+  PDF_ATTACHMENT_ACCEPT,
+} from "./utils/document-attachment-accept";
 
 const pendingHistoryAppendByMessageId = new Map<string, Promise<void>>();
 // Resolves to the thread id assigned when this message's chat was first persisted.
@@ -280,7 +287,7 @@ class VisionImageAdapter implements AttachmentAdapter {
 }
 
 class PDFAttachmentAdapter implements AttachmentAdapter {
-  accept = "application/pdf";
+  accept = PDF_ATTACHMENT_ACCEPT;
 
   add({ file }: { file: File }): Promise<PendingAttachment> {
     const maxSize = 50 * 1024 * 1024; // 50MB limit
@@ -389,7 +396,7 @@ class TextAttachmentAdapter implements AttachmentAdapter {
 }
 
 class HtmlAttachmentAdapter implements AttachmentAdapter {
-  accept = "text/html";
+  accept = HTML_ATTACHMENT_ACCEPT;
 
   async add({ file }: { file: File }): Promise<PendingAttachment> {
     return {
@@ -425,8 +432,7 @@ class HtmlAttachmentAdapter implements AttachmentAdapter {
 }
 
 class DocxAttachmentAdapter implements AttachmentAdapter {
-  accept =
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  accept = DOCX_ATTACHMENT_ACCEPT;
 
   add({ file }: { file: File }): Promise<PendingAttachment> {
     return Promise.resolve({
@@ -1166,6 +1172,50 @@ function useStudioRuntimeAdapters(
 ): StudioRuntimeAdapters {
   const aui = useAui();
 
+  // Scheduled executions own their messages on the server. Reconcile only those
+  // records so opening a live run never replaces a user's unrelated follow-up.
+  useEffect(() => {
+    let stopped = false;
+    let revision = "";
+    let timer: ReturnType<typeof setTimeout>;
+    let unsubscribe: (() => void) | undefined;
+    function connect() {
+      const item = aui.threadListItem().getState();
+      const id = item.remoteId || item.id;
+      if (!id) {
+        timer = setTimeout(connect, 1000);
+        return;
+      }
+      if (!id?.startsWith("automation-")) return;
+      unsubscribe = subscribeAutomationRun(id, async (run) => {
+        try {
+          const nextRevision = JSON.stringify(run);
+          if (!stopped && nextRevision !== revision) {
+            const stored = await listStoredChatMessages(id);
+            if (stopped) return;
+            const thread = aui.thread();
+            const current = thread.export();
+            const byId = new Map(stored.filter(message => message.metadata?.automationRunId).map(message => [message.id, message]));
+            const known = new Set(current.messages.map(item => item.message.id));
+            const messages = current.messages.map(item => {
+              const record = byId.get(item.message.id);
+              return record ? { parentId: record.parentId ?? null, message: toThreadMessage(record) } : item;
+            });
+            for (const record of byId.values()) {
+              if (!known.has(record.id)) messages.push({ parentId: record.parentId ?? null, message: toThreadMessage(record) });
+            }
+            thread.import({ ...current, messages });
+            revision = nextRevision;
+          }
+        } catch {
+          // A network interruption leaves the latest checkpoint visible.
+        }
+      });
+    }
+    connect();
+    return () => { stopped = true; clearTimeout(timer); unsubscribe?.(); };
+  }, [aui]);
+
   // Mirror Data-tab attachment deletions into the loaded thread. The in-memory
   // repository otherwise keeps the attachment, and a later repo-to-storage sync
   // (e.g. deleting a message in the thread) would write it back.
@@ -1648,11 +1698,12 @@ function useStudioRuntimeAdapters(
           // Before the document adapters: a composite takes the first match,
           // and .mkv/.mov must not fall through to them.
           new VideoAttachmentAdapter(),
-          new TextAttachmentAdapter(),
           new HtmlAttachmentAdapter(),
           new PDFAttachmentAdapter(),
           new DocxAttachmentAdapter(),
+          new SpreadsheetAttachmentAdapter(),
           new OpenDocumentAttachmentAdapter(),
+          new TextAttachmentAdapter(),
         ]),
         () => {
           const state = aui.threadListItem().getState();

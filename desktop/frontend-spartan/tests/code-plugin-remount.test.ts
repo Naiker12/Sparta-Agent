@@ -120,14 +120,28 @@ const markdownText = ts.createSourceFile(
 );
 
 /** Every `createCodePlugin(...)` call in the file, with the scope it sits in. */
-function codePluginCalls(): { atModuleScope: boolean }[] {
-  const calls: { atModuleScope: boolean }[] = [];
+function codePluginCalls(): { atModuleScope: boolean; cachedAtModuleScope: boolean }[] {
+  const calls: { atModuleScope: boolean; cachedAtModuleScope: boolean }[] = [];
+  const moduleVariables = new Set(markdownText.statements.flatMap((statement) =>
+    ts.isVariableStatement(statement) ? statement.declarationList.declarations
+      .filter((declaration) => ts.isIdentifier(declaration.name))
+      .map((declaration) => declaration.name.getText(markdownText)) : []));
   const visit = (node: ts.Node, insideFunction: boolean): void => {
     if (
       ts.isCallExpression(node) &&
       node.expression.getText(markdownText) === "createCodePlugin"
     ) {
-      calls.push({ atModuleScope: !insideFunction });
+      // A lazy initializer inside a module-cached promise is also shared across
+      // remounts. The old check incorrectly rejected this deferred pattern.
+      let cachedAtModuleScope = false;
+      for (let parent = node.parent; parent; parent = parent.parent) {
+        if (ts.isBinaryExpression(parent) &&
+            parent.operatorToken.kind === ts.SyntaxKind.QuestionQuestionEqualsToken &&
+            moduleVariables.has(parent.left.getText(markdownText))) {
+          cachedAtModuleScope = true;
+        }
+      }
+      calls.push({ atModuleScope: !insideFunction, cachedAtModuleScope });
     }
     const entersFunction =
       insideFunction ||
@@ -141,7 +155,7 @@ function codePluginCalls(): { atModuleScope: boolean }[] {
   return calls;
 }
 
-test("the chat renderer builds its code plugin once, outside the component", () => {
+test("the chat renderer shares its code plugin across component remounts", () => {
   const calls = codePluginCalls();
   assert.equal(
     calls.length,
@@ -149,7 +163,7 @@ test("the chat renderer builds its code plugin once, outside the component", () 
     "the chat renderer should build exactly one code plugin",
   );
   assert.equal(
-    calls[0].atModuleScope,
+    calls[0].atModuleScope || calls[0].cachedAtModuleScope,
     true,
     "the code plugin is built inside a component, so its incremental fence slots are discarded on every remount",
   );

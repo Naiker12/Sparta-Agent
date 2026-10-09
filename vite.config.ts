@@ -137,9 +137,9 @@ export default defineConfig(() => {
               if (id.includes('monaco-editor') || id.includes('@monaco-editor') || id.includes('@uiw/react-codemirror')) {
                 return 'vendor-editor'
               }
-              if (id.includes('mermaid') || id.includes('d3') || id.includes('thinking-orbs')) {
-                return 'vendor-charts'
-              }
+              // Let Rollup split chart/diagram dependencies by their consumers.
+              // Grouping all D3/Mermaid code forces lazy diagrams into startup
+              // whenever an eager chart imports any part of that shared chunk.
               if (id.includes('xlsx') || id.includes('mammoth')) {
                 return 'vendor-documents'
               }
@@ -170,6 +170,7 @@ export default defineConfig(() => {
         '@hugeicons/react',
         'react',
         'react-dom',
+        'docx-preview',
       ],
     },
     server: {

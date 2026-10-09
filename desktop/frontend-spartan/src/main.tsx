@@ -13,6 +13,7 @@ import { watchOverlayScrollbarGutter } from "./lib/overlay-scrollbar";
 declare global {
   interface Window {
     electronAPI?: {
+      showNotification?: (payload: { key: string; title: string; body?: string }) => Promise<boolean>;
       getBackendPort?: () => Promise<number | null>;
       authenticateBackend?: () => Promise<{
         // biome-ignore lint/style/useNamingConvention: Electron IPC API contract (external)

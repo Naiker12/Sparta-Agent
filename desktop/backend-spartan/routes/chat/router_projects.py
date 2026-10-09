@@ -57,7 +57,7 @@ def save_project(payload: ChatProject, current_subject: str = Depends(get_curren
             exc,
             500,
             f"Could not create the project folder {exc.path}. Check that the "
-            "folder is writable, or set UNSLOTH_STUDIO_PROJECTS_HOME to another "
+            "folder is writable, or set SPARTAN_PROJECTS_HOME to another "
             "location.",
             event = "chat_history.create_project_workspace_failed",
             log = logger,

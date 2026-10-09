@@ -6,7 +6,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  classifyUnslothSupport,
+  classifyModelSupport,
   formatBytes,
   formatRelativeShort,
   ggufVariantDisplayLabel,
@@ -448,7 +448,7 @@ export const DiscoverModelRow = memo(function DiscoverModelRow({
     () =>
       isDataset
         ? null
-        : classifyUnslothSupport({
+        : classifyModelSupport({
             modelId: row.id,
             pipelineTag: row.result.pipelineTag,
             tags: row.result.tags,
@@ -614,7 +614,7 @@ export const InventoryRow = memo(function InventoryRow({
     if (isDataset) {
       return false;
     }
-    const classified = classifyUnslothSupport({
+    const classified = classifyModelSupport({
       modelId: rowModelId,
       pipelineTag: row.pipelineTag,
       tags: rowTagsSignature ? rowTagsSignature.split("\u0001") : undefined,

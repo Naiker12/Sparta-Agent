@@ -9,7 +9,12 @@ Sparta Agent busca reunir conversaciones, contexto de proyecto y herramientas en
 
 ## Qué puedes esperar
 
-La versión 0.3.3 incorpora cola de mensajes persistente y una Bandeja de trabajo junto a Automatizaciones. Los mensajes pendientes pueden recuperarse desde su conversación; un envío registrado no se repite automáticamente. Los resultados inciertos requieren revisión. La bandeja muestra resúmenes y enlaces al chat, con filtros sobre la página actual.
+La versión 0.3.3 incorpora una cola persistente y una **Bandeja de trabajo** junto a Automatizaciones.
+
+- Recupera mensajes pendientes desde su conversación.
+- Un envío registrado no se repite automáticamente.
+- Los resultados inciertos requieren revisión.
+- La bandeja muestra resúmenes y enlaces al chat; sus filtros actúan sobre la página actual.
 
 | Área | Alcance documentado |
 | --- | --- |
@@ -28,7 +33,14 @@ La visión, el razonamiento, las llamadas de herramientas y los límites de cont
 
 ## Límites de la edición API-only
 
-El instalador no administra pesos, entrenamiento ni motores de modelos locales. Puedes conectar un servidor API compatible que ya tengas preparado. El contexto de proyecto se obtiene mediante archivos y herramientas; esta edición no promete un índice vectorial local ni RAG persistente.
+| Área | Alcance |
+| --- | --- |
+| Chat | Proveedores por API o un servidor compatible que hayas preparado |
+| Modelos de chat locales | El instalador no administra sus pesos, entrenamiento ni motores |
+| Contexto | Archivos y herramientas; sin promesa de índice vectorial ni RAG persistente |
+| Transcripción | El desarrollo de Canales incorpora preparación de Whisper y proveedores externos; su validación real está pendiente |
+
+Consulta [Voz y audio](/docs/features/voice-audio) para distinguir transcripción de modelos de chat.
 
 Las carpetas y módulos de compatibilidad conservados en el repositorio no amplían por sí solos el alcance del producto. Los elementos marcados como próximos y las demostraciones deben distinguirse de las funciones disponibles.
 

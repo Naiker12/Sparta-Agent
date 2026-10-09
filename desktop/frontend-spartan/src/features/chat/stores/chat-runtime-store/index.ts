@@ -1,5 +1,5 @@
 /**
- * Sparta Agent - Barril de Exportación de Chat Runtime Store
+ * Spartan - Barril de Exportación de Chat Runtime Store
  */
 
 export * from "./constants";

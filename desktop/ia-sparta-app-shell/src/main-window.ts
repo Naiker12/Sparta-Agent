@@ -28,13 +28,13 @@ export function createMainWindow(): BrowserWindow {
     },
     backgroundColor: '#F2EBE0',
     show: false,
-    icon: path.join(process.env.VITE_PUBLIC || '', 'sparta-escritorio.png'),
+    icon: path.join(process.env.VITE_PUBLIC || '', process.platform === 'win32' ? 'spartan.ico' : 'sparta-escritorio.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
       contextIsolation: true,
       nodeIntegration: false,
     },
-    title: 'Sparta Agent',
+    title: 'Spartan',
   })
 
   win.once('ready-to-show', () => {

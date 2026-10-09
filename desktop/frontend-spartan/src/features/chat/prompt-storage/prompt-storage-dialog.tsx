@@ -1,4 +1,7 @@
 import { translate as uiTranslate } from "@/i18n";
+import { EXPORT_FORMATS_LIST, type ConvExportFormat } from "./export-formats";
+export { EXPORT_FORMATS_LIST } from "./export-formats";
+export type { ConvExportFormat } from "./export-formats";
 import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import {
@@ -623,17 +626,6 @@ export async function saveChatItemAsProjectSource(
   }
 }
 
-export type ConvExportFormat = "jsonl-raw" | "csv" | "sharegpt";
-
-const EXPORT_FORMAT_LABELS: Record<ConvExportFormat, string> = {
-  "jsonl-raw": "Raw JSONL",
-  csv: "CSV",
-  sharegpt: "ShareGPT JSONL",
-};
-
-export const EXPORT_FORMATS_LIST = (
-  Object.keys(EXPORT_FORMAT_LABELS) as ConvExportFormat[]
-).map((fmt) => ({ fmt, label: EXPORT_FORMAT_LABELS[fmt] }));
 
 async function buildThreadContent(
   threadId: string,

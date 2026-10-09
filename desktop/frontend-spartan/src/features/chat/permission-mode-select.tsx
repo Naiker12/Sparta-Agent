@@ -333,7 +333,7 @@ export function PermissionModeComposerPill({
         align="start"
         sideOffset={0}
         avoidCollisions={true}
-        className="unsloth-plus-menu w-[300px]"
+        className="spartan-plus-menu w-[300px]"
       >
         <DropdownMenuLabel>
           {t("chat.composer.permissions.title")}

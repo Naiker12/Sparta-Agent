@@ -12,15 +12,17 @@ REPO = BACKEND.parents[1]
 
 
 def test_active_requirements_exclude_local_ml_stack():
-    requirements = (BACKEND / "requirements" / "studio.txt").read_text(encoding="utf-8").lower()
+    import re
+    requirements = {re.split(r'[<>=!;\s]', line.strip())[0] for line in
+        (BACKEND / "requirements" / "studio.txt").read_text(encoding="utf-8").lower().splitlines()
+        if line.strip() and not line.strip().startswith('#')}
     for retired_dependency in (
         "torch",
         "transformers",
-        "huggingface",
         "unsloth",
         "sentence-transformers",
         "sqlite-vec",
-        "whisper",
+        "faster-whisper",
     ):
         assert retired_dependency not in requirements
     assert "fastapi" in requirements
@@ -40,8 +42,8 @@ def test_openai_chat_route_refuses_local_execution():
 def test_packager_excludes_retired_runtime_components():
     builder = (REPO / "electron-builder.config.cjs").read_text(encoding="utf-8")
     for excluded_path in (
-        "vendor/unsloth-installers",
-        "install_whisper_prebuilt.py",
+        "!install_llama_prebuilt.py",
+        "!routes/whisper.py",
         "routes/rag_pkg/**",
         "routes/export.py",
         "core/training/**",

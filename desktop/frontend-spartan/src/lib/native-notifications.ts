@@ -144,6 +144,15 @@ export async function notifyNative(
   inFlightKeys.add(options.key);
 
   try {
+    if (isElectron && window.electronAPI?.showNotification) {
+      const shown = await window.electronAPI.showNotification({
+        key: options.key,
+        title: options.title,
+        body: options.body ? sanitizeNotificationBody(options.body, "") : undefined,
+      });
+      if (shown) rememberSentKey(options.key);
+      return;
+    }
     const granted = await ensurePermission(options.requestPermission !== false);
     if (!granted) {
       return;
@@ -155,7 +164,10 @@ export async function notifyNative(
     if (isElectron) {
       const notification = getBrowserNotificationApi();
       if (notification) {
-        new notification(options.title, {body});
+        const iconPath = window.location.protocol === "file:"
+          ? "./sparta-escritorio.png"
+          : `${import.meta.env.BASE_URL}sparta-escritorio.png`;
+        new notification(options.title, {body, icon: new URL(iconPath, document.baseURI).href});
         rememberSentKey(options.key);
       }
       return;

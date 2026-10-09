@@ -1,6 +1,6 @@
 import { translate as uiTranslate } from "@/i18n";
 /**
- * Sparta Agent – Project Chat Export & Storage Helpers
+ * Spartan – Project Chat Export & Storage Helpers
  *
  * Utilidades puras para exportación de conversaciones de proyectos,
  * guardado de hilos como fuentes RAG y extracción de fragmentos de texto.

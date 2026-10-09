@@ -14,10 +14,6 @@ const INDICATOR = readFileSync(
   ),
   "utf8",
 );
-const BANNER = readFileSync(
-  new URL("../src/components/llama-update-banner.tsx", import.meta.url),
-  "utf8",
-);
 
 function surface(source: string, anchor: string): string {
   const at = source.indexOf(anchor);
@@ -69,9 +65,7 @@ test("the modifier hardcodes neither theme", () => {
 // The point of the change: the card and the banners are the same surface.
 // menu-soft-surface's vars already carry the banner's geometry, so once the
 // inset is gone the two agree. If the banner is restyled, this fails.
-test("the shared vars still match the update banner's shadow", () => {
-  assert.match(BANNER, /shadow-\[0_2px_8px_-2px_rgba\(0,0,0,0\.16\)\]/);
-  assert.match(BANNER, /dark:shadow-\[0_8px_28px_-6px_rgba\(0,0,0,0\.28\)\]/);
+test("the shared surface retains its shadow geometry", () => {
   const light = rule(".menu-soft-surface,");
   assert.match(light, /--menu-soft-shadow: rgba\(0, 0, 0, 0\.16\)/);
   assert.match(light, /--menu-soft-offset-y: 2px/);

@@ -21,7 +21,7 @@ export const about = {
   reportIssue: "Reportar un problema",
   license: {
     sectionTitle: "Licencia",
-    studioLabel: "Sparta Agent",
+    studioLabel: "Spartan",
     studioLicense: "MIT",
     studioDescription: "Código abierto bajo la Licencia MIT.",
     libraryLabel: "Sparta Core",
@@ -29,9 +29,9 @@ export const about = {
     libraryDescription: "Con licencia MIT.",
   },
   dangerZone: "Zona de peligro",
-  shutDownStudio: "Cerrar Sparta Agent",
+  shutDownStudio: "Cerrar Spartan",
   shutDownStudioDescription:
-    "Cierra la aplicación de Sparta Agent y finaliza tu sesión.",
+    "Cierra la aplicación de Spartan y finaliza tu sesión.",
   shutDown: "Cerrar",
   update: {
     title: "Actualizar Spartan",

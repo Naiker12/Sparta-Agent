@@ -299,6 +299,7 @@ from routes.profile_stats import router as profile_stats_router
 from routes.memory import router as memory_router
 from routes.tasks import router as tasks_router
 from routes.channels import router as channels_router
+from routes.voice import router as voice_router
 from routes.work_runs import router as work_runs_router
 from auth import storage
 from auth.authentication import get_current_subject
@@ -404,6 +405,8 @@ def _start_post_warm_thread() -> bool:
     then read the shutdown and exited. Generations make the overlap safe -- the stale
     worker drops out by itself and a parked thread is free.
     """
+    if os.environ.get("UNSLOTH_API_ONLY") == "1":
+        return False
     global _post_warm_thread, _post_warm_generation
     with _post_warm_lock:
         _post_warm_generation += 1
@@ -1269,6 +1272,7 @@ app.include_router(prompts_router, prefix = "/api/prompts", tags = ["prompts"])
 app.include_router(memory_router, prefix = "/api/memory", tags = ["memory"])
 app.include_router(tasks_router, prefix = "/api/tasks", tags = ["tasks"])
 app.include_router(channels_router, prefix = "/api/channels", tags = ["channels"])
+app.include_router(voice_router, prefix = "/api/voice", tags = ["voice"])
 app.include_router(work_runs_router, prefix = "/api/work-runs", tags = ["work-runs"])
 app.include_router(profile_stats_router, prefix = "/api/profile", tags = ["profile"])
 app.include_router(picker_templates_router, prefix = "/api/picker", tags = ["picker"])
@@ -1302,6 +1306,8 @@ async def _await_hardware_detection(budget: float) -> bool:
     would import torch on every such host and the switch would buy nothing. The provisional
     answer ships instead and the first hardware-dependent operation detects.
     """
+    if os.environ.get("UNSLOTH_API_ONLY") == "1":
+        return False
     if os.environ.get(DISABLE_ENV_VAR) == "1":
         return _hw_module.DETECTION_COMPLETE.is_set() and _hw_module.DEVICE is not None
     # The event AND DEVICE: branches assign DEVICE and keep probing, and shutdown clears
@@ -1331,6 +1337,10 @@ def _hardware_snapshot() -> Optional[tuple[bool, Optional[str], Optional[str]]]:
     `device_type` as authoritative, and the sidebar's recovery poll runs only while it reads
     `chat_only_reason == "mlx_unavailable"`, so one such reply hides Train for the session.
     """
+    # API-only is a product capability, independent of installed GPU packages.
+    from os import environ
+    if environ.get("UNSLOTH_API_ONLY") == "1":
+        return (True, None, None)
     for _ in range(3):
         if not _hw_module.DETECTION_COMPLETE.is_set():
             return None

@@ -124,6 +124,6 @@ export { TransportConflictDialog } from "./catalog/transport-conflict-dialog";
 export { TrainIcon } from "./components/train-icon";
 export { isHiddenModelId } from "./lib/hidden-models";
 export {
-  classifyUnslothSupport,
+  classifyModelSupport,
   studioPageForTask,
-} from "./lib/unsloth-support";
+} from "./lib/model-support";

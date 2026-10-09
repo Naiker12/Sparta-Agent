@@ -154,39 +154,9 @@ test("the chat drop handler defers to a registered target", async () => {
   );
 });
 
-test("the shared image picker owns native drops and ignores stale reads", async () => {
-  const source = await readFile(
-    new URL("../src/components/image-dropzone.tsx", import.meta.url),
-    "utf8",
-  );
-  assert.match(source, /const nativeDropRef = useNativeDropTarget\(\{/);
-  assert.match(source, /ref=\{nativeDropRef\}/);
-  assert.match(source, /registerNativeAttachmentPath\(path\)/);
-  assert.match(source, /readNativeAttachmentFile\(intent\.path\.token\)/);
-  // A read outliving the picker would land on whoever holds `onChange` now, and
-  // the native policy takes fewer formats than the picker's own image/*.
-  assert.match(source, /if \(!mounted\.current \|\| claimed !== selection\.current\)\s*\{\s*return;\s*\}/);
-  assert.match(source, /NATIVE_IMAGE_EXTS\.includes\(/);
-  // Index-keyed reference slots keep the picker mounted when one is removed.
-  assert.match(source, /if \(seen\.current === value\)\s*\{\s*return;\s*\}\s*seen\.current = value;\s*selection\.current \+= 1;/);
-});
-
 // This checks the frontend contract; native-side enforcement is a separate integration test.
-test("the picker's droppable formats match the current chat drop contract", async () => {
-  const picker = await readFile(
-    new URL("../src/components/image-dropzone.tsx", import.meta.url),
-    "utf8",
-  );
+test("the chat image drop contract accepts its listed formats", async () => {
   const { CHAT_IMAGE_DROP_ACCEPT, classifyDropPaths } = await import("../src/features/native-intents/drop-paths.ts");
-  const listed = (source: string, pattern: RegExp) =>
-    [...(source.match(pattern)?.[1].matchAll(/"([a-z0-9]+)"/g) ?? [])]
-      .map((match) => match[1])
-      .sort();
-
-  assert.deepEqual(
-    listed(picker, /NATIVE_IMAGE_EXTS\s*=\s*\[([^\]]+)\]/),
-    CHAT_IMAGE_DROP_ACCEPT.split(",").map((extension) => extension.slice(1)).sort(),
-  );
   for (const extension of CHAT_IMAGE_DROP_ACCEPT.split(",")) {
     assert.equal(classifyDropPaths([`C:/images/photo${extension}`]).kind, "images");
   }

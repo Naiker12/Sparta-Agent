@@ -6,6 +6,7 @@ export const tabs = {
   chat: "Chat",
   voice: "Voice",
   connections: "Connections",
+  channelsPermissions: "Channels and permissions",
   data: "Data",
   apiKeys: "API",
   agents: "Agents",

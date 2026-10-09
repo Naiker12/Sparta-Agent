@@ -1,6 +1,6 @@
 import { useT as useUiT } from "@/i18n";
 /**
- * Sparta Agent – Compare Views
+ * Spartan – Compare Views
  *
  * Módulo que agrupa la infraestructura visual y de orquestación
  * del modo de comparación de modelos (General y LoRA compare).

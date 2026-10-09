@@ -1,5 +1,5 @@
 /**
- * Sparta Agent - Slice de Razonamiento (Thinking Mode y Reasoning Effort)
+ * Spartan - Slice de Razonamiento (Thinking Mode y Reasoning Effort)
  * Controla flags de razonamiento para modelos locales y proveedores externos.
  */
 

@@ -19,7 +19,7 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ["@dagrejs/dagre", "@dagrejs/graphlib"],
+    include: ["@dagrejs/dagre", "@dagrejs/graphlib", "docx-preview"],
   },
   server: {
     host: "0.0.0.0",

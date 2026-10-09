@@ -43,7 +43,7 @@ import {
   useHubModelSearch,
 } from "@/features/hub";
 import {
-  classifyUnslothSupport,
+  classifyModelSupport,
   downloadManager,
   hfApiToken,
   isHiddenModelId,
@@ -1185,7 +1185,7 @@ export function HubModelPicker({
         );
       }
       return (
-        classifyUnslothSupport({
+        classifyModelSupport({
           modelId: r.id,
           pipelineTag: r.pipelineTag,
           tags: r.tags,
