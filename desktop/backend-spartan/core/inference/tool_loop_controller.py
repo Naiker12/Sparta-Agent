@@ -254,6 +254,8 @@ def status_for_tool(tool_name: str, arguments: Mapping[str, Any]) -> str:
                 return f"Reading: {host}"
             return "Reading page..."
         return f"Searching: {arguments.get('query', '')}"
+    if tool_name == "generate_document":
+        return f"Creating document: {arguments.get('filename', '')}"
     if tool_name == "python":
         preview = str(arguments.get("code") or "").strip().split("\n")[0][:60]
         return f"Running Python: {preview}" if preview else "Running Python..."
@@ -353,7 +355,7 @@ def _is_file_entry(entry: object) -> bool:
 # Only these emit the file envelope, and only their output is defused first. An
 # MCP tool or a fetched page ending in a well-formed __FILES__ line is content,
 # not an envelope, and stripping it would take that line away from the model.
-_SANDBOX_TOOLS = frozenset({"python", "terminal"})
+_SANDBOX_TOOLS = frozenset({"python", "terminal", "generate_document"})
 
 
 def strip_result_for_model(result: str, tool_name: "str | None" = None) -> str:

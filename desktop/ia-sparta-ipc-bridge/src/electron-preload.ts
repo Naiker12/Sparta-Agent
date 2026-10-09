@@ -368,6 +368,9 @@ contextBridge.exposeInMainWorld("agent", {
 });
 
 contextBridge.exposeInMainWorld("fs", {
+  getGitReview: (id: string, mode: string) => ipcRenderer.invoke("fs:getGitReview", id, mode),
+  getGitReviewDiff: (id: string, filename: string, mode: string) => ipcRenderer.invoke("fs:getGitReviewDiff", id, filename, mode),
+  getGithubPullRequests: (id: string) => ipcRenderer.invoke("fs:getGithubPullRequests", id),
   getGitStatus: (projectId: string) => ipcRenderer.invoke("fs:getGitStatus", projectId) as Promise<{ success: boolean; error?: string; isRepository?: boolean; branch?: string; upstream?: string; ahead?: number; behind?: number; changed?: number; added?: number; modified?: number; deleted?: number; untracked?: number; insertions?: number; deletions?: number }>,
   getGitChanges: (projectId: string) => ipcRenderer.invoke("fs:getGitChanges", projectId) as Promise<{ success: boolean; error?: string; isRepository?: boolean; changes: Array<{ path: string; status: string }>; conflicts?: string[] }>,
   getGitDiff: (projectId: string, path: string) => ipcRenderer.invoke("fs:getGitDiff", projectId, path) as Promise<{ success: boolean; error?: string; diff?: string }>,

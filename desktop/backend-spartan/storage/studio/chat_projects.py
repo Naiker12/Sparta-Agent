@@ -42,6 +42,19 @@ def _chat_project_from_row(row: sqlite3.Row) -> dict:
 
 
 
+class DuplicateProjectFolderError(ValueError):
+    """One canonical local folder belongs to at most one project."""
+
+
+def _assert_unique_folder(conn, project_id, folder):
+    if not folder:
+        return
+    canonical = os.path.normcase(os.path.realpath(folder))
+    for row in conn.execute("SELECT id, connected_folder_path FROM chat_projects WHERE id != ? AND connected_folder_path IS NOT NULL", (project_id,)):
+        if os.path.normcase(os.path.realpath(row["connected_folder_path"])) == canonical:
+            raise DuplicateProjectFolderError("This folder is already connected to another project.")
+
+
 def upsert_chat_project(project: dict) -> dict:
     existing = get_chat_project(project["id"])
     root_path = existing.get("rootPath") if existing else None
@@ -58,6 +71,8 @@ def upsert_chat_project(project: dict) -> dict:
     root_path = _ensure_project_workspace(root_path)
     conn = get_connection()
     try:
+        conn.execute("BEGIN IMMEDIATE")
+        _assert_unique_folder(conn, project["id"], connected_folder_path)
         conn.execute(
             """
             INSERT INTO chat_projects
@@ -112,6 +127,9 @@ def update_chat_project(id: str, patch: dict) -> Optional[dict]:
 
     conn = get_connection()
     try:
+        conn.execute("BEGIN IMMEDIATE")
+        if "connectedFolderPath" in patch:
+            _assert_unique_folder(conn, id, patch["connectedFolderPath"])
         conn.execute(
             f"UPDATE chat_projects SET {', '.join(assignments)} WHERE id = ?",
             (*values, id),

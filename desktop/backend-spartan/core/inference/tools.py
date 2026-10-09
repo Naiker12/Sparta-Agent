@@ -10249,7 +10249,10 @@ TOGGLE_SKILL_TOOL = {
     },
 }
 
+from core.documents.generation import GENERATE_DOCUMENT_TOOL
+
 ALL_TOOLS = [
+    GENERATE_DOCUMENT_TOOL,
     WEB_SEARCH_TOOL,
     PYTHON_TOOL,
     TERMINAL_TOOL,
@@ -10606,6 +10609,10 @@ def execute_tool(
         )
     # Both run with the session's sandbox as cwd, so a chat deleted mid-call
     # must not unlink it from under them.
+    if name == "generate_document":
+        from core.documents.generation import generate_document
+        with _session_in_flight(session_id):
+            return generate_document(arguments, get_sandbox_workdir(session_id), cancel_event)
     if name == "python":
         with _session_in_flight(session_id):
             return _python_exec(

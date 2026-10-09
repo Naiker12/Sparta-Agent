@@ -23,6 +23,7 @@ import { CodeExecutionToolUI } from "@/components/assistant-ui/tool-ui-code-exec
 import { EditFileToolUI } from "@/components/assistant-ui/tool-ui-edit-file";
 import { ImageGenerationToolUI } from "@/components/assistant-ui/tool-ui-image-generation";
 import { KnowledgeBaseToolUI } from "@/components/assistant-ui/tool-ui-knowledge-base";
+import { DocumentToolUI } from "@/components/assistant-ui/tool-ui-document";
 import { PythonToolUI } from "@/components/assistant-ui/tool-ui-python";
 import { RenderHtmlToolUI } from "@/components/assistant-ui/tool-ui-render-html";
 import { TerminalToolUI } from "@/components/assistant-ui/tool-ui-terminal";
@@ -282,6 +283,7 @@ export const ASSISTANT_PART_COMPONENTS = {
     by_name: {
       web_search: WebSearchToolUIConfirmable,
       search_knowledge_base: KnowledgeBaseToolUIConfirmable,
+      generate_document: withToolConfirmation(DocumentToolUI),
       python: PythonToolUIConfirmable,
       terminal: TerminalToolUIConfirmable,
       edit_file: EditFileToolUIConfirmable,

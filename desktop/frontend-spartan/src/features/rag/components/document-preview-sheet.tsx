@@ -45,6 +45,7 @@ import { cn } from "@/lib/utils";
 import { getDocumentFileUrl, getPreviewTarget } from "../api/rag-api";
 import type { PreviewTarget } from "../types/rag";
 import { type LocalPreview, useDocumentPreviewStore } from "./preview-store";
+const GitReviewPanel = lazy(() => import("@/components/workspace-rail/git-review-panel").then(m => ({ default: m.GitReviewPanel })));
 
 function LocalTextPreview({
   blob,
@@ -403,6 +404,7 @@ export function DocumentPreviewSheet() {
     filename,
     page,
     localPreview,
+    repositoryPreview,
     closePreview,
     tabs,
     activeTabId,
@@ -670,7 +672,7 @@ export function DocumentPreviewSheet() {
           </div>
           <SheetCloseButton className="static shrink-0" />
         </SheetHeader>
-        <PreviewWorkspace />
+        {!repositoryPreview && <PreviewWorkspace />}
 
         <div id="document-preview-content" role="tabpanel" aria-labelledby={activeTabId ? `preview-tab-${activeTabId}` : undefined} className="min-h-0 flex-1">
           <Suspense
@@ -680,7 +682,9 @@ export function DocumentPreviewSheet() {
               </p>
             }
           >
-            {loading ? (
+            {repositoryPreview ? (
+              <GitReviewPanel key={activeTabId} preview={repositoryPreview} />
+            ) : loading ? (
               <div className="flex items-center gap-2 p-6 text-sm text-muted-foreground">
                 <Spinner className="size-3.5" />{" "}
                 {t("chat.preview.resolvingSource")}

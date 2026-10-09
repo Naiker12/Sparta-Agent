@@ -62,6 +62,7 @@ import {
   customProviderModelIdsPlaceholder,
   getExternalProviderApiKey,
   isCustomProviderType,
+  localProviderDefaultBaseUrl,
   providerModelSupportsStudioTools,
   removeExternalProviderApiKey,
   supportsProviderMaxOutputTokens,
@@ -398,11 +399,15 @@ export function ChatProvidersSettings({
     seededProviderTypeRef.current = providerType;
     setMaxOutputTokensDraft("");
     setEditingBackendProviderType(null);
+    setAvailableModels([]);
+    setSelectedModelIds([]);
+    setManualModelIds("");
+    setModelSearchQuery("");
     const entry = registryByType.get(providerType);
     if (!entry) {
       if (isCustomProviderType(providerType)) {
         setCustomProviderName(customProviderDisplayName(providerType));
-        setBaseUrlDraft("");
+        setBaseUrlDraft(localProviderDefaultBaseUrl(providerType));
       }
       return;
     }
@@ -411,10 +416,7 @@ export function ChatProvidersSettings({
     // empty until the user clicks "Load available models".
     const seedDefaults = entry.model_list_mode === "curated";
     setAvailableModels(seedDefaults ? [...entry.default_models] : []);
-    setSelectedModelIds([]);
-    setManualModelIds("");
-    setModelSearchQuery("");
-    setBaseUrlDraft("");
+    setBaseUrlDraft(localProviderDefaultBaseUrl(providerType));
   }, [providerType, editingProviderId, registryByType]);
 
   const totalModels = useMemo(
@@ -520,7 +522,7 @@ export function ChatProvidersSettings({
 
     setClearApiKeyRequested(false);
     setShowApiKey(false);
-    setBaseUrlDraft("");
+    setBaseUrlDraft(localProviderDefaultBaseUrl(providerType));
     setMaxOutputTokensDraft("");
     setEditingBackendProviderType(null);
     setAvailableModels([]);
@@ -694,7 +696,9 @@ export function ChatProvidersSettings({
         toast.info(hint.title, { description: hint.description });
       } else {
         toast.success(
-          `Found ${modelIds.length} ${modelIds.length === 1 ? "model" : "models"}.`,
+          t(modelIds.length === 1
+            ? "chat.providersDialog.modelFound"
+            : "chat.providersDialog.modelsFound", { count: modelIds.length }),
         );
       }
       if (editingProviderId) {
@@ -712,7 +716,7 @@ export function ChatProvidersSettings({
         error instanceof Error
           ? error.message
           : t("chat.providersDialog.unknownError");
-      toast.error(`Could not load models: ${message}`);
+      toast.error(t("chat.providersDialog.modelsLoadFailed", { message }));
     } finally {
       setModelsLoading(false);
     }
@@ -881,27 +885,11 @@ export function ChatProvidersSettings({
         ? [...new Set([...selectedModelIds, ...manualIds])]
         : [...selectedModelIds],
     );
-    if (manualOnly) {
-      if (modelsToSave.length === 0) {
-        toast.error(t("chat.providersDialog.addAtLeastOneModel"));
-        return;
-      }
-    } else if (remoteAllowsManual) {
-      if (modelsToSave.length === 0) {
-        toast.error(t("chat.providersDialog.addAtLeastOneModel"));
-        return;
-      }
-    } else {
-      if (availableModels.length === 0) {
-        toast.error(
-          uiTranslate("chat.providersDialog.loadModelsFirst"),
-        );
-        return;
-      }
-      if (selectedModelIds.length === 0) {
-        toast.error(t("chat.providersDialog.selectAtLeastOneModel"));
-        return;
-      }
+    // API connections can be saved before discovering or enabling any models.
+    // ChatGPT subscriptions keep the curated model contract required by the backend.
+    if (backendProviderType === "openai_codex" && modelsToSave.length === 0) {
+      toast.error(t("chat.providersDialog.selectAtLeastOneModel"));
+      return;
     }
     setMutatingProvider(true);
     try {
@@ -1024,27 +1012,11 @@ export function ChatProvidersSettings({
         ? [...new Set([...selectedModelIds, ...manualIds])]
         : [...selectedModelIds],
     );
-    if (manualOnly) {
-      if (modelsToSave.length === 0) {
-        toast.error(t("chat.providersDialog.addAtLeastOneModel"));
-        return;
-      }
-    } else if (remoteAllowsManual) {
-      if (modelsToSave.length === 0) {
-        toast.error(t("chat.providersDialog.addAtLeastOneModel"));
-        return;
-      }
-    } else {
-      if (availableModels.length === 0) {
-        toast.error(
-          uiTranslate("chat.providersDialog.loadModelsFirst"),
-        );
-        return;
-      }
-      if (selectedModelIds.length === 0) {
-        toast.error(t("chat.providersDialog.selectAtLeastOneModel"));
-        return;
-      }
+    // API connections can be saved before discovering or enabling any models.
+    // ChatGPT subscriptions keep the curated model contract required by the backend.
+    if (isEditingOAuthProvider && modelsToSave.length === 0) {
+      toast.error(t("chat.providersDialog.selectAtLeastOneModel"));
+      return;
     }
     setMutatingProvider(true);
     try {

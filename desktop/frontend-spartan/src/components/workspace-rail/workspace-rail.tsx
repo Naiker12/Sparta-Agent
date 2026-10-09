@@ -8,6 +8,7 @@ import { useDocumentPreviewStore } from "@/features/rag/components/preview-store
 import { cn } from "@/lib/utils";
 import { BotIcon, FolderIcon, GitBranchIcon, GlobeIcon } from "lucide-react";
 import type React from "react";
+import type { GitReviewScope } from "@/features/chat/api/modules/workspace-git-api";
 
 // GitHub icon SVG component for crisp rendering
 function GitHubLogoIcon({ className }: { className?: string }) {
@@ -37,7 +38,9 @@ interface RailTabItem {
   enabled: boolean;
 }
 
-export function WorkspaceRail() {
+export function WorkspaceRail({
+  reviewScope,
+}: { reviewScope?: GitReviewScope | null }) {
   const uiT = useUiT();
 
   const activeTab = useWorkspaceStore((state) => state.activeTab);
@@ -49,13 +52,17 @@ export function WorkspaceRail() {
   const tabs: RailTabItem[] = [
     {
       id: "files",
-      get label() { return uiTranslate("ui.file_explorer"); },
+      get label() {
+        return uiTranslate("ui.file_explorer");
+      },
       icon: FolderIcon,
       enabled: true,
     },
     {
       id: "changes",
-      get label() { return uiTranslate("ui.file_changes"); },
+      get label() {
+        return uiTranslate("ui.file_changes");
+      },
       icon: GitBranchIcon,
       enabled: capabilities.hasGit,
     },
@@ -67,19 +74,35 @@ export function WorkspaceRail() {
     },
     {
       id: "agents",
-      get label() { return uiTranslate("ui.subagents"); },
+      get label() {
+        return uiTranslate("ui.subagents");
+      },
       icon: BotIcon,
       enabled: capabilities.hasAgents,
     },
     {
       id: "browser",
-      get label() { return uiTranslate("ui.web_preview"); },
+      get label() {
+        return uiTranslate("ui.web_preview");
+      },
       icon: GlobeIcon,
       enabled: capabilities.hasBrowser,
     },
   ];
 
   const handleTabClick = (tabId: WorkspaceTab) => {
+    if ((tabId === "changes" || tabId === "github") && reviewScope) {
+      setOpen(false);
+      useDocumentPreviewStore
+        .getState()
+        .openRepositoryPreview(
+          { scope: reviewScope, kind: tabId },
+          uiT(
+            `chat.repository.${tabId === "changes" ? "changes" : "pullRequests"}`,
+          ),
+        );
+      return;
+    }
     if (activeTab === tabId && isOpen) {
       // Clicking the already active tab toggles panel collapse
       setOpen(false);

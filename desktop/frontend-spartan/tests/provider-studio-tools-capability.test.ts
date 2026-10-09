@@ -60,3 +60,16 @@ test("a known provider answers even before a model is chosen", () => {
   // there would grey the pills out until the user picked a model.
   assert.equal(providerModelSupportsStudioTools("ollama", null), true);
 });
+
+
+test("local UI presets inherit the custom backend capability for small models", () => {
+  setProviderModelCapabilities("custom", { [PROVIDER_CAPABILITY_WILDCARD]: { studio_tools: true } });
+  for (const provider of ["local_lmstudio", "local_ollama", "local_llamacpp", "local_vllm"]) {
+    assert.equal(providerModelSupportsStudioTools(provider, "qwen3.5-4b"), true);
+  }
+});
+
+test("an explicit unsupported local model still overrides the fallback", () => {
+  setProviderModelCapabilities("custom", { [PROVIDER_CAPABILITY_WILDCARD]: { studio_tools: true }, "unsupported-model": { studio_tools: false } });
+  assert.equal(providerModelSupportsStudioTools("local_lmstudio", "unsupported-model"), false);
+});

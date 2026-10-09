@@ -1,4 +1,7 @@
 import { create } from "zustand";
+import type { GitReviewScope } from "@/features/chat/api/modules/workspace-git-api";
+
+export interface RepositoryPreview { scope: GitReviewScope; kind: "changes" | "github" }
 
 export type LocalPreviewKind =
   | "image"
@@ -35,6 +38,8 @@ interface DocumentPreviewState {
   filename: string | null;
   page: number | null;
   localPreview: LocalPreview | null;
+  repositoryPreview: RepositoryPreview | null;
+  openRepositoryPreview: (preview: RepositoryPreview, title: string) => void;
   tabs: PreviewTab[];
   activeTabId: string | null;
   selectTab: (id: string) => void;
@@ -57,6 +62,7 @@ export interface PreviewTab {
   filename: string | null;
   page: number | null;
   localPreview: LocalPreview | null;
+  repositoryPreview?: RepositoryPreview;
 }
 
 function selectedTab(tab?: PreviewTab) {
@@ -65,6 +71,7 @@ function selectedTab(tab?: PreviewTab) {
     documentId: tab?.documentId ?? null, chunkId: tab?.chunkId ?? null,
     filename: tab?.filename ?? null, page: tab?.page ?? null,
     localPreview: tab?.localPreview ?? null,
+    repositoryPreview: tab?.repositoryPreview ?? null,
   };
 }
 
@@ -76,8 +83,17 @@ export const useDocumentPreviewStore = create<DocumentPreviewState>((set) => ({
   filename: null,
   page: null,
   localPreview: null,
+  repositoryPreview: null,
   tabs: [],
   activeTabId: null,
+  openRepositoryPreview: (repositoryPreview, title) => set((state) => {
+    const tab: PreviewTab = {
+      id: `repository:${repositoryPreview.scope.id}:${repositoryPreview.kind}`,
+      documentId: null, chunkId: null, filename: title, page: null, localPreview: null, repositoryPreview,
+    };
+    const exists = state.tabs.some(item => item.id === tab.id);
+    return { ...selectedTab(tab), revision: state.revision + 1, tabs: exists ? state.tabs.map(item => item.id === tab.id ? tab : item) : [...state.tabs, tab] };
+  }),
   selectTab: (id) => set((state) => {
     const tab = state.tabs.find((item) => item.id === id);
     return tab ? { ...selectedTab(tab), revision: state.revision + 1 } : state;
@@ -124,6 +140,7 @@ export const useDocumentPreviewStore = create<DocumentPreviewState>((set) => ({
       filename: null,
       page: null,
       localPreview: null,
+      repositoryPreview: null,
       tabs: [],
       activeTabId: null,
     }),

@@ -6,6 +6,27 @@ const preview = (attachmentId: string, filename = "report.docx") => ({
   attachmentId, filename, kind: "word" as const, blob: new Blob([attachmentId]),
 });
 
+test("repository reviews share document tabs and restore the selected document", () => {
+  store.getState().closePreview();
+  store.getState().openLocalPreview(preview("document"));
+  const documentTab = store.getState().activeTabId!;
+  const review = { scope: { id: "repo", root: "C:/repo", access: "read" as const, binding: true }, kind: "changes" as const };
+  store.getState().openRepositoryPreview(review, "Changes");
+  const reviewTab = store.getState().activeTabId!;
+  assert.equal(store.getState().tabs.length, 2);
+  assert.equal(store.getState().localPreview, null);
+  store.getState().selectTab(documentTab);
+  assert.equal(store.getState().repositoryPreview, null);
+  assert.equal(store.getState().localPreview?.attachmentId, "document");
+  store.getState().openRepositoryPreview(review, "Changes");
+  assert.equal(store.getState().activeTabId, reviewTab);
+  assert.equal(store.getState().tabs.length, 2);
+  store.getState().closeTab(reviewTab);
+  assert.equal(store.getState().activeTabId, documentTab);
+  store.getState().closePreview();
+  assert.equal(store.getState().repositoryPreview, null);
+});
+
 test("different attachments with identical filenames have independent tabs", () => {
   store.getState().closePreview();
   store.getState().openLocalPreview(preview("a"));

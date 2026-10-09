@@ -15,6 +15,15 @@ for _up in _iso.parents:
         _mod = _ilu.module_from_spec(_spec)
         _spec.loader.exec_module(_mod)  # sets the env vars on import
         break
+else:
+    # Standalone checkouts do not include the legacy shared test helper.
+    # Set this before importing Unsloth so generated modules stay out of source.
+    import os as _cache_os
+    import tempfile as _cache_tempfile
+
+    if not _cache_os.environ.get("UNSLOTH_COMPILE_LOCATION"):
+        _compile_cache_root = _cache_tempfile.TemporaryDirectory(prefix="sparta-test-compile-")
+        _cache_os.environ["UNSLOTH_COMPILE_LOCATION"] = _compile_cache_root.name
 # -----------------------------------------------------------------------------------
 
 import contextlib

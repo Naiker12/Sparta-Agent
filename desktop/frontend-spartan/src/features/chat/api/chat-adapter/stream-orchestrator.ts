@@ -913,6 +913,7 @@ export function createOpenAIStreamAdapter(
       const geminiImageModeForThisTurn =
         externalProvider?.providerType === "gemini" &&
         imageGenerationEnabledForThisTurn;
+      const documentGenerationEnabledForThisTurn = supportsStudioToolsForThisTurn && !geminiImageModeForThisTurn;
       const webSearchEnabledForThisTurn = Boolean(
         externalProvider &&
           externalSelection &&
@@ -1935,7 +1936,8 @@ export function createOpenAIStreamAdapter(
               // attach permission_mode to a passthrough turn, which the route
               // answers with a 400.
               ...(supportsStudioToolsForThisTurn &&
-              (toolsEnabled ||
+              (documentGenerationEnabledForThisTurn ||
+                toolsEnabled ||
                 studioLocalCodeTools.length > 0 ||
                 mcpEnabledForChat ||
                 ragEnabled ||
@@ -1947,6 +1949,7 @@ export function createOpenAIStreamAdapter(
                       ...(ragEnabled || projectRagEnabled
                         ? ["search_knowledge_base"]
                         : []),
+                      ...(documentGenerationEnabledForThisTurn ? ["generate_document"] : []),
                       ...(toolsEnabled ? ["web_search"] : []),
                       ...studioLocalCodeTools,
                       ...(workspaceEnabled ? WORKSPACE_TOOL_NAMES : []),
@@ -2177,7 +2180,8 @@ export function createOpenAIStreamAdapter(
               : { confirm_tool_calls: permissionMode === "ask" }),
             bypass_permissions: bypassPermissions,
             ...(supportsTools &&
-            (toolsEnabled ||
+            (documentGenerationEnabledForThisTurn ||
+              toolsEnabled ||
               codeToolsEnabled ||
               renderHtmlToolEnabledForThisTurn ||
               mcpEnabledForChat ||
@@ -2191,6 +2195,7 @@ export function createOpenAIStreamAdapter(
                     ...(ragEnabled || projectRagEnabled
                       ? ["search_knowledge_base"]
                       : []),
+                    ...(documentGenerationEnabledForThisTurn ? ["generate_document"] : []),
                     ...(toolsEnabled ? ["web_search"] : []),
                     ...(codeToolsEnabled
                       ? ["python", "terminal", "edit_file"]

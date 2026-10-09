@@ -1,7 +1,12 @@
-import { useT as useUiT } from "@/i18n";
 import type { WorkspaceChangedFile } from "@/features/chat/stores/use-workspace-store";
 import { cn } from "@/lib/utils";
-import { FolderIcon } from "lucide-react";
+import { FileCodeIcon } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { useT } from "@/i18n";
+import { useTheme } from "@/features/settings";
+import { fileLanguage } from "./file-source";
+import type { BundledLanguage } from "shiki";
 
 interface DiffLine {
   type: "context" | "addition" | "deletion";
@@ -60,26 +65,80 @@ function getDiffChunksForFile(file: WorkspaceChangedFile): DiffChunk[] {
 }
 
 export function DiffViewer({ file }: { file: WorkspaceChangedFile }) {
-  const uiT = useUiT();
+  const t = useT();
+  const { resolved } = useTheme();
+  const [split, setSplit] = useState(false);
+  const [tokens, setTokens] = useState<
+    Array<Array<{ content: string; color?: string }>>
+  >([]);
 
-  const chunks = getDiffChunksForFile(file);
+  const chunks = useMemo(() => getDiffChunksForFile(file), [file.diff]);
+  const source = useMemo(
+    () =>
+      chunks
+        .flatMap((chunk) => chunk.lines)
+        .map((line) => line.content.slice(1))
+        .join("\n"),
+    [chunks],
+  );
+  useEffect(() => {
+    let cancelled = false;
+    setTokens([]);
+    if (!source || source.length > 200_000) return;
+    void Promise.all([
+      import("shiki"),
+      import("@/components/assistant-ui/code-themes"),
+    ])
+      .then(async ([shiki, themes]) => {
+        const result = await shiki.codeToTokens(source, {
+          lang: fileLanguage(file.path) as BundledLanguage,
+          theme:
+            resolved === "dark"
+              ? themes.spartanDarkTheme
+              : themes.spartanLightTheme,
+        });
+        if (!cancelled) setTokens(result.tokens);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [source, file.path, resolved]);
+  function code(index: number, content: string) {
+    return (
+      tokens[index]?.map((token, key) => (
+        <span key={key} style={{ color: token.color }}>
+          {token.content}
+        </span>
+      )) ?? content.slice(1)
+    );
+  }
+  let sourceLineIndex = 0;
 
   if (chunks.length === 0) {
     return (
-      <p className="rounded-xl border border-border/60 p-4 text-xs text-muted-foreground">
-        {uiT("ui.no_text_differences_available_for_this_file")}</p>
+      <p className="px-4 py-3 text-xs text-muted-foreground">
+        {t("ui.no_text_differences_available_for_this_file")}
+      </p>
     );
   }
 
   return (
-    <div className="flex flex-col rounded-xl border border-border/60 bg-card overflow-hidden shadow-xs">
-      {/* File Diff Card Header */}
-      <div className="flex items-center justify-between px-3.5 py-2.5 bg-muted/40 border-b border-border/40 text-xs font-mono">
+    <div className="flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-border/40 text-xs font-mono">
         <div className="flex items-center gap-2 min-w-0 truncate text-foreground/90">
-          <FolderIcon className="w-4 h-4 text-blue-500 shrink-0" />
+          <FileCodeIcon className="size-4 shrink-0 text-muted-foreground" />
           <span className="truncate font-medium">{file.path}</span>
         </div>
         <div className="flex items-center gap-2 shrink-0 font-medium text-[11px]">
+          <Button
+            size="sm"
+            variant="ghost"
+            aria-pressed={split}
+            onClick={() => setSplit((value) => !value)}
+          >
+            {t(split ? "chat.repository.unified" : "chat.repository.split")}
+          </Button>
           <span className="text-emerald-600 dark:text-emerald-400">
             +{file.additions}
           </span>
@@ -89,7 +148,6 @@ export function DiffViewer({ file }: { file: WorkspaceChangedFile }) {
         </div>
       </div>
 
-      {/* Chunks */}
       <div className="overflow-x-auto text-[12px] font-mono leading-relaxed select-text">
         {chunks.map((chunk, chunkIdx) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: diff chunks have no ids
@@ -101,6 +159,36 @@ export function DiffViewer({ file }: { file: WorkspaceChangedFile }) {
               {chunk.lines.map((line, lineIdx) => {
                 const isAdd = line.type === "addition";
                 const isDel = line.type === "deletion";
+                const highlighted = code(sourceLineIndex++, line.content);
+                if (split)
+                  return (
+                    <div
+                      key={lineIdx}
+                      className="grid min-w-[700px] grid-cols-2 font-mono"
+                    >
+                      <div
+                        className={cn(
+                          "flex border-r border-border/40",
+                          isDel && "bg-red-500/15",
+                        )}
+                      >
+                        <span className="w-12 shrink-0 px-2 text-right text-muted-foreground select-none">
+                          {line.oldLineNumber}
+                        </span>
+                        <span className="whitespace-pre px-2">
+                          {!isAdd && highlighted}
+                        </span>
+                      </div>
+                      <div className={cn("flex", isAdd && "bg-green-500/15")}>
+                        <span className="w-12 shrink-0 px-2 text-right text-muted-foreground select-none">
+                          {line.newLineNumber}
+                        </span>
+                        <span className="whitespace-pre px-2">
+                          {!isDel && highlighted}
+                        </span>
+                      </div>
+                    </div>
+                  );
 
                 return (
                   // biome-ignore lint/suspicious/noArrayIndexKey: diff lines have no ids
@@ -115,17 +203,17 @@ export function DiffViewer({ file }: { file: WorkspaceChangedFile }) {
                       !(isAdd || isDel) && "text-foreground/80",
                     )}
                   >
-                    {/* Old line number */}
                     <div className="w-8 shrink-0 px-1 text-right text-muted-foreground/50 select-none border-r border-border/20">
                       {line.oldLineNumber ?? ""}
                     </div>
-                    {/* New line number */}
                     <div className="w-8 shrink-0 px-1 text-right text-muted-foreground/50 select-none border-r border-border/20">
                       {line.newLineNumber ?? ""}
                     </div>
-                    {/* Code line content */}
                     <div className="px-2.5 py-0.5 whitespace-pre flex-1 font-mono">
-                      {line.content}
+                      <span className="mr-2 select-none">
+                        {isAdd ? "+" : isDel ? "−" : " "}
+                      </span>
+                      {highlighted}
                     </div>
                   </div>
                 );

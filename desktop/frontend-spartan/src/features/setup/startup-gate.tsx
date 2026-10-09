@@ -137,8 +137,8 @@ export function StartupGate({ children }: { children: ReactNode }) {
         <section className="relative w-full max-w-lg px-6 py-10 text-center sm:px-10">
           <img
             alt={uiT("ui.sparta_agent_logo")}
-            className="mx-auto size-28 object-contain"
-            src={`${import.meta.env.BASE_URL}favicon.svg`}
+            className="mx-auto size-28 object-contain brightness-0 dark:invert"
+            src={`${import.meta.env.BASE_URL}spartan-logo.svg`}
           />
           <p className="mt-7 text-sm font-semibold tracking-wide text-primary">
             SPARTA AGENT
@@ -224,11 +224,13 @@ export function StartupGate({ children }: { children: ReactNode }) {
     <main className="fixed inset-0 grid place-items-center overflow-auto bg-muted/40 p-6 text-foreground">
       <section className="w-full max-w-2xl rounded-3xl border bg-card p-7 shadow-2xl sm:p-10">
         <div className="flex items-center gap-4">
-          <img
-            alt={uiT("ui.sparta_agent_logo")}
-            className="size-14 rounded-2xl border bg-background p-2 object-contain"
-            src={`${import.meta.env.BASE_URL}favicon.svg`}
-          />
+          <div className="size-14 shrink-0 rounded-2xl border bg-background p-2">
+            <img
+              alt={uiT("ui.sparta_agent_logo")}
+              className="size-full object-contain brightness-0 dark:invert"
+              src={`${import.meta.env.BASE_URL}spartan-logo.svg`}
+            />
+          </div>
           <div>
             <p className="text-sm font-semibold text-primary">
               {uiT("ui.initial_setup")}

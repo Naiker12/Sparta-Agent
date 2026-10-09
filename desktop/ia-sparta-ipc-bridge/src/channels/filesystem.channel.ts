@@ -5,6 +5,7 @@ import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { readWorkspacePreview } from "../lib/read-workspace-preview";
+import { readGitReview, readGitReviewDiff, readGithubPullRequests, type ReviewMode } from "../lib/workspace-git-review";
 import {
   startFileWatcher,
   stopFileWatcher,
@@ -231,6 +232,27 @@ function setWorkspaceBinding(
 }
 
 export function registerFilesystemIPC() {
+  ipcMain.handle("fs:getGitReview", async (_event, id: string, mode: ReviewMode = "working") => {
+    const workspace = workspaceRoots.get(id);
+    if (!workspace) return { success: false, error: "No workspace folder is connected" };
+    try { return { success: true, ...(await readGitReview(workspace.root, mode)) }; }
+    catch (error) { return { success: false, error: error instanceof Error ? error.message : String(error) }; }
+  });
+  ipcMain.handle("fs:getGitReviewDiff", async (_event, id: string, filename: string, mode: ReviewMode = "working") => {
+    const workspace = workspaceRoots.get(id);
+    if (!workspace) return { success: false, error: "No workspace folder is connected" };
+    try { return { success: true, diff: await readGitReviewDiff(workspace.root, filename, mode) }; }
+    catch (error) { return { success: false, error: error instanceof Error ? error.message : String(error) }; }
+  });
+  ipcMain.handle("fs:getGithubPullRequests", async (_event, id: string) => {
+    const workspace = workspaceRoots.get(id);
+    if (!workspace) return { success: false, error: "No workspace folder is connected" };
+    try {
+      const { repository } = await readGitReview(workspace.root, "working");
+      if (!repository) return { success: true, repository: null, pullRequests: [] };
+      return { success: true, repository, pullRequests: await readGithubPullRequests(repository) };
+    } catch { return { success: false, error: "github_unavailable" }; }
+  });
   ipcMain.handle("fs:getGitStatus", async (_event, projectId: string) => {
     const workspace = workspaceRoots.get(projectId);
     if (!workspace) return { success: false, error: "No workspace folder is connected" };
