@@ -10,7 +10,7 @@ test("Electron titlebar overlay has a visible content divider", async () => {
 
   assert.match(
     provider,
-    /function ElectronTitlebarDivider\(\)[\s\S]*?useSidebarPin\(\)[\s\S]*?useSidebarWidth\(\)[\s\S]*?var\(--studio-sidebar-live-width, \$\{width\}px\)[\s\S]*?const contentBorderLeft = pinned \? sidebarWidth : "0px";[\s\S]*?bg-sidebar-border/,
+    /function ElectronTitlebarDivider\(\)[\s\S]*?useSidebarPin\(\)[\s\S]*?useSidebarWidth\(\)[\s\S]*?const left = hasSidebar[\s\S]*?pinned[\s\S]*?var\(--studio-sidebar-live-width, \$\{width\}px\)[\s\S]*?var\(--studio-sidebar-collapsed-width,3rem\)[\s\S]*?: "0px";[\s\S]*?bg-sidebar-border/,
     "the divider must follow the sidebar's live width without adding a visible transition block",
   );
   assert.doesNotMatch(provider, /ElectronTitlebarDivider[\s\S]*?rounded-tl-\[12px\]/);

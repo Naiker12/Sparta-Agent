@@ -212,7 +212,7 @@ test("row meta falls back to the curated seeds", () => {
     /recommendedSearch\.results\s*,\s*\.\.\.catalogSeedRows\s*,\s*\.\.\.communityBrowse\.results/,
   );
   // Listing first, and the first entry per id wins.
-  assert.match(text, /if\s*\(map\.has\(r\.id\)\)\s*continue;/);
+  assert.match(text, /if\s*\(map\.has\(r\.id\)\)\s*\{\s*continue;\s*\}/);
 });
 
 test("a family name is not read out of a longer word", () => {

@@ -31,7 +31,7 @@ test("cached and local TTS picks keep the direct load path and supersede stale s
     // the display repo id instead failed offline or re-downloaded into the active cache.
     /pendingStagedTtsLoad\.current = null;[\s\S]*stageTtsDownload\(\[\]\);[\s\S]*loadTtsModelRef\.current\(repoId, ggufFilename, meta\.loadId\)/,
   );
-  assert.match(source, /if \(busyRef\.current !== null\) return;/);
+  assert.match(source, /if \(busyRef\.current !== null\) \{\s*return;\s*\}/);
   assert.match(
     source,
     /\/\*\* Start a pick that lost the race[\s\S]*?const replayQueuedTtsPick = useCallback/,
@@ -48,7 +48,7 @@ test("cached and local TTS picks keep the direct load path and supersede stale s
     // Replayed only while Audio is visible, and again when it becomes visible. Replaying
     // unconditionally started a load with activeRef already false, which the deactivation
     // effect had already stopped watching, so a hidden page could replace Chat's model.
-    /if \(activeRef\.current\) replayQueuedTtsPick\(\);/,
+    /if \(activeRef\.current\) \{\s*replayQueuedTtsPick\(\);\s*\}/,
   );
 });
 
@@ -70,7 +70,7 @@ test("managed completion loads the exact GGUF only when Audio is active and idle
 test("switching to Transcribe invalidates a pending staged TTS auto-load", () => {
   assert.match(
     source,
-    /if \(nextMode === "transcribe"\) invalidatePendingStagedTts\(\)/,
+    /if \(nextMode === "transcribe"\) \{\s*invalidatePendingStagedTts\(\)/,
   );
   assert.match(
     source,
@@ -78,7 +78,7 @@ test("switching to Transcribe invalidates a pending staged TTS auto-load", () =>
   );
   assert.match(
     source,
-    /if \(nextMode === mode\)[\s\S]*return true;[\s\S]*if \(!canTransitionAudioMode\(busyRef\.current\)\)[\s\S]*return false;[\s\S]*if \(nextMode === "transcribe"\) invalidatePendingStagedTts\(\)/,
+    /if \(nextMode === mode\)[\s\S]*return true;[\s\S]*if \(!canTransitionAudioMode\(busyRef\.current\)\)[\s\S]*return false;[\s\S]*if \(nextMode === "transcribe"\) \{\s*invalidatePendingStagedTts\(\)/,
     "a rejected mode switch must not discard the still-owned staged load",
   );
 });

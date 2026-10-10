@@ -57,18 +57,9 @@ const redirectsToChat = new Function(
 // A host that has answered: chat_only true, nothing left to wait for.
 const measuredChatOnly = (pathname: string) => redirectsToChat(pathname, true, false);
 
-test("a measured chat-only host reaches /video and its own explanation", () => {
-  assert.equal(
-    measuredChatOnly("/video"),
-    false,
-    "a direct link or a reload at /video bounces to /chat, so the no-GPU, no-PyTorch and " +
-      "macOS explanations on VideoPage are unreachable on every host that has one",
-  );
-  assert.equal(
-    measuredChatOnly("/video/anything"),
-    false,
-    "only the exact path is allowed through, so a child route still bounces",
-  );
+test("a measured chat-only host redirects retired video paths", () => {
+  assert.equal(measuredChatOnly("/video"), true);
+  assert.equal(measuredChatOnly("/video/anything"), true);
 });
 
 // The Train page has no equivalent message: it is the training wizard or nothing, and
@@ -80,8 +71,8 @@ test("a measured chat-only host is still redirected off /studio", () => {
   assert.equal(measuredChatOnly("/studio/runs"), true);
 });
 
-test("an unmeasured verdict still lets both pages wait it out", () => {
-  for (const path of ["/studio", "/studio/runs", "/video"]) {
+test("an unmeasured verdict waits on the Studio compatibility path", () => {
+  for (const path of ["/studio", "/studio/runs"]) {
     assert.equal(
       redirectsToChat(path, true, true),
       false,
@@ -92,11 +83,11 @@ test("an unmeasured verdict still lets both pages wait it out", () => {
 
 test("the pages that self-gate are unaffected, and everything else still redirects", () => {
   // Allowed for the same reason /video now is: each explains itself instead of vanishing.
-  for (const path of ["/chat", "/export", "/images", "/api-monitor", "/data-recipes"]) {
+  for (const path of ["/chat", "/projects", "/memory", "/tasks", "/channels", "/api-monitor", "/data-recipes"]) {
     assert.equal(measuredChatOnly(path), false, `${path} no longer survives the guard`);
   }
   // Nothing was widened past the paths that opt in.
-  for (const path of ["/settings", "/videos", "/videoish"]) {
+  for (const path of ["/settings", "/export", "/video", "/videos", "/videoish"]) {
     assert.equal(measuredChatOnly(path), true, `${path} slipped through the chat-only guard`);
   }
 });

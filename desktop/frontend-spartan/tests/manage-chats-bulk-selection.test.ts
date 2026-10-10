@@ -108,6 +108,6 @@ test("the header checkbox says it selects the visible chats, which is what it do
   const src = await manageChatsSource();
   // Rows sit behind a "Show more", so the label must not promise the whole list.
   assert.match(src, /onCheckedChange=\{toggleAllVisible\}/);
-  assert.match(src, /aria-label="Select all visible chats"/);
+  assert.match(src, /aria-label=\{uiT\("ui\.select_all_visible_chats"\)\}/);
   assert.doesNotMatch(src, /aria-label="Select all chats"/);
 });

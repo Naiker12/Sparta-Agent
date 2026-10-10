@@ -1,9 +1,9 @@
 {
   "date": "2026-10-10",
   "version": "0.4.0",
-  "tests": 3523,
-  "passed": 3410,
-  "failed": 113,
+  "tests": 3524,
+  "passed": 3454,
+  "failed": 70,
   "skipped": 0,
   "classification": "Mechanical classification; every remaining failure requires individual review.",
   "failures": [
@@ -23,24 +23,9 @@
       "category": "assertion_requires_review"
     },
     {
-      "location": "tests/audio-stt-download-fallback.test.ts:37:1",
-      "name": "cancelling the shared STT download never loads a partial checkpoint",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/audio-tts-download-manager.test.ts:27:1",
-      "name": "cached and local TTS picks keep the direct load path and supersede stale staging",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/audio-tts-download-manager.test.ts:70:1",
-      "name": "switching to Transcribe invalidates a pending staged TTS auto-load",
-      "category": "assertion_requires_review"
-    },
-    {
       "location": "tests/chat-local-model-options.test.ts:1:1",
       "name": "tests\\chat-local-model-options.test.ts",
-      "category": "requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/chat-model-residency.test.ts:81:1",
@@ -63,24 +48,9 @@
       "category": "assertion_requires_review"
     },
     {
-      "location": "tests/chat-only-route-guard.test.ts:60:1",
-      "name": "a measured chat-only host reaches /video and its own explanation",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/chat-only-route-guard.test.ts:83:1",
-      "name": "an unmeasured verdict still lets both pages wait it out",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/chat-only-route-guard.test.ts:93:1",
-      "name": "the pages that self-gate are unaffected, and everything else still redirects",
-      "category": "assertion_requires_review"
-    },
-    {
       "location": "tests/chat-remembers-its-model.test.ts:1:1",
       "name": "tests\\chat-remembers-its-model.test.ts",
-      "category": "requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/context-window-visible.test.ts:120:1",
@@ -90,42 +60,17 @@
     {
       "location": "tests/dataset-data-recipes-navigation.test.ts:1:1",
       "name": "tests\\dataset-data-recipes-navigation.test.ts",
-      "category": "requires_review"
-    },
-    {
-      "location": "tests/desktop-closing-overlay.test.ts:169:1",
-      "name": "a quit with no window on screen raises no overlay",
-      "category": "missing_file"
-    },
-    {
-      "location": "tests/desktop-closing-overlay.test.ts:199:1",
-      "name": "both sides agree on the event names",
-      "category": "missing_file"
-    },
-    {
-      "location": "tests/electron-titlebar-divider.test.ts:5:1",
-      "name": "Electron titlebar overlay has a visible content divider",
-      "category": "assertion_requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/export-gguf-token-fallback.test.ts:1:1",
       "name": "tests\\export-gguf-token-fallback.test.ts",
-      "category": "requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/export-progress-percent.test.ts:1:1",
       "name": "tests\\export-progress-percent.test.ts",
-      "category": "requires_review"
-    },
-    {
-      "location": "tests/gguf-variant-timeout-regression.test.ts:10:1",
-      "name": "a variants API timeout becomes an error instead of leaving the spinner active",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/hardware-verdict-recovery.test.ts:105:1",
-      "name": "the recovery poll runs while the verdict is unknown, on every platform",
-      "category": "assertion_requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/hub-recovery-paths.test.ts:23:1",
@@ -138,29 +83,14 @@
       "category": "missing_file"
     },
     {
-      "location": "tests/hub-recovery-paths.test.ts:69:1",
-      "name": "rows on screen do not hide that the feed failed",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/hub-recovery-paths.test.ts:137:1",
-      "name": "the retained footer names the cause, not just the staleness",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/hub-recovery-paths.test.ts:198:1",
-      "name": "pausing dataset fetches leaves the rendered rows alone",
-      "category": "assertion_requires_review"
-    },
-    {
       "location": "tests/image-generation-defaults.test.ts:1:1",
       "name": "tests\\image-generation-defaults.test.ts",
-      "category": "requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/image-generation-stop.test.ts:1:1",
       "name": "tests\\image-generation-stop.test.ts",
-      "category": "requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/lan-access-state.test.ts:207:1",
@@ -170,42 +100,22 @@
     {
       "location": "tests/linked-folders-lease-gate.test.ts:1:1",
       "name": "tests\\linked-folders-lease-gate.test.ts",
-      "category": "requires_review"
-    },
-    {
-      "location": "tests/llama-extra-args-diagnostics.test.ts:625:1",
-      "name": "hydration is not gated behind the advanced disclosure",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/llama-extra-args-diagnostics.test.ts:786:1",
-      "name": "a rollback restores the previous model with its arguments",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/llama-extra-args-diagnostics.test.ts:814:1",
-      "name": "a hydrated list is judged even when the row cannot be",
-      "category": "assertion_requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/llama-extra-args-panel-hydration.test.ts:1:1",
       "name": "tests\\llama-extra-args-panel-hydration.test.ts",
-      "category": "requires_review"
-    },
-    {
-      "location": "tests/llama-extra-args-status-hydration.test.ts:56:1",
-      "name": "the rollback still resends that baseline explicitly",
-      "category": "assertion_requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/loaded-build-panel-rows.test.ts:1:1",
       "name": "tests\\loaded-build-panel-rows.test.ts",
-      "category": "requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/loaded-models-backcompat.test.ts:1:1",
       "name": "tests\\loaded-models-backcompat.test.ts",
-      "category": "requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/loaded-models-barrel-order.test.ts:44:1",
@@ -270,12 +180,12 @@
     {
       "location": "tests/loaded-models-platform-matrix.test.ts:1:1",
       "name": "tests\\loaded-models-platform-matrix.test.ts",
-      "category": "requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/loaded-models-q8-precision-repro.test.ts:1:1",
       "name": "tests\\loaded-models-q8-precision-repro.test.ts",
-      "category": "requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/loaded-models-settled-retire.test.ts:41:1",
@@ -290,7 +200,7 @@
     {
       "location": "tests/loaded-models-sources.test.ts:1:1",
       "name": "tests\\loaded-models-sources.test.ts",
-      "category": "requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/mac-titlebar-optical-alignment.test.ts:24:1",
@@ -298,34 +208,24 @@
       "category": "missing_file"
     },
     {
-      "location": "tests/manage-chats-bulk-selection.test.ts:107:1",
-      "name": "the header checkbox says it selects the visible chats, which is what it does",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/markdown-streaming-scheduling.test.ts:102:1",
-      "name": "token updates keep Streamdown's expensive configuration props stable",
-      "category": "assertion_requires_review"
-    },
-    {
       "location": "tests/media-eject-busy-state.test.ts:1:1",
       "name": "tests\\media-eject-busy-state.test.ts",
-      "category": "requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/media-generation-preset-claims.test.ts:1:1",
       "name": "tests\\media-generation-preset-claims.test.ts",
-      "category": "requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/media-idle-unload-api-only.test.ts:1:1",
       "name": "tests\\media-idle-unload-api-only.test.ts",
-      "category": "requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/media-load-cancel.test.ts:1:1",
       "name": "tests\\media-load-cancel.test.ts",
-      "category": "requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/media-status-sequencing.test.ts:27:3",
@@ -353,18 +253,8 @@
       "category": "assertion_requires_review"
     },
     {
-      "location": "tests/monitor-stack-inset.test.ts:789:1",
-      "name": "a width-only animation does not remeasure the stack",
-      "category": "assertion_requires_review"
-    },
-    {
       "location": "tests/overlay-scrollbar-gutter.test.ts:248:1",
       "name": "right-edge action lists reserve the gutter they publish",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/padded-response.test.ts:53:1",
-      "name": "only the two padded routes require a payload",
       "category": "assertion_requires_review"
     },
     {
@@ -380,7 +270,7 @@
     {
       "location": "tests/pr9057-video-simulation.test.ts:1:1",
       "name": "tests\\pr9057-video-simulation.test.ts",
-      "category": "requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/project-attachment-target-adoption.test.ts:135:1",
@@ -418,51 +308,6 @@
       "category": "missing_file"
     },
     {
-      "location": "tests/provisional-hardware-verdict.test.ts:180:1",
-      "name": "the latch is claimed after the wait, not during it",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/provisional-hardware-verdict.test.ts:285:1",
-      "name": "a rejected token does not consume the once-per-load window",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/provisional-hardware-verdict.test.ts:308:1",
-      "name": "the store exposes an unknown state, not just chat-only",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/provisional-hardware-verdict.test.ts:345:1",
-      "name": "the sidebar gates Train and Video on a measured verdict",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/provisional-hardware-verdict.test.ts:377:1",
-      "name": "the route guard waits out an unknown verdict on Train and Video",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/provisional-hardware-verdict.test.ts:403:1",
-      "name": "the Video page gates on the backend's own capability answer",
-      "category": "missing_file"
-    },
-    {
-      "location": "tests/provisional-hardware-verdict.test.ts:477:1",
-      "name": "the Video row is disabled exactly when the hint has something to say",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/provisional-hardware-verdict.test.ts:513:1",
-      "name": "a failed hardware probe is retried, not left unloaded",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/provisional-hardware-verdict.test.ts:536:1",
-      "name": "a cache filled between render and subscribe still reaches the component",
-      "category": "assertion_requires_review"
-    },
-    {
       "location": "tests/qwen-thinking-size-gate.test.ts:81:1",
       "name": "all four copies of the gate pattern stay in sync",
       "category": "missing_file"
@@ -470,12 +315,7 @@
     {
       "location": "tests/read-aloud-tts-model-row.test.ts:1:1",
       "name": "tests\\read-aloud-tts-model-row.test.ts",
-      "category": "requires_review"
-    },
-    {
-      "location": "tests/recommended-curated-row-metadata.test.ts:206:1",
-      "name": "row meta falls back to the curated seeds",
-      "category": "assertion_requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/remote-access-state.test.ts:241:1",
@@ -483,94 +323,39 @@
       "category": "assertion_requires_review"
     },
     {
-      "location": "tests/sidebar-action-rows-inert.test.ts:53:1",
-      "name": "desktop branding clears the titlebar actions",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/sidebar-action-rows-inert.test.ts:66:1",
-      "name": "footer profile sits 11px above the sidebar edge",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/sidebar-action-rows-inert.test.ts:74:1",
-      "name": "every sidebar row pill sits in one shared box",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/sidebar-action-rows-inert.test.ts:95:1",
-      "name": "the sidebar list measures its scroll rail",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/sidebar-more-menu-interaction.test.ts:6:1",
-      "name": "the sidebar More flyout previews on hover and pins on click",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/sidebar-nav-migration.test.ts:83:1",
-      "name": "a customized version-5 sidebar keeps its order and only gains Audio",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/sidebar-nav-migration.test.ts:118:1",
-      "name": "an install sitting on the version-6 default picks Video up",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/sidebar-scroll-fade-deps.test.ts:11:1",
-      "name": "the bottom fade re-measures on every row-count input",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/sidebar-unread-dot.test.ts:14:1",
-      "name": "the unread dot is grey",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/sidebar-unread-dot.test.ts:25:1",
-      "name": "training run status dots are untouched",
-      "category": "assertion_requires_review"
-    },
-    {
       "location": "tests/spec-fallback-partial-offload-copy.test.ts:1:1",
       "name": "tests\\spec-fallback-partial-offload-copy.test.ts",
-      "category": "requires_review"
-    },
-    {
-      "location": "tests/tauri-details-toggle.test.ts:23:1",
-      "name": "Tauri detail toggles put a custom down chevron after their labels",
-      "category": "assertion_requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/verdict-poll-stall-guard.test.ts:1:1",
       "name": "tests\\verdict-poll-stall-guard.test.ts",
-      "category": "requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/video-download-plan-payload.test.ts:1:1",
       "name": "tests\\video-download-plan-payload.test.ts",
-      "category": "requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/video-gallery-clear-confirmation.test.ts:1:1",
       "name": "tests\\video-gallery-clear-confirmation.test.ts",
-      "category": "requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/video-generate-refusal-resync.test.ts:1:1",
       "name": "tests\\video-generate-refusal-resync.test.ts",
-      "category": "requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/video-h3-task-dialog.test.ts:1:1",
       "name": "tests\\video-h3-task-dialog.test.ts",
-      "category": "requires_review"
+      "category": "file_or_import_failure"
     },
     {
       "location": "tests/video-keyframe-canvas.test.ts:1:1",
       "name": "tests\\video-keyframe-canvas.test.ts",
-      "category": "requires_review"
+      "category": "file_or_import_failure"
     }
   ]
 }

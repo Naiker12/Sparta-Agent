@@ -6,8 +6,6 @@ import test from "node:test";
 // The overlay itself is JSX, which cannot be imported here. So: drive the store the
 // app-closing events write to, then assert the three call sites read and write it.
 import {
-  APP_CLOSING_CANCELLED_EVENT,
-  APP_CLOSING_EVENT,
   clearAppClosing,
   isAppClosing,
   markAppClosing,
@@ -133,7 +131,7 @@ test("the overlay survives a modal's body pointer-events lockout", async () => {
   );
 });
 
-test("the close button leaves the overlay to Rust", async () => {
+test("the close button delegates the quit to the native shell", async () => {
   const titlebar = await source("components/tauri/window-titlebar.tsx");
 
   // Raising it here would put it behind the quit confirmations, one of which asks whether
@@ -166,24 +164,11 @@ test("the overlay is presentation only, with no way out of a wedged reap", async
   assert.doesNotMatch(body, /setTimeout|useState/);
 });
 
-test("a quit with no window on screen raises no overlay", async () => {
-  const rust = await readFile(
-    new URL("../../src-tauri/src/main.rs", import.meta.url),
-    "utf8",
-  );
-
-  // Tray Quit reaches request_quit without going through the main window, and an autostart
-  // launch passes --hidden, whose window is built "visible": false and never shown. The
-  // overlay explains a frozen window, so with no window on screen there is nothing to say.
-  assert.match(
-    rust,
-    /fn quit_raises_the_overlay\(/,
-    "the overlay is raised without asking whether anything is on screen",
-  );
-  assert.match(
-    rust,
-    /app\.get_webview_window\("main"\)\s*\.map\(\|window\| window\.is_visible\(\)/,
-  );
+test("Electron stops its backend on quit even after the last window closes", async () => {
+  const main = await readFile(new URL("../../ia-sparta-app-shell/src/electron-main.ts", import.meta.url), "utf8");
+  assert.match(main, /app\.on\('before-quit', \(\) => backend\.stop\(\)\)/);
+  assert.match(main, /app\.on\('window-all-closed',[\s\S]*?app\.quit\(\)/);
+  assert.match(main, /win\.on\('closed', \(\) => \{\s*win = null/);
 });
 
 test("the overlay names the wait it is covering", async () => {
@@ -196,20 +181,9 @@ test("the overlay names the wait it is covering", async () => {
   assert.match(body, /<Spinner className="size-6 text-primary" \/>/);
 });
 
-test("both sides agree on the event names", async () => {
-  const rust = await readFile(
-    new URL("../../src-tauri/src/main.rs", import.meta.url),
-    "utf8",
-  );
-
-  assert.match(
-    rust,
-    new RegExp(`const APP_CLOSING_EVENT: &str = "${APP_CLOSING_EVENT}";`),
-  );
-  assert.match(
-    rust,
-    new RegExp(
-      `const APP_CLOSING_CANCELLED_EVENT: &str = "${APP_CLOSING_CANCELLED_EVENT}";`,
-    ),
-  );
+test("Electron preload and main agree on the close channel", async () => {
+  const main = await readFile(new URL("../../ia-sparta-app-shell/src/electron-main.ts", import.meta.url), "utf8");
+  const preload = await readFile(new URL("../../ia-sparta-ipc-bridge/src/electron-preload.ts", import.meta.url), "utf8");
+  assert.match(preload, /close: \(\) => ipcRenderer\.send\("win:close"\)/);
+  assert.match(main, /ipcMain\.on\('win:close', \(\) => win\?\.close\(\)\)/);
 });

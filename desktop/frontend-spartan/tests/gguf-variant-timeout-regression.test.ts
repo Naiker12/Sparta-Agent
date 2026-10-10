@@ -8,7 +8,7 @@ const source = readFileSync(
 );
 
 test("a variants API timeout becomes an error instead of leaving the spinner active", () => {
-  assert.match(source, /if \(controller\.signal\.aborted\) return;/);
+  assert.match(source, /if \(controller\.signal\.aborted\) \{\s*return;\s*\}/);
   assert.doesNotMatch(source, /controller\.signal\.aborted \|\| isAbortError/);
   assert.match(source, /loading: false,/);
   assert.match(source, /refreshError: hasUsableVariants \? message : null/);

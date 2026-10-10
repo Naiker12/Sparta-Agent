@@ -805,7 +805,7 @@ test("a width-only animation does not remeasure the stack", async () => {
   assert.match(wiring, /blockSize/, "the entry's height is never read");
   assert.match(
     wiring,
-    /if \(moved\) measure\(\)/,
+    /if \(moved\) \{\s*measure\(\)/,
     "measure runs whether or not a height moved",
   );
 });

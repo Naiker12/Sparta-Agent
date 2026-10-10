@@ -8,7 +8,7 @@ import { readFile } from "node:fs/promises";
 // iterator that a failed page leaves behind, has to keep a way back on its own.
 
 function read(path: string): Promise<string> {
-  return readFile(new URL(path, import.meta.url), "utf8");
+  return readFile(new URL(path, import.meta.url), "utf8").then((source) => source.replace(/\r\n/g, "\n"));
 }
 
 /** A callback body, so a dependency array cannot satisfy an assertion. */
@@ -84,7 +84,7 @@ test("rows on screen do not hide that the feed failed", async () => {
     "\nexport function InventoryErrorState",
   );
   assert.ok(fn.includes('failed && onRetry ? onRetry : onFetchMore'), "it must retry");
-  assert.ok(fn.includes('failed ? "Try again" : "Load more"'), "and say so");
+  assert.ok(fn.includes('failed ? uiT("update.tryAgain") : uiT("studio.history.loadMore")'), "and say so");
 });
 
 test("a live backoff is not bypassed by typing", async () => {
@@ -150,7 +150,7 @@ test("the retained footer names the cause, not just the staleness", async () => 
     "\nexport function InventoryErrorState",
   );
   assert.ok(
-    fn.includes('{failureText || "These results may be out of date."}'),
+    fn.includes('{failureText || uiT("ui.these_results_may_be_out_of_date")}'),
     "shown when there is one, with the generic line only as a fallback",
   );
 });
@@ -203,7 +203,7 @@ test("pausing dataset fetches leaves the rendered rows alone", async () => {
   // from the results memo, so gating it on the backoff blanked every visible
   // dataset row for the window. The model hook has no such line, which is why
   // only datasets went blank.
-  assert.match(datasets, /if \(!enabled\) return \[\];/);
+  assert.match(datasets, /if \(!enabled\) \{\s*return \[\];\s*\}/);
   assert.ok(
     datasets.includes("enabled: enabled && !paused"),
     "the pause has to reach the request and stop there",
