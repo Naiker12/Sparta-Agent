@@ -1,4 +1,5 @@
 import { useT as useUiT } from "@/i18n";
+import { AutomationProposalToolUI } from "@/features/tasks";
 /**
  * Spartan - Vistas de Mensajes del Asistente y Usuario (assistant-message-view)
  * Renderizado integral de mensajes: burbujas de texto, editor de etiquetas (<THINK>/<TOOL>),
@@ -284,6 +285,7 @@ export const ASSISTANT_PART_COMPONENTS = {
       web_search: WebSearchToolUIConfirmable,
       search_knowledge_base: KnowledgeBaseToolUIConfirmable,
       generate_document: withToolConfirmation(DocumentToolUI),
+      propose_automation: AutomationProposalToolUI,
       python: PythonToolUIConfirmable,
       terminal: TerminalToolUIConfirmable,
       edit_file: EditFileToolUIConfirmable,

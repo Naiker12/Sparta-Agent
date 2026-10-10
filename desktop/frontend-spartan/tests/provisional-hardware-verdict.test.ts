@@ -141,7 +141,8 @@ test("an actively detecting reply is not deferred", () => {
 // leaves the reply provisional and `fetched` false, so an unguarded loop repeats the full
 // wait on every navigation. Asserted on source: env.ts is not importable outside vite.
 test("the bounded hardware wait is spent at most once per page load", async () => {
-  const { readFile } = await import("node:fs/promises");
+  const { readFile: readRawSource } = await import("node:fs/promises");
+  const readFile = async (url: URL, encoding: "utf8") => (await readRawSource(url, encoding)).replaceAll("\r\n", "\n");
   const src = await readFile(
     new URL("../src/config/env.ts", import.meta.url),
     "utf8",
@@ -162,7 +163,8 @@ test("the bounded hardware wait is spent at most once per page load", async () =
 // reports device_type to authed callers only. An unauthenticated poll can never turn
 // provisional into measured, so it only holds the login form behind the torch import.
 test("an unauthenticated read never spends the detection window", async () => {
-  const { readFile } = await import("node:fs/promises");
+  const { readFile: readRawSource } = await import("node:fs/promises");
+  const readFile = async (url: URL, encoding: "utf8") => (await readRawSource(url, encoding)).replaceAll("\r\n", "\n");
   const src = await readFile(
     new URL("../src/config/env.ts", import.meta.url),
     "utf8",
@@ -178,7 +180,8 @@ test("an unauthenticated read never spends the detection window", async () => {
 // the latch inside the loop let the unawaited one consume a window it had not finished,
 // leaving the awaited caller on the local default and redirecting a GPU host to /chat.
 test("the latch is claimed after the wait, not during it", async () => {
-  const { readFile } = await import("node:fs/promises");
+  const { readFile: readRawSource } = await import("node:fs/promises");
+  const readFile = async (url: URL, encoding: "utf8") => (await readRawSource(url, encoding)).replaceAll("\r\n", "\n");
   const src = await readFile(
     new URL("../src/config/env.ts", import.meta.url),
     "utf8",
@@ -199,7 +202,7 @@ test("the latch is claimed after the wait, not during it", async () => {
   // would satisfy the check above.
   assert.match(
     src.slice(loopEnd),
-    /if \(spendWait[^)]*\) hardwareWaitSpent = true;/,
+    /if \(spendWait[^)]*\) \{\s*hardwareWaitSpent = true;\s*\}/,
     "the latch is never claimed after the wait, so the window is never spent",
   );
 });
@@ -208,7 +211,8 @@ test("the latch is claimed after the wait, not during it", async () => {
 // back to the browser platform: on WSL, SSH or any remote session that relabels the host
 // as local, changing model filtering, paths and install commands.
 test("a provisional forced refresh keeps the server-reported platform", async () => {
-  const { readFile } = await import("node:fs/promises");
+  const { readFile: readRawSource } = await import("node:fs/promises");
+  const readFile = async (url: URL, encoding: "utf8") => (await readRawSource(url, encoding)).replaceAll("\r\n", "\n");
   const src = await readFile(
     new URL("../src/config/env.ts", import.meta.url),
     "utf8",
@@ -234,7 +238,8 @@ test("a provisional forced refresh keeps the server-reported platform", async ()
 // detects. The sidebar's recovery poll was gated on mlx_unavailable alone, so a GPU host
 // kept the conservative deferred verdict and stayed chat-only until a hard refresh.
 test("a deferred verdict is recorded so the sidebar can poll out of it", async () => {
-  const { readFile } = await import("node:fs/promises");
+  const { readFile: readRawSource } = await import("node:fs/promises");
+  const readFile = async (url: URL, encoding: "utf8") => (await readRawSource(url, encoding)).replaceAll("\r\n", "\n");
   const env = await readFile(new URL("../src/config/env.ts", import.meta.url), "utf8");
   const sidebar = await readFile(
     new URL("../src/components/app-sidebar.tsx", import.meta.url),
@@ -256,7 +261,8 @@ test("a deferred verdict is recorded so the sidebar can poll out of it", async (
 // failure and answers with the unauthenticated body, which never carries device_type, so
 // a stale token spends the whole window and holds /login on a cold boot.
 test("a rejected token stops the wait instead of polling it out", async () => {
-  const { readFile } = await import("node:fs/promises");
+  const { readFile: readRawSource } = await import("node:fs/promises");
+  const readFile = async (url: URL, encoding: "utf8") => (await readRawSource(url, encoding)).replaceAll("\r\n", "\n");
   const src = await readFile(
     new URL("../src/config/env.ts", import.meta.url),
     "utf8",
@@ -283,14 +289,15 @@ test("a rejected token stops the wait instead of polling it out", async () => {
 // user who signs in before detection settles gets the first authenticated read; spending
 // the latch on a refused token leaves the route guard on local defaults until a refresh.
 test("a rejected token does not consume the once-per-load window", async () => {
-  const { readFile } = await import("node:fs/promises");
+  const { readFile: readRawSource } = await import("node:fs/promises");
+  const readFile = async (url: URL, encoding: "utf8") => (await readRawSource(url, encoding)).replaceAll("\r\n", "\n");
   const src = await readFile(
     new URL("../src/config/env.ts", import.meta.url),
     "utf8",
   );
   assert.match(
     src,
-    /if \(spendWait && !tokenRejected\) hardwareWaitSpent = true;/,
+    /if \(spendWait && !tokenRejected\) \{\s*hardwareWaitSpent = true;\s*\}/,
     "the latch is claimed even when the break came from a rejected token, so the " +
       "first accepted token in this page load skips its window",
   );
@@ -306,7 +313,8 @@ test("a rejected token does not consume the once-per-load window", async () => {
 // straight off it, so both tabs blacked out on launch and only came back once the backend
 // answered -- which PR #7607's lazy detection can stretch to minutes.
 test("the store exposes an unknown state, not just chat-only", async () => {
-  const { readFile } = await import("node:fs/promises");
+  const { readFile: readRawSource } = await import("node:fs/promises");
+  const readFile = async (url: URL, encoding: "utf8") => (await readRawSource(url, encoding)).replaceAll("\r\n", "\n");
   const src = await readFile(
     new URL("../src/config/env.ts", import.meta.url),
     "utf8",
@@ -318,7 +326,7 @@ test("the store exposes an unknown state, not just chat-only", async () => {
   );
   assert.match(
     src,
-    /return !state\.fetched && !state\.detectionDeferred;/,
+    /return !\(state\.fetched \|\| state\.detectionDeferred\);/,
     "the selector is not derived from `fetched`, the flag that already means " +
       "'a server-reported verdict is stored'",
   );
@@ -328,7 +336,8 @@ test("the store exposes an unknown state, not just chat-only", async () => {
 // hardware-dependent operation runs, and a deferred reply carries no device_type, so `fetched`
 // never flips. Calling that unknown would spin Train and Video for the whole session.
 test("a deferred verdict counts as settled, not as still checking", async () => {
-  const { readFile } = await import("node:fs/promises");
+  const { readFile: readRawSource } = await import("node:fs/promises");
+  const readFile = async (url: URL, encoding: "utf8") => (await readRawSource(url, encoding)).replaceAll("\r\n", "\n");
   const src = await readFile(
     new URL("../src/config/env.ts", import.meta.url),
     "utf8",
@@ -342,47 +351,27 @@ test("a deferred verdict counts as settled, not as still checking", async () => 
   );
 });
 
-test("the sidebar gates Train and Video on a measured verdict", async () => {
+test("the API sidebar excludes retired training and video destinations", async () => {
   const { readFile } = await import("node:fs/promises");
-  const src = await readFile(
-    new URL("../src/components/app-sidebar.tsx", import.meta.url),
-    "utf8",
-  );
-  assert.match(
-    src,
-    /const chatOnlyMeasured = chatOnly && !capabilitiesUnknown;/,
-    "the rows still read chatOnly directly, so the UA guess disables them",
-  );
-  // Every row-level use of the verdict goes through the measured form.
-  //
-  // `disabled: chatOnly` is an object entry, so the regressed form ends in a comma and
-  // the old `includes("disabled: chatOnly;")` could never match anything. The character
-  // class keeps `disabled: chatOnlyMeasured,` from matching, since "M" is not in it.
-  for (const pattern of [/disabled: chatOnly[,;\s]/, /if \(chatOnly\) return;/]) {
-    assert.ok(
-      !pattern.test(src),
-      `${pattern} still reads the unmeasured verdict`,
-    );
-  }
-  // Video opts into the pending state rather than rendering a guessed gray-out.
-  assert.equal(
-    src.match(/pending: capabilitiesUnknown,/g)?.length,
-    1,
-    "Video does not mark itself pending while the verdict is out",
-  );
+  const src = await readFile(new URL("../src/components/app-sidebar.tsx", import.meta.url), "utf8");
+  const start = src.indexOf("const navRows:");
+  const end = src.indexOf("const unpinnedNavIds", start);
+  assert.ok(start >= 0 && end > start);
+  assert.doesNotMatch(src.slice(start, end), /\b(video|train): \{/);
 });
 
 // beforeLoad redirects are one-way: bouncing a cold /studio or /video load to /chat on the
 // pre-measurement guess strands a healthy host there for the rest of the session.
-test("the route guard waits out an unknown verdict on Train and Video", async () => {
-  const { readFile } = await import("node:fs/promises");
+test("the compatibility route guard waits out an unknown verdict on Studio", async () => {
+  const { readFile: readRawSource } = await import("node:fs/promises");
+  const readFile = async (url: URL, encoding: "utf8") => (await readRawSource(url, encoding)).replaceAll("\r\n", "\n");
   const src = await readFile(
     new URL("../src/app/routes/__root.tsx", import.meta.url),
     "utf8",
   );
   const guard = /const SELF_GATED_WHILE_UNKNOWN = \[([^\]]*)\]/.exec(src);
   assert.ok(guard, "no list of paths that wait the verdict out");
-  for (const path of ["/studio", "/video"]) {
+  for (const path of ["/studio"]) {
     assert.ok(guard[1].includes(`"${path}"`), `${path} is still redirected on the guess`);
   }
   assert.match(
@@ -400,36 +389,12 @@ test("the route guard waits out an unknown verdict on Train and Video", async ()
 
 // The tab is reachable on hosts the backend still refuses — no GPU, no MPS device, no PyTorch —
 // so the page has to say which, rather than fail at load.
-test("the Video page gates on the backend's own capability answer", async () => {
+test("the shipped router excludes the retired video page and includes API work", async () => {
   const { readFile } = await import("node:fs/promises");
-  const src = await readFile(
-    new URL("../src/features/video/video-page.tsx", import.meta.url),
-    "utf8",
-  );
-  assert.match(
-    src,
-    /hardware\.videoSupported === false/,
-    "the page does not read the backend's video verdict",
-  );
-  assert.match(
-    src,
-    /if \(!hardware\.loaded\)/,
-    "the page renders its generator before the verdict has landed",
-  );
-  // /api/health withholds the chat-only verdict for the whole MLX self-heal. Video does not use
-  // MLX, so waiting on it would spin this page through a reinstall that cannot change its answer.
-  // The whole store is forbidden, not just capabilitiesUnknown: any of its properties would put
-  // the training verdict back in front of an answer that is already authoritative.
-  assert.ok(
-    !/usePlatformStore/.test(src),
-    "the Video gate waits on the training verdict again",
-  );
-  // A backend that predates the field sends nothing, which arrives as null; only an explicit
-  // false may hide the generator.
-  assert.ok(
-    !/videoSupported !== true/.test(src),
-    "an older backend's missing field would hide the page it has always served",
-  );
+  const src = await readFile(new URL("../src/app/router.tsx", import.meta.url), "utf8");
+  assert.doesNotMatch(src, /from ["']\.\/routes\/(video|studio)["']/);
+  assert.match(src, /memoryRoute,/);
+  assert.match(src, /tasksRoute,/);
 });
 
 // The hardcoded "needs an NVIDIA or AMD GPU" is wrong on a Mac: no GPU the user can add would
@@ -474,56 +439,35 @@ test("a chat-only Apple Silicon host keeps Video navigable", () => {
 
 // The row's disabled state must follow the hint, not chatOnly: that is the wiring the two
 // tests above only describe.
-test("the Video row is disabled exactly when the hint has something to say", async () => {
+test("API work destinations do not wait on a local hardware verdict", async () => {
   const { readFile } = await import("node:fs/promises");
-  const src = await readFile(
-    new URL("../src/components/app-sidebar.tsx", import.meta.url),
-    "utf8",
-  );
-  assert.match(
-    src,
-    /const videoDisabledHint = videoNavHint\(chatOnlyMeasured, chatOnlyReason\)/,
-    "the Video hint no longer comes from the shared derivation",
-  );
-  assert.match(
-    src,
-    /const videoDisabled = videoDisabledHint !== undefined/,
-    "the Video row's disabled state is no longer derived from its hint",
-  );
-  // The train row keeps `disabled: chatOnlyMeasured`, so match inside the video row only.
-  const videoRow = src.slice(src.indexOf("    video: {"));
-  const videoBody = videoRow.slice(0, videoRow.indexOf("},"));
-  assert.match(
-    videoBody,
-    /disabled: videoDisabled,/,
-    "the Video row is gated on the training verdict again",
-  );
-  // Disabled without the hint is worse than either alone: a greyed row with nothing to explain it.
-  assert.match(
-    videoBody,
-    /tooltip: videoDisabledHint,/,
-    "the Video row is disabled with no reason shown",
-  );
-  assert.ok(!/coming soon/.test(src), "the Video row still promises macOS support that has shipped");
+  const src = await readFile(new URL("../src/components/app-sidebar.tsx", import.meta.url), "utf8");
+  for (const id of ["memory", "tasks"]) {
+    const start = src.indexOf(`    ${id}: {`);
+    const end = src.indexOf("    },", start);
+    assert.ok(start >= 0 && end > start);
+    assert.doesNotMatch(src.slice(start, end), /disabled:|pending:|capabilitiesUnknown|chatOnly/);
+  }
 });
 
 // The Video gate waits on useHardwareInfo's `loaded`, and a failed probe used to resolve to
 // DEFAULT (loaded false) with nothing scheduled to run again: one blip and the page spun for
 // the rest of the session.
 test("a failed hardware probe is retried, not left unloaded", async () => {
-  const { readFile } = await import("node:fs/promises");
+  const { readFile: readRawSource } = await import("node:fs/promises");
+  const readFile = async (url: URL, encoding: "utf8") => (await readRawSource(url, encoding)).replaceAll("\r\n", "\n");
   const src = await readFile(
     new URL("../src/hooks/use-hardware-info.ts", import.meta.url),
     "utf8",
   );
   assert.match(
     src,
-    /if \(!cancelled && !hw\.loaded\) retry = setTimeout\(load, RETRY_MS\);/,
+    /if \(!\(cancelled \|\| hw\.loaded\)\) \{\s*retry = setTimeout\(load, RETRY_MS\);\s*\}/,
     "nothing re-probes after a failed read",
   );
   assert.match(
     src,
-    /if \(retry !== undefined\) clearTimeout\(retry\);/,
+    /if \(retry !== undefined\) \{\s*clearTimeout\(retry\);\s*\}/,
     "the retry outlives the component that scheduled it",
   );
 });
@@ -534,14 +478,15 @@ test("a failed hardware probe is retried, not left unloaded", async () => {
 // is then scheduled to call setInfo. The PR gates whole pages on `loaded`, so the symptom
 // is a permanent "Checking this machine..." rather than a stale value.
 test("a cache filled between render and subscribe still reaches the component", async () => {
-  const { readFile } = await import("node:fs/promises");
+  const { readFile: readRawSource } = await import("node:fs/promises");
+  const readFile = async (url: URL, encoding: "utf8") => (await readRawSource(url, encoding)).replaceAll("\r\n", "\n");
   const src = await readFile(
     new URL("../src/hooks/use-hardware-info.ts", import.meta.url),
     "utf8",
   );
   assert.match(
     src,
-    /if \(cached\) listener\(cached\);\s*\n\s*else load\(\);/,
+    /if \(cached\) \{\s*listener\(cached\);\s*\} else \{\s*load\(\);\s*\}/,
     "a component that missed the notify has no path to the cache it skipped loading for",
   );
   // A 200 superseded by a later invalidate must not be reported as a failed probe: load()

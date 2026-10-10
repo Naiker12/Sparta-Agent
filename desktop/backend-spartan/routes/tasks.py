@@ -81,7 +81,7 @@ def tasks(current_subject: str = Depends(get_current_subject)): return {'tasks':
 
 @router.post('')
 def create(body: TaskInput, current_subject: str = Depends(get_current_subject)):
-    if body.enabled: raise HTTPException(422, 'Automatic execution is not available yet; save a draft')
+    if body.enabled: raise HTTPException(422, 'Save the task, then confirm activation with a configured provider and model')
     try: return upsert_task(body.model_dump(), owner_subject=current_subject)
     except ValueError as error: raise HTTPException(422, str(error)) from error
 

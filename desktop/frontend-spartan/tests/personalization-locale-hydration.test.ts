@@ -27,6 +27,7 @@ type Profile = {
   avatarDataUrl: string | null;
   avatarShape: "circle" | "rounded";
   showGreetingSloth: boolean;
+  avatarSyncPending?: boolean;
 };
 
 type SavedPayload = {
@@ -134,6 +135,9 @@ function installWindow() {
   let nextId = 1;
   Object.assign(globalThis, {
     window: {
+      setInterval: () => nextId++,
+      addEventListener: () => {},
+      removeEventListener: () => {},
       setTimeout(fn: () => void): number {
         const id = nextId;
         nextId += 1;
@@ -180,7 +184,7 @@ function remotePersonalization(language: string) {
   };
 }
 
-function setup(localeResult: "superseded" | "cancelled" | "stalled") {
+function setup(localeResult: "superseded" | "cancelled" | "stalled", initialProfile: Partial<Profile> = {}, saveResult: () => Promise<void> = () => Promise.resolve()) {
   const runTimers = installWindow();
   const host = createReact();
   const saves: SavedPayload[] = [];
@@ -191,6 +195,7 @@ function setup(localeResult: "superseded" | "cancelled" | "stalled") {
     avatarDataUrl: null,
     avatarShape: "circle",
     showGreetingSloth: true,
+    ...initialProfile,
   };
   // A newer request already took French, which is the state "superseded"
   // reports: the hydrated language is not the one in effect.
@@ -223,7 +228,7 @@ function setup(localeResult: "superseded" | "cancelled" | "stalled") {
       sanitizeCustomization: (value: unknown) => value ?? {},
       savePersonalization: (data: SavedPayload) => {
         saves.push(data);
-        return Promise.resolve();
+        return saveResult();
       },
       setPalette: () => undefined,
       setTheme: () => undefined,
@@ -258,6 +263,7 @@ function setup(localeResult: "superseded" | "cancelled" | "stalled") {
       PROFILE_TEXT_MAX_LENGTH: 200,
       useUserProfileStore: profileStore,
     },
+    "../mascot-catalog": { normalizeAvatarValue: (value: unknown) => value },
   });
 
   return {
@@ -266,6 +272,10 @@ function setup(localeResult: "superseded" | "cancelled" | "stalled") {
     releaseLocale,
     runTimers,
     saves,
+    profile: () => profile,
+    pickAvatar(avatarDataUrl: string | null) {
+      profile = { ...profile, avatarDataUrl, avatarSyncPending: true };
+    },
     rename(displayName: string) {
       profile = { ...profile, displayName };
     },
@@ -335,4 +345,43 @@ test("a stalled locale catalog does not pause personalization saves", async () =
 
   assert.equal(app.saves.length, 1);
   assert.equal(app.saves[0]?.profile.displayName, "Ada");
+});
+
+test("a pending mascot survives startup hydration and is acknowledged only after saving", async () => {
+  const app = setup("stalled", { avatarDataUrl: "mascot:cat", avatarSyncPending: true });
+  app.render();
+  await settle();
+  app.render();
+  assert.equal(app.profile().avatarDataUrl, "mascot:cat");
+  assert.equal(app.profile().avatarSyncPending, true);
+  app.runTimers();
+  await settle();
+  assert.equal(app.saves[0]?.profile.avatarDataUrl, "mascot:cat");
+  assert.equal(app.profile().avatarSyncPending, false);
+});
+
+test("an unsuccessful save retains the mascot for the next startup", async () => {
+  const app = setup("stalled", { avatarDataUrl: "mascot:cat", avatarSyncPending: true }, () => Promise.reject(new Error("offline")));
+  app.render();
+  await settle();
+  app.render();
+  app.runTimers();
+  await settle();
+  assert.equal(app.profile().avatarDataUrl, "mascot:cat");
+  assert.equal(app.profile().avatarSyncPending, true);
+});
+
+test("the acknowledgement of an older mascot does not clear a newer selection", async () => {
+  let resolveSave!: () => void;
+  const waiting = new Promise<void>(resolve => { resolveSave = resolve; });
+  const app = setup("stalled", { avatarDataUrl: "mascot:cat", avatarSyncPending: true }, () => waiting);
+  app.render();
+  await settle();
+  app.render();
+  app.runTimers();
+  app.pickAvatar("mascot:owl");
+  resolveSave();
+  await settle();
+  assert.equal(app.profile().avatarDataUrl, "mascot:owl");
+  assert.equal(app.profile().avatarSyncPending, true);
 });

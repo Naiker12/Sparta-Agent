@@ -521,6 +521,8 @@ function useCoalescedStreamingText(
 // a lone currency symbol.
 const CHAT_INLINE_MATH_RE = /(?:^|[^\\$])\$(?![\s$])[^$\n]+?\$(?!\$)/;
 
+const EMPTY_STREAMDOWN_PLUGINS: StreamdownPlugins = {};
+
 function useOptionalMarkdownPlugins(markdown: string): {
   plugins: StreamdownPlugins;
   shikiTheme?: ShikiTheme;
@@ -537,7 +539,7 @@ function useOptionalMarkdownPlugins(markdown: string): {
     key: string;
     plugins: StreamdownPlugins;
     shikiTheme?: ShikiTheme;
-  }>({ key: "", plugins: {} });
+  }>({ key: "", plugins: EMPTY_STREAMDOWN_PLUGINS });
 
   useEffect(() => {
     let cancelled = false;
@@ -577,7 +579,7 @@ function useOptionalMarkdownPlugins(markdown: string): {
       .catch(() => {
         // A response remains readable when an optional renderer fails to load.
         if (!cancelled) {
-          setLoaded({ key, plugins: {} });
+          setLoaded({ key, plugins: EMPTY_STREAMDOWN_PLUGINS });
         }
       });
 
@@ -588,7 +590,7 @@ function useOptionalMarkdownPlugins(markdown: string): {
 
   return loaded.key === key
     ? { plugins: loaded.plugins, shikiTheme: loaded.shikiTheme }
-    : { plugins: {} };
+    : { plugins: EMPTY_STREAMDOWN_PLUGINS };
 }
 
 const MarkdownTextImpl = () => {

@@ -1,9 +1,19 @@
 
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile as readRawFile } from "node:fs/promises";
 import test from "node:test";
 
 import { registerBundlerResolver } from "./helpers/kit.ts";
+
+async function readFile(url: URL, encoding: "utf8"): Promise<string> {
+  const source = await readRawFile(url, encoding);
+  // The sidebar owns the preference; its extracted dialog owns the switch.
+  if (url.pathname.endsWith("/app-sidebar.tsx")) {
+    return source + "\n" + await readRawFile(new URL("../src/components/sidebar/sidebar-dialogs.tsx", import.meta.url), encoding);
+  }
+  return source;
+}
+
 
 // The store reaches a relative import written without its extension, which bare
 // node resolves only through this. Registered before the dynamic import, since a
@@ -39,7 +49,7 @@ test("every chat delete path honours the preference", async () => {
   // there is no chat row left to reach them from.
   const files = [
     "../src/components/app-sidebar.tsx",
-    "../src/features/chat/chat-page.tsx",
+    "../src/features/chat/components/project-landing.tsx",
     "../src/features/settings/components/archived-chats-dialog.tsx",
     "../src/features/settings/components/recent-dictations-view.tsx",
     "../src/features/settings/tabs/data-tab.tsx",
@@ -61,7 +71,7 @@ test("every confirmation discloses the file deletion and can undo it", async () 
   // Every dialog that can reach a delete, with the state each one names.
   const dialogs: Array<[string, string]> = [
     ["../src/components/app-sidebar.tsx", "deleteFilesOnDelete"],
-    ["../src/features/chat/chat-page.tsx", "deleteFilesOnDelete"],
+    ["../src/features/chat/components/project-landing.tsx", "deleteFilesOnDelete"],
     [
       "../src/features/settings/components/archived-chats-dialog.tsx",
       "deleteFilesOnDelete",
@@ -94,7 +104,7 @@ test("the confirmed delete follows the switch, not the preference", async () => 
   // Reading the preference at delete time would ignore a switch the user just
   // turned off, which is the whole point of showing it.
   for (const [file, signature] of [
-    ["../src/features/chat/chat-page.tsx", /item: SidebarItem,\s*deleteFiles: boolean/],
+    ["../src/features/chat/components/project-landing.tsx", /item: SidebarItem,\s*deleteFiles: boolean/],
     [
       "../src/features/settings/components/archived-chats-dialog.tsx",
       /item: SidebarItem,\s*deleteFiles: boolean/,
@@ -127,10 +137,10 @@ test("the clear-all chain carries deleteFiles to the request", async () => {
   assert.match(clearAll, /clearStoredChats\(options\)/);
 
   const storage = await read(
-    "../src/features/chat/utils/chat-history-storage.ts",
+    "../src/features/chat/storage/clear-storage.ts",
   );
   assert.match(storage, /deleteFiles: options\.deleteFiles/);
 
-  const api = await read("../src/features/chat/api/chat-api.ts");
+  const api = await read("../src/features/chat/api/modules/threads-api.ts");
   assert.match(api, /options\.deleteFiles \? "\?delete_files=true" : ""/);
 });

@@ -13,6 +13,7 @@ export class BackendManager {
   private process: ChildProcess | undefined;
   private port: number | undefined;
   private desktopSecret: string | undefined;
+  private cancelStartup: (() => void) | undefined;
 
   async authenticate(): Promise<{ access_token: string; refresh_token: string }> {
     if (!this.port || !this.desktopSecret) throw new Error("Backend is not ready");
@@ -79,12 +80,14 @@ export class BackendManager {
         windowsHide: true,
       });
       this.process = child;
+      this.cancelStartup = () => reject(new Error("El inicio del backend fue cancelado."));
       let output = "";
       let stdoutPending = "";
       let announcedPort: number | undefined;
       const resolveWhenReady = () => {
         if (this.process !== child || this.port || !announcedPort || !this.desktopSecret) return;
         this.port = announcedPort;
+        this.cancelStartup = undefined;
         if (migrateLegacyRuntime && runtimeDir) {
           try {
             // The process reached its ready handshake, so this old environment
@@ -105,6 +108,7 @@ export class BackendManager {
         }
       };
       child.stdout?.on("data", (chunk: Buffer) => {
+        if (this.process !== child) return;
         stdoutPending += chunk.toString();
         let newline: number;
         while ((newline = stdoutPending.indexOf("\n")) !== -1) {
@@ -118,12 +122,15 @@ export class BackendManager {
         // Bound unfinished log lines without ever including a secret in diagnostics.
         if (stdoutPending.length > 8192) stdoutPending = "";
       });
-      child.stderr?.on("data", (chunk: Buffer) => read(chunk.toString()));
+      child.stderr?.on("data", (chunk: Buffer) => {
+        if (this.process === child) read(chunk.toString());
+      });
       child.once("error", (error) => {
         if (this.process === child) {
           this.process = undefined;
           this.port = undefined;
           this.desktopSecret = undefined;
+          this.cancelStartup = undefined;
         }
         reject(error);
       });
@@ -135,6 +142,7 @@ export class BackendManager {
         this.process = undefined;
         this.port = undefined;
         this.desktopSecret = undefined;
+        this.cancelStartup = undefined;
       });
     });
   }
@@ -201,9 +209,12 @@ export class BackendManager {
 
   stop(): void {
     const child = this.process;
+    const cancelStartup = this.cancelStartup;
+    this.cancelStartup = undefined;
     this.process = undefined;
     this.port = undefined;
     this.desktopSecret = undefined;
+    cancelStartup?.();
     if (child && !child.killed) {
       child.kill();
     }

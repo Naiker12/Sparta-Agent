@@ -221,7 +221,7 @@ test("the panel subscribes, and does not resurrect a row it just deleted", async
       import.meta.url,
     ),
     "utf8",
-  );
+  ).then(text => text.replaceAll("\r\n", "\n"));
   assert.match(
     src,
     /subscribeProjectSourcesUpdated\(projectId, \(\) => \{\n\s*void refresh\(\{ quiet: true \}\);\n\s*\}\),/,

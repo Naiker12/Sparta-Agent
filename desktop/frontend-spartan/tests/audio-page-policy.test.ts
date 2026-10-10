@@ -25,7 +25,7 @@ const audioPageSource = readFileSync(
   "utf8",
 );
 const chatApiSource = readFileSync(
-  new URL("../src/features/chat/api/chat-api.ts", import.meta.url),
+  new URL("../src/features/chat/api/modules/models-api.ts", import.meta.url),
   "utf8",
 );
 
@@ -58,7 +58,7 @@ test("cached GGUF quant labels remain exact when no filename is present", () => 
 test("TTS load context matches the advertised generation ceiling", () => {
   assert.match(audioPageSource, /const TTS_MAX_TOKENS = 8192/);
   assert.match(audioPageSource, /max_seq_length: TTS_MAX_TOKENS/);
-  assert.match(audioPageSource, /label="Max tokens"[\s\S]*max=\{TTS_MAX_TOKENS\}/);
+  assert.match(audioPageSource, /label=\{uiT\("runSettings\.maxTokens"\)\}[\s\S]*max=\{TTS_MAX_TOKENS\}/);
 });
 
 test("Mac rejects safetensors-only TTS and redirects sibling families", () => {
@@ -263,7 +263,7 @@ test("leaving Audio clears an unresolved microphone permission wait", () => {
 test("routed picks wait in the URL until Audio is idle", () => {
   assert.match(
     audioPageSource,
-    /if \(busyRef\.current !== null\) return;[\s\S]*handledRouteModel\.current = key;[\s\S]*handleModelSelect\(wanted/,
+    /if \(busyRef\.current !== null\) \{\s*return;\s*\}[\s\S]*handledRouteModel\.current = key;[\s\S]*handleModelSelect\(wanted/,
   );
   assert.match(audioPageSource, /\[\s*active,\s*busy,/);
 });
@@ -278,11 +278,11 @@ test("file transcription cannot overlap a pending microphone permission", () => 
 test("gallery refresh preserves fallback selection and pagination identity", () => {
   assert.match(
     audioPageSource,
-    /const generation = \+\+galleryRefreshGeneration\.current;[\s\S]*listAudioGallery\(0, PAGE_SIZE\);[\s\S]*if \(generation !== galleryRefreshGeneration\.current\) return/,
+    /const generation = \+\+galleryRefreshGeneration\.current;[\s\S]*listAudioGallery\(0, PAGE_SIZE\);[\s\S]*if \(generation !== galleryRefreshGeneration\.current\) \{\s*return/,
   );
   assert.match(
     audioPageSource,
-    /!fallbackClipRef\.current[\s\S]*merged\.length > 0/,
+    /!\(galleryCache\.selectedId \|\| fallbackClipRef\.current\)[\s\S]*merged\.length > 0/,
   );
   assert.match(
     audioPageSource,
@@ -300,14 +300,14 @@ test("Audio transcription uses backend language auto-detection", () => {
 test("older STT status requests cannot overwrite newer residency", () => {
   assert.match(
     audioPageSource,
-    /const generation = \+\+sttStatusRefreshGeneration\.current;[\s\S]*await fetchSttStatus[\s\S]*generation !== sttStatusRefreshGeneration\.current\) return;[\s\S]*catch \{[\s\S]*generation !== sttStatusRefreshGeneration\.current\) return;/,
+    /const generation = \+\+sttStatusRefreshGeneration\.current;[\s\S]*await fetchSttStatus[\s\S]*generation !== sttStatusRefreshGeneration\.current\) \{\s*return;\s*\}[\s\S]*catch \{[\s\S]*generation !== sttStatusRefreshGeneration\.current\) \{\s*return;\s*\}/,
   );
 });
 
 test("older TTS status requests cannot overwrite newer residency", () => {
   assert.match(
     audioPageSource,
-    /const generation = \+\+ttsStatusRefreshGeneration\.current;[\s\S]*await getInferenceStatus\(\)[\s\S]*generation !== ttsStatusRefreshGeneration\.current\) return;[\s\S]*catch \{[\s\S]*generation !== ttsStatusRefreshGeneration\.current\) return;/,
+    /const generation = \+\+ttsStatusRefreshGeneration\.current;[\s\S]*await getInferenceStatus\(\)[\s\S]*generation !== ttsStatusRefreshGeneration\.current\) \{\s*return;\s*\}[\s\S]*catch \{[\s\S]*generation !== ttsStatusRefreshGeneration\.current\) \{\s*return;\s*\}/,
   );
 });
 
@@ -381,7 +381,7 @@ test("a superseded refresh still reports the clips its own fetch saw", () => {
   // Otherwise a generation whose clip really persisted was told it was not saved.
   assert.match(
     audioPageSource,
-    /if \(generation !== galleryRefreshGeneration\.current\) return page\.audio;/,
+    /if \(generation !== galleryRefreshGeneration\.current\) \{\s*return page\.audio;\s*\}/,
   );
   assert.match(
     audioPageSource,
@@ -508,7 +508,7 @@ test("a failed transcribe release puts the page back in Transcribe", () => {
   // on screen offers the Eject that would retry the unload.
   assert.match(
     audioPageSource,
-    /void release\.then\(\(released\) => \{[\s\S]{0,600}?if \(!released && modeRef\.current === "speak"\) setMode\("transcribe"\);/,
+    /void release\.then\(\(released\) => \{[\s\S]{0,600}?if \(!released && modeRef\.current === "speak"\) \{\s*setMode\("transcribe"\);\s*\}/,
   );
 });
 
@@ -544,7 +544,7 @@ test("generation is claimed before the transcribe release is awaited", () => {
   // each resumed into its own generateAudio while generateAbort tracked only the last.
   assert.match(
     audioPageSource,
-    /if \(busyRef\.current\) return;\s*busyRef\.current = "generating";\s*setBusy\("generating"\);\s*const releaseInFlight = pendingTranscribeRelease\.current;\s*if \(releaseInFlight/,
+    /if \(busyRef\.current\) \{\s*return;\s*\}\s*busyRef\.current = "generating";\s*setBusy\("generating"\);\s*const releaseInFlight = pendingTranscribeRelease\.current;\s*if \(releaseInFlight/,
   );
   // And a release that failed hands the slot back rather than wedging the button.
   assert.match(

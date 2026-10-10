@@ -297,11 +297,14 @@ test("a failed grammar load releases pending callbacks before retry", async () =
   const originalError = console.error;
   let staleCallbacks = 0;
   try {
-    console.error = (message?: unknown) => {
-      if (message === "[Studio Code] Failed to highlight code:") {
-        reportFailure();
-      }
-    };
+    Object.defineProperty(invalidThemes[0], "toJSON", { value: () => ({ name: "retry-light", settings: 42 }) });
+    Object.defineProperty(invalidThemes[0], "settings", {
+      configurable: true,
+      get() {
+        setTimeout(reportFailure, 0);
+        throw new Error("Simulated theme load failure");
+      },
+    });
     for (const code of blocks) {
       plugin.highlight(
         { code, language, themes: invalidThemes },
@@ -360,9 +363,14 @@ test("a transiently failed grammar load is retried under the same cache key", as
   let staleCallbacks = 0;
   const originalError = console.error;
   try {
-    console.error = (message?: unknown) => {
-      if (message === "[Studio Code] Failed to highlight code:") reportFailure();
-    };
+    Object.defineProperty(light, "toJSON", { value: () => ({ name: "transient-light", settings: 42 }) });
+    Object.defineProperty(light, "settings", {
+      configurable: true,
+      get() {
+        setTimeout(reportFailure, 0);
+        throw new Error("Simulated theme load failure");
+      },
+    });
     assert.equal(
       plugin.highlight({ code: "value = 1\n", language, themes }, () => {
         staleCallbacks += 1;
@@ -375,7 +383,7 @@ test("a transiently failed grammar load is retried under the same cache key", as
     console.error = originalError;
   }
 
-  light.settings = [];
+  Object.defineProperty(light, "settings", { value: [], writable: true, configurable: true });
   dark.settings = [];
   const retried = await withTimeout(
     highlightOnce(plugin, { code: "value = 1\nvalue = 2\n", language, themes }),

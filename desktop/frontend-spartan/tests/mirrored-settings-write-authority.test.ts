@@ -14,7 +14,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 function read(path: string): string {
-  return readFileSync(new URL(path, import.meta.url), "utf8");
+  return readFileSync(new URL(path, import.meta.url), "utf8").replaceAll("\r\n", "\n");
 }
 
 const store = read("../src/features/chat/stores/chat-runtime-store.ts");
@@ -41,7 +41,7 @@ test("selecting a Codex checkpoint keeps deep research", () => {
   // that the clamp is provider-aware and computed once, not which helper answers it.
   assert.match(
     body,
-    /const clampsDeepResearch =\s*isExternalModelId\(modelId\) && !externalModelSupportsStudioTools\(modelId\);/,
+    /const clampsDeepResearch =\s*isExternalModelId\(modelId\) &&\s*!externalModelSupportsStudioTools\(modelId\);/,
   );
   // Every deep-research write in the setter goes through that one clamp rather than
   // re-testing the id, which is what switched it off for capable providers.
@@ -72,7 +72,7 @@ test("the clamp exempts Codex and an unresolved provider", () => {
     "function externalCheckpointRefusesDeepResearch(",
     "\n}",
   );
-  assert.match(helper, /if \(!parsed\) return false;/);
+  assert.match(helper, /if \(!parsed\) \{\s*return false;\s*\}/);
   assert.match(
     helper,
     /provider != null && provider\.providerType !== "openai_codex"/,
@@ -87,14 +87,14 @@ test("hydration backfills only from an authoritative read", () => {
   );
   assert.match(
     hydrate,
-    /const \{ settings, fromServer \} = await loadChatSettingsWithLegacyImport\(\);/,
+    /const \{ settings, fromServer \} =\s*await loadChatSettingsWithLegacyImport\(\);/,
   );
   assert.match(
     hydrate,
-    /if \(fromServer\) backfillMirroredSettings\(settings\);/,
+    /if \(fromServer\) \{\s*backfillMirroredSettings\(settings\);\s*\}/,
   );
   // An ungated call is the bug: a failed GET would push this browser's stale values.
-  assert.doesNotMatch(hydrate, /\n\s*backfillMirroredSettings\(settings\);/);
+  assert.equal((hydrate.match(/backfillMirroredSettings\(settings\)/g) ?? []).length, 1);
 });
 
 test("a missing Deep Research timeout keeps the finite default", () => {
@@ -105,11 +105,11 @@ test("a missing Deep Research timeout keeps the finite default", () => {
   );
   assert.match(
     loadTimeout,
-    /const raw = window\.localStorage\.getItem\(CHAT_DEEP_RESEARCH_MODEL_TIMEOUT_KEY\);/,
+    /const raw = window\.localStorage\.getItem\(\s*CHAT_DEEP_RESEARCH_MODEL_TIMEOUT_KEY,?\s*\);/,
   );
   assert.match(
     loadTimeout,
-    /if \(raw === null\) return DEFAULT_RESEARCH_MODEL_TIMEOUT_SECONDS;/,
+    /if \(raw === null\) \{\s*return DEFAULT_RESEARCH_MODEL_TIMEOUT_SECONDS;\s*\}/,
   );
   assert.match(
     loadTimeout,

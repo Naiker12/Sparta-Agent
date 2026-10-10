@@ -29,6 +29,14 @@ if (archives.length === 0) {
 }
 
 for (const archive of archives) {
+  const backendRoot = join(dirname(archive), 'backend')
+  if (existsSync(backendRoot)) {
+    for (const entry of readdirSync(backendRoot)) {
+      if (entry.startsWith('.venv') || entry === 'venv') {
+        throw new Error(`Development Python environment included in package: ${entry}`)
+      }
+    }
+  }
   for (const removed of ['install_llama_prebuilt.py', 'routes/whisper.py', 'routes/rag.py', 'routes/export.py']) {
     if (existsSync(join(dirname(archive), 'backend', removed))) {
       throw new Error(`Unexpected local-model resource in API-only package: ${removed}`)

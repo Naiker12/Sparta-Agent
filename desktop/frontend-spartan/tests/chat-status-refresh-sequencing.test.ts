@@ -20,7 +20,7 @@ const SOURCE = readFileSync(
     new URL("../src/features/chat/hooks/use-chat-model-runtime.ts", import.meta.url),
   ),
   "utf8",
-);
+).replace(/\r\n/g, "\n");
 
 const SYNC = SOURCE.slice(
   SOURCE.indexOf("async function syncInferenceStatusToStore("),
@@ -34,17 +34,21 @@ test("every refresh takes a generation, and the newest one wins", () => {
 });
 
 test("a superseded refresh writes nothing back to the store", () => {
-  const guard = SYNC.slice(0, SYNC.indexOf("setModels("));
+  const awaited = SYNC.indexOf("await Promise.all([");
+  assert.notEqual(awaited, -1, "the status read no longer awaits its responses");
+  const firstWrite = SYNC.indexOf("setModels(", awaited);
+  assert.ok(firstWrite > awaited);
+  const guard = SYNC.slice(awaited, firstWrite);
   assert.match(
     guard,
-    /if \(signal\?\.aborted \|\| superseded\(\)\) return;/,
+    /if \(signal\?\.aborted \|\| superseded\(\)\)\s*(?:\{\s*)?return;/,
     "the check must sit between the await and the first write",
   );
 });
 
 test("a superseded refresh does not report its failure either", () => {
   const catchBlock = SYNC.slice(SYNC.indexOf("} catch (error) {"));
-  assert.match(catchBlock, /if \(signal\?\.aborted \|\| superseded\(\)\) return;/);
+  assert.match(catchBlock, /if \(signal\?\.aborted \|\| superseded\(\)\)\s*(?:\{\s*)?return;/);
   // Otherwise a read nobody would have applied still raises a toast.
   assert.ok(
     catchBlock.indexOf("superseded()") < catchBlock.indexOf("toast.error"),

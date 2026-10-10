@@ -19,7 +19,7 @@ test("generation exposes a clickable Stop action wired to the request abort", ()
   );
   assert.match(
     source,
-    /busy === "generating"[\s\S]*icon=\{StopIcon\}[\s\S]*Stop/,
+    /busy === "generating"[\s\S]*icon=\{StopIcon\}[\s\S]*uiT\("studio\.training\.stopAction"\)/,
   );
 });
 
@@ -53,7 +53,7 @@ test("leaving the audio page aborts an in-flight transcription", () => {
   );
   assert.match(
     source,
-    /if \(controller\.signal\.aborted \|\| !activeRef\.current\) return/,
+    /if \(controller\.signal\.aborted \|\| !activeRef\.current\) \{\s*return/,
   );
 });
 
@@ -74,7 +74,7 @@ test("a saved clip the refresh missed keeps its response audio mounted", () => {
   // player rendered the empty state.
   assert.match(
     source,
-    /const selectClip = useCallback\(\(id: string, keepFallback = false\) => \{[\s\S]*if \(!keepFallback\) setFallbackClip\(null\);/,
+    /const selectClip = useCallback\(\(id: string, keepFallback = false\) => \{[\s\S]*if \(!keepFallback\) \{\s*setFallbackClip\(null\);\s*\}/,
   );
   assert.match(source, /saved: true,\s*\}\);\s*selectClip\(generated\.clip_id, true\);/);
 });

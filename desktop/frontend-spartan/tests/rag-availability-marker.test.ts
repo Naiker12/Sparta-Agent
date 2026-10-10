@@ -32,7 +32,7 @@ function resetAvailability() {
 }
 
 function readSrc(path: string) {
-  return readFile(new URL(`../src/${path}`, import.meta.url), "utf8");
+  return readFile(new URL(`../src/${path}`, import.meta.url), "utf8").then(text => text.replaceAll("\r\n", "\n"));
 }
 
 /** The body of a top-level function, so an assertion cannot pass on a neighbour's code. */
@@ -266,7 +266,7 @@ test("the dialog stops offering a Create button that can only 503", async () => 
   );
   assert.match(
     src,
-    /New knowledge base/,
+    /uiT\("ui\.new_knowledge_base"\)/,
     "the create entry point moved; this test no longer guards it",
   );
   assert.match(
@@ -297,7 +297,7 @@ test("the dialog stops offering a Create button that can only 503", async () => 
   );
   assert.match(
     src,
-    /\{ragUnavailableReason \?\? "Knowledge bases are unavailable\."\}/,
+    /\{ragUnavailableReason \?\? uiT\("ui\.knowledge_bases_are_unavailable"\)\}/,
     "a machine where RAG cannot run still reads 'No knowledge bases yet.'",
   );
 });
@@ -307,7 +307,7 @@ test("the dialog stops offering a Create button that can only 503", async () => 
 // RAG host the probe can never succeed, so a queued prompt on a thread using documents
 // was never dispatched at all.
 test("a queued prompt is not held forever by a probe that can never succeed", async () => {
-  const src = await readSrc("components/assistant-ui/thread.tsx");
+  const src = await readSrc("components/assistant-ui/thread/prompt-queue-manager.ts");
   assert.match(
     src,
     /import \{ useRagAvailabilityStore \} from "@\/features\/rag\/api\/rag-availability";/,

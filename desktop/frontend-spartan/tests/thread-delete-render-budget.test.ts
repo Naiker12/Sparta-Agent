@@ -14,10 +14,14 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 function source(path: string): string {
-  return readFileSync(new URL(`../src/${path}`, import.meta.url), "utf8");
+  return readFileSync(new URL(`../src/${path}`, import.meta.url), "utf8").replaceAll("\r\n", "\n");
 }
 
-const thread = source("components/assistant-ui/thread.tsx");
+const thread = [
+  "components/assistant-ui/thread.tsx",
+  "components/assistant-ui/thread/assistant-message-view.tsx",
+  "components/assistant-ui/thread/message-action-hooks.ts",
+].map(source).join("\n");
 
 function block(start: string): string {
   const [, rest] = thread.split(start, 2);
@@ -43,7 +47,7 @@ test("the render prop is built once, at module scope", () => {
   // each time, leaving nothing for the bail-out to skip.
   assert.match(
     thread,
-    /^const renderThreadMessage = proplessSlot\(ThreadMessage\);$/m,
+    /^export const renderThreadMessage = proplessSlot\(ThreadMessage\);$/m,
   );
 });
 

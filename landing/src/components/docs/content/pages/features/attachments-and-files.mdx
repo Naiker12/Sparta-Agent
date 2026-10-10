@@ -15,13 +15,17 @@ Durante la generación verás su estado y, al abrir el resultado, un indicador d
 
 El generador admite hasta 100.000 caracteres, 10.000 filas y 100 columnas; los datos de tablas tienen un límite de 2 MB. El visor puede mostrar solo parte de una hoja y no sustituye Excel ni reproduce todos sus gráficos, estilos o fórmulas. La descarga conserva el archivo original.
 
+El desarrollo actual rechaza archivos cuyo contenido útil está vacío: un título por sí solo no basta. Durante la creación muestra un indicador de actividad, sin un porcentaje estimado. Los detalles de ejecución Python quedan plegados y puedes expandirlos para revisar código o salida.
+
+Si al abrir un archivo aparece una pantalla blanca, conserva el formato y los pasos del fallo. Se han corregido localmente un ciclo de imports y la preparación inicial de visores, con pruebas de primera apertura y reapertura en navegador; falta verificar el resultado en Electron y en la aplicación empaquetada. Sigue el [Issue de documentos](https://github.com/Naiker12/Sparta-Agent/issues/34).
+
 ## Carpeta vinculada y adjunto
 
 Una carpeta de proyecto define un contexto de trabajo. Un adjunto aporta un archivo concreto a una conversación. No asumas que vincular una carpeta significa que todos sus archivos ya están leídos o indexados.
 
 ## Comprueba el procesamiento
 
-Si una extracción o indexación falla, revisa el mensaje correspondiente. Un archivo añadido a la interfaz puede seguir pendiente de procesamiento.
+Si una extracción falla, revisa el mensaje correspondiente. Un archivo añadido a la interfaz puede seguir pendiente de procesamiento. La edición API-only no crea un índice RAG local persistente.
 
 ## Datos que llegan al modelo
 

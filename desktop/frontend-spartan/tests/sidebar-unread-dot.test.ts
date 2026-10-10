@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const SIDEBAR = readFileSync(
-  new URL("../src/components/app-sidebar.tsx", import.meta.url),
+  new URL("../src/components/sidebar/chat-sidebar-item.tsx", import.meta.url),
   "utf8",
 );
 
@@ -21,7 +21,7 @@ test("the unread dot carries no hardcoded light/dark pair", () => {
   assert.doesNotMatch(SIDEBAR, /d07a5f|df8a6f/i);
 });
 
-// Warm there does mean stopped or errored.
-test("training run status dots are untouched", () => {
-  assert.match(SIDEBAR, /runStatusDotClass\(run\.status\)/);
+test("unread notifications are not coupled to retired training status", () => {
+  assert.doesNotMatch(SIDEBAR, /runStatusDotClass|run\.status/);
+  assert.match(SIDEBAR, /hasUnreadActivity/);
 });

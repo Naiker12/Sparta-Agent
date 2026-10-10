@@ -591,14 +591,13 @@ SIDEBAR_MENU_ITEM_DEFAULTS = {
 # sends every id on each save, so a missing id 422s the whole personalization PUT, and a legacy
 # record that predates sidebarNav is served this default as if it were an explicit remote choice.
 SIDEBAR_NAV_ITEM_DEFAULTS = {
-    "hub": True,
     "projects": True,
-    "images": True,
-    "video": True,
     "audio": False,
     "recipes": False,
     "export": False,
     "api": False,
+    "memory": False,
+    "tasks": False,
 }
 
 MAX_SIDEBAR_NAV_INPUT_ITEMS = 4 * len(SIDEBAR_NAV_ITEM_DEFAULTS)
@@ -648,6 +647,8 @@ class PersonalizationSidebarNavItem(BaseModel):
         "recipes",
         "export",
         "api",
+        "memory",
+        "tasks",
     ]
     pinned: bool = True
 
@@ -723,7 +724,12 @@ class PersonalizationCustomization(BaseModel):
     ) -> list[PersonalizationSidebarNavItem]:
         # Like sidebarMenu, but order is preserved: dedupe, then append missing.
         seen: set[str] = set()
-        items = [item for item in value if not (item.id in seen or seen.add(item.id))]
+        # Accept old IDs while reading saved preferences, but retire their rows.
+        items = [
+            item for item in value
+            if item.id in SIDEBAR_NAV_ITEM_DEFAULTS
+            and not (item.id in seen or seen.add(item.id))
+        ]
         for item_id, pinned in SIDEBAR_NAV_ITEM_DEFAULTS.items():
             if item_id not in seen:
                 items.append(PersonalizationSidebarNavItem(id = item_id, pinned = pinned))

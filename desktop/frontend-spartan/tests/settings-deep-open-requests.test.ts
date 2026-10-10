@@ -38,14 +38,14 @@ test("closing the dialog drops a deep-open the panel never reached", () => {
 
 test("leaving Data drops a deep-open the panel never reached", () => {
   reset();
-  store.getState().openArchivedMedia("images");
+  store.getState().openArchivedChats();
   store.getState().setActiveTab("about");
   assert.equal(store.getState().archivedRequested, null);
 });
 
 test("an ordinary open does not inherit an abandoned deep-open", () => {
   reset();
-  store.getState().openArchivedMedia("videos");
+  store.getState().openArchivedChats();
   store.getState().openDialog("voice");
   assert.equal(store.getState().archivedRequested, null);
 });
@@ -60,11 +60,11 @@ test("reselecting Data navigates nowhere, so the deep-open still stands", () => 
 
 test("reopening on Data does not drop a deep-open still in flight", () => {
   reset();
-  store.getState().openArchivedMedia("images");
+  store.getState().openArchivedChats();
   store.getState().openDialog();
-  assert.equal(store.getState().archivedRequested, "images");
+  assert.equal(store.getState().archivedRequested, "chats");
   store.getState().openDialog("data");
-  assert.equal(store.getState().archivedRequested, "images");
+  assert.equal(store.getState().archivedRequested, "chats");
 });
 
 test("consuming it clears it, so a later visit to Data is an ordinary one", () => {

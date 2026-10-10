@@ -1,0 +1,361 @@
+{
+  "date": "2026-10-10",
+  "version": "0.4.0",
+  "tests": 3524,
+  "passed": 3454,
+  "failed": 70,
+  "skipped": 0,
+  "classification": "Mechanical classification; every remaining failure requires individual review.",
+  "failures": [
+    {
+      "location": "tests/appearance-accent-vars.test.ts:253:1",
+      "name": "loaded-model stripes stay on the semantic success color",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/audio-mode-task-filter.test.ts:21:1",
+      "name": "Hub discovery follows the active audio mode",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/audio-picker-policy.test.ts:521:1",
+      "name": "a local Whisper checkpoint is not advertised as a routable ASR row",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/chat-local-model-options.test.ts:1:1",
+      "name": "tests\\chat-local-model-options.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/chat-model-residency.test.ts:81:1",
+      "name": "the selector's tick asks the caller, and defaults to the old rule",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/chat-model-residency.test.ts:141:1",
+      "name": "the hub cards ask residency before saying Loaded",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/chat-model-residency.test.ts:160:1",
+      "name": "another runtime loading re-reads the chat status",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/chat-model-residency.test.ts:184:1",
+      "name": "an eviction drops the pick, not just the loaded marks",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/chat-remembers-its-model.test.ts:1:1",
+      "name": "tests\\chat-remembers-its-model.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/context-window-visible.test.ts:120:1",
+      "name": "the header renders the bar on the window alone, with usage optional",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/dataset-data-recipes-navigation.test.ts:1:1",
+      "name": "tests\\dataset-data-recipes-navigation.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/export-gguf-token-fallback.test.ts:1:1",
+      "name": "tests\\export-gguf-token-fallback.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/export-progress-percent.test.ts:1:1",
+      "name": "tests\\export-progress-percent.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/hub-recovery-paths.test.ts:23:1",
+      "name": "clients with their own request keep their own reachability",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/hub-recovery-paths.test.ts:36:1",
+      "name": "the panel still reads the classified cause, not that boolean",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/image-generation-defaults.test.ts:1:1",
+      "name": "tests\\image-generation-defaults.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/image-generation-stop.test.ts:1:1",
+      "name": "tests\\image-generation-stop.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/lan-access-state.test.ts:207:1",
+      "name": "the pending-password message is desktop-aware",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/linked-folders-lease-gate.test.ts:1:1",
+      "name": "tests\\linked-folders-lease-gate.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/llama-extra-args-panel-hydration.test.ts:1:1",
+      "name": "tests\\llama-extra-args-panel-hydration.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/loaded-build-panel-rows.test.ts:1:1",
+      "name": "tests\\loaded-build-panel-rows.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/loaded-models-backcompat.test.ts:1:1",
+      "name": "tests\\loaded-models-backcompat.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/loaded-models-barrel-order.test.ts:44:1",
+      "name": "the cycle this order defends against is still present",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-barrel-order.test.ts:52:1",
+      "name": "general-tab reads the keys at module scope, not inside a component",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-dismiss.test.ts:105:1",
+      "name": "the dismissal key is cleared by Reset all local preferences",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-dismiss.test.ts:113:1",
+      "name": "the card carries a close button, and a load brings it back",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-dismiss.test.ts:155:1",
+      "name": "a row ejects with the eject glyph, the header closes with an X",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-drag-restore.test.ts:108:1",
+      "name": "the reclamp effect re-runs when the panel node appears",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-drag-restore.test.ts:200:1",
+      "name": "only the pill consumes the sentinel, since only it has a click",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-eject-unverified.test.ts:26:1",
+      "name": "an unreadable verification is its own outcome, not `ejected`",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-eject-unverified.test.ts:39:1",
+      "name": "the STT re-read returns the sentinel rather than null on a failed read",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-eject-unverified.test.ts:53:1",
+      "name": "the sentinel is checked before the truthiness test that would hide it",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-pending-reset.test.ts:59:1",
+      "name": "the hook drops pending loads once recording is turned off",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-pending-reset.test.ts:173:1",
+      "name": "recording is gated on the preference, not on whether the card shows",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-platform-matrix.test.ts:1:1",
+      "name": "tests\\loaded-models-platform-matrix.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/loaded-models-q8-precision-repro.test.ts:1:1",
+      "name": "tests\\loaded-models-q8-precision-repro.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/loaded-models-settled-retire.test.ts:41:1",
+      "name": "a read that failed outright is evidence about nothing",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-settled-retire.test.ts:51:1",
+      "name": "a readable source is still retired, or the row would never go",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-sources.test.ts:1:1",
+      "name": "tests\\loaded-models-sources.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/mac-titlebar-optical-alignment.test.ts:24:1",
+      "name": "mac chat and media headers share the lowered control row",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/media-eject-busy-state.test.ts:1:1",
+      "name": "tests\\media-eject-busy-state.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/media-generation-preset-claims.test.ts:1:1",
+      "name": "tests\\media-generation-preset-claims.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/media-idle-unload-api-only.test.ts:1:1",
+      "name": "tests\\media-idle-unload-api-only.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/media-load-cancel.test.ts:1:1",
+      "name": "tests\\media-load-cancel.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/media-status-sequencing.test.ts:27:3",
+      "name": "the images page lets only the newest status read write",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/media-status-sequencing.test.ts:53:3",
+      "name": "the images page claims its ticket before awaiting, not after",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/media-status-sequencing.test.ts:27:3",
+      "name": "the video page lets only the newest status read write",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/media-status-sequencing.test.ts:53:3",
+      "name": "the video page claims its ticket before awaiting, not after",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/mmproj-fallback.test.ts:86:1",
+      "name": "attachment and send gates forward projector fallback state",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/overlay-scrollbar-gutter.test.ts:248:1",
+      "name": "right-edge action lists reserve the gutter they publish",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/per-model-params-hydration.test.ts:487:1",
+      "name": "every site that re-applies model defaults asks for the replay",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/per-model-params-hydration.test.ts:553:1",
+      "name": "a remembered budget is capped by a non-GGUF load",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/pr9057-video-simulation.test.ts:1:1",
+      "name": "tests\\pr9057-video-simulation.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/project-attachment-target-adoption.test.ts:135:1",
+      "name": "the run keeps the project it started in",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/project-attachment-target-adoption.test.ts:238:1",
+      "name": "the project composer's choice survives the swap to a thread",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/provider-max-output-tokens-guards.test.ts:188:1",
+      "name": "every clamp site waits for a resolved provider",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/provider-max-output-tokens.test.ts:13:1",
+      "name": "all max-output cap callers pass the selected connection override",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/provider-max-output-tokens.test.ts:40:1",
+      "name": "the connection editor exposes a bounded optional cap and warning",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/provider-max-output-tokens.test.ts:86:1",
+      "name": "preset application clamps live Max Tokens to the active external cap",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/provider-max-output-tokens.test.ts:106:1",
+      "name": "lowering an active external cap immediately clamps live Max Tokens",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/qwen-thinking-size-gate.test.ts:81:1",
+      "name": "all four copies of the gate pattern stay in sync",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/read-aloud-tts-model-row.test.ts:1:1",
+      "name": "tests\\read-aloud-tts-model-row.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/remote-access-state.test.ts:241:1",
+      "name": "the pending-password message is desktop-aware",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/spec-fallback-partial-offload-copy.test.ts:1:1",
+      "name": "tests\\spec-fallback-partial-offload-copy.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/verdict-poll-stall-guard.test.ts:1:1",
+      "name": "tests\\verdict-poll-stall-guard.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/video-download-plan-payload.test.ts:1:1",
+      "name": "tests\\video-download-plan-payload.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/video-gallery-clear-confirmation.test.ts:1:1",
+      "name": "tests\\video-gallery-clear-confirmation.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/video-generate-refusal-resync.test.ts:1:1",
+      "name": "tests\\video-generate-refusal-resync.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/video-h3-task-dialog.test.ts:1:1",
+      "name": "tests\\video-h3-task-dialog.test.ts",
+      "category": "file_or_import_failure"
+    },
+    {
+      "location": "tests/video-keyframe-canvas.test.ts:1:1",
+      "name": "tests\\video-keyframe-canvas.test.ts",
+      "category": "file_or_import_failure"
+    }
+  ]
+}

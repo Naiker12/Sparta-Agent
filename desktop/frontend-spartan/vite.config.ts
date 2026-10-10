@@ -19,7 +19,9 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ["@dagrejs/dagre", "@dagrejs/graphlib", "docx-preview"],
+    // Lazy viewers must not trigger dependency discovery and reload the chat
+    // on the first document click during desktop development.
+    include: ["@dagrejs/dagre", "@dagrejs/graphlib", "docx-preview", "xlsx", "react-pdf", "pdfjs-dist"],
   },
   server: {
     host: "0.0.0.0",

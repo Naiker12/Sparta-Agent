@@ -80,7 +80,7 @@ test("a non-string model is refused rather than handed to the tab", () => {
     useSettingsPanelPrefsStore.getState(),
   ) as { agentsModel: unknown; fineTuneAction: string };
   assert.equal(out.agentsModel, null);
-  assert.equal(out.fineTuneAction, "train");
+  assert.equal(out.fineTuneAction, "recipes");
 });
 
 test("a persisted blob cannot replace the store actions", () => {
@@ -201,7 +201,7 @@ test("an unreadable record leaves the defaults", () => {
   assert.equal(out.agentsModel, null);
   assert.equal(out.agentsVariant, null);
   assert.equal(out.resourcesLiveUpdates, true);
-  assert.equal(out.fineTuneAction, "train");
+  assert.equal(out.fineTuneAction, "recipes");
 });
 
 // Last: it rehydrates the store. Corrupt JSON must not take settings down.
