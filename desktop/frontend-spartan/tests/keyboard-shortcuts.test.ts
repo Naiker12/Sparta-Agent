@@ -265,22 +265,13 @@ test("Reset all local preferences clears the rebound chords", async () => {
 test("every locale overlay carries the shortcut strings", async () => {
   const locales = ["en", "es"];
   for (const locale of locales) {
-    const source = await readFile(
-      new URL(`../src/i18n/locales/${locale}/settings/keyboard-shortcuts.ts`, import.meta.url),
-      "utf8",
-    );
-    const subtree = source;
-    for (const key of ["title", "resetAll", "conflictShadowed", "groups"]) {
-      assert.ok(
-        subtree.includes(`"${key}":`),
-        `${locale} is missing settings.keyboardShortcuts.${key}`,
-      );
+    const { keyboardShortcuts: catalog } = await import(`../src/i18n/locales/${locale}/settings/keyboard-shortcuts.ts`);
+    for (const key of ["title", "resetAll", "conflictShadowed"]) {
+      assert.equal(typeof catalog[key], "string", `${locale} is missing ${key}`);
     }
+    assert.ok(catalog.groups && typeof catalog.groups === "object");
     for (const def of SHORTCUT_DEFS) {
-      assert.ok(
-        subtree.includes(`"${def.id}": {`),
-        `${locale} is missing settings.keyboardShortcuts.actions.${def.id}`,
-      );
+      assert.ok(catalog.actions[def.id], `${locale} is missing ${def.id}`);
     }
   }
 });
@@ -322,10 +313,9 @@ test("a Super chord off macOS records nothing rather than a different chord", ()
 // user sees outside the shortcuts tab. Hard-coded, they keep advertising the
 // shipped chord after a rebind, and a dead one after a clear.
 test("the sidebar hints render the bound chord, not the shipped default", async () => {
-  const source = await readFile(
-    new URL("../src/components/app-sidebar.tsx", import.meta.url),
-    "utf8",
-  );
+  const sources = await Promise.all(["app-sidebar.tsx", "sidebar/sidebar-user-footer.tsx", "sidebar/sidebar-brand-header.tsx"].map(file =>
+    readFile(new URL(`../src/components/${file}`, import.meta.url), "utf8")));
+  const source = sources.join("\n");
   for (const literal of ['"⌘K"', '"Ctrl+K"', "<DropdownMenuShortcut>⌘,"]) {
     assert.ok(
       !source.includes(literal),

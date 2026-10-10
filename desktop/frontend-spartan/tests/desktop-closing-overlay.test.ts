@@ -87,7 +87,7 @@ test("the backend hook routes both quit events into the store", async () => {
   );
   assert.match(
     hook,
-    /isExternalServer, closing,/,
+    /isExternalServer,\s*closing,/,
     "the hook stopped returning the flag",
   );
 });
@@ -190,8 +190,8 @@ test("the overlay names the wait it is covering", async () => {
   const screen = await source("components/tauri/startup-screen.tsx");
   const body = closingContent(screen);
 
-  assert.match(body, /Closing (?:Spartan Agent|Unsloth|Spartan Agent) Desktop\.\.\./);
-  assert.match(body, /Shutting down the backend\./);
+  assert.match(body, /shell\.startup\.closing/);
+  assert.match(body, /shell\.startup\.shuttingDown/);
   // A still screen reads as the freeze it is there to explain.
   assert.match(body, /<Spinner className="size-6 text-primary" \/>/);
 });
