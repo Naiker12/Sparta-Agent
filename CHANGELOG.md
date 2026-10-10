@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.4.0] - Unreleased
+
+### Added
+
+- Propuestas de automatización desde el chat y el compositor, con revisión de horario, zona horaria, proveedor y modelo antes de activar.
+- Confirmación de tareas desde Telegram vinculada al propietario, con caducidad y sin permisos implícitos de archivos.
+- Guía de automatizaciones y regresiones de navegador para activación, documentos y presentación de herramientas.
+
+### Fixed
+
+- Separación entre guardar borrador, probar manualmente y activar una tarea programada; errores de configuración visibles.
+- Apertura del chat de una ejecución reciente cuando la aplicación está visible.
+- Rechazo de documentos vacíos, preparación inicial de visores y ciclo de imports de herramientas Python.
+- Presentación de generación de documentos, movimiento reducido y detalles Python plegados.
+- Persistencia de la mascota elegida cuando la sincronización remota está pendiente o falla.
+- Contratos de pruebas migrados y límites de tiempo de integración Git en Windows.
+- Exclusión de entornos Python de desarrollo del instalador y sincronización de la versión en enlaces de descarga.
+
+### Changed
+
+- Landing y documentación actualizadas con alcance y diagnóstico de las funciones actuales.
+- Dependencias de landing revisadas; auditoría local sin vulnerabilidades reportadas.
+
+### Release
+
+- Candidato en preparación: el tag y la publicación requieren resolver los bloqueos de validación registrados en la auditoría de 0.4.0.
+
 ## [0.3.3] - 2026-10-02
 
 ### Added

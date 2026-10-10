@@ -209,13 +209,14 @@ def activate_task(task_id, owner_subject, provider_id, model):
         if not row: raise LookupError('Task not found')
         task = _configured_task(row)
         now = _now()
-        due = task['runAt'] if task['scheduleType'] == 'once' else next_occurrence(task, now)
-        if due is None or due <= now: raise ValueError('Choose a future schedule')
+        # Updating the model of an active task must not postpone its pending run.
+        due = row['next_run_at'] if row['enabled'] else (task['runAt'] if task['scheduleType'] == 'once' else next_occurrence(task, now))
+        if due is None or (not row['enabled'] and due <= now): raise ValueError('Choose a future schedule')
         config = json.loads(row['schedule_config'])
         config.update(providerId=provider_id, model=model, automaticConsent=True)
         from core.inference.automation_workspace import workspace_binding
         config['workspaceBinding'] = workspace_binding(task)
-        conn.execute('UPDATE agent_tasks SET enabled=1,next_run_at=?,schedule_config=?,updated_at=? WHERE id=?', (due, json.dumps(config), now, task_id))
+        conn.execute("UPDATE agent_tasks SET enabled=1,next_run_at=?,schedule_config=?,last_error=NULL,status='scheduled',updated_at=? WHERE id=?", (due, json.dumps(config), now, task_id))
         conn.commit()
         return get_task(task_id, owner_subject)
     finally: conn.close()
@@ -238,8 +239,14 @@ def claim_due_task():
             task = _configured_task(row)
             task['scheduledAt'] = row['next_run_at']
             if not task.get('automaticConsent') or not task.get('providerId') or not task.get('model'):
-                continue  # Legacy enabled tasks never gain implicit credential access.
-            next_run = next_occurrence(task, now)
+                # Legacy tasks need activation, but must not look active forever.
+                conn.execute("UPDATE agent_tasks SET enabled=0,next_run_at=NULL,status='failed',last_error=?,updated_at=? WHERE id=?", ('Choose a provider and model and confirm schedule activation', now, task['id']))
+                continue
+            try:
+                next_run = next_occurrence(task, now)
+            except (ValueError, KeyError, TypeError):
+                conn.execute("UPDATE agent_tasks SET enabled=0,next_run_at=NULL,status='failed',last_error=?,updated_at=? WHERE id=?", ('Invalid schedule or unavailable timezone; edit and reactivate the automation', now, task['id']))
+                continue
             run_id = str(uuid.uuid4())
             from storage.studio.automation_chats import create_run_chat
             try:
@@ -250,7 +257,7 @@ def claim_due_task():
             conn.execute("INSERT INTO agent_task_runs(id,task_id,started_at,heartbeat_at,thread_id,status) VALUES(?,?,?,?,?,'running')", (run_id, task['id'], now, now, thread_id))
             from core.inference.automation_delivery import enqueue
             enqueue(conn, task, run_id, 'started', now, account=destinations.get(task['ownerSubject']))
-            conn.execute('UPDATE agent_tasks SET next_run_at=?,enabled=?,last_run_at=? WHERE id=?', (next_run, next_run is not None, now, task['id']))
+            conn.execute("UPDATE agent_tasks SET next_run_at=?,enabled=?,last_run_at=?,last_error=NULL,status='running' WHERE id=?", (next_run, next_run is not None, now, task['id']))
             conn.commit()
             return task, run_id
         conn.commit()
@@ -271,7 +278,7 @@ def task_notifications(owner_subject, since):
         rows = conn.execute("""SELECT r.id||':started' AS id,'started' AS status,r.started_at AS finishedAt,r.thread_id AS threadId,t.schedule_config FROM agent_task_runs r JOIN agent_tasks t ON t.id=r.task_id WHERE t.owner_subject=? AND r.started_at>? AND r.thread_id IS NOT NULL
         UNION ALL SELECT r.id||':finished',r.status,r.finished_at,r.thread_id,t.schedule_config FROM agent_task_runs r JOIN agent_tasks t ON t.id=r.task_id WHERE t.owner_subject=? AND r.finished_at>?
         ORDER BY finishedAt,id LIMIT 100""", (owner_subject, since, owner_subject, since)).fetchall()
-        return [{'id': row['id'], 'status': row['status'], 'threadId': row['threadId'], 'finishedAt': row['finishedAt'], 'notify': json.loads(row['schedule_config']).get('notify', True)} for row in rows]
+        return [{'id': row['id'], 'status': row['status'], 'threadId': row['threadId'], 'projectId': json.loads(row['schedule_config']).get('projectId'), 'finishedAt': row['finishedAt'], 'notify': json.loads(row['schedule_config']).get('notify', True)} for row in rows]
     finally: conn.close()
 
 def begin_task_preview(task_id: str, owner_subject: str) -> str:
@@ -310,6 +317,7 @@ def finish_task_preview(run_id: str, output: str | None = None, error: str | Non
             conn.execute("UPDATE agent_task_runs SET finished_at=?,status=?,output=COALESCE(?,output),error=? WHERE id=? AND status='running'", (now, status, output, error, run_id))
             task_row = conn.execute('SELECT t.* FROM agent_tasks t JOIN agent_task_runs r ON r.task_id=t.id WHERE r.id=? AND r.thread_id IS NOT NULL', (run_id,)).fetchone()
             if task_row:
+                conn.execute('UPDATE agent_tasks SET last_error=?,status=?,updated_at=? WHERE id=?', (error, status, now, task_row['id']))
                 from core.inference.automation_delivery import enqueue
                 enqueue(conn, _configured_task(task_row), run_id, 'finished', now, status)
         conn.commit()

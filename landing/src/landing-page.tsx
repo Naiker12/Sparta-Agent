@@ -373,6 +373,19 @@ export default function LandingPage({
             <a href={getPublicUrl("?docs=features/channels")}>Ver Canales y Telegram <ArrowUpRight /></a>
           </div>
         </section>
+        <section className="benefits-section site-container" aria-labelledby="automations-title">
+          <div className="section-heading">
+            <span className="eyebrow">AUTOMATIZACIONES · EN DESARROLLO</span>
+            <h2 id="automations-title">De una petición a una tarea programada.</h2>
+            <p>El desarrollo actual permite preparar un plan desde el chat, revisar sus opciones y confirmar la activación. Su integración y validación en la app distribuida están pendientes.</p>
+          </div>
+          <div className="benefits-grid">
+            <article><MessageSquare aria-hidden="true" /><h3>Describe lo que necesitas.</h3><p>Pide una tarea desde el chat o prepara una propuesta desde Telegram con tu cuenta autorizada.</p></article>
+            <article><Clock3 aria-hidden="true" /><h3>Revisa antes de activar.</h3><p>Elige horario, zona horaria y modelo. Guardar un borrador o probarlo manualmente no lo activa.</p></article>
+            <article><ShieldCheck aria-hidden="true" /><h3>Consulta el resultado en su chat.</h3><p>Sparta debe permanecer abierto. La propuesta no concede acceso a archivos; revisa los permisos y las opciones de búsqueda.</p></article>
+          </div>
+          <div className="integration-note"><BookOpen aria-hidden="true" />Estados, confirmación y diagnóstico.<a href={getPublicUrl("?docs=features/automations")}>Ver Automatizaciones <ArrowUpRight /></a></div>
+        </section>
         <section
           id="descargas"
           className="downloads-section site-container"

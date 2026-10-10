@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_call:
   pull_request:
     branches: [main]
   push:
@@ -27,6 +28,9 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
+
+      - name: Product version consistency
+        run: node scripts/check-product-version.mjs
 
       - name: Electron frontend regression tests
         run: npm --prefix desktop/frontend-spartan run test:electron
@@ -56,6 +60,12 @@ jobs:
       - name: Unit and browser regression tests
         run: npm test
 
+      - name: Automation creation and activation in the browser
+        run: npm run test:automations:browser
+
+      - name: Document first open and format switching in the browser
+        run: npm run test:documents:browser
+
   backend-contracts:
     runs-on: ubuntu-latest
     steps:
@@ -64,7 +74,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install CPU-only test dependencies
-        run: pip install pytest fastapi==0.141.1 PyJWT httpx structlog cryptography python-multipart pymupdf openpyxl python-docx PyYAML numpy Pillow filelock ddgs
+        run: pip install pytest fastapi==0.141.1 PyJWT httpx structlog cryptography python-multipart pymupdf openpyxl python-docx PyYAML numpy Pillow filelock ddgs tzdata
       - name: Authentication boundary and credential rotation
         working-directory: desktop/backend-spartan
         env:
@@ -79,4 +89,10 @@ jobs:
         working-directory: desktop/backend-spartan
         env:
           PYTHONPATH: .
-        run: python -m pytest --noconftest tests/test_document_generation.py tests/test_project_folder_uniqueness.py -q
+        run: python -m pytest --noconftest tests/test_document_generation.py tests/test_document_prompt_nudge.py tests/test_project_folder_uniqueness.py -q
+
+      - name: Automation activation, scheduling and execution
+        working-directory: desktop/backend-spartan
+        env:
+          PYTHONPATH: .
+        run: python -m pytest --noconftest tests/test_automation_proposals.py tests/test_automation_schedule_flow.py tests/test_automation_chats.py tests/test_automation_executor.py tests/test_automation_scheduler_workers.py tests/test_tasks_redesign.py tests/test_task_preview.py tests/test_automation_delivery.py -q

@@ -1,4 +1,5 @@
 import { translate as uiTranslate } from "@/i18n";
+import { AutomationSchedulingEditor, type AutomationProposal } from "@/features/tasks";
 import { useT as useUiT } from "@/i18n";
 /**
  * Spartan - Menú de Herramientas y Acciones del Composer (ComposerToolsMenu)
@@ -103,6 +104,7 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
   researchAvailable,
 }) => {
   const uiT = useUiT();
+  const [scheduleProposal, setScheduleProposal] = useState<AutomationProposal | null>(null);
 
   const navigate = useNavigate();
   const toolsEnabled = useChatRuntimeStore((s) => s.toolsEnabled);
@@ -433,6 +435,7 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
 
   return (
     <>
+      {scheduleProposal && <AutomationSchedulingEditor plan={scheduleProposal} onDismiss={() => setScheduleProposal(null)} />}
       <PromptStorageDialog
         open={promptStorageOpen}
         onOpenChange={setPromptStorageOpen}
@@ -591,6 +594,10 @@ export const ComposerToolsMenu: FC<ComposerToolsMenuProps> = ({
               </DropdownMenuSubContent>
             </DropdownMenuSub>
           ) : null}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => setScheduleProposal({ title: "", prompt: aui.composer().getState().text })}>
+            {uiT("ui.automation_schedule_from_chat")}
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <NewProjectDialog

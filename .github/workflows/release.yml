@@ -16,7 +16,11 @@ env:
   NODE_OPTIONS: "--max-old-space-size=8192"
 
 jobs:
+  quality:
+    uses: ./.github/workflows/ci.yml
+
   build:
+    needs: quality
     strategy:
       fail-fast: false
       matrix:
@@ -35,8 +39,7 @@ jobs:
       - name: Validate release tag matches package version
         shell: bash
         run: |
-          VERSION="$(node -p 'require("./package.json").version')"
-          test "$GITHUB_REF_NAME" = "v$VERSION"
+          node scripts/check-product-version.mjs "$GITHUB_REF_NAME"
       - uses: actions/setup-node@v5
         with:
           node-version: 22

@@ -1,7 +1,7 @@
 {
   "name": "sparta-agent",
   "private": true,
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "Local-first agentic IDE for high-performance engineering teams",
   "author": "Naiker12",
   "license": "MIT",
@@ -27,6 +27,8 @@
     "sparta": "node ./bin/sparta.mjs",
     "test": "vitest run",
     "test:electron:smoke": "npm --prefix ./desktop/frontend-spartan run build && node tests/electron-startup.smoke.mjs",
+    "test:automations:browser": "node tests/automations-flow.browser.mjs",
+    "test:documents:browser": "node tests/document-preview-flow.browser.mjs",
     "test:watch": "vitest",
     "postinstall": "node -e \"try { require('fs').rmSync('node_modules/.vite', { recursive: true, force: true }); console.log('✓ Vite cache cleaned'); } catch(e) { /* ignore */ }\""
   },

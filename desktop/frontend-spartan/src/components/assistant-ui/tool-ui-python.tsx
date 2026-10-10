@@ -6,13 +6,18 @@ import { Spinner } from "@/components/ui/spinner";
 import { authFetch } from "@/features/auth";
 import { useT } from "@/i18n";
 
+// eslint-disable-next-line no-restricted-imports
 import {
   preferSanitizedFullToolOutput,
-  useChatRuntimeStore,
-  useToolAwaitingApproval,
   useToolOutputFor,
   useToolPaneScope,
-} from "@/features/chat";
+} from "@/features/chat/tool-output-scope";
+// Tool renderers cannot load the chat barrel: it imports the message renderer
+// that registers this component, causing a first-load initialization cycle.
+// eslint-disable-next-line no-restricted-imports
+import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
+// eslint-disable-next-line no-restricted-imports
+import { useToolAwaitingApproval } from "@/features/chat/tool-approval";
 import { stringifyToolResult } from "@/lib/strip-ansi";
 import type { ToolCallMessagePartComponent } from "@assistant-ui/react";
 import { useToolArgsStatus } from "@assistant-ui/react";
@@ -45,8 +50,11 @@ function isStructuredResult(val: unknown): val is StructuredResult {
   const v = val as { files?: unknown };
   return (
     "text" in val &&
+    typeof (val as { text?: unknown }).text === "string" &&
     "images" in val &&
+    Array.isArray((val as { images?: unknown }).images) &&
     "sessionId" in val &&
+    typeof (val as { sessionId?: unknown }).sessionId === "string" &&
     // Persisted content can carry anything, and the card maps over this and
     // reads name off each entry.
     isSandboxFileList(v.files)
@@ -147,8 +155,8 @@ const PythonToolUIImpl: ToolCallMessagePartComponent = ({
   const uiT = useUiT();
 
   const t = useT();
-  const code = (args as { code?: string })?.code ?? "";
-  const firstLine = code.split("\n")[0]?.slice(0, 60) ?? "";
+  const rawCode = (args as { code?: unknown })?.code;
+  const code = typeof rawCode === "string" ? rawCode : "";
   const isRunning = status?.type === "running";
   // Args still streaming = the model is WRITING the code, not running it yet.
   const { propStatus } = useToolArgsStatus();
@@ -208,32 +216,26 @@ const PythonToolUIImpl: ToolCallMessagePartComponent = ({
   }
 
   return (
-    // Status, output and images collapse from history; the executed script
-    // renders outside ToolFallbackContent so it stays visible on reopen
-    // (#7165). Terminal keeps its command inside the collapsible -- a one-line
-    // command is not the artifact a user comes back for, a script is.
-    <ToolFallbackRoot defaultOpen={isRunning}>
+    // Keep implementation details available on demand instead of filling
+    // the conversation with every library probe and installation script.
+    <ToolFallbackRoot defaultOpen={false}>
       <ToolFallbackTrigger
-        toolName={
-          firstLine
-            ? `${t("chat.tools.python")}: ${firstLine}`
-            : t("chat.tools.python")
-        }
+        toolName={t("chat.tools.python")}
         status={status}
         icon={CodeIcon}
       />
-      {code && (
-        <div className="mt-1 pl-5">
-          <ToolCodeCell
-            label={uiT("ui.script")}
-            code={code}
-            language="python"
-            downloadName="script.py"
-            streaming={isWriting}
-          />
-        </div>
-      )}
       <ToolFallbackContent>
+        {code && (
+          <div className="mt-1 pl-5">
+            <ToolCodeCell
+              label={uiT("ui.script")}
+              code={code}
+              language="python"
+              downloadName="script.py"
+              streaming={isWriting}
+            />
+          </div>
+        )}
         <div className="border-l-2 border-muted-foreground/20 pl-2">
           {/* Output */}
           {isRunning ? (

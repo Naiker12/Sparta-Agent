@@ -66,8 +66,12 @@ async def _worker(account):
                     continue
                 try:
                     conversation_reply = False
+                    from . import automation_plans
+                    schedule_result = automation_plans.resolve(account, message) if not message['media'] else None
                     requested_name = profile.name_request(account_id, message['user_id'], message['text']) if not message['media'] else None
-                    if requested_name:
+                    if schedule_result is not None:
+                        output = schedule_result
+                    elif requested_name:
                         if profile.change_name(account_id, message['user_id'], requested_name):
                             run_id = work.start(account_id, update_id, message)
                             work.set_stage(run_id, account_id, 'updating_profile')
@@ -185,7 +189,9 @@ async def _worker(account):
                             repo.event(account_id, 'delivery_revoked')
                             continue
                     else:
-                        if not message['media'] and command(message['text']) == '/projects':
+                        if getattr(output, 'automation_plan_token', None):
+                            await transport.send(message['chat_id'], output, reply_markup=automation_plans.keyboard(current, message, output.automation_plan_token))
+                        elif not message['media'] and command(message['text']) == '/projects':
                             await transport.send(message['chat_id'], output, reply_markup=controls.project_keyboard(current, message))
                         else:
                             await transport.send(message['chat_id'], output)

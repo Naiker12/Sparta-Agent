@@ -1,0 +1,45 @@
+---
+title: "Automatizaciones"
+description: "Prepara una tarea, revisa su horario y modelo y confirma cuándo puede ejecutarse."
+---
+
+## Prepara y activa una tarea
+
+Desde **Automatizaciones**, escribe las instrucciones, elige el horario y revisa la zona horaria. Selecciona un proveedor y un modelo disponibles antes de activar la tarea.
+
+| Acción o estado | Qué significa |
+| --- | --- |
+| Guardar borrador | Conserva la configuración sin programar ejecuciones |
+| Guardar y activar | Solicita confirmación y programa la tarea con el modelo elegido |
+| Probar manualmente | Ejecuta una prueba; no activa un borrador ni una tarea pausada |
+| Pausada | No se ejecuta por horario hasta que la actives |
+| Error | Revisa el mensaje, la conexión y el modelo antes de reintentar |
+
+**Sparta y su backend deben permanecer abiertos** para ejecutar las tareas. El programador no es un servicio en la nube ni enciende el equipo. Revisa la siguiente ejecución después de activar o modificar el horario.
+
+## Programar desde el chat
+
+El desarrollo actual añade una propuesta revisable desde la conversación y la opción **Programar tarea** en el menú **+** del compositor. Por ejemplo: «Cada lunes a las 9:00, busca noticias públicas sobre energía y prepara un resumen con fuentes».
+
+1. Revisa las instrucciones y el horario propuestos.
+2. Ajusta la zona horaria, las notificaciones y las opciones de búsqueda.
+3. Elige el proveedor y el modelo.
+4. Guarda como borrador o confirma la activación.
+
+La propuesta del modelo no activa la tarea por sí sola ni concede acceso a archivos. Cancelar el editor conserva el texto del compositor.
+
+## Desde Telegram
+
+El flujo en desarrollo permite al propietario autorizado pedir un plan desde Telegram. El bot muestra instrucciones, horario y modelo, con botones para confirmar o cancelar. La confirmación caduca a los diez minutos y está vinculada a la cuenta y al usuario que pidió el plan. Si cambias el proveedor o el modelo del bot, pide una nueva propuesta.
+
+Este flujo admite texto y búsqueda pública; no concede permisos de archivos locales. Los conectores aún no operativos no ofrecen esta función. Consulta [Canales y Telegram](/docs/features/channels).
+
+## Resultados y recuperación
+
+Cada ejecución guarda su resultado en un chat. El desarrollo actual abre automáticamente el chat ante un aviso de inicio reciente cuando la aplicación está visible; los avisos antiguos ofrecen **Abrir chat** sin cambiar tu conversación automáticamente.
+
+Si llega la hora y no ocurre nada, comprueba que la tarea está activa, el backend sigue abierto y el proveedor y modelo están disponibles. Una prueba manual correcta no sustituye la activación. Si aparece un error, conserva su mensaje y consulta [Diagnóstico](/docs/guides/troubleshooting).
+
+## Estado de esta guía
+
+Revisión del **9 de octubre de 2026**. Las correcciones de activación, navegación y propuestas desde chat tienen pruebas locales; están pendientes de integración y validación con proveedores reales en la app distribuida. La versión instalada puede mostrar un flujo anterior. Sigue el [Issue de automatizaciones](https://github.com/Naiker12/Sparta-Agent/issues/33).

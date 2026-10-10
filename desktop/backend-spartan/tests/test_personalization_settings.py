@@ -196,7 +196,6 @@ def test_customization_sidebar_nav_preserves_order_and_normalizes():
         ("projects", True),
         ("images", True),
         ("audio", False),
-        ("train", True),
         ("recipes", False),
         ("export", False),
         ("api", False),

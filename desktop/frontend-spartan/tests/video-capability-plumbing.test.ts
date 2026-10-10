@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
+import ts from "typescript";
+import { fileURLToPath } from "node:url";
 
 // Only llama-server knows whether a GGUF takes video, so the flag travels from
 // /props to the model row and the adapter reads it off that row. Every hop that
@@ -28,15 +30,24 @@ async function sourceFiles(dir: URL): Promise<URL[]> {
 }
 
 const rel = (file: URL) =>
-  path.relative(new URL(".", SRC).pathname, file.pathname);
+  path.relative(fileURLToPath(SRC), fileURLToPath(file)).replaceAll(path.sep, "/");
 
 test("every mapper that writes hasAudioInput writes hasVideoInput too", async () => {
   const files = await sourceFiles(SRC);
   const dropped: string[] = [];
   for (const file of files) {
     const source = await readFile(file, "utf8");
-    // The write, not the read: `hasAudioInput:` assigns, `.hasAudioInput` reads.
-    if (!/\bhasAudioInput\s*:/.test(source)) continue;
+    // Only object assignments carry capabilities; interface props describe UI contracts.
+    const ast = ts.createSourceFile(file.pathname, source, ts.ScriptTarget.Latest, true);
+    let writesAudioInput = false;
+    const visit = (node: ts.Node): void => {
+      if (ts.isPropertyAssignment(node) && node.name.getText(ast) === "hasAudioInput") {
+        writesAudioInput = true;
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(ast);
+    if (!writesAudioInput) continue;
     // The runtime type declares both as optional fields, not a mapping.
     if (rel(file) === "features/chat/types/runtime.ts") continue;
     if (!/\bhasVideoInput\s*:/.test(source)) dropped.push(rel(file));
@@ -64,9 +75,10 @@ test("the video drain names video when a clip cannot be read", async () => {
     new URL("components/assistant-ui/thread.tsx", SRC),
     "utf8",
   );
-  // Cloned from the audio drain, so the toast title came along with it. This is
-  // the one path whose job is to explain why a dropped video did not attach.
+  // The toast was localized in the i18n pass; it now uses uiTranslate with the
+  // key "ui.could_not_attach_dropped_video". Verify the key carries "video" so
+  // the drain is still clearly identified as the video path, not the audio one.
   const drain = source.slice(source.indexOf("claimVideoAttachments"));
-  const title = drain.match(/toast\.error\("Could not attach dropped (\w+)"/)?.[1];
-  assert.equal(title, "video");
+  const i18nKey = drain.match(/toast\.error\(uiTranslate\(["']ui\.could_not_attach_dropped_(\w+)["']\)/)?.[1];
+  assert.equal(i18nKey, "video");
 });

@@ -2508,6 +2508,13 @@ html[data-chat-font] .aui-root {
     animation: artifact-loading-line 1.7s linear infinite;
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    .artifact-card-shimmer {
+      animation: none;
+      transform: none;
+    }
+  }
+
   .artifact-panel-shell::before,
   .artifact-panel-shell::after {
     content: "";

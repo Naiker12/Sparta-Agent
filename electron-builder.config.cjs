@@ -51,7 +51,8 @@ module.exports = {
       to: 'backend',
       filter: [
         '**/*',
-        '!**/.venv/**',
+        '!**/.venv*/**',
+        '!**/venv/**',
         '!**/__pycache__/**',
         '!**/*.pyc',
         '!**/.pytest_cache/**',
