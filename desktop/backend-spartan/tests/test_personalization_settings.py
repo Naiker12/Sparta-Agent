@@ -152,14 +152,13 @@ def _sidebar_nav(items):
 # features/settings/stores/appearance-custom-store.ts). The client sends this list verbatim on
 # every personalization save, so the backend must accept it and default to the same thing.
 FRONTEND_SHIPPED_SIDEBAR_NAV = [
-    ("hub", True),
     ("projects", True),
-    ("images", True),
-    ("video", True),
     ("audio", False),
     ("recipes", False),
     ("export", False),
     ("api", False),
+    ("memory", False),
+    ("tasks", False),
 ]
 
 
@@ -183,22 +182,21 @@ def test_customization_sidebar_nav_preserves_order_and_normalizes():
     p = PersonalizationPayload.model_validate(
         _sidebar_nav(
             [
-                {"id": "video", "pinned": True},
-                {"id": "video", "pinned": False},
+                {"id": "tasks", "pinned": True},
+                {"id": "tasks", "pinned": False},
                 {"id": "hub", "pinned": False},
             ]
         )
     )
     # Client order survives; duplicates keep the first, unsent ids are appended.
     assert [(i.id, i.pinned) for i in p.appearance.customization.sidebarNav] == [
-        ("video", True),
-        ("hub", False),
+        ("tasks", True),
         ("projects", True),
-        ("images", True),
         ("audio", False),
         ("recipes", False),
         ("export", False),
         ("api", False),
+        ("memory", False),
     ]
 
 
@@ -459,15 +457,13 @@ def test_personalization_route_roundtrip_real_shape(monkeypatch):
                 ],
                 # Reordered and partly unpinned, so the round-trip proves order survives a save.
                 "sidebarNav": [
-                    {"id": "images", "pinned": True},
-                    {"id": "video", "pinned": True},
                     {"id": "audio", "pinned": False},
-                    {"id": "hub", "pinned": True},
-                    {"id": "train", "pinned": True},
                     {"id": "projects", "pinned": False},
                     {"id": "recipes", "pinned": False},
                     {"id": "export", "pinned": False},
                     {"id": "api", "pinned": False},
+                    {"id": "memory", "pinned": True},
+                    {"id": "tasks", "pinned": False},
                 ],
             },
         },

@@ -299,9 +299,9 @@ test("randomised replies keep the two placements apart", () => {
 // ---------------------------------------------------------- the shipped placement ---
 
 const ADAPTER = readFileSync(
-  new URL("../src/features/chat/api/chat-adapter.ts", import.meta.url),
+  new URL("../src/features/chat/api/chat-adapter/stream-orchestrator.ts", import.meta.url),
   "utf8",
-);
+).replaceAll("\r\n", "\n");
 
 /**
  * Which of the two modes above the adapter is actually running.

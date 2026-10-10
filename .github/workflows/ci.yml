@@ -91,6 +91,12 @@ jobs:
           PYTHONPATH: .
         run: python -m pytest --noconftest tests/test_document_generation.py tests/test_document_prompt_nudge.py tests/test_project_folder_uniqueness.py -q
 
+      - name: Personalization migration and persistence
+        working-directory: desktop/backend-spartan
+        env:
+          PYTHONPATH: .
+        run: python -m pytest --noconftest tests/test_personalization_settings.py -q
+
       - name: Automation activation, scheduling and execution
         working-directory: desktop/backend-spartan
         env:
