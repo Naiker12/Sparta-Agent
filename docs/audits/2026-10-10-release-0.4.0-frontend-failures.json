@@ -1,0 +1,966 @@
+{
+  "date": "2026-10-10",
+  "version": "0.4.0",
+  "tests": 3520,
+  "passed": 3329,
+  "failed": 191,
+  "skipped": 0,
+  "classification": "Mechanical classification; every remaining failure requires individual review.",
+  "failures": [
+    {
+      "location": "tests/appearance-accent-vars.test.ts:253:1",
+      "name": "loaded-model stripes stay on the semantic success color (0.9658ms)",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/audio-generation-stop.test.ts:11:1",
+      "name": "generation exposes a clickable Stop action wired to the request abort (6.8056ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/audio-generation-stop.test.ts:41:1",
+      "name": "leaving the audio page aborts an in-flight transcription (1.9693ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/audio-generation-stop.test.ts:71:1",
+      "name": "a saved clip the refresh missed keeps its response audio mounted (2.3778ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/audio-mode-task-filter.test.ts:21:1",
+      "name": "Hub discovery follows the active audio mode (7.1827ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/audio-model-eject.test.ts:18:1",
+      "name": "Audio exposes the shared picker eject action only while idle (15.2412ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/audio-model-eject.test.ts:182:1",
+      "name": "selected and fallback clip actions remain named and downloadable (3.8344ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/audio-model-eject.test.ts:195:1",
+      "name": "a dictation model this page did not load survives a mode switch (1.3126ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/audio-model-eject.test.ts:225:1",
+      "name": "the unload request carries the claimed model to the backend (1.2079ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/audio-page-policy.test.ts:58:1",
+      "name": "TTS load context matches the advertised generation ceiling (3.1036ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/audio-page-policy.test.ts:263:1",
+      "name": "routed picks wait in the URL until Audio is idle (2.0543ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/audio-page-policy.test.ts:278:1",
+      "name": "gallery refresh preserves fallback selection and pagination identity (2.2636ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/audio-page-policy.test.ts:300:1",
+      "name": "older STT status requests cannot overwrite newer residency (1.8989ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/audio-page-policy.test.ts:307:1",
+      "name": "older TTS status requests cannot overwrite newer residency (1.5652ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/audio-page-policy.test.ts:314:1",
+      "name": "leaving Audio cancels an owned TTS load without touching a pre-request prompt (2.0068ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/audio-page-policy.test.ts:380:1",
+      "name": "a superseded refresh still reports the clips its own fetch saw (2.0401ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/audio-page-policy.test.ts:506:1",
+      "name": "a failed transcribe release puts the page back in Transcribe (1.3768ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/audio-page-policy.test.ts:542:1",
+      "name": "generation is claimed before the transcribe release is awaited (1.6521ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/audio-picker-policy.test.ts:521:1",
+      "name": "a local Whisper checkpoint is not advertised as a routable ASR row (4.6672ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/audio-stt-download-fallback.test.ts:37:1",
+      "name": "cancelling the shared STT download never loads a partial checkpoint (6.1454ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/audio-tts-download-manager.test.ts:27:1",
+      "name": "cached and local TTS picks keep the direct load path and supersede stale staging (4.9283ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/audio-tts-download-manager.test.ts:70:1",
+      "name": "switching to Transcribe invalidates a pending staged TTS auto-load (1.2934ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/auto-load-cpu-fallback-toast.test.ts:59:1",
+      "name": "the auto-load toast is driven by that verdict, not by its own copy of it (1.902ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/auto-load-cpu-fallback-toast.test.ts:68:1",
+      "name": "every auto-load path forwards the load response's fallback reason (4.1703ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/chat-local-model-options.test.ts:1:1",
+      "name": "tests\\chat-local-model-options.test.ts (388.0667ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/chat-model-residency.test.ts:81:1",
+      "name": "the selector's tick asks the caller, and defaults to the old rule (5.768ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/chat-model-residency.test.ts:141:1",
+      "name": "the hub cards ask residency before saying Loaded (0.8207ms)",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/chat-model-residency.test.ts:160:1",
+      "name": "another runtime loading re-reads the chat status (4.1356ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/chat-model-residency.test.ts:184:1",
+      "name": "an eviction drops the pick, not just the loaded marks (1.8184ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/chat-only-route-guard.test.ts:60:1",
+      "name": "a measured chat-only host reaches /video and its own explanation (2.8693ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/chat-only-route-guard.test.ts:83:1",
+      "name": "an unmeasured verdict still lets both pages wait it out (0.7417ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/chat-only-route-guard.test.ts:93:1",
+      "name": "the pages that self-gate are unaffected, and everything else still redirects (0.4342ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/chat-remembers-its-model.test.ts:1:1",
+      "name": "tests\\chat-remembers-its-model.test.ts (546.234ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/code-plugin-incremental.test.ts:277:1",
+      "name": "a failed grammar load releases pending callbacks before retry (539.7673ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/code-plugin-incremental.test.ts:332:1",
+      "name": "a transiently failed grammar load is retried under the same cache key (520.0107ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/composer-keystroke-subscription-budget.test.ts:72:1",
+      "name": "the continue bar subscribes once on a message that is not the newest (1.3144ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/composer-keystroke-subscription-budget.test.ts:101:1",
+      "name": "the newest message still gets the whole continue bar (0.4731ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/connections-empty-opens-form.test.ts:15:1",
+      "name": "an empty connection list opens the add-connection form (8.6928ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/connections-empty-opens-form.test.ts:46:1",
+      "name": "the form's back arrow still returns to the list (1.546ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/context-window-visible.test.ts:120:1",
+      "name": "the header renders the bar on the window alone, with usage optional (4.0879ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/dataset-data-recipes-navigation.test.ts:1:1",
+      "name": "tests\\dataset-data-recipes-navigation.test.ts (1140.3204ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/desktop-closing-overlay.test.ts:69:1",
+      "name": "the backend hook routes both quit events into the store (23.5753ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/desktop-closing-overlay.test.ts:169:1",
+      "name": "a quit with no window on screen raises no overlay (3.28ms)",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/desktop-closing-overlay.test.ts:189:1",
+      "name": "the overlay names the wait it is covering (6.3075ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/desktop-closing-overlay.test.ts:199:1",
+      "name": "both sides agree on the event names (2.1348ms)",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/desktop-stop-intent.test.ts:196:1",
+      "name": "stopping records the intent before the shutdown it can outlive (3.6612ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/desktop-stop-intent.test.ts:229:1",
+      "name": "a second stop cannot run while the first is in flight (4.5049ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/electron-titlebar-divider.test.ts:5:1",
+      "name": "Electron titlebar overlay has a visible content divider (10.242ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/export-gguf-token-fallback.test.ts:1:1",
+      "name": "tests\\export-gguf-token-fallback.test.ts (307.911ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/export-progress-percent.test.ts:1:1",
+      "name": "tests\\export-progress-percent.test.ts (317.2033ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/external-model-selection-label.test.ts:216:1",
+      "name": "a manual model ID the user deleted is not blamed on the provider (2.6851ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/external-model-selection-label.test.ts:234:1",
+      "name": "no connection that takes manual model IDs reports a withdrawal (0.8452ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/external-model-selection-label.test.ts:416:1",
+      "name": "the chat page feeds the picker the connections behind the options (1.2796ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/external-model-selection-label.test.ts:465:1",
+      "name": "the dropped-model strings are translated everywhere (12.9913ms)",
+      "category": "missing_module"
+    },
+    {
+      "location": "tests/fork-count-batching.test.ts:164:1",
+      "name": "the badge no longer owns a listener or a per-message request (4.4543ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/gguf-variant-timeout-regression.test.ts:10:1",
+      "name": "a variants API timeout becomes an error instead of leaving the spinner active (4.5264ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/hardware-verdict-recovery.test.ts:105:1",
+      "name": "the recovery poll runs while the verdict is unknown, on every platform (8.8781ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/hosted-image-tool-with-studio-tools.test.ts:32:1",
+      "name": "the Studio-tools branch still asks for the hosted tools Studio cannot run (6.291ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/hosted-image-tool-with-studio-tools.test.ts:47:1",
+      "name": "it does not ask the provider for the tools Studio is running locally (0.5188ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/hub-recovery-paths.test.ts:23:1",
+      "name": "clients with their own request keep their own reachability (26.9351ms)",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/hub-recovery-paths.test.ts:36:1",
+      "name": "the panel still reads the classified cause, not that boolean (3.9657ms)",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/hub-recovery-paths.test.ts:69:1",
+      "name": "rows on screen do not hide that the feed failed (3.9238ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/hub-recovery-paths.test.ts:137:1",
+      "name": "the retained footer names the cause, not just the staleness (3.395ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/hub-recovery-paths.test.ts:198:1",
+      "name": "pausing dataset fetches leaves the rendered rows alone (16.6954ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/image-generation-defaults.test.ts:1:1",
+      "name": "tests\\image-generation-defaults.test.ts (465.0906ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/image-generation-stop.test.ts:1:1",
+      "name": "tests\\image-generation-stop.test.ts (465.0628ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/keyboard-shortcuts.test.ts:265:1",
+      "name": "every locale overlay carries the shortcut strings (3.0224ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/keyboard-shortcuts.test.ts:324:1",
+      "name": "the sidebar hints render the bound chord, not the shipped default (8.9935ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/lan-access-state.test.ts:207:1",
+      "name": "the pending-password message is desktop-aware (7.0152ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/linked-folders-lease-gate.test.ts:1:1",
+      "name": "tests\\linked-folders-lease-gate.test.ts (330.2848ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/llama-extra-args-diagnostics.test.ts:625:1",
+      "name": "hydration is not gated behind the advanced disclosure (3.6602ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/llama-extra-args-diagnostics.test.ts:786:1",
+      "name": "a rollback restores the previous model with its arguments (4.9089ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/llama-extra-args-diagnostics.test.ts:814:1",
+      "name": "a hydrated list is judged even when the row cannot be (0.9318ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/llama-extra-args-panel-hydration.test.ts:1:1",
+      "name": "tests\\llama-extra-args-panel-hydration.test.ts (385.6268ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/llama-extra-args-status-hydration.test.ts:56:1",
+      "name": "the rollback still resends that baseline explicitly (3.1374ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-build-panel-rows.test.ts:1:1",
+      "name": "tests\\loaded-build-panel-rows.test.ts (382.7138ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-backcompat.test.ts:1:1",
+      "name": "tests\\loaded-models-backcompat.test.ts (661.8908ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-barrel-order.test.ts:44:1",
+      "name": "the cycle this order defends against is still present (2.8864ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-barrel-order.test.ts:52:1",
+      "name": "general-tab reads the keys at module scope, not inside a component (0.6448ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-dismiss.test.ts:105:1",
+      "name": "the dismissal key is cleared by Reset all local preferences (3.8178ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-dismiss.test.ts:113:1",
+      "name": "the card carries a close button, and a load brings it back (2.4151ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-dismiss.test.ts:155:1",
+      "name": "a row ejects with the eject glyph, the header closes with an X (1.1626ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-drag-restore.test.ts:108:1",
+      "name": "the reclamp effect re-runs when the panel node appears (1.5844ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-drag-restore.test.ts:200:1",
+      "name": "only the pill consumes the sentinel, since only it has a click (0.8808ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-eject-unverified.test.ts:26:1",
+      "name": "an unreadable verification is its own outcome, not `ejected` (2.3768ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-eject-unverified.test.ts:39:1",
+      "name": "the STT re-read returns the sentinel rather than null on a failed read (0.4262ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-eject-unverified.test.ts:53:1",
+      "name": "the sentinel is checked before the truthiness test that would hide it (0.4733ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-pending-reset.test.ts:59:1",
+      "name": "the hook drops pending loads once recording is turned off (1.7054ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-pending-reset.test.ts:173:1",
+      "name": "recording is gated on the preference, not on whether the card shows (1.6073ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-platform-matrix.test.ts:1:1",
+      "name": "tests\\loaded-models-platform-matrix.test.ts (631.9345ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-q8-precision-repro.test.ts:1:1",
+      "name": "tests\\loaded-models-q8-precision-repro.test.ts (703.5757ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-settled-retire.test.ts:41:1",
+      "name": "a read that failed outright is evidence about nothing (4.9429ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-settled-retire.test.ts:51:1",
+      "name": "a readable source is still retired, or the row would never go (0.4405ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/loaded-models-sources.test.ts:1:1",
+      "name": "tests\\loaded-models-sources.test.ts (799.335ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/mac-titlebar-optical-alignment.test.ts:24:1",
+      "name": "mac chat and media headers share the lowered control row (2.8747ms)",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/manage-chats-bulk-selection.test.ts:107:1",
+      "name": "the header checkbox says it selects the visible chats, which is what it does (8.2597ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/markdown-streaming-scheduling.test.ts:102:1",
+      "name": "token updates keep Streamdown's expensive configuration props stable (2.9762ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/media-eject-busy-state.test.ts:1:1",
+      "name": "tests\\media-eject-busy-state.test.ts (342.5365ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/media-generation-preset-claims.test.ts:1:1",
+      "name": "tests\\media-generation-preset-claims.test.ts (331.8322ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/media-idle-unload-api-only.test.ts:1:1",
+      "name": "tests\\media-idle-unload-api-only.test.ts (413.4709ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/media-load-cancel.test.ts:1:1",
+      "name": "tests\\media-load-cancel.test.ts (411.863ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/media-status-sequencing.test.ts:27:3",
+      "name": "the images page lets only the newest status read write (1.9691ms)",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/media-status-sequencing.test.ts:53:3",
+      "name": "the images page claims its ticket before awaiting, not after (0.5807ms)",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/media-status-sequencing.test.ts:27:3",
+      "name": "the video page lets only the newest status read write (0.51ms)",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/media-status-sequencing.test.ts:53:3",
+      "name": "the video page claims its ticket before awaiting, not after (0.3426ms)",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/mirrored-settings-write-authority.test.ts:38:1",
+      "name": "selecting a Codex checkpoint keeps deep research (4.6625ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/mirrored-settings-write-authority.test.ts:69:1",
+      "name": "the clamp exempts Codex and an unresolved provider (0.5782ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/mirrored-settings-write-authority.test.ts:82:1",
+      "name": "hydration backfills only from an authoritative read (1.2143ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/mirrored-settings-write-authority.test.ts:100:1",
+      "name": "a missing Deep Research timeout keeps the finite default (0.3585ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/mmproj-fallback.test.ts:86:1",
+      "name": "attachment and send gates forward projector fallback state (2.7186ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/monitor-stack-inset.test.ts:789:1",
+      "name": "a width-only animation does not remeasure the stack (2.3099ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/overlay-scrollbar-gutter.test.ts:248:1",
+      "name": "right-edge action lists reserve the gutter they publish (55.0281ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/padded-response.test.ts:53:1",
+      "name": "only the two padded routes require a payload (2.9325ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/per-model-params-hydration.test.ts:487:1",
+      "name": "every site that re-applies model defaults asks for the replay (4.9954ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/per-model-params-hydration.test.ts:553:1",
+      "name": "a remembered budget is capped by a non-GGUF load (1.9943ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/pr9057-video-simulation.test.ts:1:1",
+      "name": "tests\\pr9057-video-simulation.test.ts (1697.6792ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/preserve-thinking-user-preference.test.ts:93:1",
+      "name": "every load and status writer resolves rather than taking the raw default (4.8297ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/project-attachment-target-adoption.test.ts:135:1",
+      "name": "the run keeps the project it started in (1.5365ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/project-attachment-target-adoption.test.ts:238:1",
+      "name": "the project composer's choice survives the swap to a thread (2.6628ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/project-source-save.test.ts:217:1",
+      "name": "the panel subscribes, and does not resurrect a row it just deleted (13.1614ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/provider-max-output-tokens-guards.test.ts:188:1",
+      "name": "every clamp site waits for a resolved provider (1.1573ms)",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/provider-max-output-tokens.test.ts:13:1",
+      "name": "all max-output cap callers pass the selected connection override (2.9962ms)",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/provider-max-output-tokens.test.ts:40:1",
+      "name": "the connection editor exposes a bounded optional cap and warning (5.5641ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/provider-max-output-tokens.test.ts:86:1",
+      "name": "preset application clamps live Max Tokens to the active external cap (0.9563ms)",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/provider-max-output-tokens.test.ts:106:1",
+      "name": "lowering an active external cap immediately clamps live Max Tokens (1.5534ms)",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/provisional-hardware-verdict.test.ts:180:1",
+      "name": "the latch is claimed after the wait, not during it (3.2745ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/provisional-hardware-verdict.test.ts:285:1",
+      "name": "a rejected token does not consume the once-per-load window (2.5495ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/provisional-hardware-verdict.test.ts:308:1",
+      "name": "the store exposes an unknown state, not just chat-only (3.9528ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/provisional-hardware-verdict.test.ts:345:1",
+      "name": "the sidebar gates Train and Video on a measured verdict (2.2441ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/provisional-hardware-verdict.test.ts:377:1",
+      "name": "the route guard waits out an unknown verdict on Train and Video (5.6823ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/provisional-hardware-verdict.test.ts:403:1",
+      "name": "the Video page gates on the backend's own capability answer (2.3031ms)",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/provisional-hardware-verdict.test.ts:477:1",
+      "name": "the Video row is disabled exactly when the hint has something to say (5.5977ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/provisional-hardware-verdict.test.ts:513:1",
+      "name": "a failed hardware probe is retried, not left unloaded (3.9139ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/provisional-hardware-verdict.test.ts:536:1",
+      "name": "a cache filled between render and subscribe still reaches the component (3.0234ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/qwen-thinking-size-gate.test.ts:81:1",
+      "name": "all four copies of the gate pattern stay in sync (2.8143ms)",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/rag-availability-marker.test.ts:260:1",
+      "name": "the dialog stops offering a Create button that can only 503 (3.3956ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/rag-availability-marker.test.ts:309:1",
+      "name": "a queued prompt is not held forever by a probe that can never succeed (6.9421ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/rag-refresh-sequencing.test.ts:123:1",
+      "name": "a failure is only reported for the request still being awaited (3.7789ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/rag-refresh-sequencing.test.ts:189:1",
+      "name": "the composer reads indexing from the hooks, not the listed rows (8.5073ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/rag-refresh-sequencing.test.ts:253:1",
+      "name": "the poll and the initial list are wired that way (2.2538ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/rag-refresh-sequencing.test.ts:309:1",
+      "name": "work reported by another tab lapses (2.6221ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/rag-refresh-sequencing.test.ts:440:1",
+      "name": "a folder job watcher rides out a failed read (1.797ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/rag-refresh-sequencing.test.ts:616:1",
+      "name": "work is counted per reporting tab, not per project (1.8424ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/rag-refresh-sequencing.test.ts:668:1",
+      "name": "a failed reconciling refresh is retried before the gate drops (1.8852ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/rag-refresh-sequencing.test.ts:733:1",
+      "name": "a project composer picks up a folder sync already running (1.7462ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/rag-refresh-sequencing.test.ts:806:1",
+      "name": "a background prompt queue checks the project it will send to (2.9343ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/rag-refresh-sequencing.test.ts:831:1",
+      "name": "a queue in a chat with no row still waits on its project (2.9492ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/rag-refresh-sequencing.test.ts:855:1",
+      "name": "unlinking a folder announces for the project it was for (1.8904ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/rag-refresh-sequencing.test.ts:899:1",
+      "name": "a failed row read holds a queued prompt instead of releasing it (1.1634ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/rag-refresh-sequencing.test.ts:928:1",
+      "name": "a knowledge-base queue does not wait on project sources (3.4222ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/rag-refresh-sequencing.test.ts:958:1",
+      "name": "a retry stops when the scope it started for is gone (1.5152ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/rag-refresh-sequencing.test.ts:982:1",
+      "name": "a queue with no row yet falls back to its own project, not the store (0.9394ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/rag-refresh-sequencing.test.ts:1005:1",
+      "name": "the work timer is armed for the earliest sender deadline (1.5605ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/read-aloud-tts-model-row.test.ts:1:1",
+      "name": "tests\\read-aloud-tts-model-row.test.ts (349.0609ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/recommended-curated-row-metadata.test.ts:206:1",
+      "name": "row meta falls back to the curated seeds (108.1729ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/remote-access-state.test.ts:241:1",
+      "name": "the pending-password message is desktop-aware (9.9435ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/resident-config-match.test.ts:365:1",
+      "name": "selectModel weighs the config and the lease before confirming a reload (2.7173ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/resident-config-match.test.ts:1315:1",
+      "name": "a preserved Vulkan CPU fallback is not a placement disagreement (1.5522ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/resident-config-match.test.ts:1587:1",
+      "name": "an outstanding audio probe keeps the shortcut from skipping the load (1.8037ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/sandbox-reveal-path.test.ts:105:1",
+      "name": "a failed history read is reported, not mistaken for a chat that ran no tools (1.4447ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/sandbox-reveal-path.test.ts:155:1",
+      "name": "the legacy probe runs only for a chat now inside a project (8.0273ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/sandbox-reveal-path.test.ts:166:1",
+      "name": "a sandbox tool result is wrapped even when it carries no envelope (1.2727ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/sidebar-action-rows-inert.test.ts:53:1",
+      "name": "desktop branding clears the titlebar actions (13.8998ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/sidebar-action-rows-inert.test.ts:66:1",
+      "name": "footer profile sits 11px above the sidebar edge (11.2483ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/sidebar-action-rows-inert.test.ts:74:1",
+      "name": "every sidebar row pill sits in one shared box (19.6146ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/sidebar-action-rows-inert.test.ts:95:1",
+      "name": "the sidebar list measures its scroll rail (4.6859ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/sidebar-more-menu-interaction.test.ts:6:1",
+      "name": "the sidebar More flyout previews on hover and pins on click (27.0223ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/sidebar-nav-backend-parity.test.ts:11:1",
+      "name": "the backend sidebar nav defaults match the frontend (15.1255ms)",
+      "category": "missing_file"
+    },
+    {
+      "location": "tests/sidebar-nav-backend-parity.test.ts:30:1",
+      "name": "Train and Video are still the capability-gated rows (6.4081ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/sidebar-nav-migration.test.ts:83:1",
+      "name": "a customized version-5 sidebar keeps its order and only gains Audio (4.7873ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/sidebar-nav-migration.test.ts:118:1",
+      "name": "an install sitting on the version-6 default picks Video up (1.2153ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/sidebar-scroll-fade-deps.test.ts:11:1",
+      "name": "the bottom fade re-measures on every row-count input (12.9077ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/sidebar-spinner-column.test.ts:22:1",
+      "name": "nav and Recents spinners land on one trailing column (25.7125ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/sidebar-spinner-column.test.ts:63:1",
+      "name": "a working Recents row clears the kebab on hover (5.2731ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/sidebar-spinner-column.test.ts:152:1",
+      "name": "the expanded row and the flyout both show a pending tooltip (6.9798ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/sidebar-spinner-column.test.ts:177:1",
+      "name": "capability rows carry a pending tooltip (35.408ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/sidebar-unread-dot.test.ts:14:1",
+      "name": "the unread dot is grey (6.3274ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/sidebar-unread-dot.test.ts:25:1",
+      "name": "training run status dots are untouched (2.5667ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/spec-fallback-partial-offload-copy.test.ts:1:1",
+      "name": "tests\\spec-fallback-partial-offload-copy.test.ts (374.8976ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/tauri-details-toggle.test.ts:23:1",
+      "name": "Tauri detail toggles put a custom down chevron after their labels (24.8644ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/thread-delete-render-budget.test.ts:40:1",
+      "name": "the render prop is built once, at module scope (4.9346ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/thread-delete-render-budget.test.ts:50:1",
+      "name": "ThreadMessage sends each kind to the component that names it (0.7401ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/thread-delete-render-budget.test.ts:59:1",
+      "name": "research-reply ownership is selected as an answer, not as the message list (0.4373ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/thread-part-components-stable.test.ts:41:1",
+      "name": "the assistant part components are a single module-scope object (1.257ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/trailing-placeholder-prefix-safety.test.ts:341:1",
+      "name": "the corpus is run through the placement the adapter actually ships (1.4797ms)",
+      "category": "assertion_requires_review"
+    },
+    {
+      "location": "tests/verdict-poll-stall-guard.test.ts:1:1",
+      "name": "tests\\verdict-poll-stall-guard.test.ts (1422.0015ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/video-download-plan-payload.test.ts:1:1",
+      "name": "tests\\video-download-plan-payload.test.ts (850.4322ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/video-gallery-clear-confirmation.test.ts:1:1",
+      "name": "tests\\video-gallery-clear-confirmation.test.ts (892.7231ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/video-generate-refusal-resync.test.ts:1:1",
+      "name": "tests\\video-generate-refusal-resync.test.ts (720.5608ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/video-h3-task-dialog.test.ts:1:1",
+      "name": "tests\\video-h3-task-dialog.test.ts (718.8002ms)",
+      "category": "other_requires_review"
+    },
+    {
+      "location": "tests/video-keyframe-canvas.test.ts:1:1",
+      "name": "tests\\video-keyframe-canvas.test.ts (879.0798ms)",
+      "category": "other_requires_review"
+    }
+  ]
+}

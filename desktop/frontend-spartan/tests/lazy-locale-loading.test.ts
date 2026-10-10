@@ -66,44 +66,51 @@ test("only English is present before a non-English locale is requested", () => {
 });
 
 test("initialization waits for the saved locale catalog before committing it", async () => {
-  store.set(localeStore.LOCALE_STORAGE_KEY, "de");
+  store.set(localeStore.LOCALE_STORAGE_KEY, "es");
 
   const initialized = localeStore.initializeLocale();
   assert.notEqual(typeof initialized, "string");
   assert.equal(localeStore.getLocale(), "en");
 
-  assert.equal(await initialized, "de");
-  assert.equal(localeStore.getLocale(), "de");
-  assert.equal(localeStore.getLocalePreference(), "de");
-  assert.equal(documentLanguage, "de");
-  assert.equal(messagesModule.translate("common.cancel"), "Abbrechen");
+  assert.equal(await initialized, "es");
+  assert.equal(localeStore.getLocale(), "es");
+  assert.equal(localeStore.getLocalePreference(), "es");
+  assert.equal(documentLanguage, "es");
+  assert.equal(messagesModule.translate("common.cancel"), "Cancelar");
 });
 
 test("concurrent requests share one catalog load", async () => {
-  const first = messagesModule.loadLocaleMessages("ko");
-  const second = messagesModule.loadLocaleMessages("ko");
+  delete messagesModule.messages.es;
+  const first = messagesModule.loadLocaleMessages("es");
+  const second = messagesModule.loadLocaleMessages("es");
 
   assert.ok(first);
   assert.equal(second, first);
   await first;
-  assert.equal(messagesModule.loadLocaleMessages("ko"), undefined);
+  assert.equal(messagesModule.loadLocaleMessages("es"), undefined);
 });
 
 test("concurrent language loads keep the latest selection", async () => {
-  const first = localeStore.setLocale("fr");
-  const second = localeStore.setLocale("it");
+  let finishFirst!: () => void;
+  const first = localeStore.setLocale("es", {
+    loadMessages: () => new Promise<void>((resolve) => {
+      finishFirst = resolve;
+    }),
+  });
+  const second = localeStore.setLocale("en");
+  finishFirst();
   await Promise.all([
-    messagesModule.loadLocaleMessages("fr"),
-    messagesModule.loadLocaleMessages("it"),
+    messagesModule.loadLocaleMessages("es"),
+    messagesModule.loadLocaleMessages("en"),
   ]);
 
   assert.equal(await first, "superseded");
   assert.equal(await second, "applied");
 
-  assert.equal(localeStore.getLocale(), "it");
-  assert.equal(localeStore.getLocalePreference(), "it");
-  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "it");
-  assert.equal(messagesModule.translate("common.cancel"), "Annulla");
+  assert.equal(localeStore.getLocale(), "en");
+  assert.equal(localeStore.getLocalePreference(), "en");
+  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "en");
+  assert.equal(messagesModule.translate("common.cancel"), "Cancel");
 });
 
 test("a selection is shown as pending and persisted only after loading", async () => {
@@ -112,38 +119,38 @@ test("a selection is shown as pending and persisted only after loading", async (
     finishLoading = resolve;
   });
 
-  const selected = localeStore.setLocale("ja", {
+  const selected = localeStore.setLocale("en", {
     loadMessages: () => loading,
   });
 
-  assert.equal(localeStore.getPendingLocalePreference(), "ja");
-  assert.equal(localeStore.getLocale(), "it");
-  assert.equal(localeStore.getLocalePreference(), "it");
-  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "it");
+  assert.equal(localeStore.getPendingLocalePreference(), "en");
+  assert.equal(localeStore.getLocale(), "en");
+  assert.equal(localeStore.getLocalePreference(), "en");
+  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "en");
 
   finishLoading();
   assert.equal(await selected, "applied");
 
   assert.equal(localeStore.getPendingLocalePreference(), null);
-  assert.equal(localeStore.getLocale(), "ja");
-  assert.equal(localeStore.getLocalePreference(), "ja");
-  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "ja");
+  assert.equal(localeStore.getLocale(), "en");
+  assert.equal(localeStore.getLocalePreference(), "en");
+  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "en");
 });
 
 test("a failed selection keeps the active and persisted language", async () => {
-  const selected = localeStore.setLocale("ko", {
+  const selected = localeStore.setLocale("es", {
     loadMessages: () => Promise.reject(new Error("catalog unavailable")),
   });
 
-  assert.equal(localeStore.getPendingLocalePreference(), "ko");
-  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "ja");
+  assert.equal(localeStore.getPendingLocalePreference(), "es");
+  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "en");
 
   assert.equal(await selected, "failed");
 
   assert.equal(localeStore.getPendingLocalePreference(), null);
-  assert.equal(localeStore.getLocale(), "ja");
-  assert.equal(localeStore.getLocalePreference(), "ja");
-  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "ja");
+  assert.equal(localeStore.getLocale(), "en");
+  assert.equal(localeStore.getLocalePreference(), "en");
+  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "en");
 });
 
 test("cancelling a pending selection prevents a late commit", async () => {
@@ -153,23 +160,23 @@ test("cancelling a pending selection prevents a late commit", async () => {
     finishLoading = resolve;
   });
 
-  const selected = localeStore.setLocale("de", {
+  const selected = localeStore.setLocale("es", {
     loadMessages: () => loading,
     signal: controller.signal,
   });
-  assert.equal(localeStore.getPendingLocalePreference(), "de");
+  assert.equal(localeStore.getPendingLocalePreference(), "es");
 
   controller.abort();
   assert.equal(localeStore.getPendingLocalePreference(), null);
-  assert.equal(localeStore.getLocale(), "ja");
-  assert.equal(localeStore.getLocalePreference(), "ja");
-  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "ja");
+  assert.equal(localeStore.getLocale(), "en");
+  assert.equal(localeStore.getLocalePreference(), "en");
+  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "en");
 
   finishLoading();
   assert.equal(await selected, "cancelled");
-  assert.equal(localeStore.getLocale(), "ja");
-  assert.equal(localeStore.getLocalePreference(), "ja");
-  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "ja");
+  assert.equal(localeStore.getLocale(), "en");
+  assert.equal(localeStore.getLocalePreference(), "en");
+  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "en");
 });
 
 test("a browser language change cannot supersede a pending explicit choice", async () => {
@@ -183,30 +190,30 @@ test("a browser language change cannot supersede a pending explicit choice", asy
     finishLoading = resolve;
   });
 
-  const selected = localeStore.setLocale("de", {
+  const selected = localeStore.setLocale("es", {
     loadMessages: () => loading,
   });
-  navigatorState.language = "fr-FR";
-  navigatorState.languages = ["fr-FR"];
+  navigatorState.language = "en-US";
+  navigatorState.languages = ["en-US"];
   fireWindowEvent("languagechange");
 
-  assert.equal(localeStore.getPendingLocalePreference(), "de");
+  assert.equal(localeStore.getPendingLocalePreference(), "es");
   finishLoading();
   assert.equal(await selected, "applied");
   unsubscribe();
 
-  assert.equal(localeStore.getLocale(), "de");
-  assert.equal(localeStore.getLocalePreference(), "de");
-  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "de");
+  assert.equal(localeStore.getLocale(), "es");
+  assert.equal(localeStore.getLocalePreference(), "es");
+  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "es");
 });
 
 test("a browser language change refreshes a pending auto choice", async () => {
   assert.equal(
-    localeStore.setLocale("it", { loadMessages: () => undefined }),
+    localeStore.setLocale("en", { loadMessages: () => undefined }),
     "applied",
   );
-  navigatorState.language = "de-DE";
-  navigatorState.languages = ["de-DE"];
+  navigatorState.language = "es-ES";
+  navigatorState.languages = ["es-ES"];
   const unsubscribe = localeStore.subscribeLocale(() => undefined);
   let finishLoading!: () => void;
   const loading = new Promise<void>((resolve) => {
@@ -233,7 +240,7 @@ test("a browser language change refreshes a pending auto choice", async () => {
 });
 
 test("a catalog timeout preserves the preference and finishes later", async () => {
-  store.set(localeStore.LOCALE_STORAGE_KEY, "de");
+  store.set(localeStore.LOCALE_STORAGE_KEY, "es");
   let finishLoading!: () => void;
   const loading = new Promise<void>((resolve) => {
     finishLoading = resolve;
@@ -249,21 +256,21 @@ test("a catalog timeout preserves the preference and finishes later", async () =
   assert.equal(localeStore.getLocale(), "en");
   // Personalization sync reads this preference. The temporary English render
   // must not turn into a server-side language change.
-  assert.equal(localeStore.getLocalePreference(), "de");
+  assert.equal(localeStore.getLocalePreference(), "es");
   assert.equal(localeStore.getPendingLocalePreference(), null);
-  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "de");
+  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "es");
 
   finishLoading();
   await loading;
   await Promise.resolve();
 
-  assert.equal(localeStore.getLocale(), "de");
-  assert.equal(localeStore.getLocalePreference(), "de");
+  assert.equal(localeStore.getLocale(), "es");
+  assert.equal(localeStore.getLocalePreference(), "es");
   assert.equal(localeStore.getPendingLocalePreference(), null);
 });
 
 test("a late initial catalog cannot replace a newer language selection", async () => {
-  store.set(localeStore.LOCALE_STORAGE_KEY, "de");
+  store.set(localeStore.LOCALE_STORAGE_KEY, "es");
   let finishLoading!: () => void;
   const loading = new Promise<void>((resolve) => {
     finishLoading = resolve;
@@ -276,19 +283,19 @@ test("a late initial catalog cannot replace a newer language selection", async (
   assert.notEqual(typeof initialized, "string");
   await initialized;
 
-  await localeStore.setLocale("it", { loadMessages: () => undefined });
+  await localeStore.setLocale("en", { loadMessages: () => undefined });
   finishLoading();
   await loading;
   await Promise.resolve();
 
-  assert.equal(localeStore.getLocale(), "it");
-  assert.equal(localeStore.getLocalePreference(), "it");
+  assert.equal(localeStore.getLocale(), "en");
+  assert.equal(localeStore.getLocalePreference(), "en");
   assert.equal(localeStore.getPendingLocalePreference(), null);
-  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "it");
+  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "en");
 });
 
 test("a failed initial catalog falls back to English", async () => {
-  store.set(localeStore.LOCALE_STORAGE_KEY, "fr");
+  store.set(localeStore.LOCALE_STORAGE_KEY, "es");
 
   const initialized = localeStore.initializeLocale({
     loadMessages: () => Promise.reject(new Error("catalog unavailable")),
@@ -297,13 +304,13 @@ test("a failed initial catalog falls back to English", async () => {
 
   assert.equal(await initialized, "en");
   assert.equal(localeStore.getLocale(), "en");
-  assert.equal(localeStore.getLocalePreference(), "fr");
+  assert.equal(localeStore.getLocalePreference(), "es");
   assert.equal(localeStore.getPendingLocalePreference(), null);
-  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "fr");
+  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "es");
 });
 
 test("a synchronous initial catalog failure preserves the preference", () => {
-  store.set(localeStore.LOCALE_STORAGE_KEY, "ko");
+  store.set(localeStore.LOCALE_STORAGE_KEY, "es");
 
   const initialized = localeStore.initializeLocale({
     loadMessages: () => {
@@ -313,16 +320,16 @@ test("a synchronous initial catalog failure preserves the preference", () => {
 
   assert.equal(initialized, "en");
   assert.equal(localeStore.getLocale(), "en");
-  assert.equal(localeStore.getLocalePreference(), "ko");
+  assert.equal(localeStore.getLocalePreference(), "es");
   assert.equal(localeStore.getPendingLocalePreference(), null);
-  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "ko");
+  assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "es");
 });
 
 test("hydration adopts a preference whose catalog failed, rendering English", async () => {
   await localeStore.setLocale("en");
   store.delete(localeStore.LOCALE_STORAGE_KEY);
 
-  const result = await localeStore.setLocale("de", {
+  const result = await localeStore.setLocale("es", {
     loadMessages: () => Promise.reject(new Error("chunk 404")),
     adoptOnFailure: true,
   });
@@ -331,7 +338,7 @@ test("hydration adopts a preference whose catalog failed, rendering English", as
   // refusing to adopt it would leave the local preference disagreeing with the
   // server and the next outbound save would push the stale value back over it.
   assert.equal(result, "failed");
-  assert.equal(localeStore.getLocalePreference(), "de");
+  assert.equal(localeStore.getLocalePreference(), "es");
   assert.equal(localeStore.getLocale(), "en");
   assert.equal(localeStore.getPendingLocalePreference(), null);
   // Not persisted: storage records choices that worked, and writing this one
@@ -343,12 +350,12 @@ test("hydration adopts a preference whose catalog failed, rendering English", as
 test("a user-initiated failure is not adopted", async () => {
   await localeStore.setLocale("en");
 
-  const result = await localeStore.setLocale("ru", {
+  const result = await localeStore.setLocale("es", {
     loadMessages: () => Promise.reject(new Error("chunk 404")),
   });
 
   assert.equal(result, "failed");
-  assert.notEqual(localeStore.getLocalePreference(), "ru");
+  assert.notEqual(localeStore.getLocalePreference(), "es");
   assert.equal(localeStore.getLocale(), "en");
 });
 
@@ -372,19 +379,19 @@ test("a synchronous loader throw leaves an in-flight request pending", async () 
     finishLoading = resolve;
   });
 
-  const slow = localeStore.setLocale("fr", { loadMessages: () => loading });
-  assert.equal(localeStore.getPendingLocalePreference(), "fr");
+  const slow = localeStore.setLocale("es", { loadMessages: () => loading });
+  assert.equal(localeStore.getPendingLocalePreference(), "es");
 
   // This request never becomes the pending one, so clearing the marker on its
   // way out would blank the spinner the slow request is still relying on.
-  const thrown = await localeStore.setLocale("hi", {
+  const thrown = await localeStore.setLocale("es", {
     loadMessages: () => {
       throw new Error("sync boom");
     },
   });
 
   assert.equal(thrown, "failed");
-  assert.equal(localeStore.getPendingLocalePreference(), "fr");
+  assert.equal(localeStore.getPendingLocalePreference(), "es");
 
   finishLoading();
   await slow;
@@ -396,8 +403,9 @@ test("a cross-tab language change is adopted even when its catalog fails", async
   let failLoad!: (error: Error) => void;
   // The real in-flight map, so the store's own listener deduplicates onto this
   // load rather than reaching the network: the handler takes no loader.
+  delete messagesModule.messages.es;
   const load = messagesModule.loadLocaleMessages(
-    "ru",
+    "es",
     () =>
       new Promise((_, reject) => {
         failLoad = reject;
@@ -406,10 +414,10 @@ test("a cross-tab language change is adopted even when its catalog fails", async
   load?.catch(() => undefined);
 
   try {
-    // The other tab picked Russian: it wrote the shared value first, and this
+    // The other tab picked Spanish: it wrote the shared value first, and this
     // event is only the notification that it did.
-    store.set(localeStore.LOCALE_STORAGE_KEY, "ru");
-    fireStorageEvent(localeStore.LOCALE_STORAGE_KEY, "ru");
+    store.set(localeStore.LOCALE_STORAGE_KEY, "es");
+    fireStorageEvent(localeStore.LOCALE_STORAGE_KEY, "es");
     failLoad(new Error("chunk 404"));
     await load?.catch(() => undefined);
     await new Promise((resolve) => setImmediate(resolve));
@@ -418,15 +426,15 @@ test("a cross-tab language change is adopted even when its catalog fails", async
     // user chose. Keeping the replaced one would leave this tab disagreeing
     // with storage until a reload, and the next personalization save would
     // upload that stale language over the other tab's choice.
-    assert.equal(localeStore.getLocalePreference(), "ru");
+    assert.equal(localeStore.getLocalePreference(), "es");
     assert.equal(localeStore.getLocale(), "en");
     assert.equal(localeStore.getPendingLocalePreference(), null);
     assert.equal(localeStore.getLocaleCatalogFailed(), true);
     // Storage is where this came from, and nothing about it worked here.
-    assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "ru");
+    assert.equal(store.get(localeStore.LOCALE_STORAGE_KEY), "es");
   } finally {
     unsubscribe();
-    messagesModule.forgetLocaleLoad("ru");
+    messagesModule.forgetLocaleLoad("es");
   }
 });
 
@@ -500,13 +508,13 @@ function shownLabel(): unknown {
 test("the language menu shows the language in effect after a catalog failure", async () => {
   await localeStore.setLocale("en", { loadMessages: () => undefined });
 
-  const result = await localeStore.setLocale("de", {
+  const result = await localeStore.setLocale("es", {
     loadMessages: () => Promise.reject(new Error("chunk 404")),
     adoptOnFailure: true,
   });
 
   assert.equal(result, "failed");
-  assert.equal(localeStore.getLocalePreference(), "de");
+  assert.equal(localeStore.getLocalePreference(), "es");
   assert.equal(localeStore.getLocale(), "en");
   // Naming the adopted-but-failed language here would make it the value the
   // Select already holds, and picking it again would then fire nothing, so a
@@ -514,7 +522,7 @@ test("the language menu shows the language in effect after a catalog failure", a
   // English instead only moves that on to English, which is the one the user
   // needs to pick to stop retrying German and keep the language they can read.
   assert.equal(shownLanguage(), "");
-  assert.ok(canPick("de"));
+  assert.ok(canPick("es"));
   assert.ok(canPick("en"));
   // Still the language in effect on the trigger, only as the placeholder.
   assert.equal(shownLabel(), "English");
@@ -525,13 +533,13 @@ test("accepting the fallback after a catalog failure is a real choice", async ()
   store.delete(localeStore.LOCALE_STORAGE_KEY);
 
   assert.equal(
-    await localeStore.setLocale("de", {
+    await localeStore.setLocale("es", {
       loadMessages: () => Promise.reject(new Error("chunk 404")),
       adoptOnFailure: true,
     }),
     "failed",
   );
-  assert.equal(localeStore.getLocalePreference(), "de");
+  assert.equal(localeStore.getLocalePreference(), "es");
 
   // What the user does when they would rather keep English than keep waiting
   // for a chunk that will not load: pick English. If the menu were already
@@ -550,14 +558,14 @@ test("accepting the fallback after a catalog failure is a real choice", async ()
 
 test("the language menu shows the preference once it is the one in effect", async () => {
   assert.equal(
-    await localeStore.setLocale("de", {
+    await localeStore.setLocale("es", {
       loadMessages: () => Promise.resolve(),
     }),
     "applied",
   );
 
-  assert.equal(localeStore.getLocale(), "de");
-  assert.equal(shownLanguage(), "de");
+  assert.equal(localeStore.getLocale(), "es");
+  assert.equal(shownLanguage(), "es");
 });
 
 test("the language menu shows auto rather than the detected locale", () => {
@@ -577,19 +585,19 @@ test("the language menu shows a pending choice while its catalog loads", async (
     finishLoading = resolve;
   });
 
-  const selected = localeStore.setLocale("it", { loadMessages: () => loading });
-  assert.equal(shownLanguage(), "it");
+  const selected = localeStore.setLocale("en", { loadMessages: () => loading });
+  assert.equal(shownLanguage(), "en");
 
   finishLoading();
   assert.equal(await selected, "applied");
-  assert.equal(shownLanguage(), "it");
+  assert.equal(shownLanguage(), "en");
 });
 
 test("auto detection stays retryable when its detected catalog fails", async () => {
   await localeStore.setLocale("auto", { loadMessages: () => undefined });
 
-  navigatorState.language = "de-DE";
-  navigatorState.languages = ["de-DE"];
+  navigatorState.language = "es-ES";
+  navigatorState.languages = ["es-ES"];
   try {
     // What hydration issues: adopt the stored preference even when its catalog
     // never arrives, so the local value does not drift from the server's.
@@ -599,7 +607,7 @@ test("auto detection stays retryable when its detected catalog fails", async () 
     });
 
     assert.equal(result, "failed");
-    // Auto resolved to German, German never loaded, so English is in effect
+    // Auto resolved to Spanish, Spanish never loaded, so English is in effect
     // while the preference is still, correctly, auto.
     assert.equal(localeStore.getLocalePreference(), "auto");
     assert.equal(localeStore.getLocale(), "en");
@@ -620,7 +628,7 @@ test("auto detection stays retryable when its detected catalog fails", async () 
       }),
       "applied",
     );
-    assert.equal(localeStore.getLocale(), "de");
+    assert.equal(localeStore.getLocale(), "es");
     assert.equal(shownLanguage(), "auto");
   } finally {
     navigatorState.language = "en-US";
@@ -632,8 +640,8 @@ test("a refreshed auto whose new catalog fails is still retryable", async () => 
   await localeStore.setLocale("auto", { loadMessages: () => undefined });
   assert.equal(localeStore.getLocale(), "en");
 
-  navigatorState.language = "de-DE";
-  navigatorState.languages = ["de-DE"];
+  navigatorState.language = "es-ES";
+  navigatorState.languages = ["es-ES"];
   try {
     // The shape handleLanguageChange issues on a browser language change:
     // re-apply the standing auto preference, without adopting on failure.
@@ -664,7 +672,7 @@ test("a rejected pick leaves a working auto preference named", async () => {
   // its own catalog. The menu has to keep naming auto here, or a failed pick of
   // an unrelated language would be enough to hide it.
   assert.equal(
-    await localeStore.setLocale("ru", {
+    await localeStore.setLocale("es", {
       loadMessages: () => Promise.reject(new Error("chunk 404")),
     }),
     "failed",
@@ -687,7 +695,7 @@ test("a catalog that never settles does not hold the caller forever", async () =
   // service worker. Nothing about this request will ever wake the awaiting
   // hydration, so the store has to.
   const outcome = await settledWithin(
-    localeStore.setLocale("hi", {
+    localeStore.setLocale("es", {
       loadMessages: () => new Promise<void>(() => {}),
       adoptOnFailure: true,
       timeoutMs: 5,
@@ -696,7 +704,7 @@ test("a catalog that never settles does not hold the caller forever", async () =
 
   assert.equal(outcome, "failed");
   // Adopted on the fallback catalog, exactly as a rejection would leave it.
-  assert.equal(localeStore.getLocalePreference(), "hi");
+  assert.equal(localeStore.getLocalePreference(), "es");
   assert.equal(localeStore.getLocale(), "en");
   assert.equal(localeStore.getPendingLocalePreference(), null);
   assert.equal(localeStore.getLocaleCatalogFailed(), true);
@@ -710,7 +718,7 @@ test("a catalog that arrives after the timeout still commits", async () => {
 
   assert.equal(
     await settledWithin(
-      localeStore.setLocale("ar", {
+      localeStore.setLocale("es", {
         loadMessages: () => loading,
         adoptOnFailure: true,
         timeoutMs: 5,
@@ -723,8 +731,8 @@ test("a catalog that arrives after the timeout still commits", async () => {
   finishLoading();
   await loading;
   await new Promise((resolve) => setImmediate(resolve));
-  assert.equal(localeStore.getLocale(), "ar");
-  assert.equal(localeStore.getLocalePreference(), "ar");
+  assert.equal(localeStore.getLocale(), "es");
+  assert.equal(localeStore.getLocalePreference(), "es");
   assert.equal(localeStore.getLocaleCatalogFailed(), false);
 });
 
@@ -738,10 +746,10 @@ test("a pick that names no bound of its own is still bounded", async () => {
   // only way out of it.
   mock.timers.enable({ apis: ["setTimeout"] });
   try {
-    const selected = localeStore.setLocale("ko", {
+    const selected = localeStore.setLocale("es", {
       loadMessages: () => new Promise<void>(() => {}),
     });
-    assert.equal(localeStore.getPendingLocalePreference(), "ko");
+    assert.equal(localeStore.getPendingLocalePreference(), "es");
 
     mock.timers.tick(localeStore.LOCALE_SELECTION_TIMEOUT_MS);
 
@@ -763,6 +771,7 @@ test("a timed out catalog is evicted so the next pick asks for it again", async 
 
   // The real in-flight map, with an import that is accepted and then never
   // settles: a stalled CDN, proxy or service worker.
+  delete messagesModule.messages.es;
   let requests = 0;
   const stalled = () => {
     requests += 1;
@@ -774,17 +783,17 @@ test("a timed out catalog is evicted so the next pick asks for it again", async 
 
   mock.timers.enable({ apis: ["setTimeout"] });
   try {
-    const first = localeStore.setLocale("pt-BR", { loadMessages });
+    const first = localeStore.setLocale("es", { loadMessages });
     mock.timers.tick(localeStore.LOCALE_SELECTION_TIMEOUT_MS);
     assert.equal(await first, "failed");
 
     // What the user does next: pick the language again once the network is back.
-    const retry = localeStore.setLocale("pt-BR", { loadMessages });
+    const retry = localeStore.setLocale("es", { loadMessages });
     mock.timers.tick(localeStore.LOCALE_SELECTION_TIMEOUT_MS);
     assert.equal(await retry, "failed");
   } finally {
     mock.timers.reset();
-    messagesModule.forgetLocaleLoad("pt-BR");
+    messagesModule.forgetLocaleLoad("es");
   }
 
   assert.equal(
@@ -795,10 +804,11 @@ test("a timed out catalog is evicted so the next pick asks for it again", async 
 });
 
 test("a timed out startup catalog is evicted so the first pick asks for it again", async () => {
-  store.set(localeStore.LOCALE_STORAGE_KEY, "hi");
+  store.set(localeStore.LOCALE_STORAGE_KEY, "es");
 
   // The real in-flight map, with an import that is accepted and then never
   // settles: a stalled CDN, proxy or service worker.
+  delete messagesModule.messages.es;
   let requests = 0;
   const stalled = () => {
     requests += 1;
@@ -816,12 +826,12 @@ test("a timed out startup catalog is evicted so the first pick asks for it again
 
     // What the user does next: the saved language is on the fallback catalog,
     // so they pick it again from the menu once the network is back.
-    const picked = localeStore.setLocale("hi", { loadMessages });
+    const picked = localeStore.setLocale("es", { loadMessages });
     mock.timers.tick(localeStore.LOCALE_SELECTION_TIMEOUT_MS);
     assert.equal(await picked, "failed");
   } finally {
     mock.timers.reset();
-    messagesModule.forgetLocaleLoad("hi");
+    messagesModule.forgetLocaleLoad("es");
   }
 
   assert.equal(

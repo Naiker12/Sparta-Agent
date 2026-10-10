@@ -243,13 +243,13 @@ test("a painting window publishes on frames, never on the cap", () => {
 });
 
 const ADAPTER = readFileSync(
-  new URL("../src/features/chat/api/chat-adapter.ts", import.meta.url),
+  new URL("../src/features/chat/api/chat-adapter/stream-orchestrator.ts", import.meta.url),
   "utf8",
 );
 
 /** Drop comments, so a commented-out gate cannot satisfy a search. */
 function withoutComments(source: string): string {
-  return source
+  return source.replace(/\r\n/g, "\n")
     .replace(/\/\*[\s\S]*?\*\//g, "")
     .split("\n")
     .map((line) => {
@@ -302,7 +302,7 @@ test("the gate paces the publish, not the bookkeeping before it", () => {
   );
   const track = loop.indexOf("countReasoningGroups(assistantContent)");
   const finish = loop.indexOf("reasoningDurationTracker.finishGroup()");
-  const gate = loop.search(/if \([^)]*!canPublish\(streamedChars\)\) \{/);
+  const gate = loop.indexOf("if (!(replayStateChanged || canPublish(streamedChars))) {");
   const publish = loop.indexOf("content: assistantContent,");
 
   for (const [name, at] of [
@@ -600,7 +600,7 @@ test("a state-bearing provider delta is never held by the gate", () => {
     loop.includes("let replayStateChanged = false;"),
     "replay state changes are not tracked",
   );
-  const gate = loop.search(/if \(!replayStateChanged && !canPublish\(/);
+  const gate = loop.indexOf("if (!(replayStateChanged || canPublish(streamedChars))) {");
   assert.notEqual(gate, -1, "replay state does not force a publish");
 });
 
@@ -617,7 +617,7 @@ test("a content-free replay delta still reaches the message", () => {
   const replaySkip = loop.indexOf(
     "if (replayStateChanged && !delta && !reasoning) {",
   );
-  const emptySkip = loop.indexOf("if (!delta && !reasoning) {");
+  const emptySkip = loop.indexOf("if (!(delta || reasoning)) {", replaySkip + 1);
   assert.notEqual(replaySkip, -1, "content-free replay metadata is dropped");
   assert.ok(
     replaySkip < emptySkip,
@@ -669,7 +669,7 @@ test("a chunk with nothing new to show does not spend a gate cycle", () => {
   const unchanged = loop.indexOf(
     "cumulativeText.length === textLenBeforeChunk",
   );
-  const gate = loop.search(/if \([^)]*!canPublish\(streamedChars\)\) \{/);
+  const gate = loop.indexOf("if (!(replayStateChanged || canPublish(streamedChars))) {");
   assert.notEqual(emptied, -1, "an emptied reply still reaches the gate");
   assert.notEqual(unchanged, -1, "an unchanged reply still reaches the gate");
   assert.ok(

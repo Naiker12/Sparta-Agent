@@ -13,14 +13,14 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const src = await readFile(
-  new URL("../src/components/assistant-ui/thread.tsx", import.meta.url),
+const src = (await readFile(
+  new URL("../src/components/assistant-ui/thread/assistant-action-bar.tsx", import.meta.url),
   "utf8",
-);
+)).replace(/\r\n/g, "\n");
 
 /** The onSelect body of the "Save to project sources" action bar item. */
 function saveHandler(): string {
-  const marker = src.indexOf("Save to project sources");
+  const marker = src.indexOf('t("chat.actions.saveToProjectSources")');
   assert.ok(marker > 0, "the reply action is gone or was renamed");
   const start = src.lastIndexOf("<ActionBarMorePrimitive.Item", marker);
   assert.ok(start > 0 && start < marker, "could not find the item's opening tag");
@@ -48,7 +48,7 @@ test("the reply is saved to its own thread's project, not the selected one", () 
 test("a thread with no project is refused rather than sent somewhere", () => {
   assert.match(
     saveHandler(),
-    /if \(!thread\?\.projectId\) \{\n\s*toast\.info\("This chat isn't in a project\."\);\n\s*return;\n\s*\}/,
+    /if \(!thread\?\.projectId\) \{\n\s*toast\.info\(t\("chat\.actions\.notInProject"\)\);\n\s*return;\n\s*\}/,
     "a chat that is not in a project falls through to a save with no destination",
   );
 });
@@ -73,7 +73,7 @@ test("the thread id is resolved before the menu can close", () => {
 // The action is still hidden outside a project, so the reply menu does not grow
 // an item that can only refuse itself.
 test("the item is only rendered while a project is selected", () => {
-  const marker = src.indexOf("Save to project sources");
+  const marker = src.indexOf('t("chat.actions.saveToProjectSources")');
   // From the item's own opening tag, so the window cannot miss the guard by
   // being outgrown by the handler.
   const open = src.lastIndexOf("<ActionBarMorePrimitive.Item", marker);

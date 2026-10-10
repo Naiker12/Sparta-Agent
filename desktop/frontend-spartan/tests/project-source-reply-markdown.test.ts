@@ -86,10 +86,10 @@ test("the reply action saves through this conversion", async () => {
   // thread.tsx is 6k lines of TSX that node cannot load, so this reads the
   // source, the way project-source-reply-destination.test.ts does.
   const src = await readFile(
-    new URL("../src/components/assistant-ui/thread.tsx", import.meta.url),
+    new URL("../src/components/assistant-ui/thread/assistant-action-bar.tsx", import.meta.url),
     "utf8",
   );
-  const marker = src.indexOf("Save to project sources");
+  const marker = src.indexOf('t("chat.actions.saveToProjectSources")');
   assert.ok(marker > 0, "the reply action is gone or was renamed");
   const handler = src.slice(
     src.lastIndexOf("<ActionBarMorePrimitive.Item", marker),
@@ -97,7 +97,7 @@ test("the reply action saves through this conversion", async () => {
   );
   assert.match(
     handler,
-    /replySourceMarkdown\(\n\s*aui\.message\(\)\.getState\(\)\.content,/,
+    /replySourceMarkdown\(\s*aui\.message\(\)\.getState\(\)\.content,/,
     "the reply is uploaded without rendering its non-text parts",
   );
   assert.ok(
