@@ -1,0 +1,1310 @@
+{
+  "../desktop/frontend-spartan/node_modules/@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2": {
+    "file": "assets/figtree-latin-wght-normal-D_ZTVpCC.woff2",
+    "src": "../desktop/frontend-spartan/node_modules/@fontsource-variable/figtree/files/figtree-latin-wght-normal.woff2"
+  },
+  "../desktop/frontend-spartan/node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2": {
+    "file": "assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+    "src": "../desktop/frontend-spartan/node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2"
+  },
+  "../desktop/frontend-spartan/node_modules/@fontsource-variable/space-grotesk/files/space-grotesk-latin-wght-normal.woff2": {
+    "file": "assets/space-grotesk-latin-wght-normal-BhU9QXUp.woff2",
+    "src": "../desktop/frontend-spartan/node_modules/@fontsource-variable/space-grotesk/files/space-grotesk-latin-wght-normal.woff2"
+  },
+  "../desktop/frontend-spartan/public/fonts/Hellix-Medium.woff": {
+    "file": "assets/Hellix-Medium-BaJQzTxc.woff",
+    "src": "../desktop/frontend-spartan/public/fonts/Hellix-Medium.woff"
+  },
+  "../desktop/frontend-spartan/public/fonts/Hellix-Regular.woff": {
+    "file": "assets/Hellix-Regular-DWoKGW5I.woff",
+    "src": "../desktop/frontend-spartan/public/fonts/Hellix-Regular.woff"
+  },
+  "../desktop/frontend-spartan/public/fonts/Hellix-SemiBold.woff2": {
+    "file": "assets/Hellix-SemiBold-ku7lU1KZ.woff2",
+    "src": "../desktop/frontend-spartan/public/fonts/Hellix-SemiBold.woff2"
+  },
+  "../desktop/frontend-spartan/public/spartan-logo.svg": {
+    "file": "assets/spartan-logo-qvz-qbG9.svg",
+    "src": "../desktop/frontend-spartan/public/spartan-logo.svg"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/afro-directions.webp": {
+    "file": "assets/afro-directions-DkHfYuK1.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/afro-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/afro-reactions.webp": {
+    "file": "assets/afro-reactions-Duml0IAM.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/afro-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/astronaut-directions.webp": {
+    "file": "assets/astronaut-directions-CleLEMnq.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/astronaut-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/astronaut-reactions.webp": {
+    "file": "assets/astronaut-reactions-BESShJHC.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/astronaut-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/bald-directions.webp": {
+    "file": "assets/bald-directions-C7cN1azN.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/bald-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/bald-reactions.webp": {
+    "file": "assets/bald-reactions-BVznQ4I2.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/bald-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/ballerina-directions.webp": {
+    "file": "assets/ballerina-directions-CEEzjyrt.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/ballerina-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/ballerina-reactions.webp": {
+    "file": "assets/ballerina-reactions-Dav3dwie.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/ballerina-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/bear-directions.webp": {
+    "file": "assets/bear-directions-I7cdEme4.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/bear-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/bear-reactions.webp": {
+    "file": "assets/bear-reactions-DOoD-lra.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/bear-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/beard-directions.webp": {
+    "file": "assets/beard-directions-BEC8Mmme.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/beard-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/beard-reactions.webp": {
+    "file": "assets/beard-reactions-DB5JzI74.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/beard-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/builder-directions.webp": {
+    "file": "assets/builder-directions-DS29zlFV.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/builder-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/builder-reactions.webp": {
+    "file": "assets/builder-reactions-Cpw7LpQP.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/builder-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/bunny-directions.webp": {
+    "file": "assets/bunny-directions-C2AJrqA2.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/bunny-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/bunny-reactions.webp": {
+    "file": "assets/bunny-reactions-eut1am04.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/bunny-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/cap-directions.webp": {
+    "file": "assets/cap-directions-3HnLoxi7.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/cap-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/cap-reactions.webp": {
+    "file": "assets/cap-reactions-BnsvR3hi.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/cap-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/cat-directions.webp": {
+    "file": "assets/cat-directions-BVxmRMse.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/cat-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/cat-reactions.webp": {
+    "file": "assets/cat-reactions-CGwBkK20.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/cat-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/chef-directions.webp": {
+    "file": "assets/chef-directions-Dc5H2G0K.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/chef-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/chef-reactions.webp": {
+    "file": "assets/chef-reactions-D8LPzX6H.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/chef-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/clockwork-directions.webp": {
+    "file": "assets/clockwork-directions-BcBvooKS.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/clockwork-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/clockwork-reactions.webp": {
+    "file": "assets/clockwork-reactions-Dj9tv7Z8.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/clockwork-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/crt-directions.webp": {
+    "file": "assets/crt-directions-Ceg1CPrJ.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/crt-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/crt-reactions.webp": {
+    "file": "assets/crt-reactions-zo5FLI3c.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/crt-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/cube-directions.webp": {
+    "file": "assets/cube-directions-CZmBd981.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/cube-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/cube-reactions.webp": {
+    "file": "assets/cube-reactions-BXv9REmN.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/cube-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/deer-directions.webp": {
+    "file": "assets/deer-directions-5fuZl13c.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/deer-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/deer-reactions.webp": {
+    "file": "assets/deer-reactions-DnvewRwC.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/deer-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/dino-directions.webp": {
+    "file": "assets/dino-directions-BLdCJpbz.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/dino-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/dino-reactions.webp": {
+    "file": "assets/dino-reactions-ClLCNrX5.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/dino-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/drone-directions.webp": {
+    "file": "assets/drone-directions-CwkUf90R.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/drone-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/drone-reactions.webp": {
+    "file": "assets/drone-reactions-Cx25xIMh.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/drone-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/fox-directions.webp": {
+    "file": "assets/fox-directions-xhhGWbGS.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/fox-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/fox-ink-directions.webp": {
+    "file": "assets/fox-ink-directions-C4KkZrM2.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/fox-ink-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/fox-ink-reactions.webp": {
+    "file": "assets/fox-ink-reactions-l0VKP6o3.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/fox-ink-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/fox-paper-directions.webp": {
+    "file": "assets/fox-paper-directions-YEcHJTMr.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/fox-paper-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/fox-paper-reactions.webp": {
+    "file": "assets/fox-paper-reactions-BssKQuwt.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/fox-paper-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/fox-pixel-directions.webp": {
+    "file": "assets/fox-pixel-directions-BDVqkZvf.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/fox-pixel-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/fox-pixel-reactions.webp": {
+    "file": "assets/fox-pixel-reactions-Bwsy6gZM.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/fox-pixel-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/fox-reactions.webp": {
+    "file": "assets/fox-reactions-5XxRjzh0.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/fox-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/fox-riso-directions.webp": {
+    "file": "assets/fox-riso-directions-D_Z_r9Ao.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/fox-riso-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/fox-riso-reactions.webp": {
+    "file": "assets/fox-riso-reactions-1_-QJraZ.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/fox-riso-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/fox-sketch-directions.webp": {
+    "file": "assets/fox-sketch-directions-DqDRmbcW.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/fox-sketch-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/fox-sketch-reactions.webp": {
+    "file": "assets/fox-sketch-reactions-CNTMNHl_.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/fox-sketch-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/frog-directions.webp": {
+    "file": "assets/frog-directions-B8IJIeYL.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/frog-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/frog-reactions.webp": {
+    "file": "assets/frog-reactions-NstMCCwb.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/frog-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/gearbot-directions.webp": {
+    "file": "assets/gearbot-directions-BWwEvx9E.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/gearbot-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/gearbot-reactions.webp": {
+    "file": "assets/gearbot-reactions-BJsPYvEq.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/gearbot-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/glasses-directions.webp": {
+    "file": "assets/glasses-directions-D1z-Zkwi.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/glasses-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/glasses-reactions.webp": {
+    "file": "assets/glasses-reactions-1lLhtmbN.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/glasses-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/grandpa-directions.webp": {
+    "file": "assets/grandpa-directions-NMvy3nSU.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/grandpa-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/grandpa-reactions.webp": {
+    "file": "assets/grandpa-reactions-CFZY-2L7.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/grandpa-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/granny-directions.webp": {
+    "file": "assets/granny-directions-D29pVLlF.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/granny-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/granny-reactions.webp": {
+    "file": "assets/granny-reactions-DSKj0Wl1.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/granny-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/hamster-directions.webp": {
+    "file": "assets/hamster-directions-SRCmhT51.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/hamster-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/hamster-reactions.webp": {
+    "file": "assets/hamster-reactions-Bb7SDKoS.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/hamster-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/hedgehog-directions.webp": {
+    "file": "assets/hedgehog-directions-B_TednNU.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/hedgehog-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/hedgehog-reactions.webp": {
+    "file": "assets/hedgehog-reactions-BlEbUZNF.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/hedgehog-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/hijabi-directions.webp": {
+    "file": "assets/hijabi-directions-CeQ09Xvf.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/hijabi-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/hijabi-reactions.webp": {
+    "file": "assets/hijabi-reactions-BtSTq9BF.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/hijabi-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/kamran-directions.webp": {
+    "file": "assets/kamran-directions-CMjgPaJB.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/kamran-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/kamran-reactions.webp": {
+    "file": "assets/kamran-reactions-BOkYlikt.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/kamran-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/knight-directions.webp": {
+    "file": "assets/knight-directions-SyO-ymdM.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/knight-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/knight-reactions.webp": {
+    "file": "assets/knight-reactions-BThNCXCa.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/knight-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/koala-directions.webp": {
+    "file": "assets/koala-directions-C0brp0fO.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/koala-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/koala-reactions.webp": {
+    "file": "assets/koala-reactions-MJeZxK3D.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/koala-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/lantern-directions.webp": {
+    "file": "assets/lantern-directions-B9kDWK08.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/lantern-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/lantern-reactions.webp": {
+    "file": "assets/lantern-reactions-Dky0PDec.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/lantern-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/mouse-directions.webp": {
+    "file": "assets/mouse-directions-C5GfPwUy.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/mouse-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/mouse-reactions.webp": {
+    "file": "assets/mouse-reactions-CqLGzZ_2.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/mouse-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/nurse-directions.webp": {
+    "file": "assets/nurse-directions-B6ezFm4J.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/nurse-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/nurse-reactions.webp": {
+    "file": "assets/nurse-reactions-5jZ5CpQ2.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/nurse-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/otter-directions.webp": {
+    "file": "assets/otter-directions-C1r0mCCY.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/otter-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/otter-reactions.webp": {
+    "file": "assets/otter-reactions-eKMxDnPX.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/otter-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/owl-directions.webp": {
+    "file": "assets/owl-directions-D8fYuyQS.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/owl-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/owl-reactions.webp": {
+    "file": "assets/owl-reactions-C_kQSpE2.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/owl-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/panda-directions.webp": {
+    "file": "assets/panda-directions-wKNW_dTP.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/panda-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/panda-reactions.webp": {
+    "file": "assets/panda-reactions-DLaYXnK2.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/panda-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/penguin-directions.webp": {
+    "file": "assets/penguin-directions-B5PQkQed.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/penguin-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/penguin-reactions.webp": {
+    "file": "assets/penguin-reactions-BNaDONEv.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/penguin-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/pirate-directions.webp": {
+    "file": "assets/pirate-directions-Cm7FNn5A.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/pirate-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/pirate-reactions.webp": {
+    "file": "assets/pirate-reactions-DcGxGzsF.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/pirate-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/postbot-directions.webp": {
+    "file": "assets/postbot-directions-CNWVusUa.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/postbot-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/postbot-reactions.webp": {
+    "file": "assets/postbot-reactions-Crn0RPyK.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/postbot-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/pug-directions.webp": {
+    "file": "assets/pug-directions-Cd-_ESmf.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/pug-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/pug-reactions.webp": {
+    "file": "assets/pug-reactions-8LI5XafN.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/pug-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/raccoon-directions.webp": {
+    "file": "assets/raccoon-directions-BxHF1yMM.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/raccoon-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/raccoon-reactions.webp": {
+    "file": "assets/raccoon-reactions-DuJgoub-.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/raccoon-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/radio-directions.webp": {
+    "file": "assets/radio-directions-Cr8Keo7Z.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/radio-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/radio-reactions.webp": {
+    "file": "assets/radio-reactions-DIRhNUwm.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/radio-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/redpanda-directions.webp": {
+    "file": "assets/redpanda-directions-DVPrwuyG.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/redpanda-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/redpanda-reactions.webp": {
+    "file": "assets/redpanda-reactions-DxJ1px2p.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/redpanda-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/rocket-directions.webp": {
+    "file": "assets/rocket-directions-DA6gFeRc.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/rocket-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/rocket-reactions.webp": {
+    "file": "assets/rocket-reactions-D_QlQZ-u.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/rocket-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/scientist-directions.webp": {
+    "file": "assets/scientist-directions-CDUNFBrW.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/scientist-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/scientist-reactions.webp": {
+    "file": "assets/scientist-reactions-Cnno_qpU.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/scientist-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/scout-directions.webp": {
+    "file": "assets/scout-directions-BRYaxJSr.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/scout-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/scout-reactions.webp": {
+    "file": "assets/scout-reactions-Oxr7HOWr.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/scout-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/sheep-directions.webp": {
+    "file": "assets/sheep-directions-Bt5IGYgj.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/sheep-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/sheep-reactions.webp": {
+    "file": "assets/sheep-reactions-z3lhnfdO.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/sheep-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/sikh-directions.webp": {
+    "file": "assets/sikh-directions-C-L1kCX9.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/sikh-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/sikh-reactions.webp": {
+    "file": "assets/sikh-reactions-CuwjXPt3.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/sikh-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/skater-directions.webp": {
+    "file": "assets/skater-directions-BcVnoRMZ.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/skater-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/skater-reactions.webp": {
+    "file": "assets/skater-reactions-BZzFMyz1.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/skater-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/sloth-directions.webp": {
+    "file": "assets/sloth-directions-BbywNDNd.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/sloth-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/sloth-reactions.webp": {
+    "file": "assets/sloth-reactions-B8ypuKAP.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/sloth-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/tiger-directions.webp": {
+    "file": "assets/tiger-directions-i13uXpvL.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/tiger-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/tiger-reactions.webp": {
+    "file": "assets/tiger-reactions-uZS6fqsU.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/tiger-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/toaster-directions.webp": {
+    "file": "assets/toaster-directions-YEp4rll3.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/toaster-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/toaster-reactions.webp": {
+    "file": "assets/toaster-reactions-CnptEMnc.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/toaster-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/tv-directions.webp": {
+    "file": "assets/tv-directions-D7xsj-eW.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/tv-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/tv-reactions.webp": {
+    "file": "assets/tv-reactions-BBjYbjPz.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/tv-reactions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/wizard-directions.webp": {
+    "file": "assets/wizard-directions-kMlvL456.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/wizard-directions.webp"
+  },
+  "../desktop/frontend-spartan/src/assets/mascots/wizard-reactions.webp": {
+    "file": "assets/wizard-reactions-CoT7KumB.webp",
+    "src": "../desktop/frontend-spartan/src/assets/mascots/wizard-reactions.webp"
+  },
+  "_bundle-mjs-B_AA55HL.js": {
+    "file": "assets/bundle-mjs-B_AA55HL.js",
+    "name": "bundle-mjs"
+  },
+  "_callout-DObzBjdN.js": {
+    "file": "assets/callout-DObzBjdN.js",
+    "name": "callout",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_createLucideIcon-BY90-81l.js"
+    ]
+  },
+  "_card-Cl3UlBEk.js": {
+    "file": "assets/card-Cl3UlBEk.js",
+    "name": "card",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_createLucideIcon-BY90-81l.js",
+      "_framework-Da_PKS3t.js"
+    ]
+  },
+  "_chunk-Cyuzqnbw.js": {
+    "file": "assets/chunk-Cyuzqnbw.js",
+    "name": "chunk"
+  },
+  "_chunk-D32TOXHM-DFGoWWVS.js": {
+    "file": "assets/chunk-D32TOXHM-DFGoWWVS.js",
+    "name": "chunk-D32TOXHM",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_lib-kF_vxsZi.js",
+      "_bundle-mjs-B_AA55HL.js"
+    ],
+    "dynamicImports": [
+      "node_modules/streamdown/dist/highlighted-body-KQOG7T2V.js",
+      "node_modules/streamdown/dist/mermaid-MCJ5UELQ.js"
+    ]
+  },
+  "_createLucideIcon-BY90-81l.js": {
+    "file": "assets/createLucideIcon-BY90-81l.js",
+    "name": "createLucideIcon",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "_dist-BfWOVZaL.js": {
+    "file": "assets/dist-BfWOVZaL.js",
+    "name": "dist",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_releases-scyZjQCL.js",
+      "_createLucideIcon-BY90-81l.js"
+    ]
+  },
+  "_floating-ui.react-dom-Di6hAoj6.js": {
+    "file": "assets/floating-ui.react-dom-Di6hAoj6.js",
+    "name": "floating-ui.react-dom",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_releases-scyZjQCL.js"
+    ]
+  },
+  "_framework-Da_PKS3t.js": {
+    "file": "assets/framework-Da_PKS3t.js",
+    "name": "framework",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "_i18n-3k5QahvO.js": {
+    "file": "assets/i18n-3k5QahvO.js",
+    "name": "i18n",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_dist-BfWOVZaL.js",
+      "_framework-Da_PKS3t.js"
+    ]
+  },
+  "_lib-kF_vxsZi.js": {
+    "file": "assets/lib-kF_vxsZi.js",
+    "name": "lib",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_floating-ui.react-dom-Di6hAoj6.js"
+    ]
+  },
+  "_navigation-DS7wM4Cp.js": {
+    "file": "assets/navigation-DS7wM4Cp.js",
+    "name": "navigation"
+  },
+  "_releases-scyZjQCL.js": {
+    "file": "assets/releases-scyZjQCL.js",
+    "name": "releases",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "_remove-undefined-CzMSKybq-CUTPf38U.js": {
+    "file": "assets/remove-undefined-CzMSKybq-CUTPf38U.js",
+    "name": "remove-undefined-CzMSKybq"
+  },
+  "_search-BQtcDT0e.js": {
+    "file": "assets/search-BQtcDT0e.js",
+    "name": "search",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_releases-scyZjQCL.js",
+      "_dist-BfWOVZaL.js",
+      "_lib-kF_vxsZi.js",
+      "_createLucideIcon-BY90-81l.js",
+      "_framework-Da_PKS3t.js"
+    ]
+  },
+  "_search-DRF8rSVm.js": {
+    "file": "assets/search-DRF8rSVm.js",
+    "name": "search",
+    "imports": [
+      "_lib-kF_vxsZi.js",
+      "_search-BQtcDT0e.js"
+    ]
+  },
+  "_sparta-mark-Bynd8vt-.js": {
+    "file": "assets/sparta-mark-Bynd8vt-.js",
+    "name": "sparta-mark",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_releases-scyZjQCL.js",
+      "_bundle-mjs-B_AA55HL.js"
+    ]
+  },
+  "_steps-vGRl94rx.js": {
+    "file": "assets/steps-vGRl94rx.js",
+    "name": "steps",
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "_url-BVHvi3_K-BT8unFa0.js": {
+    "file": "assets/url-BVHvi3_K-BT8unFa0.js",
+    "name": "url-BVHvi3_K"
+  },
+  "index.html": {
+    "file": "assets/index-L0BYRcbt.js",
+    "name": "index",
+    "src": "index.html",
+    "isEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js"
+    ],
+    "dynamicImports": [
+      "src/landing-page.tsx",
+      "src/components/docs/docs-page.tsx"
+    ],
+    "css": [
+      "assets/index-BPXSQDaN.css"
+    ]
+  },
+  "node_modules/fumadocs-core/dist/search/client/algolia.js": {
+    "file": "assets/algolia-D31pIiK4.js",
+    "name": "algolia",
+    "src": "node_modules/fumadocs-core/dist/search/client/algolia.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_search-DRF8rSVm.js"
+    ]
+  },
+  "node_modules/fumadocs-core/dist/search/client/fetch.js": {
+    "file": "assets/fetch-B51tBVhv.js",
+    "name": "fetch",
+    "src": "node_modules/fumadocs-core/dist/search/client/fetch.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "node_modules/fumadocs-ui/dist/components/dialog/search-default.js"
+    ]
+  },
+  "node_modules/fumadocs-core/dist/search/client/mixedbread.js": {
+    "file": "assets/mixedbread-C_-R3hiW.js",
+    "name": "mixedbread",
+    "src": "node_modules/fumadocs-core/dist/search/client/mixedbread.js",
+    "isDynamicEntry": true
+  },
+  "node_modules/fumadocs-core/dist/search/client/orama-cloud-legacy.js": {
+    "file": "assets/orama-cloud-legacy-CzA_wTRR.js",
+    "name": "orama-cloud-legacy",
+    "src": "node_modules/fumadocs-core/dist/search/client/orama-cloud-legacy.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_remove-undefined-CzMSKybq-CUTPf38U.js",
+      "_search-DRF8rSVm.js"
+    ]
+  },
+  "node_modules/fumadocs-core/dist/search/client/orama-cloud.js": {
+    "file": "assets/orama-cloud-5P79jhFD.js",
+    "name": "orama-cloud",
+    "src": "node_modules/fumadocs-core/dist/search/client/orama-cloud.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_remove-undefined-CzMSKybq-CUTPf38U.js",
+      "_search-DRF8rSVm.js"
+    ]
+  },
+  "node_modules/fumadocs-core/dist/search/client/orama-static.js": {
+    "file": "assets/orama-static-B7ln4q5y.js",
+    "name": "orama-static",
+    "src": "node_modules/fumadocs-core/dist/search/client/orama-static.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_remove-undefined-CzMSKybq-CUTPf38U.js",
+      "_search-DRF8rSVm.js",
+      "_url-BVHvi3_K-BT8unFa0.js"
+    ]
+  },
+  "node_modules/fumadocs-ui/dist/components/dialog/search-default.js": {
+    "file": "assets/search-default-CdxljSOv.js",
+    "name": "search-default",
+    "src": "node_modules/fumadocs-ui/dist/components/dialog/search-default.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_dist-BfWOVZaL.js",
+      "_search-BQtcDT0e.js",
+      "_url-BVHvi3_K-BT8unFa0.js",
+      "_i18n-3k5QahvO.js"
+    ],
+    "dynamicImports": [
+      "node_modules/fumadocs-ui/dist/components/dialog/search-default.js",
+      "node_modules/fumadocs-core/dist/search/client/algolia.js",
+      "node_modules/fumadocs-core/dist/search/client/orama-cloud.js",
+      "node_modules/fumadocs-core/dist/search/client/orama-cloud-legacy.js",
+      "node_modules/fumadocs-core/dist/search/client/mixedbread.js",
+      "node_modules/fumadocs-core/dist/search/client/orama-static.js"
+    ]
+  },
+  "node_modules/streamdown/dist/highlighted-body-KQOG7T2V.js": {
+    "file": "assets/highlighted-body-KQOG7T2V-BtOhQelL.js",
+    "name": "highlighted-body-KQOG7T2V",
+    "src": "node_modules/streamdown/dist/highlighted-body-KQOG7T2V.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_chunk-D32TOXHM-DFGoWWVS.js"
+    ]
+  },
+  "node_modules/streamdown/dist/mermaid-MCJ5UELQ.js": {
+    "file": "assets/mermaid-MCJ5UELQ-DDuyFik2.js",
+    "name": "mermaid-MCJ5UELQ",
+    "src": "node_modules/streamdown/dist/mermaid-MCJ5UELQ.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-D32TOXHM-DFGoWWVS.js"
+    ]
+  },
+  "src/components/docs/content/pages/architecture/backend-architecture.mdx": {
+    "file": "assets/backend-architecture-DWtpo52F.js",
+    "name": "backend-architecture",
+    "src": "src/components/docs/content/pages/architecture/backend-architecture.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/architecture/frontend-ui.mdx": {
+    "file": "assets/frontend-ui-CUuoDVQU.js",
+    "name": "frontend-ui",
+    "src": "src/components/docs/content/pages/architecture/frontend-ui.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/architecture/ipc-bridge.mdx": {
+    "file": "assets/ipc-bridge-BsaJygds.js",
+    "name": "ipc-bridge",
+    "src": "src/components/docs/content/pages/architecture/ipc-bridge.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/architecture/overview.mdx": {
+    "file": "assets/overview-DvHC4Cyf.js",
+    "name": "overview",
+    "src": "src/components/docs/content/pages/architecture/overview.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/core-concepts/chat-vs-agent-mode.mdx": {
+    "file": "assets/chat-vs-agent-mode-CC8n24ha.js",
+    "name": "chat-vs-agent-mode",
+    "src": "src/components/docs/content/pages/core-concepts/chat-vs-agent-mode.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/core-concepts/models-and-providers.mdx": {
+    "file": "assets/models-and-providers-Dt8eEy4l.js",
+    "name": "models-and-providers",
+    "src": "src/components/docs/content/pages/core-concepts/models-and-providers.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/core-concepts/security-and-sandbox.mdx": {
+    "file": "assets/security-and-sandbox-BPq0cYV-.js",
+    "name": "security-and-sandbox",
+    "src": "src/components/docs/content/pages/core-concepts/security-and-sandbox.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_callout-DObzBjdN.js"
+    ]
+  },
+  "src/components/docs/content/pages/development/local-setup.mdx": {
+    "file": "assets/local-setup-DRxhcJnv.js",
+    "name": "local-setup",
+    "src": "src/components/docs/content/pages/development/local-setup.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/development/project-structure.mdx": {
+    "file": "assets/project-structure-CeMw9rn3.js",
+    "name": "project-structure",
+    "src": "src/components/docs/content/pages/development/project-structure.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/api-monitor.mdx": {
+    "file": "assets/api-monitor-B0SecxNN.js",
+    "name": "api-monitor",
+    "src": "src/components/docs/content/pages/features/api-monitor.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/attachments-and-files.mdx": {
+    "file": "assets/attachments-and-files-V0vObJpI.js",
+    "name": "attachments-and-files",
+    "src": "src/components/docs/content/pages/features/attachments-and-files.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/automations.mdx": {
+    "file": "assets/automations-BC0hiT2S.js",
+    "name": "automations",
+    "src": "src/components/docs/content/pages/features/automations.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/channels.mdx": {
+    "file": "assets/channels-dRdzxF48.js",
+    "name": "channels",
+    "src": "src/components/docs/content/pages/features/channels.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/code-execution.mdx": {
+    "file": "assets/code-execution-Ck6LwHNO.js",
+    "name": "code-execution",
+    "src": "src/components/docs/content/pages/features/code-execution.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/deep-research.mdx": {
+    "file": "assets/deep-research-he6XtdSy.js",
+    "name": "deep-research",
+    "src": "src/components/docs/content/pages/features/deep-research.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/live-tools.mdx": {
+    "file": "assets/live-tools-DKtP816g.js",
+    "name": "live-tools",
+    "src": "src/components/docs/content/pages/features/live-tools.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/multimodal-rag.mdx": {
+    "file": "assets/multimodal-rag-MqtLvdHF.js",
+    "name": "multimodal-rag",
+    "src": "src/components/docs/content/pages/features/multimodal-rag.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/recipe-studio.mdx": {
+    "file": "assets/recipe-studio-DpmFIkuO.js",
+    "name": "recipe-studio",
+    "src": "src/components/docs/content/pages/features/recipe-studio.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/remote-access.mdx": {
+    "file": "assets/remote-access-mw7RNhUR.js",
+    "name": "remote-access",
+    "src": "src/components/docs/content/pages/features/remote-access.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/features/voice-audio.mdx": {
+    "file": "assets/voice-audio-BI-5hMNn.js",
+    "name": "voice-audio",
+    "src": "src/components/docs/content/pages/features/voice-audio.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/guides/first-task.mdx": {
+    "file": "assets/first-task-DKORZWNn.js",
+    "name": "first-task",
+    "src": "src/components/docs/content/pages/guides/first-task.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/guides/performance.mdx": {
+    "file": "assets/performance-CzPuyWhB.js",
+    "name": "performance",
+    "src": "src/components/docs/content/pages/guides/performance.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/guides/troubleshooting.mdx": {
+    "file": "assets/troubleshooting-Bs9ri-CM.js",
+    "name": "troubleshooting",
+    "src": "src/components/docs/content/pages/guides/troubleshooting.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/guides/workspace.mdx": {
+    "file": "assets/workspace-B5ETDv2N.js",
+    "name": "workspace",
+    "src": "src/components/docs/content/pages/guides/workspace.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/index.mdx": {
+    "file": "assets/pages-CkqqcvIn.js",
+    "name": "pages",
+    "src": "src/components/docs/content/pages/index.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_card-Cl3UlBEk.js",
+      "_callout-DObzBjdN.js"
+    ]
+  },
+  "src/components/docs/content/pages/mcp/configuration.mdx": {
+    "file": "assets/configuration-CHRKgm3F.js",
+    "name": "configuration",
+    "src": "src/components/docs/content/pages/mcp/configuration.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/mcp/introduction.mdx": {
+    "file": "assets/introduction-sDeo2Jw3.js",
+    "name": "introduction",
+    "src": "src/components/docs/content/pages/mcp/introduction.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/mcp/supported-servers.mdx": {
+    "file": "assets/supported-servers-oC48gYCU.js",
+    "name": "supported-servers",
+    "src": "src/components/docs/content/pages/mcp/supported-servers.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/project/status-and-scope.mdx": {
+    "file": "assets/status-and-scope-tlnTHh71.js",
+    "name": "status-and-scope",
+    "src": "src/components/docs/content/pages/project/status-and-scope.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/content/pages/quickstart.mdx": {
+    "file": "assets/quickstart-BqcZLpwK.js",
+    "name": "quickstart",
+    "src": "src/components/docs/content/pages/quickstart.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_callout-DObzBjdN.js",
+      "_steps-vGRl94rx.js"
+    ]
+  },
+  "src/components/docs/content/pages/skills/overview.mdx": {
+    "file": "assets/overview-Kp_eH_Mn.js",
+    "name": "overview",
+    "src": "src/components/docs/content/pages/skills/overview.mdx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html"
+    ]
+  },
+  "src/components/docs/docs-page.tsx": {
+    "file": "assets/docs-page-Dfh-wgdl.js",
+    "name": "docs-page",
+    "src": "src/components/docs/docs-page.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_floating-ui.react-dom-Di6hAoj6.js",
+      "_releases-scyZjQCL.js",
+      "_dist-BfWOVZaL.js",
+      "_createLucideIcon-BY90-81l.js",
+      "_framework-Da_PKS3t.js",
+      "_card-Cl3UlBEk.js",
+      "_url-BVHvi3_K-BT8unFa0.js",
+      "_callout-DObzBjdN.js",
+      "_steps-vGRl94rx.js",
+      "_i18n-3k5QahvO.js",
+      "_navigation-DS7wM4Cp.js"
+    ],
+    "dynamicImports": [
+      "node_modules/fumadocs-ui/dist/components/dialog/search-default.js",
+      "src/components/docs/docs-search.tsx",
+      "src/components/docs/content/pages/architecture/backend-architecture.mdx",
+      "src/components/docs/content/pages/architecture/frontend-ui.mdx",
+      "src/components/docs/content/pages/architecture/ipc-bridge.mdx",
+      "src/components/docs/content/pages/architecture/overview.mdx",
+      "src/components/docs/content/pages/core-concepts/chat-vs-agent-mode.mdx",
+      "src/components/docs/content/pages/core-concepts/models-and-providers.mdx",
+      "src/components/docs/content/pages/core-concepts/security-and-sandbox.mdx",
+      "src/components/docs/content/pages/development/local-setup.mdx",
+      "src/components/docs/content/pages/development/project-structure.mdx",
+      "src/components/docs/content/pages/features/api-monitor.mdx",
+      "src/components/docs/content/pages/features/attachments-and-files.mdx",
+      "src/components/docs/content/pages/features/automations.mdx",
+      "src/components/docs/content/pages/features/channels.mdx",
+      "src/components/docs/content/pages/features/code-execution.mdx",
+      "src/components/docs/content/pages/features/deep-research.mdx",
+      "src/components/docs/content/pages/features/live-tools.mdx",
+      "src/components/docs/content/pages/features/multimodal-rag.mdx",
+      "src/components/docs/content/pages/features/recipe-studio.mdx",
+      "src/components/docs/content/pages/features/remote-access.mdx",
+      "src/components/docs/content/pages/features/voice-audio.mdx",
+      "src/components/docs/content/pages/guides/first-task.mdx",
+      "src/components/docs/content/pages/guides/performance.mdx",
+      "src/components/docs/content/pages/guides/troubleshooting.mdx",
+      "src/components/docs/content/pages/guides/workspace.mdx",
+      "src/components/docs/content/pages/index.mdx",
+      "src/components/docs/content/pages/mcp/configuration.mdx",
+      "src/components/docs/content/pages/mcp/introduction.mdx",
+      "src/components/docs/content/pages/mcp/supported-servers.mdx",
+      "src/components/docs/content/pages/project/status-and-scope.mdx",
+      "src/components/docs/content/pages/quickstart.mdx",
+      "src/components/docs/content/pages/skills/overview.mdx"
+    ],
+    "css": [
+      "assets/docs-page-CH9WVCQm.css"
+    ]
+  },
+  "src/components/docs/docs-search.tsx": {
+    "file": "assets/docs-search-CkDjkArr.js",
+    "name": "docs-search",
+    "src": "src/components/docs/docs-search.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_search-BQtcDT0e.js",
+      "_navigation-DS7wM4Cp.js"
+    ]
+  },
+  "src/components/landing/sparta-preview.tsx": {
+    "file": "assets/sparta-preview-Bx5Y4gpZ.js",
+    "name": "sparta-preview",
+    "src": "src/components/landing/sparta-preview.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_sparta-mark-Bynd8vt-.js",
+      "_floating-ui.react-dom-Di6hAoj6.js",
+      "_releases-scyZjQCL.js",
+      "_lib-kF_vxsZi.js",
+      "_chunk-D32TOXHM-DFGoWWVS.js"
+    ],
+    "css": [
+      "assets/sparta-preview-CXvuy5h3.css"
+    ],
+    "assets": [
+      "assets/afro-directions-DkHfYuK1.webp",
+      "assets/afro-reactions-Duml0IAM.webp",
+      "assets/astronaut-directions-CleLEMnq.webp",
+      "assets/astronaut-reactions-BESShJHC.webp",
+      "assets/bald-directions-C7cN1azN.webp",
+      "assets/bald-reactions-BVznQ4I2.webp",
+      "assets/ballerina-directions-CEEzjyrt.webp",
+      "assets/ballerina-reactions-Dav3dwie.webp",
+      "assets/bear-directions-I7cdEme4.webp",
+      "assets/bear-reactions-DOoD-lra.webp",
+      "assets/beard-directions-BEC8Mmme.webp",
+      "assets/beard-reactions-DB5JzI74.webp",
+      "assets/builder-directions-DS29zlFV.webp",
+      "assets/builder-reactions-Cpw7LpQP.webp",
+      "assets/bunny-directions-C2AJrqA2.webp",
+      "assets/bunny-reactions-eut1am04.webp",
+      "assets/cap-directions-3HnLoxi7.webp",
+      "assets/cap-reactions-BnsvR3hi.webp",
+      "assets/cat-directions-BVxmRMse.webp",
+      "assets/cat-reactions-CGwBkK20.webp",
+      "assets/chef-directions-Dc5H2G0K.webp",
+      "assets/chef-reactions-D8LPzX6H.webp",
+      "assets/clockwork-directions-BcBvooKS.webp",
+      "assets/clockwork-reactions-Dj9tv7Z8.webp",
+      "assets/crt-directions-Ceg1CPrJ.webp",
+      "assets/crt-reactions-zo5FLI3c.webp",
+      "assets/cube-directions-CZmBd981.webp",
+      "assets/cube-reactions-BXv9REmN.webp",
+      "assets/deer-directions-5fuZl13c.webp",
+      "assets/deer-reactions-DnvewRwC.webp",
+      "assets/dino-directions-BLdCJpbz.webp",
+      "assets/dino-reactions-ClLCNrX5.webp",
+      "assets/drone-directions-CwkUf90R.webp",
+      "assets/drone-reactions-Cx25xIMh.webp",
+      "assets/fox-directions-xhhGWbGS.webp",
+      "assets/fox-ink-directions-C4KkZrM2.webp",
+      "assets/fox-ink-reactions-l0VKP6o3.webp",
+      "assets/fox-paper-directions-YEcHJTMr.webp",
+      "assets/fox-paper-reactions-BssKQuwt.webp",
+      "assets/fox-pixel-directions-BDVqkZvf.webp",
+      "assets/fox-pixel-reactions-Bwsy6gZM.webp",
+      "assets/fox-reactions-5XxRjzh0.webp",
+      "assets/fox-riso-directions-D_Z_r9Ao.webp",
+      "assets/fox-riso-reactions-1_-QJraZ.webp",
+      "assets/fox-sketch-directions-DqDRmbcW.webp",
+      "assets/fox-sketch-reactions-CNTMNHl_.webp",
+      "assets/frog-directions-B8IJIeYL.webp",
+      "assets/frog-reactions-NstMCCwb.webp",
+      "assets/gearbot-directions-BWwEvx9E.webp",
+      "assets/gearbot-reactions-BJsPYvEq.webp",
+      "assets/glasses-directions-D1z-Zkwi.webp",
+      "assets/glasses-reactions-1lLhtmbN.webp",
+      "assets/grandpa-directions-NMvy3nSU.webp",
+      "assets/grandpa-reactions-CFZY-2L7.webp",
+      "assets/granny-directions-D29pVLlF.webp",
+      "assets/granny-reactions-DSKj0Wl1.webp",
+      "assets/hamster-directions-SRCmhT51.webp",
+      "assets/hamster-reactions-Bb7SDKoS.webp",
+      "assets/hedgehog-directions-B_TednNU.webp",
+      "assets/hedgehog-reactions-BlEbUZNF.webp",
+      "assets/hijabi-directions-CeQ09Xvf.webp",
+      "assets/hijabi-reactions-BtSTq9BF.webp",
+      "assets/kamran-directions-CMjgPaJB.webp",
+      "assets/kamran-reactions-BOkYlikt.webp",
+      "assets/knight-directions-SyO-ymdM.webp",
+      "assets/knight-reactions-BThNCXCa.webp",
+      "assets/koala-directions-C0brp0fO.webp",
+      "assets/koala-reactions-MJeZxK3D.webp",
+      "assets/lantern-directions-B9kDWK08.webp",
+      "assets/lantern-reactions-Dky0PDec.webp",
+      "assets/mouse-directions-C5GfPwUy.webp",
+      "assets/mouse-reactions-CqLGzZ_2.webp",
+      "assets/nurse-directions-B6ezFm4J.webp",
+      "assets/nurse-reactions-5jZ5CpQ2.webp",
+      "assets/otter-directions-C1r0mCCY.webp",
+      "assets/otter-reactions-eKMxDnPX.webp",
+      "assets/owl-directions-D8fYuyQS.webp",
+      "assets/owl-reactions-C_kQSpE2.webp",
+      "assets/panda-directions-wKNW_dTP.webp",
+      "assets/panda-reactions-DLaYXnK2.webp",
+      "assets/penguin-directions-B5PQkQed.webp",
+      "assets/penguin-reactions-BNaDONEv.webp",
+      "assets/pirate-directions-Cm7FNn5A.webp",
+      "assets/pirate-reactions-DcGxGzsF.webp",
+      "assets/postbot-directions-CNWVusUa.webp",
+      "assets/postbot-reactions-Crn0RPyK.webp",
+      "assets/pug-directions-Cd-_ESmf.webp",
+      "assets/pug-reactions-8LI5XafN.webp",
+      "assets/raccoon-directions-BxHF1yMM.webp",
+      "assets/raccoon-reactions-DuJgoub-.webp",
+      "assets/radio-directions-Cr8Keo7Z.webp",
+      "assets/radio-reactions-DIRhNUwm.webp",
+      "assets/redpanda-directions-DVPrwuyG.webp",
+      "assets/redpanda-reactions-DxJ1px2p.webp",
+      "assets/rocket-directions-DA6gFeRc.webp",
+      "assets/rocket-reactions-D_QlQZ-u.webp",
+      "assets/scientist-directions-CDUNFBrW.webp",
+      "assets/scientist-reactions-Cnno_qpU.webp",
+      "assets/scout-directions-BRYaxJSr.webp",
+      "assets/scout-reactions-Oxr7HOWr.webp",
+      "assets/sheep-directions-Bt5IGYgj.webp",
+      "assets/sheep-reactions-z3lhnfdO.webp",
+      "assets/sikh-directions-C-L1kCX9.webp",
+      "assets/sikh-reactions-CuwjXPt3.webp",
+      "assets/skater-directions-BcVnoRMZ.webp",
+      "assets/skater-reactions-BZzFMyz1.webp",
+      "assets/sloth-directions-BbywNDNd.webp",
+      "assets/sloth-reactions-B8ypuKAP.webp",
+      "assets/tiger-directions-i13uXpvL.webp",
+      "assets/tiger-reactions-uZS6fqsU.webp",
+      "assets/toaster-directions-YEp4rll3.webp",
+      "assets/toaster-reactions-CnptEMnc.webp",
+      "assets/tv-directions-D7xsj-eW.webp",
+      "assets/tv-reactions-BBjYbjPz.webp",
+      "assets/wizard-directions-kMlvL456.webp",
+      "assets/wizard-reactions-CoT7KumB.webp",
+      "assets/spartan-logo-qvz-qbG9.svg"
+    ]
+  },
+  "src/landing-page.tsx": {
+    "file": "assets/landing-page-CIjsG3Un.js",
+    "name": "landing-page",
+    "src": "src/landing-page.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-Cyuzqnbw.js",
+      "index.html",
+      "_sparta-mark-Bynd8vt-.js",
+      "_releases-scyZjQCL.js"
+    ],
+    "dynamicImports": [
+      "src/components/landing/sparta-preview.tsx"
+    ],
+    "css": [
+      "assets/landing-page-rtLUU4nk.css"
+    ],
+    "assets": [
+      "assets/Hellix-Regular-DWoKGW5I.woff",
+      "assets/inter-latin-wght-normal-Dx4kXJAl.woff2",
+      "assets/figtree-latin-wght-normal-D_ZTVpCC.woff2",
+      "assets/space-grotesk-latin-wght-normal-BhU9QXUp.woff2",
+      "assets/Hellix-Medium-BaJQzTxc.woff",
+      "assets/Hellix-SemiBold-ku7lU1KZ.woff2"
+    ]
+  }
+}

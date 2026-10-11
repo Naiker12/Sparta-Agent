@@ -1,0 +1,1 @@
+import{t as e}from"./search-default-CdxljSOv.js";export{e as fetchClient};
