@@ -109,7 +109,7 @@ test("the reclamp effect re-runs when the panel node appears", () => {
   // The card renders nothing until the first poll returns a row, so the effect's
   // first run sees no node. A RefObject mutation does not re-render, so the node
   // has to arrive through state for the effect to ever see it.
-  const guard = SOURCE.indexOf("!panelEl) return;");
+  const guard = SOURCE.indexOf("if (!panelEl) {");
   assert.notEqual(
     guard,
     -1,
@@ -199,11 +199,11 @@ test("every drag handle goes through startDrag, which resets the sentinel", () =
 
 test("only the pill consumes the sentinel, since only it has a click", () => {
   const pill = INDICATOR.slice(
-    INDICATOR.indexOf("Show details, or drag to move"),
-    INDICATOR.indexOf("Show details, or drag to move") + 400,
+    INDICATOR.indexOf("ui.value0_show_details_or_drag_to_move"),
+    INDICATOR.indexOf("ui.value0_show_details_or_drag_to_move") + 400,
   );
   assert.match(pill, /onPointerDown=\{startDrag\}/);
-  assert.match(pill, /if \(!justDragged\(\)\) setCollapsed\(false\)/);
+  assert.match(pill, /if \(!justDragged\(\)\) \{\s*setCollapsed\(false\);\s*\}/);
 });
 
 // The clamp is a display-time adaptation, not a choice the user made. Writing

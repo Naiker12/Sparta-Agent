@@ -21,7 +21,7 @@ const SOURCE = readFileSync(
     new URL("../src/features/loaded-models/loaded-models-api.ts", import.meta.url),
   ),
   "utf8",
-);
+).replace(/\r\n/g, "\n");
 
 test("an unreadable verification is its own outcome, not `ejected`", () => {
   assert.match(
@@ -31,7 +31,7 @@ test("an unreadable verification is its own outcome, not `ejected`", () => {
   );
   assert.match(
     SOURCE,
-    /if \(stillResident === UNVERIFIED\) return \{ status: "unverified" \};/,
+    /if \(stillResident === UNVERIFIED\) \{\s*return \{ status: "unverified" \};\s*\}/,
     "the runtime eject must map the sentinel before the null check",
   );
 });
@@ -41,12 +41,12 @@ test("the STT re-read returns the sentinel rather than null on a failed read", (
   assert.match(stt, /const after = await bounded\(readSttStatus\);/);
   assert.match(
     stt,
-    /if \(!after\) return UNVERIFIED;/,
+    /if \(!after\) \{\s*return UNVERIFIED;\s*\}/,
     "a null status read is unreadable, not proof the engine is empty",
   );
   assert.doesNotMatch(
     stt.slice(stt.indexOf("const after")),
-    /if \(!after\) return null;/,
+    /if \(!after\) \{\s*return null;\s*\}/,
   );
 });
 

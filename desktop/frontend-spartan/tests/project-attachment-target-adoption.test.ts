@@ -134,7 +134,7 @@ test("attaching is held until the chat's project is known", () => {
 // project is first resolved.
 test("the run keeps the project it started in", () => {
   const source = readFileSync(
-    new URL("../src/features/chat/api/chat-adapter.ts", import.meta.url),
+    new URL("../src/features/chat/api/chat-adapter/stream-orchestrator.ts", import.meta.url),
     "utf8",
   );
   assert.match(
@@ -144,7 +144,7 @@ test("the run keeps the project it started in", () => {
   );
   assert.match(
     source,
-    /rememberComposerProjectForRun\(resolvedThreadId, composerProjectIdAtSend\)/,
+    /rememberComposerProjectForRun\(\s*resolvedThreadId,\s*composerProjectIdAtSend,?\s*\)/,
   );
 });
 
@@ -237,7 +237,7 @@ test("both writers of the pending entry move the claim", () => {
 // mounts with the id already set, so neither of the bar's adopt paths runs.
 test("the project composer's choice survives the swap to a thread", () => {
   const page = readFileSync(
-    new URL("../src/features/chat/chat-page.tsx", import.meta.url),
+    new URL("../src/features/chat/components/project-landing.tsx", import.meta.url),
     "utf8",
   );
   // The swap: this is what unmounts the composer.
@@ -246,9 +246,9 @@ test("the project composer's choice survives the swap to a thread", () => {
   // this composer recorded: a later composer's choice is refused, not consumed.
   assert.match(
     page,
-    /adoptPendingProjectAttachmentTarget\(\s*activeThreadId,\s*captured\?\.nonce === newThreadNonce \? captured\.claim : NO_SUCH_CLAIM,\s*\);\s*setPendingNewThreadId\(activeThreadId\);/,
+    /adoptPendingProjectAttachmentTarget\(\s*activeThreadId,\s*captured\?\.nonce === newThreadNonce \? captured\.claim : noSuchClaim,\s*\);\s*setPendingNewThreadId\(activeThreadId\);/,
   );
-  assert.match(page, /const NO_SUCH_CLAIM = -1;/);
+  assert.match(page, /const noSuchClaim = -1;/);
   // Captured by claim, so re-picking the same destination is still this
   // composer's choice rather than an unrecognised one.
   assert.match(page, /const claim = readPendingAttachmentTargetClaim\(\);/);

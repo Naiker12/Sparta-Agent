@@ -95,7 +95,7 @@ test("attachment and send gates forward projector fallback state", () => {
   );
 
   const sendGate = sourceBetween(
-    "../src/features/chat/api/chat-adapter.ts",
+    "../src/features/chat/api/chat-adapter/stream-orchestrator.ts",
     "const imageGateReason = getImageInputUnavailableReason({",
     "if (imageGateReason)",
   );

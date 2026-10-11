@@ -1,9 +1,9 @@
 {
-  "date": "2026-10-10",
+  "date": "2026-10-11",
   "version": "0.4.0",
-  "tests": 3524,
-  "passed": 3454,
-  "failed": 70,
+  "tests": 3528,
+  "passed": 3476,
+  "failed": 52,
   "skipped": 0,
   "classification": "Mechanical classification; every remaining failure requires individual review.",
   "failures": [
@@ -53,11 +53,6 @@
       "category": "file_or_import_failure"
     },
     {
-      "location": "tests/context-window-visible.test.ts:120:1",
-      "name": "the header renders the bar on the window alone, with usage optional",
-      "category": "assertion_requires_review"
-    },
-    {
       "location": "tests/dataset-data-recipes-navigation.test.ts:1:1",
       "name": "tests\\dataset-data-recipes-navigation.test.ts",
       "category": "file_or_import_failure"
@@ -91,11 +86,6 @@
       "location": "tests/image-generation-stop.test.ts:1:1",
       "name": "tests\\image-generation-stop.test.ts",
       "category": "file_or_import_failure"
-    },
-    {
-      "location": "tests/lan-access-state.test.ts:207:1",
-      "name": "the pending-password message is desktop-aware",
-      "category": "assertion_requires_review"
     },
     {
       "location": "tests/linked-folders-lease-gate.test.ts:1:1",
@@ -143,41 +133,6 @@
       "category": "assertion_requires_review"
     },
     {
-      "location": "tests/loaded-models-drag-restore.test.ts:108:1",
-      "name": "the reclamp effect re-runs when the panel node appears",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/loaded-models-drag-restore.test.ts:200:1",
-      "name": "only the pill consumes the sentinel, since only it has a click",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/loaded-models-eject-unverified.test.ts:26:1",
-      "name": "an unreadable verification is its own outcome, not `ejected`",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/loaded-models-eject-unverified.test.ts:39:1",
-      "name": "the STT re-read returns the sentinel rather than null on a failed read",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/loaded-models-eject-unverified.test.ts:53:1",
-      "name": "the sentinel is checked before the truthiness test that would hide it",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/loaded-models-pending-reset.test.ts:59:1",
-      "name": "the hook drops pending loads once recording is turned off",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/loaded-models-pending-reset.test.ts:173:1",
-      "name": "recording is gated on the preference, not on whether the card shows",
-      "category": "assertion_requires_review"
-    },
-    {
       "location": "tests/loaded-models-platform-matrix.test.ts:1:1",
       "name": "tests\\loaded-models-platform-matrix.test.ts",
       "category": "file_or_import_failure"
@@ -186,16 +141,6 @@
       "location": "tests/loaded-models-q8-precision-repro.test.ts:1:1",
       "name": "tests\\loaded-models-q8-precision-repro.test.ts",
       "category": "file_or_import_failure"
-    },
-    {
-      "location": "tests/loaded-models-settled-retire.test.ts:41:1",
-      "name": "a read that failed outright is evidence about nothing",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/loaded-models-settled-retire.test.ts:51:1",
-      "name": "a readable source is still retired, or the row would never go",
-      "category": "assertion_requires_review"
     },
     {
       "location": "tests/loaded-models-sources.test.ts:1:1",
@@ -248,39 +193,14 @@
       "category": "missing_file"
     },
     {
-      "location": "tests/mmproj-fallback.test.ts:86:1",
-      "name": "attachment and send gates forward projector fallback state",
-      "category": "assertion_requires_review"
-    },
-    {
       "location": "tests/overlay-scrollbar-gutter.test.ts:248:1",
       "name": "right-edge action lists reserve the gutter they publish",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/per-model-params-hydration.test.ts:487:1",
-      "name": "every site that re-applies model defaults asks for the replay",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/per-model-params-hydration.test.ts:553:1",
-      "name": "a remembered budget is capped by a non-GGUF load",
       "category": "assertion_requires_review"
     },
     {
       "location": "tests/pr9057-video-simulation.test.ts:1:1",
       "name": "tests\\pr9057-video-simulation.test.ts",
       "category": "file_or_import_failure"
-    },
-    {
-      "location": "tests/project-attachment-target-adoption.test.ts:135:1",
-      "name": "the run keeps the project it started in",
-      "category": "assertion_requires_review"
-    },
-    {
-      "location": "tests/project-attachment-target-adoption.test.ts:238:1",
-      "name": "the project composer's choice survives the swap to a thread",
-      "category": "assertion_requires_review"
     },
     {
       "location": "tests/provider-max-output-tokens-guards.test.ts:188:1",
@@ -318,18 +238,8 @@
       "category": "file_or_import_failure"
     },
     {
-      "location": "tests/remote-access-state.test.ts:241:1",
-      "name": "the pending-password message is desktop-aware",
-      "category": "assertion_requires_review"
-    },
-    {
       "location": "tests/spec-fallback-partial-offload-copy.test.ts:1:1",
       "name": "tests\\spec-fallback-partial-offload-copy.test.ts",
-      "category": "file_or_import_failure"
-    },
-    {
-      "location": "tests/verdict-poll-stall-guard.test.ts:1:1",
-      "name": "tests\\verdict-poll-stall-guard.test.ts",
       "category": "file_or_import_failure"
     },
     {

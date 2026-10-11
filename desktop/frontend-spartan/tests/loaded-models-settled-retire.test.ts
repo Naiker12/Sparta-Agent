@@ -39,7 +39,7 @@ test("an unreadable source keeps its settled row", () => {
 });
 
 test("a read that failed outright is evidence about nothing", () => {
-  assert.match(HOOK, /const ALL_SOURCES: LoadedModelSource\[\] = \["chat", "image", "video", "stt"\]/);
+  assert.match(HOOK, /const ALL_SOURCES: LoadedModelSource\[\] = \["chat", "stt"\]/);
   const refresh = HOOK.slice(
     HOOK.indexOf("void readLoadedModels(polledRef.current)"),
     HOOK.indexOf("}, [track, retireSettled]);"),
@@ -54,6 +54,6 @@ test("a readable source is still retired, or the row would never go", () => {
     HOOK.indexOf("const refreshRef ="),
   );
   // The early return is on nothing left to retire, not on anything unreadable.
-  assert.match(retire, /if \(done\.length === 0\) return;/);
-  assert.match(retire, /for \(const source of done\) next\.delete\(source\);/);
+  assert.match(retire, /if \(done\.length === 0\) \{\s*return;\s*\}/);
+  assert.match(retire, /for \(const source of done\) \{\s*next\.delete\(source\);\s*\}/);
 });

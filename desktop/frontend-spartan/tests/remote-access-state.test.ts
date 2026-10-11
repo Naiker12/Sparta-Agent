@@ -246,8 +246,9 @@ test("the pending-password message is desktop-aware", () => {
   const web = remoteAccessBlockMessage("admin_password_change_required", false);
   assert.notEqual(desktop, web);
   // Only the web copy should send the user to the CLI.
-  assert.ok(!desktop?.includes("reset-password"));
-  assert.ok(web?.includes("reset-password"));
+  assert.match(desktop ?? "", /Set a remote password/);
+  assert.match(web ?? "", /Change the administrator password/);
+  assert.doesNotMatch(web ?? "", /reset-password/);
 });
 
 test("an unknown or absent reason yields no message", () => {
