@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.4.1] - Unreleased
+## [0.4.1] - 2026-10-11
 
 ### Added
 
@@ -25,7 +25,8 @@
 
 ### Release
 
-- Candidato en preparación: el tag y la publicación requieren resolver los bloqueos de validación registrados en `docs/audits/2026-10-11-release-0.4.1.md`.
+- Instaladores de Windows, macOS Apple silicon/Intel y Linux, con metadatos del actualizador validados antes de publicar.
+- Notas de versión con funciones nuevas, correcciones, instrucciones de actualización y límites de uso.
 
 ## [0.3.3] - 2026-10-02
 

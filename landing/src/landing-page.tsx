@@ -302,8 +302,8 @@ export default function LandingPage({
             <h2 id="tools-title">Del pedido al archivo, en la conversación.</h2>
             <p>
               Estas funciones requieren un modelo compatible con herramientas.
-              La descarga publicada puede incluir una versión anterior a los
-              cambios más recientes del proyecto.
+              La versión 0.4.1 mejora la generación y apertura de archivos,
+              con estados de progreso y controles de contenido.
             </p>
           </div>
           <div className="benefits-grid">
@@ -318,7 +318,7 @@ export default function LandingPage({
             </article>
             <article>
               <BookOpen aria-hidden="true" />
-              <h3>Consulta fuentes desde tu modelo local.</h3>
+              <h3>Consulta fuentes desde tu proveedor.</h3>
               <p>
                 Activa Búsqueda web para consultar información con fuentes.
                 Sparta ejecuta la búsqueda cuando el modelo solicita la
@@ -346,9 +346,9 @@ export default function LandingPage({
         </section>
         <section className="benefits-section site-container" aria-labelledby="channels-title">
           <div className="section-heading">
-            <span className="eyebrow">CANALES · EN DESARROLLO</span>
+            <span className="eyebrow">CANALES · TELEGRAM</span>
             <h2 id="channels-title">Consulta Spartan desde Telegram.</h2>
-            <p>Bot privado, usuarios autorizados y tu proveedor de IA. Estas funciones están implementadas en la rama de Canales; la descarga publicada puede incluir una versión anterior.</p>
+            <p>Bot privado, usuarios autorizados y tu proveedor de IA. Conecta Telegram para consultar proyectos y revisar propuestas de tareas.</p>
           </div>
           <div className="benefits-grid">
             <article>
@@ -375,9 +375,9 @@ export default function LandingPage({
         </section>
         <section className="benefits-section site-container" aria-labelledby="automations-title">
           <div className="section-heading">
-            <span className="eyebrow">AUTOMATIZACIONES · EN DESARROLLO</span>
+            <span className="eyebrow">AUTOMATIZACIONES · DESDE EL CHAT</span>
             <h2 id="automations-title">De una petición a una tarea programada.</h2>
-            <p>El desarrollo actual permite preparar un plan desde el chat, revisar sus opciones y confirmar la activación. Su integración y validación en la app distribuida están pendientes.</p>
+            <p>Prepara un plan desde el chat, revisa su horario, zona horaria y modelo y confirma la activación. Cada ejecución conserva su resultado en un chat.</p>
           </div>
           <div className="benefits-grid">
             <article><MessageSquare aria-hidden="true" /><h3>Describe lo que necesitas.</h3><p>Pide una tarea desde el chat o prepara una propuesta desde Telegram con tu cuenta autorizada.</p></article>
@@ -385,6 +385,19 @@ export default function LandingPage({
             <article><ShieldCheck aria-hidden="true" /><h3>Consulta el resultado en su chat.</h3><p>Sparta debe permanecer abierto. La propuesta no concede acceso a archivos; revisa los permisos y las opciones de búsqueda.</p></article>
           </div>
           <div className="integration-note"><BookOpen aria-hidden="true" />Estados, confirmación y diagnóstico.<a href={getPublicUrl("?docs=features/automations")}>Ver Automatizaciones <ArrowUpRight /></a></div>
+        </section>
+        <section className="benefits-section site-container" aria-labelledby="release-title">
+          <div className="section-heading">
+            <span className="eyebrow">NOVEDADES · v{release.version}</span>
+            <h2 id="release-title">Una actualización para trabajar con más continuidad.</h2>
+            <p>Esta versión incorpora programación desde la conversación y corrige interrupciones al crear documentos, abrir resultados y recuperar tus preferencias.</p>
+          </div>
+          <div className="benefits-grid">
+            <article><Clock3 aria-hidden="true" /><h3>Tareas con un plan revisable.</h3><p>Define la tarea desde el chat o Telegram. Revisa el modelo y el horario antes de activarla y abre el chat de su ejecución.</p></article>
+            <article><FileText aria-hidden="true" /><h3>Documentos con progreso claro.</h3><p>Generación compacta, detalles de código desplegables y apertura inicial de Word, PDF y hojas de cálculo corregida. Los archivos vacíos se rechazan.</p></article>
+            <article><Check aria-hidden="true" /><h3>Tus elecciones se conservan.</h3><p>Mejoras al recuperar la mascota, el proveedor, el modelo y las preferencias entre conversaciones y reinicios.</p></article>
+          </div>
+          <div className="integration-note"><BookOpen aria-hidden="true" />Conoce las mejoras y los requisitos de uso.<a href={release.url} target="_blank" rel="noopener noreferrer">Notas de v{release.version} <ArrowUpRight /></a></div>
         </section>
         <section
           id="descargas"
