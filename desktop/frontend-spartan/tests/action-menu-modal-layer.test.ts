@@ -26,11 +26,11 @@ import test from "node:test";
 import ts from "typescript";
 
 const THREAD = new URL(
-  "../src/components/assistant-ui/thread.tsx",
+  "../src/components/assistant-ui/thread/assistant-action-bar.tsx",
   import.meta.url,
 );
 const source = ts.createSourceFile(
-  "thread.tsx",
+  "assistant-action-bar.tsx",
   readFileSync(THREAD, "utf8"),
   ts.ScriptTarget.ESNext,
   true,
@@ -55,7 +55,7 @@ const menuRoots = (): ts.JsxOpeningLikeElement[] => {
 
 test("every message action menu is non-modal", () => {
   const roots = menuRoots();
-  assert.ok(roots.length > 0, "no ActionBarMorePrimitive.Root in thread.tsx");
+  assert.ok(roots.length > 0, "no ActionBarMorePrimitive.Root in assistant-action-bar.tsx");
 
   for (const root of roots) {
     const modal = root.attributes.properties.find(

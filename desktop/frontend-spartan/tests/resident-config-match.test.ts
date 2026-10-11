@@ -391,7 +391,7 @@ test("selectModel weighs the config and the lease before confirming a reload", (
   // Widened as the gate's preamble grows: what matters is that the guard opens the block
   // the identity check sits in, not how many reads it makes first.
   const guard = source.lastIndexOf(
-    "if (!forceReload && !nativePathToken) {",
+    "if (!(forceReload || nativePathToken)) {",
     identityCheck,
   );
   assert.ok(
@@ -1600,7 +1600,7 @@ test("an outstanding audio probe keeps the shortcut from skipping the load", () 
   // route derives that from the identifier and the drafter retry is guarded on it.
   assert.match(
     source,
-    /\(loadPath \?\? modelId\)\.toLowerCase\(\)\.endsWith\("\.gguf"\)/,
+    /\(loadPath \?\? modelId\)\s*\.toLowerCase\(\)\s*\.endsWith\("\.gguf"\)/,
     "the repair check no longer knows whether the pick sends a path",
   );
   assert.ok(

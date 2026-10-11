@@ -1,0 +1,393 @@
+{
+  "date": "2026-10-11",
+  "version": "0.4.1",
+  "baseline": "2026-10-10-release-0.4.0-frontend-failures.json",
+  "baselineFailures": 52,
+  "runs": [
+    {
+      "platform": "Windows",
+      "node": "22.23.3",
+      "tests": 3629,
+      "passed": 3629,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "platform": "Windows",
+      "node": "24.19.0",
+      "tests": 3629,
+      "passed": 3629,
+      "failed": 0,
+      "skipped": 0
+    }
+  ],
+  "failures": [],
+  "baselineReviews": [
+    {
+      "location": "tests/appearance-accent-vars.test.ts:253:1",
+      "name": "loaded-model stripes stay on the semantic success color",
+      "category": "missing_file",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/audio-mode-task-filter.test.ts:21:1",
+      "name": "Hub discovery follows the active audio mode",
+      "category": "assertion_requires_review",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/audio-picker-policy.test.ts:521:1",
+      "name": "a local Whisper checkpoint is not advertised as a routable ASR row",
+      "category": "assertion_requires_review",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/chat-local-model-options.test.ts:1:1",
+      "name": "tests\\chat-local-model-options.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/chat-model-residency.test.ts:81:1",
+      "name": "the selector's tick asks the caller, and defaults to the old rule",
+      "category": "assertion_requires_review",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/chat-model-residency.test.ts:141:1",
+      "name": "the hub cards ask residency before saying Loaded",
+      "category": "missing_file",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/chat-model-residency.test.ts:160:1",
+      "name": "another runtime loading re-reads the chat status",
+      "category": "assertion_requires_review",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/chat-model-residency.test.ts:184:1",
+      "name": "an eviction drops the pick, not just the loaded marks",
+      "category": "assertion_requires_review",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/chat-remembers-its-model.test.ts:1:1",
+      "name": "tests\\chat-remembers-its-model.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/dataset-data-recipes-navigation.test.ts:1:1",
+      "name": "tests\\dataset-data-recipes-navigation.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/export-gguf-token-fallback.test.ts:1:1",
+      "name": "tests\\export-gguf-token-fallback.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/export-progress-percent.test.ts:1:1",
+      "name": "tests\\export-progress-percent.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/hub-recovery-paths.test.ts:23:1",
+      "name": "clients with their own request keep their own reachability",
+      "category": "missing_file",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/hub-recovery-paths.test.ts:36:1",
+      "name": "the panel still reads the classified cause, not that boolean",
+      "category": "missing_file",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/image-generation-defaults.test.ts:1:1",
+      "name": "tests\\image-generation-defaults.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/image-generation-stop.test.ts:1:1",
+      "name": "tests\\image-generation-stop.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/linked-folders-lease-gate.test.ts:1:1",
+      "name": "tests\\linked-folders-lease-gate.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/llama-extra-args-panel-hydration.test.ts:1:1",
+      "name": "tests\\llama-extra-args-panel-hydration.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/loaded-build-panel-rows.test.ts:1:1",
+      "name": "tests\\loaded-build-panel-rows.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/loaded-models-backcompat.test.ts:1:1",
+      "name": "tests\\loaded-models-backcompat.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/loaded-models-barrel-order.test.ts:44:1",
+      "name": "the cycle this order defends against is still present",
+      "category": "assertion_requires_review",
+      "resolution": "fixed_preference_reset_and_safe_import",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/loaded-models-barrel-order.test.ts:52:1",
+      "name": "general-tab reads the keys at module scope, not inside a component",
+      "category": "assertion_requires_review",
+      "resolution": "fixed_preference_reset_and_safe_import",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/loaded-models-dismiss.test.ts:105:1",
+      "name": "the dismissal key is cleared by Reset all local preferences",
+      "category": "assertion_requires_review",
+      "resolution": "fixed_preference_reset_and_safe_import",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/loaded-models-dismiss.test.ts:113:1",
+      "name": "the card carries a close button, and a load brings it back",
+      "category": "assertion_requires_review",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/loaded-models-dismiss.test.ts:155:1",
+      "name": "a row ejects with the eject glyph, the header closes with an X",
+      "category": "assertion_requires_review",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/loaded-models-platform-matrix.test.ts:1:1",
+      "name": "tests\\loaded-models-platform-matrix.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/loaded-models-q8-precision-repro.test.ts:1:1",
+      "name": "tests\\loaded-models-q8-precision-repro.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/loaded-models-sources.test.ts:1:1",
+      "name": "tests\\loaded-models-sources.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/mac-titlebar-optical-alignment.test.ts:24:1",
+      "name": "mac chat and media headers share the lowered control row",
+      "category": "missing_file",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/media-eject-busy-state.test.ts:1:1",
+      "name": "tests\\media-eject-busy-state.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/media-generation-preset-claims.test.ts:1:1",
+      "name": "tests\\media-generation-preset-claims.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/media-idle-unload-api-only.test.ts:1:1",
+      "name": "tests\\media-idle-unload-api-only.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/media-load-cancel.test.ts:1:1",
+      "name": "tests\\media-load-cancel.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/media-status-sequencing.test.ts:27:3",
+      "name": "the images page lets only the newest status read write",
+      "category": "missing_file",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/media-status-sequencing.test.ts:53:3",
+      "name": "the images page claims its ticket before awaiting, not after",
+      "category": "missing_file",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/media-status-sequencing.test.ts:27:3",
+      "name": "the video page lets only the newest status read write",
+      "category": "missing_file",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/media-status-sequencing.test.ts:53:3",
+      "name": "the video page claims its ticket before awaiting, not after",
+      "category": "missing_file",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/overlay-scrollbar-gutter.test.ts:248:1",
+      "name": "right-edge action lists reserve the gutter they publish",
+      "category": "assertion_requires_review",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/pr9057-video-simulation.test.ts:1:1",
+      "name": "tests\\pr9057-video-simulation.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/provider-max-output-tokens-guards.test.ts:188:1",
+      "name": "every clamp site waits for a resolved provider",
+      "category": "missing_file",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/provider-max-output-tokens.test.ts:13:1",
+      "name": "all max-output cap callers pass the selected connection override",
+      "category": "missing_file",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/provider-max-output-tokens.test.ts:40:1",
+      "name": "the connection editor exposes a bounded optional cap and warning",
+      "category": "assertion_requires_review",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/provider-max-output-tokens.test.ts:86:1",
+      "name": "preset application clamps live Max Tokens to the active external cap",
+      "category": "missing_file",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/provider-max-output-tokens.test.ts:106:1",
+      "name": "lowering an active external cap immediately clamps live Max Tokens",
+      "category": "missing_file",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/qwen-thinking-size-gate.test.ts:81:1",
+      "name": "all four copies of the gate pattern stay in sync",
+      "category": "missing_file",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/read-aloud-tts-model-row.test.ts:1:1",
+      "name": "tests\\read-aloud-tts-model-row.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "migrated_current_contract",
+      "verification": "Included in full Node 22 frontend test run; no failures or skipped tests."
+    },
+    {
+      "location": "tests/spec-fallback-partial-offload-copy.test.ts:1:1",
+      "name": "tests\\spec-fallback-partial-offload-copy.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/video-download-plan-payload.test.ts:1:1",
+      "name": "tests\\video-download-plan-payload.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/video-gallery-clear-confirmation.test.ts:1:1",
+      "name": "tests\\video-gallery-clear-confirmation.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/video-generate-refusal-resync.test.ts:1:1",
+      "name": "tests\\video-generate-refusal-resync.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/video-h3-task-dialog.test.ts:1:1",
+      "name": "tests\\video-h3-task-dialog.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    },
+    {
+      "location": "tests/video-keyframe-canvas.test.ts:1:1",
+      "name": "tests\\video-keyframe-canvas.test.ts",
+      "category": "file_or_import_failure",
+      "resolution": "retired_removed_implementation",
+      "verification": "Production implementation already removed before this repair; recorded in retired-contract ledger."
+    }
+  ],
+  "retiredContracts": "2026-10-11-retired-frontend-contracts.json",
+  "note": "Test count differs because formerly unimportable files now execute their individual cases and obsolete tests were retired. This is not a claim of 52 production bug fixes."
+}

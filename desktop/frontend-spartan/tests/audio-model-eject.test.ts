@@ -15,16 +15,11 @@ const adapterSource = readFileSync(
   "utf8",
 );
 
-test("Audio exposes the shared picker eject action only while idle", () => {
-  assert.match(
-    source,
-    /onEject=\{busy === null && selectorValue \? handleEject : undefined\}/,
-  );
-  assert.match(source, /if \(busy !== null \|\| isRecording\)/);
-  assert.match(
-    source,
-    /loaded=\{mode === "transcribe" \? sttReady : undefined\}/,
-  );
+test("Audio keeps local ejection guarded without exposing the retired local picker", () => {
+  assert.doesNotMatch(source, /<ModelSelector\b/);
+  const start = source.indexOf("const handleEject = useCallback");
+  assert.ok(start >= 0);
+  assert.match(source.slice(start, start + 900), /if \(busy !== null \|\| isRecording\)/);
 });
 
 test("Speak eject unloads the live main model and cancels stale auto-load", () => {
@@ -180,15 +175,15 @@ test("leaving Transcribe releases the sidecar it loaded", () => {
 });
 
 test("selected and fallback clip actions remain named and downloadable", () => {
-  assert.match(source, /aria-label="Download audio clip"/);
-  assert.match(source, /aria-label="Delete audio clip"/);
+  assert.match(source, /aria-label=\{uiT\("ui\.download_audio_clip"\)\}/);
+  assert.match(source, /aria-label=\{uiT\("ui\.delete_audio_clip"\)\}/);
   assert.match(
     source,
     /const handleDownloadFallbackClip[\s\S]*anchor\.download = "generated-audio\.wav"/,
   );
   assert.match(
     source,
-    /onClick=\{handleDownloadFallbackClip\}[\s\S]*Download WAV/,
+    /onClick=\{handleDownloadFallbackClip\}[\s\S]*uiT\("ui\.download_wav"\)/,
   );
 });
 
@@ -199,7 +194,7 @@ test("a dictation model this page did not load survives a mode switch", () => {
   // Eject unloaded a model this page never loaded. Model only, not model plus engine: a
   // "gguf" pick without whisper-server is served by the Transformers fallback and reports
   // residency under that engine, so requiring the requested engine leaked the sidecar.
-  assert.match(source, /claim !== null && claim === sttLoadedModel;/);
+  assert.match(source, /claim !== null &&\s*claim === sttLoadedModel;/);
   // Ownership is claimed after a successful load, not before it: claiming up front left the
   // flag set when a download was cancelled while the backend kept the previous resident
   // model, so leaving Transcribe unloaded another surface's model.
@@ -225,5 +220,5 @@ test("the eject unload names the model this page claimed", () => {
 test("the unload request carries the claimed model to the backend", () => {
   const adapter = adapterSource;
   assert.match(adapter, /export function unloadSttModel\(\s*engine\?: SttEngine,\s*model\?: string,/);
-  assert.match(adapter, /if \(model\) params\.set\("model", model\);/);
+  assert.match(adapter, /if \(model\) \{\s*params\.set\("model", model\);\s*\}/);
 });

@@ -44,6 +44,14 @@ def test_word_contains_text_and_table(tmp_path):
     assert document.tables[0].cell(1, 0).text == "Ana"
 
 
+@pytest.mark.parametrize("extension", ["pdf", "docx", "xlsx", "csv", "txt", "md"])
+@pytest.mark.parametrize("payload", [{"title": "Pending report"}, {"rows": [[None, " "]], "headers": [" "]}])
+def test_placeholder_document_is_not_published(tmp_path, extension, payload):
+    result = generate_document({"filename": f"empty.{extension}", **payload}, tmp_path)
+    assert result.startswith("Error:")
+    assert list(tmp_path.iterdir()) == []
+
+
 @pytest.mark.parametrize("filename", ["../outside.pdf", "C:\\outside.xlsx", "evil.py", "", ".hidden.pdf"])
 def test_rejects_paths_and_unsupported_formats(tmp_path, filename):
     assert generate_document({"filename": filename, "content": "Test"}, tmp_path).startswith("Error:")

@@ -94,10 +94,10 @@ test("every load and status writer resolves rather than taking the raw default",
   for (const path of [
     "../src/features/chat/lib/apply-inference-status-to-store.ts",
     "../src/features/chat/hooks/use-chat-model-runtime.ts",
-    "../src/features/chat/api/chat-adapter.ts",
+    "../src/features/chat/api/chat-adapter/auto-load.ts",
     "../src/features/chat/shared-composer.tsx",
   ]) {
-    const source = readFileSync(new URL(path, import.meta.url), "utf8");
+    const source = readFileSync(new URL(path, import.meta.url), "utf8").replaceAll("\r\n", "\n");
     assert.match(source, /resolvePreserveThinkingOnLoad\(/, path);
     assert.doesNotMatch(source, /preserveThinkingDefaultFromLoad\(/, path);
   }

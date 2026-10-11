@@ -2954,8 +2954,9 @@ def _build_tool_action_nudge(
     code_tools = [name for name in _LOCAL_CODE_TOOLS if name in tool_names]
     has_code = bool(code_tools)
     has_artifact = "render_html" in tool_names
+    has_documents = "generate_document" in tool_names
     datetime_str = _get_current_datetime_string()
-    if not (has_web or has_code or has_artifact):
+    if not (has_web or has_code or has_artifact or has_documents):
         return datetime_str
     if full_access_only:
         return _full_access_tip(code_tools) if (full_access and has_code) else ""
@@ -2971,6 +2972,16 @@ def _build_tool_action_nudge(
             tool_tip_parts.append(_full_access_tip(code_tools))
     if has_artifact:
         tool_tip_parts.append(_TOOL_ARTIFACT_TIP)
+    if has_documents:
+        tool_tip_parts.append(
+            "For PDF, DOCX, XLSX, CSV, TXT and Markdown documents, prepare the "
+            "complete content and use generate_document. Its renderer is already "
+            "provided by Sparta: do not probe or install reportlab, fpdf or "
+            "other Python libraries for these standard formats. Use Python only "
+            "when computation or custom processing is actually needed. Never "
+            "publish an empty placeholder or invent sandbox download links; "
+            "the application shows the download card after the tool succeeds."
+        )
     return (
         f"{datetime_str} "
         + _TOOL_BASE_NUDGE

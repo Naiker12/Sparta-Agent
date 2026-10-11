@@ -13,7 +13,7 @@ test("the sidebar More flyout previews on hover and pins on click", async () => 
   assert.match(source, /const \[morePinnedOpen, setMorePinnedOpen\] = useState\(false\)/);
   assert.match(source, /const moreOpen = moreHoverOpen \|\| morePinnedOpen/);
   assert.match(source, /open=\{moreOpen\}\s*\n\s*onOpenChange=\{handleMoreOpenChange\}/);
-  assert.match(source, /<DropdownMenuTrigger asChild>/);
+  assert.match(source, /<DropdownMenuTrigger asChild=\{true\}>/);
   assert.match(source, /onPointerEnter=\{openMorePreview\}/);
   assert.match(source, /onPointerLeave=\{closeMorePreviewSoon\}/);
   assert.match(source, /onPointerDownCapture=/);

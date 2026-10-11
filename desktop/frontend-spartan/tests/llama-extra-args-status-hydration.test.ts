@@ -56,7 +56,7 @@ test("the baseline follows a same-model reload from elsewhere", () => {
 test("the rollback still resends that baseline explicitly", () => {
   assert.match(
     RUNTIME,
-    /stateBeforeUnload\.loadedLlamaExtraArgs != null\s*\n?\s*\? \{ llama_extra_args: stateBeforeUnload\.loadedLlamaExtraArgs \}/,
+    /stateBeforeUnload\.loadedLlamaExtraArgs != null\s*\n?\s*\?\s*\{\s*llama_extra_args:\s*stateBeforeUnload\.loadedLlamaExtraArgs,?\s*\}/,
   );
 });
 

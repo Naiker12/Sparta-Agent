@@ -80,7 +80,7 @@ test("the untouched pre-Audio version-5 sidebar adopts the Audio-aware default",
   );
 });
 
-test("a customized version-5 sidebar keeps its order and only gains Audio", () => {
+test("a customized version-5 sidebar keeps supported choices and gains current entries", () => {
   const customizedV5: Array<{ id: string; pinned: boolean }> = [
     { id: "projects", pinned: true },
     { id: "hub", pinned: true },
@@ -98,7 +98,7 @@ test("a customized version-5 sidebar keeps its order and only gains Audio", () =
   );
   assert.deepEqual(
     customization.sidebarNav.map((item) => item.id),
-    [...customizedV5.map((item) => item.id), "audio"],
+    ["projects", "recipes", "export", "api", "audio", "memory", "tasks"],
   );
   assert.equal(customization.sidebarNav.at(-1)?.pinned, false);
 });
@@ -115,14 +115,14 @@ test("a user-arranged sidebar survives the migration", () => {
   );
 });
 
-test("an install sitting on the version-6 default picks Video up", () => {
+test("an install on the version-6 default adopts the current API layout", () => {
   // The layout this change replaces. Untouched, so it adopts the new default
   // rather than being read as a deliberate choice to keep Video under More.
   const customization = sanitizeCustomization({ sidebarNav: shippedLayouts[4] });
   const migrated = migrateShippedSidebarNavDefault(customization, 6, 7);
   assert.deepEqual(migrated.sidebarNav, DEFAULT_CUSTOMIZATION.sidebarNav);
   const ids = migrated.sidebarNav.filter((item) => item.pinned).map((i) => i.id);
-  assert.deepEqual(ids, ["hub", "projects", "images", "video"]);
+  assert.deepEqual(ids, ["projects"]);
 });
 
 test("a shipped-looking layout chosen after migration is preserved", () => {

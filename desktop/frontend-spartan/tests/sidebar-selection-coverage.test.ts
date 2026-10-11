@@ -8,10 +8,9 @@ import test from "node:test";
 // responding to cmd and shift click.
 
 async function sidebarSource(): Promise<string> {
-  return readFile(
-    new URL("../src/components/app-sidebar.tsx", import.meta.url),
-    "utf8",
-  );
+  const files = ["app-sidebar.tsx", "sidebar/use-sidebar-selection.ts"];
+  const sources = await Promise.all(files.map(file => readFile(new URL(`../src/components/${file}`, import.meta.url), "utf8")));
+  return sources.join("\n").replace(/\r\n/g, "\n");
 }
 
 test("every chat list hands its rows a selection list", async () => {
@@ -27,9 +26,9 @@ test("every chat list hands its rows a selection list", async () => {
 
 test("folder rows select too, and open their own bulk menu", async () => {
   const source = await sidebarSource();
-  assert.match(source, /handleProjectSelectionClick\(event, project\.id\)/);
+  assert.match(source, /handleProjectSelectionClick\(\s*event,\s*project\.id,?\s*\)/);
   assert.match(source, /selectProjectForContextMenu\(project\.id\)/);
-  assert.match(source, /\{renderProjectContextMenu\(\)\}/);
+  assert.match(source, /<ProjectContextMenu\s/);
   assert.match(source, /selectedProjectIds\.has\(project\.id\)/);
 });
 
@@ -70,7 +69,7 @@ test("a right-click drops the other kind even on an already-selected row", async
   ]) {
     const body = bodyOf(source, name);
     const dropAt = body.indexOf(drop);
-    const returnAt = body.search(/if \(selected\w+\.has\([\w.]+\)\) return;/);
+    const returnAt = body.search(/if \(selected\w+\.has\([\w.]+\)\)\s*(?:\{\s*)?return;/);
     assert.ok(dropAt >= 0, `${name} does not drop the other kind`);
     assert.ok(returnAt >= 0, `${name} lost its early return`);
     assert.ok(
@@ -117,7 +116,7 @@ test("one failed archive does not abandon the rest of the batch", async () => {
   assert.ok(tryAt > loopAt, "archiveSelected catches around the loop, not in it");
   // Reported on what got through, not on whether the loop threw.
   assert.match(body, /archived \+= 1/);
-  assert.match(body, /if \(archived > 0\) showArchivedChatsToast\(\)/);
+  assert.match(body, /if \(archived > 0\)\s*(?:\{\s*)?showArchivedChatsToast\(\)/);
   assert.match(body, /if \(archived < items\.length\)/);
 });
 

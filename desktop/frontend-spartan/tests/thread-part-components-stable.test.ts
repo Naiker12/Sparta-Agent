@@ -14,9 +14,9 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 const THREAD_SOURCE = readFileSync(
-  new URL("../src/components/assistant-ui/thread.tsx", import.meta.url),
+  new URL("../src/components/assistant-ui/thread/assistant-message-view.tsx", import.meta.url),
   "utf8",
-);
+).replaceAll("\r\n", "\n");
 
 test("the assistant part components are not an inline object literal", () => {
   // `components={{` is the regression's exact shape: an inline JSX literal, so
@@ -41,13 +41,13 @@ test("the assistant part components are not an inline object literal", () => {
 test("the assistant part components are a single module-scope object", () => {
   assert.match(
     THREAD_SOURCE,
-    /^const ASSISTANT_PART_COMPONENTS = \{/m,
+    /^export const ASSISTANT_PART_COMPONENTS = \{/m,
     "ASSISTANT_PART_COMPONENTS must be declared at module scope, so that every " +
       "render passes the identical object",
   );
   assert.match(
     THREAD_SOURCE,
-    /<MessagePrimitive\.Parts components=\{ASSISTANT_PART_COMPONENTS\} \/>/,
+    /<MessagePrimitive\.Parts\s+components=\{ASSISTANT_PART_COMPONENTS\}\s*\/>/,
     "MessagePrimitive.Parts must be given the hoisted constant by name",
   );
 });
@@ -67,7 +67,7 @@ test("the upstream memo still compares components.tools by identity", () => {
   );
   let comparator: string;
   try {
-    comparator = readFileSync(comparatorPath, "utf8");
+    comparator = readFileSync(comparatorPath, "utf8").replaceAll("\r\n", "\n");
   } catch (cause) {
     throw new Error(
       `cannot read the assistant-ui comparator at ${comparatorPath.pathname}. This is an install problem, not a failure of the code under test: reinstall node_modules and re-run before reading anything into it.`,

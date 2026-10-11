@@ -64,7 +64,7 @@ test("the hook drops pending loads once recording is turned off", () => {
   assert.ok(guard.length > 0, "expected the enable-transition guard");
   assert.match(
     guard,
-    /if \(!track && pending\.size > 0\) setPending\(new Map\(\)\)/,
+    /if \(!track && pending\.size > 0\) \{\s*setPending\(new Map\(\)\);\s*\}/,
     "turning recording off must empty the pending map",
   );
 });
@@ -189,8 +189,8 @@ test("recording is gated on the preference, not on whether the card shows", () =
     SOURCE.indexOf("// The load call announces itself"),
     SOURCE.indexOf("}, [track, refresh]);") + 22,
   );
-  assert.match(subscribe, /if \(!track\) return;/);
-  assert.doesNotMatch(subscribe, /if \(!enabled\) return;/);
+  assert.match(subscribe, /if \(!track\) \{\s*return;\s*\}/);
+  assert.doesNotMatch(subscribe, /if \(!enabled\) \{\s*return;\s*\}/);
 
   const INDICATOR = readFileSync(
     fileURLToPath(

@@ -527,14 +527,14 @@ function cpuFallbackPlacementPreserved(
   const layers = config.gpuLayers ?? standing.gpuLayers;
   return (
     (mode === "auto" || (mode === "manual" && layers === 0)) &&
-    standing.reconcileGpuIds(
+    (standing.reconcileGpuIds(
       config.selectedGpuIds ?? null,
       config.selectedGpuIndexKind,
-    )?.length === 0 &&
+    )?.length ?? 0) === 0 &&
     !config.tensorParallel &&
-    standing.splitRatio?.length === 0 &&
+    (standing.splitRatio?.length ?? 0) === 0 &&
     (config.nCpuMoe ?? standing.nCpuMoe) === 0 &&
-    config.llamaExtraArgs?.length === 0
+    (config.llamaExtraArgs?.length ?? 0) === 0
   );
 }
 

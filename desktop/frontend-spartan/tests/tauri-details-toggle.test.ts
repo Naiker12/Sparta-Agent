@@ -25,9 +25,9 @@ test("Tauri detail toggles put a custom down chevron after their labels", async 
   const update = await source("update-screen.tsx");
 
   for (const [sourceText, label] of [
-    [startup, "Show installation details"],
-    [startup, "Show setup details"],
-    [update, "Show update details"],
+    [startup, "shell.startup.showInstallDetails"],
+    [startup, "shell.startup.showSetupDetails"],
+    [update, "update.screen.showDetails"],
   ] as const) {
     const summary = summaryForLabel(sourceText, label);
     assert.match(summary, /\blist-none\b/);

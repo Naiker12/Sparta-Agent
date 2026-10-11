@@ -19,6 +19,6 @@ export function DemoAutomationRun({ onChat }: { onChat: () => void }) {
       {step >= 2 && <li><MessageSquare /><div><strong>Respuesta en curso</strong><span>El resultado se guarda en el chat vinculado a sparta-demo.</span></div></li>}
       {step === 3 && <li><Check /><div><strong>Final · 09:01</strong><span>Resultado disponible y aviso de final enviado en el ejemplo.</span></div></li>}
     </ol>}
-    <p className="explorer-meta">Simulación local: no programa tareas ni envía mensajes. La automatización del escritorio genera texto; el trabajo con archivos y herramientas sigue pendiente.</p>
+    <p className="explorer-meta">Simulación local: no programa tareas ni envía mensajes. En el escritorio, revisa horario y modelo y confirma la activación. El desarrollo actual añade propuestas desde chat y búsqueda pública; no concede acceso a archivos.</p>
   </div>;
 }

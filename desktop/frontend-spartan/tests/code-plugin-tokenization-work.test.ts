@@ -132,6 +132,8 @@ test("a streaming fence is tokenized once, not once per update", async () => {
     last?.tokens,
     reference.codeToTokens(SOURCE, {
       lang: "typescript",
+      // Match the counting fixture: correctness must not depend on CPU scheduling.
+      tokenizeTimeLimit: 0,
       themes: { light: "github-light", dark: "github-dark" },
     }).tokens,
   );

@@ -9,6 +9,7 @@ export interface UserProfileState {
   displayName: string;
   nickname: string;
   avatarDataUrl: string | null;
+  avatarSyncPending: boolean;
   avatarShape: AvatarShape;
   showGreetingSloth: boolean;
   setDisplayName: (displayName: string) => void;
@@ -24,12 +25,16 @@ export const useUserProfileStore = create<UserProfileState>()(
       displayName: "",
       nickname: "",
       avatarDataUrl: null,
+      avatarSyncPending: false,
       avatarShape: "circle",
       showGreetingSloth: true,
       setDisplayName: (displayName) => set({ displayName }),
       setNickname: (nickname) => set({ nickname }),
       setAvatarDataUrl: (avatarDataUrl) =>
-        set({ avatarDataUrl: normalizeAvatarValue(avatarDataUrl) }),
+        set({
+          avatarDataUrl: normalizeAvatarValue(avatarDataUrl),
+          avatarSyncPending: true,
+        }),
       setAvatarShape: (avatarShape) => set({ avatarShape }),
       setShowGreetingSloth: (showGreetingSloth) => set({ showGreetingSloth }),
     }),
@@ -45,6 +50,7 @@ export const useUserProfileStore = create<UserProfileState>()(
           ...current,
           ...saved,
           avatarDataUrl: normalizeAvatarValue(saved.avatarDataUrl ?? null),
+          avatarSyncPending: saved.avatarSyncPending === true,
         };
       },
     },

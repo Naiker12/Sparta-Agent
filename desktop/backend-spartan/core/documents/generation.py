@@ -16,7 +16,7 @@ GENERATE_DOCUMENT_TOOL = {
     "type": "function",
     "function": {
         "name": "generate_document",
-        "description": "Create a downloadable PDF, Excel XLSX, Word DOCX, CSV, TXT or Markdown file. Supply the finished text and/or table data, never Python code. This works independently of the Code toggle. Use this tool when the user asks for a file; do not claim a file exists until the tool succeeds.",
+        "description": "Create a downloadable PDF, Excel XLSX, Word DOCX, CSV, TXT or Markdown file. Prefer this tool for these formats instead of checking or installing Python libraries. First prepare the complete requested content and verify any facts or calculations needed. Then supply the finished text and/or populated table data, never Python code or an empty placeholder. This works independently of the Code toggle. Use this tool when the user asks for a file; do not claim a file exists until the tool succeeds. The application renders the download card; do not invent sandbox:/ links or local download URLs.",
         "parameters": {
             "type": "object",
             "properties": {
@@ -57,9 +57,10 @@ def _validated_data(arguments):
             raise ValueError("Each row must contain at most 100 text, number or boolean cells.")
     if len(json.dumps([headers, rows], ensure_ascii=False)) > 2_000_000:
         raise ValueError("Table data exceeds the supported limit.")
-    if not (title.strip() or content.strip() or headers or rows):
-        raise ValueError("Provide document content or table data.")
-    if extension in {".xlsx", ".csv"} and not (headers or rows):
+    populated_table = any(str(value).strip() for row in [headers, *rows] for value in row if value is not None)
+    if not (content.strip() or populated_table):
+        raise ValueError("Prepare the finished document content or populated table data before creating the file; a title alone is not enough.")
+    if extension in {".xlsx", ".csv"} and not populated_table:
         raise ValueError("Provide headers or rows for a spreadsheet.")
     return filename, title, content, headers, rows
 

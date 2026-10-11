@@ -1,3 +1,4 @@
+import { LOADED_MODELS_PREFERENCE_KEYS } from "@/features/loaded-models/show-loaded-models-pref";
 import { useChannelAssistantStore } from "@/features/channels";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +34,7 @@ import { SETTINGS_PANEL_PREFS_STORAGE_KEY } from "../stores/settings-panel-prefs
 
 
 const PREFS_KEYS: string[] = [
+  ...Object.values(LOADED_MODELS_PREFERENCE_KEYS),
   "sparta-channel-assistant",
   // Appearance
   "theme",

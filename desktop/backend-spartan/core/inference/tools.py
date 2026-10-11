@@ -4530,6 +4530,7 @@ def _render_html_reaches_network(arguments: dict) -> bool:
 # to pause them and their safety needs no argument scan. render_html is handled
 # separately above because a networked canvas does need approval.
 _ALWAYS_SAFE_TOOLS = frozenset({
+    "propose_automation",
     "web_search",
     "search_knowledge_base",
     "list_mcp_servers",
@@ -10250,8 +10251,10 @@ TOGGLE_SKILL_TOOL = {
 }
 
 from core.documents.generation import GENERATE_DOCUMENT_TOOL
+from core.inference.automation_proposals import PROPOSE_AUTOMATION_TOOL
 
 ALL_TOOLS = [
+    PROPOSE_AUTOMATION_TOOL,
     GENERATE_DOCUMENT_TOOL,
     WEB_SEARCH_TOOL,
     PYTHON_TOOL,
@@ -10610,9 +10613,14 @@ def execute_tool(
     # Both run with the session's sandbox as cwd, so a chat deleted mid-call
     # must not unlink it from under them.
     if name == "generate_document":
+        # Standard formats have a dedicated renderer; no package installation
+        # or model-supplied Python is needed.
         from core.documents.generation import generate_document
         with _session_in_flight(session_id):
             return generate_document(arguments, get_sandbox_workdir(session_id), cancel_event)
+    if name == "propose_automation":
+        from core.inference.automation_proposals import propose_automation
+        return propose_automation(arguments)
     if name == "python":
         with _session_in_flight(session_id):
             return _python_exec(

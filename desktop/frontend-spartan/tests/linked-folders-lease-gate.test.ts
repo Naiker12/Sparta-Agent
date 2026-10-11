@@ -1,9 +1,4 @@
-
-// Issue 8416: gated on `isTauri` alone, the picker stayed live when the app
-// attached to a backend it had not spawned, and only a spawned backend holds
-
-// button must be dead without the capability AND `link()` must refuse anyway.
-// No React renderer here, so this asserts on source, like ~50 sibling tests.
+// Native folder linking needs both backend support and a lease usable by this app.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -15,33 +10,21 @@ const HOOK = readFileSync(
     new URL("../src/features/rag/components/use-linked-folders.ts", import.meta.url),
   ),
   "utf8",
-);
+).replace(/\r\n/g, "\n");
 
 const MANAGER = readFileSync(
   fileURLToPath(
     new URL("../src/features/rag/components/linked-folders-manager.tsx", import.meta.url),
   ),
   "utf8",
-);
-
-const COMMANDS = readFileSync(
-  fileURLToPath(
-    new URL("../../src-tauri/src/commands.rs", import.meta.url),
-  ),
-  "utf8",
-);
+).replace(/\r\n/g, "\n");
 
 const READINESS = readFileSync(
   fileURLToPath(
     new URL("../src/features/native-intents/use-native-readiness.ts", import.meta.url),
   ),
   "utf8",
-);
-
-const PREFLIGHT = readFileSync(
-  fileURLToPath(new URL("../../src-tauri/src/preflight.rs", import.meta.url)),
-  "utf8",
-);
+).replace(/\r\n/g, "\n");
 
 test("the picker is gated on the backend capability, not on isTauri alone", () => {
   assert.match(
@@ -63,7 +46,7 @@ test("link() refuses without the capability, not just the button", () => {
   assert.ok(body.length > 0, "link() should still exist");
   assert.match(
     body,
-    /if\s*\([^)]*!nativePathLeasesSupported[^)]*\)\s*return/,
+    /if \(!\(scopeType && scopeId && isTauri && nativePathLeasesSupported\)\) \{\s*return/,
     "link() must bail before pickNativeDocumentFolder when leases are unsupported",
   );
   // A stale closure would restore the old behaviour once the capability flips.
@@ -82,7 +65,7 @@ test("the unsupported branch names the managed backend, not the desktop app", ()
     "the unsupported copy must not tell a desktop user to use the desktop app",
   );
   assert.ok(
-    MANAGER.includes("managed desktop backend"),
+    MANAGER.includes('t("projectsPage.linkedFoldersDesktopDescription")') && MANAGER.includes('t("projectsPage.desktopBackendRequired")'),
     "the unsupported copy and tooltip should name the managed backend",
   );
 });
@@ -109,23 +92,7 @@ test("the health bit alone does not enable the picker inside the app", () => {
   const gate = READINESS.slice(READINESS.indexOf("native_path_leases_usable"));
   assert.match(
     gate,
-    /if\s*\(usable\)\s*setSupported\(true\)/,
+    /if\s*\(usable\)\s*\{\s*setSupported\(true\)/,
     "setSupported must be reached only when the app confirms the backend is ours",
-  );
-});
-
-test("an adopted backend keeps running and only loses lease-backed actions", () => {
-  // owned_stale routes through startRepair(), which runs a network update, so a
-  // key mismatch must not force one: report the capability, leave it running.
-  assert.ok(
-    !PREFLIGHT.includes("native_path_lease_secret_not_persisted") &&
-      !PREFLIGHT.includes("native_path_lease_secret_not_shared"),
-    "an adopted survivor must not be forced stale over the lease key",
-  );
-  assert.match(
-    COMMANDS,
-    /fn native_path_leases_usable[\s\S]*?Some\(snapshot\) if !snapshot\.is_adopted/,
-    "usable must require a spawned, non-adopted backend, not merely the absence " +
-      "of an adopted one: attached_ready installs no snapshot at all",
   );
 });

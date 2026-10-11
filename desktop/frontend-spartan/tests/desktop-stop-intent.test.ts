@@ -53,7 +53,7 @@ function hookSource(): Promise<string> {
   return readFile(
     new URL("../src/hooks/use-tauri-backend.ts", import.meta.url),
     "utf8",
-  );
+  ).then(text => text.replaceAll("\r\n", "\n"));
 }
 
 test("a fresh session carries no stop intent", () => {
@@ -247,7 +247,7 @@ test("a second stop cannot run while the first is in flight", async () => {
   // the winner earned, so the next reload starts a server the user asked to stop.
   assert.match(
     guard,
-    /if \(stoppingRef\.current\) return;\s*stoppingRef\.current = true;/,
+    /if \(stoppingRef\.current\) \{\s*return;\s*\}\s*stoppingRef\.current = true;/,
     "a second stop still runs while the first is in flight",
   );
   assert.match(

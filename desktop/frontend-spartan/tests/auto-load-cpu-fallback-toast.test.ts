@@ -25,10 +25,10 @@ const CALL_SITES = /\n\s*showAutoLoadSuccess\([\s\S]*?\);/g;
 // module would drag in the stores and the toast layer for one closure.
 const source = readFileSync(
   fileURLToPath(
-    new URL("../src/features/chat/api/chat-adapter.ts", import.meta.url),
+    new URL("../src/features/chat/api/chat-adapter/auto-load.ts", import.meta.url),
   ),
   "utf8",
-);
+).replaceAll("\r\n", "\n");
 
 // The wording and the warn-vs-success choice used to be written inline in
 // showAutoLoadSuccess, and this file matched them there by substring. Both now

@@ -16,7 +16,11 @@ env:
   NODE_OPTIONS: "--max-old-space-size=8192"
 
 jobs:
+  quality:
+    uses: ./.github/workflows/ci.yml
+
   build:
+    needs: quality
     strategy:
       fail-fast: false
       matrix:
@@ -35,8 +39,11 @@ jobs:
       - name: Validate release tag matches package version
         shell: bash
         run: |
-          VERSION="$(node -p 'require("./package.json").version')"
-          test "$GITHUB_REF_NAME" = "v$VERSION"
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            node scripts/check-product-version.mjs "$GITHUB_REF_NAME"
+          else
+            node scripts/check-product-version.mjs
+          fi
       - uses: actions/setup-node@v5
         with:
           node-version: 22
@@ -89,7 +96,13 @@ jobs:
         run: |
           npm --prefix landing run docs:check
           npm --prefix landing run build:gh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: validated-release-assets
+          path: release-output/*
+          if-no-files-found: error
       - uses: softprops/action-gh-release@v3
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           tag_name: ${{ github.ref_name }}
           name: Sparta Agent ${{ github.ref_name }}
@@ -99,6 +112,7 @@ jobs:
           fail_on_unmatched_files: true
           files: release-output/*
       - uses: peaceiris/actions-gh-pages@v4
+        if: startsWith(github.ref, 'refs/tags/')
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./landing/dist

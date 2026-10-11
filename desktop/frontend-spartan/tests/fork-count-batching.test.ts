@@ -166,12 +166,14 @@ test("the badge no longer owns a listener or a per-message request", () => {
     new URL("../src/components/assistant-ui/thread.tsx", import.meta.url),
     "utf8",
   );
-  assert.doesNotMatch(thread, /getForkCount\(/);
+  const combined = thread + readFileSync(new URL("../src/components/assistant-ui/thread/message-action-hooks.ts", import.meta.url), "utf8");
+  const badgeSource = readFileSync(new URL("../src/components/assistant-ui/thread/assistant-action-bar.tsx", import.meta.url), "utf8");
+  assert.doesNotMatch(combined, /getForkCount\(/);
   assert.doesNotMatch(thread, /addEventListener\(CHAT_HISTORY_UPDATED_EVENT/);
-  assert.match(thread, /subscribeForkCounts\(remoteId, onChange\)/);
+  assert.match(badgeSource, /subscribeForkCounts\(remoteId, onChange\)/);
   // The badges all unmount at rest, so the thread has to hold the subscription itself.
   assert.match(
-    thread,
+    combined,
     /const useThreadForkCounts[\s\S]*?subscribeForkCounts\(remoteId,/,
   );
   assert.match(thread, /^ {2}useThreadForkCounts\(\);$/m);

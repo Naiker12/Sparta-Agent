@@ -92,6 +92,12 @@ async function world(rows: Record<string, Record<string, unknown>> = {}) {
   const mod = await import(`${STORE_URL}?scenario=compat${scenario}`);
   const store = () => mod.useChatRuntimeStore.getState();
   await store().hydratePersistedSettings();
+  // Wait for the persistence acknowledgement; event-loop turns alone depend on Node's loader timing.
+  settleWrites = () => Promise.all(
+    ["A", "B", "L", ...threadRows.rows.keys(), store().activeThreadId]
+      .filter((id): id is string => Boolean(id))
+      .map((id) => mod.awaitThreadScopedSettingsWrite(id)),
+  );
   return {
     mod,
     store,
@@ -119,6 +125,8 @@ async function world(rows: Record<string, Record<string, unknown>> = {}) {
   };
 }
 
+let settleWrites: () => Promise<unknown> = async () => {};
+
 async function settle(tick: (ms: number) => void): Promise<void> {
   for (let round = 0; round < 3; round += 1) {
     tick(1000);
@@ -126,6 +134,7 @@ async function settle(tick: (ms: number) => void): Promise<void> {
       await new Promise((resolve) => setImmediate(resolve));
     }
   }
+  await settleWrites();
 }
 
 function assertUsable(sampling: Record<string, unknown>, where: string): void {

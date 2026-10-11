@@ -104,9 +104,9 @@ test("token updates keep Streamdown's expensive configuration props stable", () 
   assert.ok(streamdown, "chat <Streamdown> is missing");
 
   for (const [attribute, constant] of [
-    ["plugins", "STREAMDOWN_PLUGINS"],
+    ["plugins", "markdownRenderers.plugins"],
     ["controls", "STREAMDOWN_CONTROLS"],
-    ["shikiTheme", "STREAMDOWN_SHIKI_THEME"],
+    ["shikiTheme", "markdownRenderers.shikiTheme"],
   ]) {
     assert.equal(
       jsxAttribute(streamdown, attribute)?.initializer?.getText(source),
@@ -114,6 +114,14 @@ test("token updates keep Streamdown's expensive configuration props stable", () 
       `${attribute} must retain object identity while raw tokens arrive`,
     );
   }
+});
+
+test("optional renderer loading retains configuration identity between token updates", () => {
+  const hook = source.getText().split("function useOptionalMarkdownPlugins")[1].split("const MarkdownTextImpl")[0];
+  assert.match(hook, /\}, \[key, needs\.code, needs\.math, needs\.mermaid\]\);/);
+  assert.match(hook, /plugins: loaded\.plugins, shikiTheme: loaded\.shikiTheme/);
+  assert.match(hook, /: \{ plugins: EMPTY_STREAMDOWN_PLUGINS \};/);
+  assert.doesNotMatch(hook, /plugins: \{\}/);
 });
 
 test("stream updates are paint-coalesced without a time or length throttle", () => {

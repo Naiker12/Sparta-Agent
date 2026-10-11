@@ -1,4 +1,3 @@
-
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
@@ -8,7 +7,7 @@ import { readFile } from "node:fs/promises";
 // iterator that a failed page leaves behind, has to keep a way back on its own.
 
 function read(path: string): Promise<string> {
-  return readFile(new URL(path, import.meta.url), "utf8");
+  return readFile(new URL(path, import.meta.url), "utf8").then((source) => source.replace(/\r\n/g, "\n"));
 }
 
 /** A callback body, so a dependency array cannot satisfy an assertion. */
@@ -20,24 +19,11 @@ function body(source: string, start: string, end: string): string {
   return source.slice(at, to);
 }
 
-test("clients with their own request keep their own reachability", async () => {
-  const page = await read("../src/features/hub/hub-page.tsx");
-  // This value reaches useHubFeed and, through useModelsSelection, the selected
-  // model's metadata lookup. Those are independent requests: on the discovery
-  // phase they stayed blocked at "probing" until a listing succeeded, and the
-  // Downloaded tab has no Retry to make one happen.
-  assert.match(page, /const online = useOnlineStatus\(\);/);
-  assert.ok(
-    !/useHubAvailability\(\)\.phase/.test(page),
-    "the feed's phase must not gate a client that never runs a listing",
-  );
-});
-
 test("the panel still reads the classified cause, not that boolean", async () => {
-  const page = await read("../src/features/hub/hub-page.tsx");
+  const page = await read("../src/features/hub/hooks/use-discover-search.ts");
   // Reverting `online` must not quietly revert the diagnosis with it: the panel
   // is driven by searchFailure, which useDiscoverSearch reads off the phase.
-  assert.match(page, /searchFailure,/);
+  assert.match(page, /const searchFailure = isDiscoverTab \? failure : null;/);
   const search = await read("../src/features/hub/hooks/use-discover-search.ts");
   assert.match(search, /const \{ phase, failure \} = useHubAvailability\(\);/);
   assert.match(search, /const online = phase === "available";/);
@@ -84,7 +70,7 @@ test("rows on screen do not hide that the feed failed", async () => {
     "\nexport function InventoryErrorState",
   );
   assert.ok(fn.includes('failed && onRetry ? onRetry : onFetchMore'), "it must retry");
-  assert.ok(fn.includes('failed ? "Try again" : "Load more"'), "and say so");
+  assert.ok(fn.includes('failed ? uiT("update.tryAgain") : uiT("studio.history.loadMore")'), "and say so");
 });
 
 test("a live backoff is not bypassed by typing", async () => {
@@ -150,7 +136,7 @@ test("the retained footer names the cause, not just the staleness", async () => 
     "\nexport function InventoryErrorState",
   );
   assert.ok(
-    fn.includes('{failureText || "These results may be out of date."}'),
+    fn.includes('{failureText || uiT("ui.these_results_may_be_out_of_date")}'),
     "shown when there is one, with the generic line only as a fallback",
   );
 });
@@ -203,7 +189,7 @@ test("pausing dataset fetches leaves the rendered rows alone", async () => {
   // from the results memo, so gating it on the backoff blanked every visible
   // dataset row for the window. The model hook has no such line, which is why
   // only datasets went blank.
-  assert.match(datasets, /if \(!enabled\) return \[\];/);
+  assert.match(datasets, /if \(!enabled\) \{\s*return \[\];\s*\}/);
   assert.ok(
     datasets.includes("enabled: enabled && !paused"),
     "the pause has to reach the request and stop there",

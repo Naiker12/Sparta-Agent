@@ -165,6 +165,7 @@ export {
   parseExternalModelId,
 } from "./external-providers";
 export { ApiProviderLogo } from "./api-provider-logo";
+export type { ExternalProviderConfig } from "./external-providers";
 export { useExternalProvidersStore } from "./stores/external-providers-store";
 export { DeleteChatFilesSwitch } from "./components/delete-chat-files-switch";
 export { ChatSearchDialog } from "./components/chat-search-dialog";

@@ -573,7 +573,7 @@ const pageSource = readFileSync(
     ),
   ),
   "utf8",
-);
+).replaceAll("\r\n", "\n");
 
 test("the row stores argv tokens, not the typed string", () => {
   const row = pageSource.slice(pageSource.indexOf("function ExtraArgsRow("));
@@ -798,7 +798,7 @@ test("a rollback restores the previous model with its arguments", () => {
   // without the arguments it had been running.
   assert.match(
     runtime,
-    /stateBeforeUnload\.loadedLlamaExtraArgs != null \? \{ llama_extra_args: stateBeforeUnload\.loadedLlamaExtraArgs \}/,
+    /stateBeforeUnload\.loadedLlamaExtraArgs != null \?\s*\{\s*llama_extra_args:\s*stateBeforeUnload\.loadedLlamaExtraArgs,?\s*\}/,
   );
   // And the snapshot is kept on every successful load, not only an explicit one,
   // taken from the server's own echo first: a reload that omits the field but sets
@@ -819,7 +819,7 @@ test("a hydrated list is judged even when the row cannot be", () => {
   // With Advanced collapsed the row never mounts, so nothing objects to a stored
   // list this build refuses (the overrides route only validates its shape), and
   // Load would be live for a request that comes back 400.
-  assert.match(body, /const hydratedIsLoadable = extraArgsAreLoadable\( diagnoseExtraArgs\(formatExtraArgs\(stored\)/);
+  assert.match(body, /const hydratedIsLoadable = extraArgsAreLoadable\( diagnoseExtraArgs\(\s*formatExtraArgs\(stored\)/);
   // But not over an edit made while the request was out: the row is judging that
   // text, and replacing its verdict re-enabled Load for invalid input.
   assert.match(

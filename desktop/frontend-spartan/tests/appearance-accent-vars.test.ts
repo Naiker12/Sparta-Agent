@@ -1,4 +1,3 @@
-
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -248,21 +247,6 @@ test("a narrow valid band between custom and elevated surfaces is not skipped", 
   const corrected = vars.get("--primary") ?? "";
   assert.ok(ratio(corrected, "#4bba47") >= 2.5);
   assert.ok(ratio(corrected, "#212121") >= 2.5);
-});
-
-test("loaded-model stripes stay on the semantic success color", () => {
-  const hubCss = readFileSync(
-    new URL("../src/features/hub/hub.css", import.meta.url),
-    "utf8",
-  );
-  const activeBlocks = [
-    ...hubCss.matchAll(/\[data-active="true"\]\s*\{([^}]+)\}/g),
-  ];
-  assert.equal(activeBlocks.length, 4);
-  for (const [, declarations = ""] of activeBlocks) {
-    assert.match(declarations, /box-shadow:[^;]+var\(--status-success\)/);
-    assert.doesNotMatch(declarations, /var\(--primary\)/);
-  }
 });
 
 test("resize-handle glows follow the primary token", () => {

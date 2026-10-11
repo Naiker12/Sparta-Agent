@@ -26,10 +26,10 @@ test("the bottom fade re-measures on every row-count input", async () => {
     "pinnedChatItems.length",
     "projectChatRowCount",
     "visibleProjectRecords.length",
-    "runItems.length",
+    "projects.length",
+    "showUpdateCard",
     // Disclosures, which hide and reveal whole sections.
     "chatOpen",
-    "runsOpen",
     "pinnedOpen",
     "projectsOpen",
     // Regrouping, which can empty or fill the Projects section outright.

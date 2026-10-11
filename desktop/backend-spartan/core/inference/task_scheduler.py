@@ -1,7 +1,14 @@
 """Application-lifetime scheduler; missed occurrences are coalesced."""
 import asyncio
+import logging
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
+
+logger = logging.getLogger(__name__)
+
+
+class AutomationConfigurationError(ValueError):
+    """Safe messages that may be persisted without leaking provider credentials."""
 
 
 def next_occurrence(task, now):
@@ -34,10 +41,13 @@ def make_client(provider_id, model):
     from core.inference.external_provider import ExternalProviderClient
     provider = get_provider(provider_id)
     if not provider or not provider['is_enabled'] or provider['provider_type'] == 'openai_codex':
-        raise ValueError('Choose an enabled API provider')
+        raise AutomationConfigurationError('Choose an enabled API provider and reactivate the schedule')
     if model not in (provider.get('models') or provider.get('available_models') or []):
-        raise ValueError('Choose a configured model')
-    key = resolve_provider_api_key(provider_id, None)
+        raise AutomationConfigurationError('The saved model is no longer configured; choose a model and reactivate the schedule')
+    try:
+        key = resolve_provider_api_key(provider_id, None)
+    except ValueError as error:
+        raise AutomationConfigurationError('Saved provider credentials are unavailable; reconnect the provider') from error
     return ExternalProviderClient(provider['provider_type'], provider.get('base_url') or get_base_url(provider['provider_type']), key)
 
 
@@ -70,13 +80,15 @@ async def _scheduler_loop():
                     def completed(finished):
                         active.discard(finished)
                         if not finished.cancelled():
-                            finished.exception()  # Retrieve a terminal storage error without exposing it.
+                            error = finished.exception()
+                            if error is not None:
+                                logger.warning('Automation worker failed to persist its result (%s)', type(error).__name__)
                     worker.add_done_callback(completed)
             except asyncio.CancelledError:
                 raise
-            except Exception:
+            except Exception as error:
                 # A transient database failure must not kill scheduling.
-                pass
+                logger.warning('Automation scheduler could not claim pending tasks (%s)', type(error).__name__)
             await asyncio.sleep(5)
     finally:
         pending = list(active)
@@ -116,6 +128,8 @@ async def execute_claimed(task, run_id):
         finish_task_preview(run_id, output=output)
     except AutomationStopped:
         finish_task_preview(run_id, error='Execution cancelled or chat unavailable')
+    except AutomationConfigurationError as error:
+        finish_task_preview(run_id, error=str(error))
     except asyncio.CancelledError:
         finish_task_preview(run_id, error='Execution interrupted at shutdown')
         raise

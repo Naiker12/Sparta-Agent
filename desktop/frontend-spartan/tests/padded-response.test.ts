@@ -17,7 +17,7 @@ import test from "node:test";
 import { assertCompletedPaddedBody } from "../src/features/chat/api/padded-response.ts";
 
 const chatApi = readFileSync(
-  new URL("../src/features/chat/api/chat-api.ts", import.meta.url),
+  new URL("../src/features/chat/api/modules/models-api.ts", import.meta.url),
   "utf8",
 );
 
@@ -56,5 +56,6 @@ test("only the two padded routes require a payload", () => {
     ...chatApi.matchAll(/parseJsonOrThrow<[^>]*>\(\s*response,\s*"([^"]+)"/g),
   ].map((match) => match[1]);
   assert.deepEqual(labelled, ["Model load", "Model unload"]);
-  assert.ok(chatApi.includes("assertCompletedPaddedBody(body, paddedLabel)"));
+  const base = readFileSync(new URL("../src/features/chat/api/modules/base.ts", import.meta.url), "utf8");
+  assert.ok(base.includes("assertCompletedPaddedBody(body, paddedLabel)"));
 });

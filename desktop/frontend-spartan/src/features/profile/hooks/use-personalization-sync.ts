@@ -80,6 +80,14 @@ function sameProfile(a: ProfileSnapshot, b: ProfileSnapshot): boolean {
   );
 }
 
+function acknowledgeAvatar(avatar: string | null): void {
+  const current = useUserProfileStore.getState();
+  // A response to an older save must not clear a newer local selection.
+  if (current.avatarSyncPending && current.avatarDataUrl === avatar) {
+    useUserProfileStore.setState({ avatarSyncPending: false });
+  }
+}
+
 function drainQueuedSave(
   saveInFlightRef: RefValue<boolean>,
   queuedSaveRef: RefValue<QueuedSave | null>,
@@ -99,6 +107,7 @@ function drainQueuedSave(
     .then(() => {
       if (authGenerationRef.current === next.generation) {
         lastSavedRef.current = next.serialized;
+        acknowledgeAvatar(next.data.profile.avatarDataUrl);
       }
     })
     .catch(() => {
@@ -251,17 +260,17 @@ export function usePersonalizationSync(enabled: boolean): void {
           // default so the push detects the diff) rather than treating the
           // default as an explicit remote choice. A record that actually stored
           // the field reports <field>Saved=true and still wins.
-          const localGreeting =
-            useUserProfileStore.getState().showGreetingSloth;
+          const localProfile = useUserProfileStore.getState();
+          const localGreeting = localProfile.showGreetingSloth;
           const remoteGreeting = remote.profile.showGreetingSloth !== false;
           const keepLocalGreeting =
             remote.greetingSlothSaved === false && localGreeting === false;
           const nextProfile: ProfileSnapshot = {
             displayName: remote.profile.displayName ?? "",
             nickname: remote.profile.nickname ?? "",
-            avatarDataUrl: normalizeAvatarValue(
-              remote.profile.avatarDataUrl ?? null,
-            ),
+            avatarDataUrl: localProfile.avatarSyncPending
+              ? localProfile.avatarDataUrl
+              : normalizeAvatarValue(remote.profile.avatarDataUrl ?? null),
             avatarShape:
               remote.profile.avatarShape === "rounded" ? "rounded" : "circle",
             showGreetingSloth: keepLocalGreeting
@@ -299,6 +308,9 @@ export function usePersonalizationSync(enabled: boolean): void {
             ? remoteLanguage
             : latestLanguageRef.current;
           useUserProfileStore.setState(nextProfile);
+          acknowledgeAvatar(
+            normalizeAvatarValue(remote.profile.avatarDataUrl ?? null),
+          );
           if (nextTheme !== latestThemeRef.current) {
             setTheme(nextTheme);
           }
@@ -395,6 +407,7 @@ export function usePersonalizationSync(enabled: boolean): void {
             try {
               await savePersonalization(nextPayload);
               lastSavedRef.current = nextSerialized;
+              acknowledgeAvatar(nextPayload.profile.avatarDataUrl);
             } catch {
               lastSavedRef.current = "";
             }

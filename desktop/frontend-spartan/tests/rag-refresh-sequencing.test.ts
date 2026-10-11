@@ -6,7 +6,18 @@
 // latest-request rule useRagDocuments.refresh applies.
 
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync as readRawSource } from "node:fs";
+
+function readFileSync(url: URL, encoding: "utf8"): string {
+  let text = readRawSource(url, encoding);
+  if (url.pathname.endsWith("/components/assistant-ui/thread.tsx")) {
+    text += readRawSource(new URL("../src/components/assistant-ui/thread/prompt-queue-manager.ts", import.meta.url), encoding);
+  }
+  if (url.pathname.endsWith("/api/chat-adapter.ts")) {
+    text = readRawSource(new URL("../src/features/chat/api/chat-adapter/token-counting.ts", import.meta.url), encoding);
+  }
+  return text.replaceAll("\r\n", "\n");
+}
 import test from "node:test";
 
 type Row = { id: string; status: string };
@@ -130,7 +141,7 @@ test("a failure is only reported for the request still being awaited", () => {
   );
   assert.match(
     source,
-    /if \(refreshSeq\.current !== requestId\) return true;\s*if \(\s*!opts\?\.silentErrors &&\s*!useRagAvailabilityStore\.getState\(\)\.isUnavailable\(\)/,
+    /if \(refreshSeq\.current !== requestId\) \{\s*return true;\s*\}\s*if \(\s*!\(\s*opts\?\.silentErrors \|\|\s*useRagAvailabilityStore\.getState\(\)\.isUnavailable\(\)/,
   );
 });
 
@@ -224,7 +235,7 @@ test("the composer reads indexing from the hooks, not the listed rows", () => {
   );
   assert.match(
     bar,
-    /const hasIndexing =\s*threadIndexing \|\| threadListLoading \|\| projectIndexing \|\| projectListLoading;/,
+    /const hasIndexing =\s*threadIndexing\s*\|\|\s*threadListLoading\s*\|\|\s*projectIndexing\s*\|\|\s*projectListLoading;/,
   );
 });
 
@@ -273,7 +284,7 @@ test("the poll and the initial list are wired that way", () => {
   );
   assert.match(
     bar,
-    /threadIndexing \|\| threadListLoading \|\| projectIndexing \|\| projectListLoading/,
+    /threadIndexing\s*\|\|\s*threadListLoading\s*\|\|\s*projectIndexing\s*\|\|\s*projectListLoading/,
   );
 });
 
@@ -316,7 +327,7 @@ test("work reported by another tab lapses", () => {
   // Local and remote add up; a remote count past its deadline is dropped.
   assert.match(
     api,
-    /if \(entry\.until > now\) remoteCount \+= entry\.count;\s*\}\s*return \(projectWorkInFlight\.get\(projectId\) \?\? 0\) \+ remoteCount;/,
+    /if \(entry\.until > now\) \{\s*remoteCount \+= entry\.count;\s*\}\s*\}\s*return \(projectWorkInFlight\.get\(projectId\) \?\? 0\) \+ remoteCount;/,
   );
   // One pending wake-up per project, however chatty the other tab is.
   assert.match(api, /clearTimeout\(timer\)/);
@@ -445,7 +456,7 @@ test("a folder job watcher rides out a failed read", () => {
   // The catch is inside the loop, so a failure does not reach the finally.
   assert.match(
     api,
-    /if \(isRagClientError\(error\)\) break;\s*consecutiveFailures \+= 1;\s*if \(consecutiveFailures >= MAX_FOLDER_JOB_READ_FAILURES\) \{\s*break;/,
+    /if \(isRagClientError\(error\)\) \{\s*break;\s*\}\s*consecutiveFailures \+= 1;\s*if \(consecutiveFailures >= MAX_FOLDER_JOB_READ_FAILURES\) \{\s*break;/,
   );
   // A read that comes back clears the streak, so only a run of them gives up.
   assert.match(api, /consecutiveFailures = 0;/);
@@ -628,7 +639,7 @@ test("work is counted per reporting tab, not per project", () => {
     api,
     /postMessage\(\{ kind: "work-state", projectId, count, from: TAB_ID \}\)/,
   );
-  assert.match(api, /if \(entry\.until > now\) remoteCount \+= entry\.count;/);
+  assert.match(api, /if \(entry\.until > now\) \{\s*remoteCount \+= entry\.count;\s*\}/);
 
   // The reported sequence, per sender.
   const TTL = 120_000;
@@ -676,7 +687,7 @@ test("a failed reconciling refresh is retried before the gate drops", () => {
   assert.match(hook, /const REFRESH_RETRIES = 3;/);
   assert.match(
     hook,
-    /if \(await refresh\(\{ quiet: opts\?\.quiet, silentErrors: !last \}\)\) return;/,
+    /if \(await refresh\(\{ quiet: opts\?\.quiet, silentErrors: !last \}\)\) \{\s*return;\s*\}/,
   );
   // The release is still guaranteed, retries or not.
   assert.match(
@@ -690,7 +701,7 @@ test("a failed reconciling refresh is retried before the gate drops", () => {
     /scope\.type === "project"\s*\? loadProjectSources\(scope\.projectId\)\s*: refresh\(\)/,
   );
   // A superseded request reports the list as known: the newer one owns it.
-  assert.match(hook, /if \(refreshSeq\.current !== requestId\) return true;/);
+  assert.match(hook, /if \(refreshSeq\.current !== requestId\) \{\s*return true;\s*\}/);
 });
 
 // The backend creates and starts the job before it answers, so the request
@@ -747,7 +758,7 @@ test("a project composer picks up a folder sync already running", () => {
   // an answer, but the project is never closed to a later one.
   assert.match(
     api,
-    /if \(\(folderReconcileNotBefore\.get\(projectId\) \?\? 0\) > now\) return;[\s\S]{0,400}?folderReconcileNotBefore\.set\(projectId, now \+ FOLDER_RECONCILE_MIN_GAP_MS\);/,
+    /if \(\(folderReconcileNotBefore\.get\(projectId\) \?\? 0\) > now\) \{\s*return;\s*\}[\s\S]{0,400}?folderReconcileNotBefore\.set\(projectId, now \+ FOLDER_RECONCILE_MIN_GAP_MS\);/,
   );
   assert.match(api, /folderReconcileNotBefore\.delete\(projectId\);/);
 
@@ -864,7 +875,7 @@ test("unlinking a folder announces for the project it was for", () => {
   // Announced before the scope guard, so navigating mid-DELETE cannot skip it.
   assert.match(
     hook,
-    /if \(unlinkedProjectId\) announceProjectSourcesUpdated\(unlinkedProjectId\);\s*if \(currentScopeKey\.current !== operationScopeKey\) return;/,
+    /if \(unlinkedProjectId\) \{\s*announceProjectSourcesUpdated\(unlinkedProjectId\);\s*\}\s*if \(currentScopeKey\.current !== operationScopeKey\) \{\s*return;\s*\}/,
   );
 });
 
@@ -904,7 +915,7 @@ test("a failed row read holds a queued prompt instead of releasing it", () => {
   assert.match(adapter, /opts\?: \{ rethrowReadFailure\?: boolean;/);
   assert.match(
     adapter,
-    /\} catch \(error\) \{[\s\S]{0,200}?if \(opts\?\.rethrowReadFailure\) throw error;\s*return null;/,
+    /\} catch \(error\) \{[\s\S]{0,200}?if \(opts\?\.rethrowReadFailure\) \{\s*throw error;\s*\}\s*return null;/,
   );
   const thread = readFileSync(
     new URL("../src/components/assistant-ui/thread.tsx", import.meta.url),
@@ -932,7 +943,7 @@ test("a knowledge-base queue does not wait on project sources", () => {
   );
   assert.match(
     thread,
-    /const usesKnowledgeBaseAtQueueStart =\s*chatStateAtQueueStart\.ragEnabled &&\s*chatStateAtQueueStart\.ragSource\.type === "kb";/,
+    /const usesKnowledgeBaseAtQueueStart =\s*\(restoredSettings\?\.ragEnabled \?\? chatStateAtQueueStart\.ragEnabled\) &&\s*\(restoredSettings\?\.ragSource \?\? chatStateAtQueueStart\.ragSource\)\.type === "kb";/,
   );
   assert.match(thread, /usesKnowledgeBase: usesKnowledgeBaseAtQueueStart,/);
   // Ahead of the project lookup, and after the thread one, which a KB queue
@@ -972,7 +983,7 @@ test("a retry stops when the scope it started for is gone", () => {
   // starts this load runs before the one that records the live scope.
   assert.match(
     hook,
-    /await new Promise\(\(resolve\) =>\s*setTimeout\(resolve, 1000 \* \(attempt \+ 1\)\),\s*\);[\s\S]{0,400}?if \(liveScopeKeyRef\.current !== startedFor\) return;/,
+    /await new Promise\(\(resolve\) =>\s*setTimeout\(resolve, 1000 \* \(attempt \+ 1\)\),\s*\);[\s\S]{0,400}?if \(liveScopeKeyRef\.current !== startedFor\) \{\s*return;\s*\}/,
   );
 });
 
@@ -1014,7 +1025,7 @@ test("the work timer is armed for the earliest sender deadline", () => {
   assert.match(api, /Math\.max\(0, earliest - Date\.now\(\)\)/);
   // Fired, it drops what lapsed and arms for the next deadline rather than
   // leaving the remaining senders with no wake-up at all.
-  assert.match(api, /if \(entry\.until <= now\) live\.delete\(sender\);/);
+  assert.match(api, /if \(entry\.until <= now\) \{\s*live\.delete\(sender\);\s*\}/);
   assert.match(
     api,
     /publishProjectWorkChanged\(projectId\);\s*armRemoteWorkExpiry\(projectId\);/,

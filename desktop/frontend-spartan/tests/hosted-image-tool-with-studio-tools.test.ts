@@ -10,9 +10,9 @@ import test from "node:test";
 // in enabled_tools. So this reads that branch out of the source, the same way
 // the backend's route tests read the gate out of routes/inference.py.
 const SOURCE = readFileSync(
-  fileURLToPath(new URL("../src/features/chat/api/chat-adapter.ts", import.meta.url)),
+  fileURLToPath(new URL("../src/features/chat/api/chat-adapter/stream-orchestrator.ts", import.meta.url)),
   "utf8",
-);
+).replaceAll("\r\n", "\n");
 
 // The branch taken when the provider runs Studio's tools. Bounded by the
 // hosted-only branch that follows it, so the two cannot be confused.

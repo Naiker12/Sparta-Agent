@@ -21,6 +21,7 @@ _ONE_SHOT_TOOLS = frozenset({"render_html"})
 # Only built-in observations known not to change the workspace. Arbitrary shell,
 # Python and MCP calls may mutate it, including before returning an error.
 _READ_ONLY_TOOLS = frozenset({
+    "propose_automation",
     "web_search", "search_knowledge_base", "list_mcp_servers",
     "search_mcp_catalog", "list_skills", "search_skill_catalog",
 })

@@ -44,6 +44,11 @@ export interface MissingExternalModel {
   state: MissingExternalModelState;
 }
 
+// Older saved connections accepted manual IDs alongside an incomplete catalog.
+// These types are retired from setup, but their persisted selections still need
+// truthful labels: an absent ID never proves the provider withdrew that model.
+const LEGACY_MANUAL_CATALOG_PROVIDERS = new Set(["ollama", "vllm", "llama_cpp"]);
+
 /**
  * Describes an `external::<connectionId>::<modelId>` selection with no option behind it, or
  * null for any other selection.
@@ -98,9 +103,9 @@ export function missingExternalModel(
   // Ollama, vLLM, llama.cpp and OpenRouter take typed-in model IDs beside the fetched list,
   // and the dialog saves those to `models` alone, so their catalogue never carried them and
   // its silence about one is not evidence of anything.
-  const catalogCoversEveryId = !allowsManualModelIdsWithCatalog(
-    connection?.providerType,
-  );
+  const catalogCoversEveryId =
+    !allowsManualModelIdsWithCatalog(connection?.providerType) &&
+    !LEGACY_MANUAL_CATALOG_PROVIDERS.has(connection?.providerType ?? "");
   // `modelId` is decoded and `availableModels` holds raw provider ids, so these compare
   // directly; an empty catalogue is unknown rather than empty, since a connection with no
   // enabled models never gets one written.

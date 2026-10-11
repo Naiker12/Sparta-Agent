@@ -413,18 +413,15 @@ test("the picker trigger resolves a dropped connected model before naming it", (
 
 // The catalogue only reaches the picker if chat-page builds it from the connections and
 // passes it down both the single-chat and compare paths.
-test("the chat page feeds the picker the connections behind the options", () => {
-  const page = readFileSync(
-    fileURLToPath(new URL("../src/features/chat/chat-page.tsx", import.meta.url)),
-    "utf8",
-  );
-  assert.match(page, /availableModels: provider\.availableModels/);
-  // Once for the memo's own type, then every hop from chat-page to the picker.
-  assert.ok(
-    (page.match(/externalConnections=\{externalConnections\}/g) ?? []).length >=
-      5,
-    "externalConnections must reach the picker on both the chat and compare paths",
-  );
+test("chat and compare both use the provider-backed API selector", () => {
+  for (const path of ["chat-page.tsx", "components/compare-content.tsx"]) {
+    const source = readFileSync(new URL(`../src/features/chat/${path}`, import.meta.url), "utf8");
+    assert.match(source, /<ApiProviderModelSelector\s+[\s\S]*?models=\{externalModels\}/);
+  }
+  const selector = readFileSync(new URL("../src/features/chat/components/api-provider-model-selector.tsx", import.meta.url), "utf8");
+  assert.match(selector, /useExternalProvidersStore\(s => s\.providers\)/);
+  assert.match(selector, /p\.availableModels/);
+  assert.match(selector, /connectionsEnabled \? providers : \[\]/);
 });
 
 test("the compare and audio toasts use the external-aware labels", () => {
@@ -463,22 +460,10 @@ test("the compare and audio toasts use the external-aware labels", () => {
 // The strings the trigger shows must exist in every locale: check-parity treats "picker."
 // as a required overlay prefix, so a missing one fails CI rather than falling back.
 test("the dropped-model strings are translated everywhere", async () => {
-  const locales = [
-    "ar",
-    "de",
-    "en",
-    "es",
-    "fr",
-    "hi",
-    "it",
-    "ja",
-    "ko",
-    "pt-br",
-    "ru",
-    "zh-CN",
-  ];
+  const { LOCALES } = await import("../src/i18n/messages.ts");
+  const locales = Object.keys(LOCALES);
   for (const locale of locales) {
-    const module = (await import(`../src/i18n/locales/${locale}.ts`)) as Record<
+    const module = (await import(`../src/i18n/locales/${locale}/index.ts`)) as Record<
       string,
       { picker?: Record<string, string> }
     >;

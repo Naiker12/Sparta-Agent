@@ -6,7 +6,7 @@ import {
   SETTINGS_SEARCH_KEYWORDS,
   createSettingsSearchIndex,
 } from "../src/features/settings/settings-search.ts";
-import { en } from "../src/i18n/locales/en.ts";
+import { en } from "../src/i18n/locales/en/index.ts";
 
 const UPDATE_ENTRY = "settings.about.updates";
 

@@ -1,7 +1,9 @@
 import { useT as useUiT } from "@/i18n";
 "use client";
 
-import { useToolOutputFor, useToolPaneScope } from "@/features/chat";
+// Avoid the chat/message renderer cycle when a tool UI loads independently.
+// eslint-disable-next-line no-restricted-imports
+import { useToolOutputFor, useToolPaneScope } from "@/features/chat/tool-output-scope";
 import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 import { stripAnsi, tailToolOutput } from "@/lib/strip-ansi";
 import { useEffect, useMemo, useRef } from "react";

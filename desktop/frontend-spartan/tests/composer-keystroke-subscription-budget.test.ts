@@ -25,11 +25,15 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 function source(path: string): string {
-  return readFileSync(new URL(`../src/${path}`, import.meta.url), "utf8");
+  return readFileSync(new URL(`../src/${path}`, import.meta.url), "utf8").replaceAll("\r\n", "\n");
 }
 
 const markdown = source("components/assistant-ui/markdown-text.tsx");
-const thread = source("components/assistant-ui/thread.tsx");
+const thread = [
+  "components/assistant-ui/thread.tsx",
+  "components/assistant-ui/thread/assistant-message-view.tsx",
+  "components/assistant-ui/thread/message-action-hooks.ts",
+].map(source).join("\n");
 
 /** The body of the named function or component declaration, up to its closing brace. */
 function body(text: string, start: string, terminator = "\n}"): string {

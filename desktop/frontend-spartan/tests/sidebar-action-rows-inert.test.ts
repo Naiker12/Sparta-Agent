@@ -8,10 +8,9 @@ import test from "node:test";
 // action row therefore sits there looking permanently hovered.
 
 async function sidebarSource(): Promise<string> {
-  return readFile(
-    new URL("../src/components/app-sidebar.tsx", import.meta.url),
-    "utf8",
-  );
+  const paths = ["app-sidebar.tsx", "sidebar/sidebar-brand-header.tsx", "sidebar/sidebar-user-footer.tsx"];
+  const sources = await Promise.all(paths.map(path => readFile(new URL(`../src/components/${path}`, import.meta.url), "utf8")));
+  return sources.join("\n/* extracted sidebar */\n").replaceAll("\r\n", "\n");
 }
 
 /** The props of the NavItem carrying `label`, from its tag to the next one. */
@@ -86,9 +85,9 @@ test("every sidebar row pill sits in one shared box", async () => {
     /const scrollRowPadding = usesDesktopTitlebar \? "px-\[5px\]" : "px-1\.5"/,
   );
   // New Chat and the footer sit outside the scroller.
-  assert.equal(source.match(/(?<!const )rowPadding[,}]/g)?.length, 2);
+  assert.equal(source.split("/* extracted sidebar */")[0].match(/(?<!const )rowPadding[,}]/g)?.length, 2);
   // Nav rows, pinned chats, Projects, Recents, training runs sit inside it.
-  assert.equal(source.match(/scrollRowPadding[,}]/g)?.length, 5);
+  assert.equal(source.split("/* extracted sidebar */")[0].match(/scrollRowPadding[,}]/g)?.length, 4);
   assert.equal(source.match(/"pl-2 pr-\[5px\]"/g), null);
 });
 
@@ -102,7 +101,7 @@ test("the sidebar list measures its scroll rail", async () => {
   );
   // A callback ref, not an effect: the Sheet unmounts on close and the
   // breakpoint swaps subtrees, so the scroller is a new node each time.
-  assert.match(source, /ref=\{attachScroller\}/);
+  assert.match(source, /ref=\{[\s\S]{0,250}?attachScroller\(element\)/);
   assert.match(
     source,
     /const attachScroller = useCallback\(\s*\(el: HTMLDivElement \| null\) => \{/,
@@ -114,7 +113,7 @@ test("the sidebar list measures its scroll rail", async () => {
   assert.match(source, /railWidthRef\.current = null;/);
   // Measured on attach, or a list overflowing on arrival stays misaligned
   // until something fires a scroll.
-  assert.match(source, /if \(!el\) return;\s*measureScrollRail\(el\);/);
+  assert.match(source, /if \(!el\) \{\s*return;\s*\}\s*measureScrollRail\(el\);/);
   // Then off the box, not off renders: the Images disclosure and the project
   // toggles change the row count without rendering AppSidebar, and a scrollbar
   // appearing shrinks the content box.
@@ -130,7 +129,7 @@ test("the sidebar list measures its scroll rail", async () => {
   // And only on a change, so it cannot re-trigger itself.
   assert.match(
     source,
-    /if \(rail === railWidthRef\.current\) return;/,
+    /if \(rail === railWidthRef\.current\) \{\s*return;\s*\}/,
   );
   // The fade stops at the rail too: the thumb ends its travel in that band.
   assert.match(

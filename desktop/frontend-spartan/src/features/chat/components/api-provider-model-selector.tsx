@@ -9,6 +9,7 @@ import { listProviderModels, updateProviderConfig } from "../api/providers-api";
 import { buildExternalModelId, parseExternalModelId, toExternalBackendProviderType } from "../external-providers";
 import { useExternalProvidersStore } from "../stores/external-providers-store";
 import { saveReasoningCatalog } from "../catalog-reasoning";
+import { externalModelLabel } from "../lib/external-model-label";
 import { cn } from "@/lib/utils";
 import { Check, ChevronDown, RefreshCw, Settings2 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -42,6 +43,7 @@ export function ApiProviderModelSelector({ models, value, onValueChange, onConfi
     return [...all.values()];
   }, [models, providers, connectionsEnabled]);
   const selected = options.find(m => m.id === value);
+  const selectedLabel = selected?.name ?? externalModelLabel(value);
   const groups = [...new Set(options.map(m => m.providerId))];
 
   async function refresh() {
@@ -76,12 +78,12 @@ export function ApiProviderModelSelector({ models, value, onValueChange, onConfi
     finally { setSaving(false); }
   }
 
-  if (!options.length && !connected.length) return <Button variant="ghost" size="sm" onClick={onConfigureProviders} disabled={!onConfigureProviders} aria-label={uiT("ui.choose_an_api_provider_to_start_chatting")}>{uiT("ui.choose_provider")}</Button>;
+  if (!options.length && !connected.length && !selectedLabel) return <Button variant="ghost" size="sm" onClick={onConfigureProviders} disabled={!onConfigureProviders} aria-label={uiT("ui.choose_an_api_provider_to_start_chatting")}>{uiT("ui.choose_provider")}</Button>;
 
   return <Popover open={open} onOpenChange={next => { setOpen(next); if (next && !loaded) void refresh(); }}>
-    <PopoverTrigger asChild><Button variant="ghost" size="sm" className={cn("composer-model-selector min-w-0 max-w-[180px] rounded-full", className)} data-tour={triggerDataTour} aria-label={uiT("studio.modelPicker.selectModel")} title={selected ? `${selected.providerName}: ${selected.name}` : uiT("studio.modelPicker.selectModel")} disabled={saving}>
+    <PopoverTrigger asChild><Button variant="ghost" size="sm" className={cn("composer-model-selector min-w-0 max-w-[180px] rounded-full", className)} data-tour={triggerDataTour} aria-label={uiT("studio.modelPicker.selectModel")} title={selected ? `${selected.providerName}: ${selected.name}` : selectedLabel ?? uiT("studio.modelPicker.selectModel")} disabled={saving}>
       {selected && <ApiProviderLogo providerType={selected.providerType} className="size-4 shrink-0" />}
-      <span className="min-w-0 truncate">{selected?.name.replace(/^[^/:]+[:/]/, "") ?? uiT("studio.modelPicker.selectModel")}</span><ChevronDown className="shrink-0" data-icon="inline-end" />
+      <span className="min-w-0 truncate">{selectedLabel?.replace(/^[^/:]+[:/]/, "") ?? uiT("studio.modelPicker.selectModel")}</span><ChevronDown className="shrink-0" data-icon="inline-end" />
     </Button></PopoverTrigger>
     <PopoverContent side="top" align="end" sideOffset={8} className="w-[min(360px,calc(100vw-32px))] gap-0 overflow-hidden rounded-2xl border p-0 shadow-xl">
       <Command>

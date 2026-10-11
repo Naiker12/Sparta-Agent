@@ -31,9 +31,11 @@ assert.ok(
   "the lifted block is not the one that re-reads the verdict",
 );
 
+const constants = await readFile(new URL("../src/components/sidebar/sidebar-types-and-constants.tsx", import.meta.url), "utf8");
+
 function constant(name: string): number {
-  const found = new RegExp(`const ${name} = (\\d+);`).exec(src);
-  assert.ok(found, `${name} is no longer declared in app-sidebar.tsx`);
+  const found = new RegExp(`const ${name} = (\\d+);`).exec(constants);
+  assert.ok(found, `${name} is no longer declared in sidebar-types-and-constants.tsx`);
   return Number(found[1]);
 }
 const STALL_MS = constant("VERDICT_POLL_STALL_MS");

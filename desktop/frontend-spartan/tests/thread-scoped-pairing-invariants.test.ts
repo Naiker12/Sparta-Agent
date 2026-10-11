@@ -14,7 +14,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 function read(path: string): string {
-  return readFileSync(new URL(path, import.meta.url), "utf8");
+  return readFileSync(new URL(path, import.meta.url), "utf8").replace(/\r\n/g, "\n");
 }
 
 const store = read("../src/features/chat/stores/chat-runtime-store.ts");
@@ -266,7 +266,7 @@ test("the read that gates sends cannot hang forever", () => {
 test("every run waits for the chat's settings, not just the composer", () => {
   // Reload, Continue and send-from-edit never touch handleSubmit; they all reach the
   // adapter, so the wait belongs there.
-  const adapter = read("../src/features/chat/api/chat-adapter.ts");
+  const adapter = read("../src/features/chat/api/chat-adapter/stream-orchestrator.ts");
   const run = slice(adapter, "await useChatRuntimeStore.getState().hydratePersistedSettings();", "let runtime =");
   assert.match(run, /await awaitThreadScopedPairing\(runThreadId\)/);
 });
@@ -275,7 +275,7 @@ test("a replay entry survives a failed replay", () => {
   // authFetch resolves for 404 and 5xx, and the missing-row case this exists for is
   // exactly the one that 404s.
   const replay = slice(store, "export function replayUnconfirmedThreadSettings", "\n}");
-  assert.match(replay, /if \(res\.ok\) forgetReplayedThreadSettings\(threadId, body\)/);
+  assert.match(replay, /if \(res\.ok\)\s*(?:\{\s*)?forgetReplayedThreadSettings\(threadId, body\)/);
   assert.doesNotMatch(
     replay,
     /localStorage\.removeItem\(THREAD_SETTINGS_REPLAY_KEY\);\n    if \(!raw\)/,
@@ -291,7 +291,7 @@ test("a debounce-fired write is resendable on a terminal event too", () => {
 });
 
 test("forking settles a held edit, not just the debounce", () => {
-  const composerSrc = composer;
+  const composerSrc = read("../src/components/assistant-ui/thread/message-action-hooks.ts");
   assert.match(composerSrc, /await settleThreadScopedSettingsForCopy\(remoteId\)/);
   const settle = slice(store, "export async function settleThreadScopedSettingsForCopy", "\n}");
   assert.match(settle, /commitHeldThreadScopedEditsToTheirThread\(\)/);
@@ -306,7 +306,7 @@ test("the run's wait is bound to the run's own chat", () => {
   const wait = slice(store, "export function awaitThreadScopedPairing", "\n}");
   assert.match(wait, /threadId: string \| null \| undefined/);
   assert.match(wait, /pairingSettledByThreadId\.get\(threadId\)/);
-  const adapter = read("../src/features/chat/api/chat-adapter.ts");
+  const adapter = read("../src/features/chat/api/chat-adapter/stream-orchestrator.ts");
   assert.match(adapter, /await awaitThreadScopedPairing\(runThreadId\)/);
 });
 
@@ -325,7 +325,7 @@ test("a terminal event does not send a stale snapshot after the newest one", () 
   assert.match(terminal, /const sentNewest = new Set<string>\(\)/);
   assert.match(terminal, /beaconUnsettledThreadSettingsWrites\(sentNewest\)/);
   const beacon = slice(store, "function beaconUnsettledThreadSettingsWrites", "\n}");
-  assert.match(beacon, /if \(alreadySent\.has\(threadId\)\) continue;/);
+  assert.match(beacon, /if \(alreadySent\.has\(threadId\)\)\s*(?:\{\s*)?continue;/);
 });
 
 test("last session's replay is ordered before this session's writes", () => {
@@ -367,20 +367,26 @@ test("the thread read that gates sends aborts when it times out", () => {
 test("a read nobody is waiting for any more is cancelled", () => {
   const effect = slice(provider, "const reads = new Set<AbortController>();", "\n  }, [activeThreadId");
   assert.match(effect, /abortReads\(\);/);
-  const api = read("../src/features/chat/api/chat-api.ts");
+  const api = read("../src/features/chat/api/modules/threads-api.ts");
   const get = slice(api, "export async function getChatThread", "\n}");
   assert.match(get, /options\.timeoutMs !== undefined/);
   assert.match(get, /combineAbortSignals\(\[timeout\.signal, options\.signal\]\)/);
 });
 
-test("the ensure step in front of a settings write is bounded too", () => {
-  // It runs BEFORE the write, so neither the caller's signal nor the write timeout
-  // reaches it, and a stall there leaves the whole per-thread chain pending.
-  const storage = read("../src/features/chat/utils/chat-history-storage.ts");
+test("a settings write is bounded and forwards cancellation without recreating a missing chat", () => {
+  const storage = read("../src/features/chat/storage/thread-storage.ts");
   const update = slice(storage, "export async function updateStoredChatThread", "\n}");
-  assert.match(update, /ensureStoredChatThread\(threadId, undefined, \{/);
-  assert.match(update, /bounded: true/);
-  assert.match(update, /signal: options\.signal/);
+  assert.match(update, /await updateChatThread\(threadId, patch, options\)/);
+  assert.doesNotMatch(update, /ensureStoredChatThread\(/);
+  const api = read("../src/features/chat/api/modules/threads-api.ts");
+  const patch = slice(api, "export async function updateChatThread", "\n}");
+  assert.match(patch, /threadWriteFetch\([\s\S]*options\.signal/);
+  const base = read("../src/features/chat/api/modules/base.ts");
+  const fetch = slice(base, "export async function threadWriteFetch", "\n}");
+  assert.match(fetch, /disposableTimeoutSignal\(THREAD_WRITE_TIMEOUT_MS\)/);
+  assert.match(fetch, /caller\.addEventListener\("abort", abort\)/);
+  assert.match(fetch, /timeout\.signal\.addEventListener\("abort", abort\)/);
+  assert.match(fetch, /signal: controller\.signal/);
 });
 
 test("a tab-close snapshot is replayed even if global settings fail to hydrate", () => {
@@ -389,7 +395,7 @@ test("a tab-close snapshot is replayed even if global settings fail to hydrate",
   assert.match(catchArm, /replayUnconfirmedThreadSettings\(\);/);
   // and it must not then run twice
   const replay = slice(store, "export function replayUnconfirmedThreadSettings", "\n}");
-  assert.match(replay, /if \(threadSettingsReplayStarted\) return;/);
+  assert.match(replay, /if \(threadSettingsReplayStarted\)\s*(?:\{\s*)?return;/);
 });
 
 test("a default hydration had to skip is not restored from the pre-hydration copy", () => {
@@ -456,7 +462,7 @@ test("the replay cannot block the session's writes forever", () => {
 test("a fork stops when the chat's settings could not be saved", () => {
   const merge = slice(store, "async function mergeThreadScopedSettingsIntoRow", "\n}");
   assert.match(merge, /throw error;/);
-  assert.match(composer, /Could not fork this chat/);
+  assert.match(read("../src/components/assistant-ui/thread/message-action-hooks.ts"), /ui\.could_not_fork_this_chat/);
 });
 
 test("an unsaved chat's edit reaches the installation defaults without a round trip", () => {
@@ -479,9 +485,9 @@ test("a run whose pairing never settled is refused, not run on another chat's se
   const wait = slice(store, "export function awaitThreadScopedPairing", "\n}");
   assert.match(wait, /Promise<boolean>/);
   assert.match(wait, /resolve\(false\)/);
-  const adapter = read("../src/features/chat/api/chat-adapter.ts");
+  const adapter = read("../src/features/chat/api/chat-adapter/stream-orchestrator.ts");
   assert.match(adapter, /if \(!\(await awaitThreadScopedPairing\(runThreadId\)\)\) \{/);
-  assert.match(adapter, /the message was not sent/);
+  assert.match(adapter, /ui\.this_chat_s_settings_could_not_be_loaded_so_the_message_was_not_s/);
 });
 
 test("the pairing wait outlasts the read it is waiting for", () => {
@@ -645,7 +651,8 @@ test("toggling Think applies its params even in a chat that pins sampling", () =
   );
   // The post-load application of the same table stays marked.
   const runtime = read("../src/features/chat/hooks/use-chat-model-runtime.ts");
-  const post = slice(runtime, "store.setParams({ ...store.params, ...p }", "\n              }");
+  const post = slice(runtime, "store.setParams(", "\n              }");
+  assert.match(post, /\{ \.\.\.store\.params, \.\.\.p \}/);
   assert.match(post, /fromModelDefaults: true/);
 });
 
@@ -676,9 +683,9 @@ test("the in-memory defaults follow the model defaults that were just written", 
   const setParams = slice(store, "setParams: (params, options)", "\n  setCustomPresets:");
   assert.match(setParams, /noteThreadScopedDefaults\(sharedParams\);/);
   const note = slice(store, "function noteThreadScopedDefaults", "\n}");
-  assert.match(note, /if \(!isThreadScopedParamKey\(key\)\) continue;/);
+  assert.match(note, /if \(!isThreadScopedParamKey\(key\)\)\s*(?:\{\s*)?continue;/);
   // Only ever updated, never created: with no chat open there is nothing to hold.
-  assert.match(note, /if \(globalThreadScopedDefaults === null\) continue;/);
+  assert.match(note, /if \(globalThreadScopedDefaults === null\)\s*(?:\{\s*)?continue;/);
   // A held field is restored from the pre-window sample when the pairing closes, so a
   // default published inside the window has to be recorded or this session stays behind.
   assert.match(
@@ -724,7 +731,7 @@ test("the model being left does not remember the open chat's values", () => {
   // still out owns its keys too: the edit is in the held list rather than in a snapshot.
   assert.match(
     strip,
-    /if \(held === undefined && threadScopedOverride\(key\) === undefined\) continue;/,
+    /if \(held === undefined && threadScopedOverride\(key\) === undefined\)\s*(?:\{\s*)?continue;/,
   );
   assert.match(
     strip,
@@ -739,6 +746,6 @@ test("the model being left does not remember the open chat's values", () => {
   // With no chat open and none awaiting its read there is nothing of a chat's here.
   assert.match(
     strip,
-    /if \(threadScopedSettingsThreadId === null && pendingPairingThreadId === null\)/,
+    /if\s*\(\s*threadScopedSettingsThreadId === null &&\s*pendingPairingThreadId === null\s*\)/,
   );
 });

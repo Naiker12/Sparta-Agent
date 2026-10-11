@@ -98,9 +98,9 @@ test("a successful reveal resolves without reading the body", async () => {
 });
 
 const SIDEBAR = readFileSync(
-  fileURLToPath(new URL("../src/components/app-sidebar.tsx", import.meta.url)),
+  fileURLToPath(new URL("../src/components/sidebar/chat-sidebar-item.tsx", import.meta.url)),
   "utf-8",
-);
+).replace(/\r\n/g, "\n");
 
 test("a failed history read is reported, not mistaken for a chat that ran no tools", () => {
   // No React renderer here, so this asserts on source, like ~50 sibling tests.
@@ -171,10 +171,10 @@ test("a sandbox tool result is wrapped even when it carries no envelope", () => 
   // name a folder from its current scope that it never wrote to.
   const adapter = readFileSync(
     fileURLToPath(
-      new URL("../src/features/chat/api/chat-adapter.ts", import.meta.url),
+      new URL("../src/features/chat/api/chat-adapter/stream-orchestrator.ts", import.meta.url),
     ),
     "utf-8",
-  );
+  ).replace(/\r\n/g, "\n");
   const branch = adapter.slice(
     adapter.indexOf(
       "} else if (\n                      createdFiles.length > 0 ||",

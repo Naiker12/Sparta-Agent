@@ -497,7 +497,7 @@ test("every site that re-applies model defaults asks for the replay", () => {
     [
       // The Qwen3 thinking-mode params applied after a load.
       "../src/features/chat/hooks/use-chat-model-runtime.ts",
-      /setParams\(\{ \.\.\.store\.params, \.\.\.p \}, \{\s*fromModelDefaults: true,/,
+      /setParams\(\s*\{ \.\.\.store\.params, \.\.\.p \},\s*\{\s*fromModelDefaults: true,/,
     ],
   ];
   for (const [path, pattern] of sites) {
@@ -570,7 +570,7 @@ test("a remembered budget is capped by a non-GGUF load", () => {
   );
 
   const adapter = readFileSync(
-    new URL("../src/features/chat/api/chat-adapter.ts", import.meta.url),
+    new URL("../src/features/chat/api/chat-adapter/auto-load.ts", import.meta.url),
     "utf8",
   );
   assert.match(

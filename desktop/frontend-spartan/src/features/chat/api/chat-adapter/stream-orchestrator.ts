@@ -1949,7 +1949,7 @@ export function createOpenAIStreamAdapter(
                       ...(ragEnabled || projectRagEnabled
                         ? ["search_knowledge_base"]
                         : []),
-                      ...(documentGenerationEnabledForThisTurn ? ["generate_document"] : []),
+                      ...(documentGenerationEnabledForThisTurn ? ["generate_document", "propose_automation"] : []),
                       ...(toolsEnabled ? ["web_search"] : []),
                       ...studioLocalCodeTools,
                       ...(workspaceEnabled ? WORKSPACE_TOOL_NAMES : []),
@@ -2195,7 +2195,7 @@ export function createOpenAIStreamAdapter(
                     ...(ragEnabled || projectRagEnabled
                       ? ["search_knowledge_base"]
                       : []),
-                    ...(documentGenerationEnabledForThisTurn ? ["generate_document"] : []),
+                    ...(documentGenerationEnabledForThisTurn ? ["generate_document", "propose_automation"] : []),
                     ...(toolsEnabled ? ["web_search"] : []),
                     ...(codeToolsEnabled
                       ? ["python", "terminal", "edit_file"]

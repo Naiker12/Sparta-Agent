@@ -1,11 +1,22 @@
 import { createRoot } from "react-dom/client";
 import { DocumentPreviewSheet } from "../../src/features/rag/components/document-preview-sheet";
+import { DocumentGenerationStatus } from "../../src/components/assistant-ui/tool-ui-document";
 import { useDocumentPreviewStore } from "../../src/features/rag/components/preview-store";
 import "../../src/index.css";
 
 const blob = new Blob(["Proyecto,Lenguaje,Estado\n" + Array.from({length: 220}, (_, i) => `Proyecto ${i + 1},TypeScript,Activo`).join("\n")]);
 function Fixture() {
-  return <main className="p-8"><h1>Vista previa: comprobación manual</h1><div className="flex flex-col gap-4 items-start">
+  return <main className="p-8"><h1>Vista previa: comprobación manual</h1><DocumentGenerationStatus filename="Informe.pdf" /><div className="flex flex-col gap-4 items-start">
+    <button onClick={() => {
+      const stream = 'BT /F1 20 Tf 50 700 Td (Preview PDF) Tj ET';
+      const objects = ['<< /Type /Catalog /Pages 2 0 R >>', '<< /Type /Pages /Kids [3 0 R] /Count 1 >>', '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>', '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>', `<< /Length ${stream.length} >>\nstream\n${stream}\nendstream`];
+      let pdf = '%PDF-1.4\n';
+      const offsets = [0];
+      objects.forEach((object, i) => { offsets.push(pdf.length); pdf += `${i + 1} 0 obj\n${object}\nendobj\n`; });
+      const start = pdf.length;
+      pdf += `xref\n0 6\n0000000000 65535 f \n${offsets.slice(1).map(offset => `${String(offset).padStart(10, '0')} 00000 n \n`).join('')}trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${start}\n%%EOF`;
+      useDocumentPreviewStore.getState().openLocalPreview({blob:new Blob([pdf],{type:'application/pdf'}),filename:'preview.pdf',kind:'pdf'});
+    }}>Abrir PDF</button>
     <button onClick={() => useDocumentPreviewStore.getState().openLocalPreview({blob, filename:"proyectos.csv",kind:"csv"})}>Abrir hoja</button>
     <button onClick={() => useDocumentPreviewStore.getState().openLocalPreview({blob:new Blob(["# Documento de prueba\n\nTexto independiente para comprobar las pestañas."]),filename:"notas.md",kind:"text",attachmentId:"fixture-notes"})}>Abrir notas</button>
     <button onClick={async () => {

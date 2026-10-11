@@ -1,8 +1,10 @@
+// Runtime configuration must not initialize model-selector UI and chat renderers.
+// eslint-disable-next-line no-restricted-imports
 import {
   applyPerModelConfigToRuntime,
   currentRuntimePerModelConfig,
   perModelConfigsEqual,
-} from "@/features/model-picker";
+} from "@/features/model-picker/model-config/apply-per-model-config";
 import {
   CONTEXT_LENGTH_MIN,
   DEFAULT_MAX_SEQ_LENGTH,

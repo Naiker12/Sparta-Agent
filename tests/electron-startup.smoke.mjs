@@ -45,9 +45,9 @@ try {
   page = await electron.firstWindow();
   page.on('pageerror', error => errors.push(error.message));
   await page.getByRole('button', { name: 'Entrar a Sparta' }).click({ timeout: 30_000 });
-  await page.getByRole('heading', { name: 'Prepara Sparta Agent' }).waitFor({ timeout: 30_000 });
+  await page.getByRole('heading', { name: 'Prepara Spartan' }).waitFor({ timeout: 30_000 });
   assert.equal(await page.getByText('Backend pendiente', { exact: true }).count(), 1);
-  assert.ok(await page.getByAltText('Logo de Sparta Agent').evaluate(image => image.complete && image.naturalWidth > 0));
+  assert.ok(await page.getByAltText('Logo de Spartan').evaluate(image => image.complete && image.naturalWidth > 0));
   const result = await page.evaluate(async () => ({
     version: await window.electronAPI.getVersion(),
     isolated: typeof window.require === 'undefined',

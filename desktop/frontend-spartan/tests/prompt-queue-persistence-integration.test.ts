@@ -19,6 +19,7 @@ async function manager() {
   (globalThis as any).__queueEnv = env;
   (globalThis as any).window = new EventTarget();
   const mocks: Record<string, string> = {
+    "@/i18n": "export const translate = key => key;",
     "react": "export const createContext = value => value;",
     "@/features/auth": `export const AUTH_SESSION_CLEARED_EVENT='cleared'; export const getAuthSessionEpoch=()=>globalThis.__queueEnv.epoch;`,
     "@/lib/toast": "export const toast={error:()=>{}};",

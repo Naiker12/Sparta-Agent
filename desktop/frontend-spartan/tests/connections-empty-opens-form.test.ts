@@ -21,7 +21,7 @@ test("an empty connection list opens the add-connection form", () => {
   );
   assert.match(
     dialog,
-    /const selectableRegistry = registryRows\.filter\(\(entry\) => !entry\.hidden\);\s*setRegistry\(selectableRegistry\);/,
+    /const selectableRegistry = registryRows\.filter\(\s*\(entry\) => !entry\.hidden,?\s*\);\s*setRegistry\(selectableRegistry\);/,
   );
 
   // Reading `providers` would decide against the previous render's props.
@@ -49,7 +49,7 @@ test("the form's back arrow still returns to the list", () => {
     dialog,
     /function closeForm\(\) \{\s*resetForm\(\);\s*autoOpenedAddFormRef\.current = true;\s*setPage\("list"\);/,
   );
-  assert.match(dialog, /No connections yet/);
+  assert.match(dialog, /chat\.providersDialog\.noConnectionsYet/);
 });
 
 test("navigating before the sync lands consumes the auto-open", () => {

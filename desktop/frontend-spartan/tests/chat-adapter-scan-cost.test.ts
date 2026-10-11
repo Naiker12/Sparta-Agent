@@ -362,7 +362,7 @@ test("the whole per-arrival path is linear in the reply length", () => {
 // ------------------------------------------------------------ source pins ---
 
 const ADAPTER = readFileSync(
-  new URL("../src/features/chat/api/chat-adapter.ts", import.meta.url),
+  new URL("../src/features/chat/api/chat-adapter/stream-orchestrator.ts", import.meta.url),
   "utf8",
 );
 

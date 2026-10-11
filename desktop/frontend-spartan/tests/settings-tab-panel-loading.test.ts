@@ -63,10 +63,20 @@ test("the dialog loads every tab panel on demand", async () => {
   assert.deepEqual(statics, [], `settings-dialog still statically imports: ${statics}`);
 
   // One loader per panel on disk, so a tab added later cannot go missing from the map.
-  const panels = (await readdir(TABS_DIR)).filter((f) => /-tab\.tsx$/.test(f));
-  assert.ok(panels.length >= 12, `only found ${panels.length} tab panels`);
+  const retiredPanels = new Set(["agents-tab.tsx", "resources-tab.tsx"]);
+  const panels = (await readdir(TABS_DIR)).filter((f) => /-tab\.tsx$/.test(f) && !retiredPanels.has(f));
+  assert.ok(panels.length >= 10, `only found ${panels.length} tab panels`);
+  for (const file of retiredPanels) {
+    assert.ok(!source.includes(`import("./tabs/${file.replace(/\.tsx$/, "")}")`), `${file} must stay off the API-only loading path`);
+  }
   for (const file of panels) {
     const specifier = `./tabs/${file.replace(/\.tsx$/, "")}`;
+    if (file === "local-voice-tab.tsx") {
+      const voice = await readFile(path.join(TABS_DIR, "voice-tab.tsx"), "utf8");
+      assert.ok(source.includes('import("./tabs/voice-tab")'));
+      assert.match(voice, /from "\.\/local-voice-tab"/);
+      continue;
+    }
     assert.ok(
       source.includes(`import("${specifier}")`),
       `no deferred import for ${specifier}`,
@@ -168,7 +178,8 @@ test("the panels are prefetched once the dialog opens", async () => {
   // Without this the first tab click trades the startup cost for an interaction one.
   const source = await readFile(DIALOG, "utf8");
   assert.match(source, /scheduleIdleTask/);
-  assert.match(source, /Object\.values\(TAB_LOADERS\)/);
+  assert.match(source, /for \(const tab of TABS\)/);
+  assert.match(source, /const load = TAB_LOADERS\[tab\.id\]/);
   // It warms unselected panels, so a failed chunk must not reach the page as a rejection.
   assert.match(source, /load\(\)\.catch\(/);
 });

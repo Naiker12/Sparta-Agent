@@ -301,8 +301,8 @@ test("a hostless blocked URI still reaches the banner", () => {
 // the policy for nothing, then hides the banner because networkAllowed is true.
 test("the grant is not offered for a scheme it cannot widen", () => {
   assert.equal(
-    readConst("GRANT_CANNOT_FIX_SCHEME"),
-    '{ "worker-src": "data" }',
+    readConst("GRANT_CANNOT_FIX_SCHEME").replace(/\s/g, "").replace(/,}/g, "}"),
+    '{"worker-src":"data"}',
   );
   const source = sourceFile(FRAME);
   let filtered = false;

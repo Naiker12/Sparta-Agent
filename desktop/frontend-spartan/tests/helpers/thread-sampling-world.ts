@@ -123,6 +123,7 @@ export interface World {
 }
 
 interface StoreModule {
+  awaitThreadScopedSettingsWrite: (threadId: string) => Promise<boolean>;
   useChatRuntimeStore: {
     getState: () => Record<string, (...args: never[]) => unknown> & {
       params: Record<string, unknown>;
@@ -135,13 +136,14 @@ interface StoreModule {
 }
 
 /** Let the debounced writers and their promise chains finish. */
-async function drain(tick: (ms: number) => void): Promise<void> {
+async function drain(tick: (ms: number) => void, settleWrite: (id: string) => Promise<boolean>): Promise<void> {
   for (let round = 0; round < 3; round += 1) {
     tick(1000);
     for (let i = 0; i < 6; i += 1) {
       await new Promise((resolve) => setImmediate(resolve));
     }
   }
+  await Promise.all(["A", "B"].map(settleWrite));
 }
 
 /**
@@ -414,7 +416,7 @@ export async function runScenario(
 
   for (const op of ops) {
     await perform(op);
-    await drain(tick);
+    await drain(tick, mod.awaitThreadScopedSettingsWrite);
     check(op);
     if (violations.length > 0) break;
   }

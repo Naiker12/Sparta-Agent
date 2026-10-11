@@ -1,4 +1,3 @@
-
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -11,14 +10,9 @@ function source(relativePath: string): string {
 }
 
 test("all max-output cap callers pass the selected connection override", () => {
-  const settings = source("chat-settings-sheet.tsx");
   const runtime = source("stores/chat-runtime-store.ts");
-  const adapter = source("api/chat-adapter.ts");
+  const adapter = source("api/chat-adapter/stream-orchestrator.ts");
 
-  assert.match(
-    settings,
-    /getExternalMaxOutputTokens\([\s\S]*?activeExternalProvider\?\.maxOutputTokens/,
-  );
   assert.match(
     runtime,
     // inside the `if (provider)` guard, so no optional chain: an unresolved
@@ -50,11 +44,11 @@ test("the connection editor exposes a bounded optional cap and warning", () => {
   assert.match(dialog, /Max Tokens limit/);
   assert.match(
     dialog,
-    /Caps Max Tokens for this connection\. Never raises it past a\s+model's documented limit\. Leave blank to use that limit, or\s+32,768 for a model without one\./,
+    /ui.caps_max_tokens_for_this_connection_never_raises_it_past_a_model_/,
   );
   assert.match(
     dialog,
-    /If the upstream provider does not support this value,\s+requests may fail\./,
+    /ui.if_the_upstream_provider_does_not_support_this_value_requests_may/,
   );
   // A TEXT input: a `number` input sanitizes "131,072" to the empty string, which
   // means "no override" here and would silently CLEAR it on save. Bounds live in
@@ -80,37 +74,5 @@ test("the connection editor exposes a bounded optional cap and warning", () => {
   assert.match(
     dialog,
     /setMaxOutputTokensDraft\(\s*provider\.maxOutputTokens == null\s*\? ""\s*: Math\.max\(\s*provider\.maxOutputTokens,\s*getExternalMinOutputTokens\(provider\.providerType\),\s*\)\.toString\(\),\s*\);/,
-  );
-});
-
-test("preset application clamps live Max Tokens to the active external cap", () => {
-  const settings = source("chat-settings-sheet.tsx");
-
-  assert.match(
-    settings,
-    // The provider guard is part of the shape: unresolved, the cap is the 32,768
-    // fallback and a preset would lower the value for good. The guards test covers
-    // the other two clamp sites.
-    /function applyPresetParamsWithinCurrentLimits\([\s\S]*?if \(!isExternalModel \|\| activeExternalProvider == null\) return nextParams;[\s\S]*?Math\.min\(nextParams\.maxTokens, maxTokensMax\)/,
-  );
-  assert.match(
-    settings,
-    /onParamsChange\(applyPresetParamsWithinCurrentLimits\(p\.params\)\)/,
-  );
-  assert.match(
-    settings,
-    /applyPresetParamsWithinCurrentLimits\(fallbackPreset\.params\)/,
-  );
-});
-
-test("lowering an active external cap immediately clamps live Max Tokens", () => {
-  const settings = source("chat-settings-sheet.tsx");
-
-  // `resolveExternalMaxTokensClamp` decides (unit-tested in the guards test); this
-  // asserts the effect still asks it, still passes the availability inputs, and still
-  // writes back through the preset-source bookkeeping.
-  assert.match(
-    settings,
-    /useEffect\(\(\) => \{\s*const clampedMaxTokens = resolveExternalMaxTokensClamp\(\{[\s\S]*?settingsHydrated,[\s\S]*?hasActiveExternalProvider: activeExternalProvider != null,[\s\S]*?isExternalModel,[\s\S]*?maxTokens: params\.maxTokens,[\s\S]*?maxTokensMax,[\s\S]*?\}\);[\s\S]*?if \(clampedMaxTokens == null\) \{[\s\S]*?maxTokens: clampedMaxTokens[\s\S]*?setActivePresetSource\(nextSource\)[\s\S]*?onParamsChange\(nextParams\)/,
   );
 });

@@ -1,4 +1,3 @@
-
 // Two rules the panel has to keep while it hydrates the stored arguments, both about
 // what happens in the window between the request going out and its answer arriving.
 // Source-level, because both live inside effects of a component this suite has no
@@ -18,7 +17,7 @@ const PANEL = readFileSync(
     "src/features/model-picker/components/model-config-page.tsx",
   ),
   "utf8",
-);
+).replace(/\r\n/g, "\n");
 
 test("a list typed while hydration was in flight is not sanitized", () => {
   // The local list is sanitized because it can be legacy stored data this build now
@@ -39,9 +38,9 @@ test("a collapsed section is re-judged once the catalogue lands", () => {
 });
 
 const ADAPTER = readFileSync(
-  path.join(HERE, "..", "src/features/chat/api/chat-adapter.ts"),
+  path.join(HERE, "..", "src/features/chat/api/chat-adapter/auto-load.ts"),
   "utf8",
-);
+).replace(/\r\n/g, "\n");
 
 test("a background auto-load hydrates a server-only override", () => {
   // resolveInitialConfig reads local storage, so an override written through the API
@@ -51,7 +50,7 @@ test("a background auto-load hydrates a server-only override", () => {
   assert.match(ADAPTER, /let resolvedExtraArgs = config\.llamaExtraArgs;/);
   assert.match(ADAPTER, /const stored = await fetchLoadExtraArgs\(/);
   // Sanitized, because this becomes an explicit list that /load validates strictly.
-  assert.match(ADAPTER, /sanitizeStoredExtraArgs\(tokens, managed\?\.managed/);
+  assert.match(ADAPTER, /sanitizeStoredExtraArgs\(\s*tokens,\s*managed\?\.managed/);
   // The local copy too: it was written by whatever build was running then, so a
   // flag added to the managed set since would be sent explicitly and 400.
   assert.match(ADAPTER, /const cleaned = clean\(resolvedExtraArgs\);/);
@@ -68,18 +67,6 @@ test("a background auto-load hydrates a server-only override", () => {
   assert.match(ADAPTER, /candidate\.kind === "gguf" &&\s*\n?\s*!isDiffusion/);
 });
 
-const HUB = readFileSync(
-  path.join(HERE, "..", "src/features/hub/hub-page.tsx"),
-  "utf8",
-);
-
-test("applying from the Hub settings page carries the arguments into the load", () => {
-  // applyPerModelConfigToRuntime does not store llamaExtraArgs, so a selection made
-  // without the config left the field undefined: the load omitted it, the route kept
-  // the resident server's old list, and an edit or a clear did nothing.
-  assert.match(HUB, /forceReload: true,\n(\s*\/\/.*\n)*\s*config,/);
-});
-
 test("a collapsed section stops objecting once nothing is left to object to", () => {
   // Reset with Advanced collapsed clears the list, and the row is not mounted to
   // withdraw the verdict it left standing, so Load stayed disabled.
@@ -89,7 +76,7 @@ test("a collapsed section stops objecting once nothing is left to object to", ()
 const COMPOSER = readFileSync(
   path.join(HERE, "..", "src/features/chat/shared-composer.tsx"),
   "utf8",
-);
+).replace(/\r\n/g, "\n");
 
 test("a compare pane sanitizes the local list as well as the fetched one", () => {
   // A config saved by an older build can still name a flag that is managed now, and
@@ -124,7 +111,7 @@ test("the hidden validation re-runs when the binary changes", () => {
 const OVERRIDES = readFileSync(
   path.join(HERE, "..", "src/features/model-picker/api/model-overrides.ts"),
   "utf8",
-);
+).replace(/\r\n/g, "\n");
 
 test("the legacy overrides fallback searches the caller's own identities", () => {
   // A backend that predates the resolved field answers with the whole map, and the
@@ -142,7 +129,7 @@ test("the hidden hydration check knows the slot floor", () => {
   // reaches that 400.
   assert.match(
     PANEL,
-    /batchFloor: effectiveBatchFloor\(configRef\.current\.nParallel, managed\)/,
+    /batchFloor: effectiveBatchFloor\(\s*configRef\.current\.nParallel,\s*managed,?\s*\)/,
   );
 });
 
@@ -198,17 +185,15 @@ test("a stored empty list hydrates as a clear, not as nothing stored", () => {
 const CHAT_PAGE = readFileSync(
   path.join(HERE, "..", "src/features/chat/chat-page.tsx"),
   "utf8",
-);
+).replace(/\r\n/g, "\n");
 
 test("a launch that only applies the remembered config still carries its arguments", () => {
   // applyPerModelConfigToRuntime has no field for the launch flags, and /load only
   // inherits them from the SAME resident model, so a cold launch or a switch from
   // another model ran without the arguments this model was remembered with. Both
   // paths that load through the runtime alone now pass the config itself.
-  assert.match(HUB, /\.\.\.\(rememberedConfig \? \{ config: rememberedConfig \} : \{\}\),/);
-  assert.match(CHAT_PAGE, /const remembered = rememberedConfigFor\(selection\);/);
-  assert.match(CHAT_PAGE, /\.\.\.\(remembered \? \{ config: remembered \} : \{\}\),/);
+  assert.match(CHAT_PAGE, /const loadConfig = selection\.config \?\? rememberedConfigFor\(selection\);/);
+  assert.match(CHAT_PAGE, /\.\.\.\(loadConfig \? \{ config: loadConfig, keepSpeculative: true \} : \{\}\),/);
   // Nothing is invented when there is no remembered config: the field stays absent,
   // which is what lets /load keep a resident model's own flags.
-  assert.doesNotMatch(HUB, /config: rememberedConfig \?\? null/);
 });

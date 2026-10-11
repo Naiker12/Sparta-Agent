@@ -124,7 +124,7 @@ test("the header renders the bar on the window alone, with usage optional", () =
   );
   assert.match(
     page,
-    /view\.mode === "single" && \(contextUsage \|\| contextWindowKnown\)/,
+    /view\.mode === "single" &&\s*\(contextUsage \|\| contextWindowKnown\)/,
   );
   assert.match(page, /used=\{contextUsage\?\.totalTokens \?\? null\}/);
 });

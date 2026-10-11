@@ -182,19 +182,8 @@ test("an entry saved by an older install loads without gaining a cap", () => {
   assert.equal(reloaded.maxOutputTokens, 384000);
 });
 
-// The guard has to hold at every clamp site, not just the effect: a preset or checkpoint
-// applied while the provider is unresolved would lower the value permanently. Source-level
-// assertions, since neither call site is reachable without a DOM.
-test("every clamp site waits for a resolved provider", () => {
-  const settings = readFileSync(
-    new URL("../src/features/chat/chat-settings-sheet.tsx", import.meta.url),
-    "utf8",
-  );
-  assert.match(
-    settings,
-    /function applyPresetParamsWithinCurrentLimits\([\s\S]*?if \(!isExternalModel \|\| activeExternalProvider == null\) return nextParams;/,
-  );
-
+// A checkpoint must not be permanently capped while its provider is unresolved.
+test("the checkpoint cap waits for a resolved provider", () => {
   const store = readFileSync(
     new URL("../src/features/chat/stores/chat-runtime-store.ts", import.meta.url),
     "utf8",

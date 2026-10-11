@@ -291,6 +291,6 @@ test("right-edge action lists reserve the gutter they publish", async () => {
   // Keep staged-source remove actions inside the gutter.
   assert.match(
     projectSourceDropzone,
-    /<ul className="[^"]*overlay-scrollbar-gutter[^"]*max-h-52[^"]*overflow-y-auto[^"]*">[\s\S]{0,1000}aria-label={`Remove \${entry\.name}`}/,
+    /<ul className="[^"]*overlay-scrollbar-gutter[^"]*max-h-52[^"]*overflow-y-auto[^"]*">[\s\S]{0,1000}aria-label=\{uiT\("ui.remove_value0", \{ value0: String\(entry\.name\) \}\)\}/,
   );
 });

@@ -37,7 +37,7 @@ test("Audio mirrors an STT transfer into Downloads without resetting an adopted 
 test("cancelling the shared STT download never loads a partial checkpoint", () => {
   assert.match(
     source,
-    /if \(download\?\.cancelled\) return;[\s\S]*if \(download\?\.error\)[\s\S]*if \(!download\?\.downloading\) break;[\s\S]*await loadSttModel\(sidecarKey, engine, controller\.signal\)/,
+    /if \(download\?\.cancelled\) \{\s*return;\s*\}[\s\S]*if \(download\?\.error\)[\s\S]*if \(!download\?\.downloading\) \{\s*break;\s*\}[\s\S]*await loadSttModel\(sidecarKey, engine, controller\.signal\)/,
   );
 });
 

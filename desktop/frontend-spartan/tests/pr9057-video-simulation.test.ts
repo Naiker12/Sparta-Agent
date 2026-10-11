@@ -27,9 +27,9 @@ import { AUDIO_ACCEPT, MAX_AUDIO_SIZE } from "../src/lib/audio-utils.ts";
 // same trick tests/auto-load-target-key.test.ts uses. This still asserts against
 // the real code: a rename or a rewrite fails the slice below.
 const adapterSource = readFileSync(
-  fileURLToPath(new URL("../src/features/chat/api/chat-adapter.ts", import.meta.url)),
+  fileURLToPath(new URL("../src/features/chat/api/chat-adapter/multimodal-detection.ts", import.meta.url)),
   "utf8",
-);
+).replace(/\r\n/g, "\n");
 
 function lift(name: string, opener: string): string {
   const start = adapterSource.indexOf(opener);
@@ -40,7 +40,7 @@ function lift(name: string, opener: string): string {
 }
 
 const liftedTs = [
-  lift("extractVideoPartBase64", "function extractVideoPartBase64("),
+  lift("extractVideoPartBase64", "export function extractVideoPartBase64(").replace("export function", "function"),
   lift("findLatestUserVideoBase64", "export function findLatestUserVideoBase64(").replace(
     "export function",
     "function",
@@ -334,7 +334,7 @@ const recountSource = readFileSync(
     new URL("../src/features/chat/utils/refresh-context-usage.ts", import.meta.url),
   ),
   "utf8",
-);
+).replace(/\r\n/g, "\n");
 
 test("the recount declines a video turn, as it already declines image and audio", () => {
   // toOpenAIMessages has no video branch, so a turn carrying a clip would be

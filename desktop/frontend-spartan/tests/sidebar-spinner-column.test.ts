@@ -1,7 +1,17 @@
 
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile as readRawFile } from "node:fs/promises";
 import test from "node:test";
+
+async function readFile(url: URL, encoding: "utf8"): Promise<string> {
+  if (url.pathname.endsWith("/app-sidebar.tsx")) {
+    const files = ["app-sidebar.tsx", "sidebar/sidebar-nav-items.tsx", "sidebar/chat-sidebar-item.tsx"];
+    const sources = await Promise.all(files.map(file => readRawFile(new URL(`../src/components/${file}`, import.meta.url), encoding)));
+    return sources.join("\n").replace(/\r\n/g, "\n");
+  }
+  return readRawFile(url, encoding);
+}
+
 
 // Both spinners are ml-auto, so each one sits at its row's padding-right plus
 // its own margin-right. The two rows carry different padding, so the margins
@@ -75,7 +85,7 @@ test("a working Recents row clears the kebab on hover", async () => {
     source,
     // Anchor on the branch comment so nested spinner ternaries cannot redirect
     // the match to a pinned or project row.
-    /A spinner glyph cannot truncate[\s\S]{0,120}?"(group-hover\/recent-item:pr-[^"]*)"/,
+    /: showWorkSpinner\s*\? "(group-hover\/recent-item:pr-[^"]*)"/,
     "the showWorkSpinner padding branch",
   );
   // hover, menu-open and coarse-pointer all reveal the kebab, so all must clear it
@@ -174,20 +184,15 @@ test("the expanded row and the flyout both show a pending tooltip", async () => 
   );
 });
 
-test("capability rows carry a pending tooltip", async () => {
-  const source = await readFile(
-    new URL("../src/components/app-sidebar.tsx", import.meta.url),
-    "utf8",
-  );
-  for (const row of ["video"]) {
-    const block = source.slice(source.indexOf(`    ${row}: {`));
-    const body = block.slice(0, block.indexOf("\n    },"));
-    assert.match(
-      body,
-      /pendingTooltip: t\("shell\.navigation\.\w+Checking"\)/,
-      `the ${row} row spins without saying why`,
-    );
-  }
+test("API-only navigation does not wait for retired hardware capabilities", async () => {
+  const source = await readFile(new URL("../src/components/app-sidebar.tsx", import.meta.url), "utf8");
+  const start = source.indexOf("const navRows:");
+  const end = source.indexOf("const unpinnedNavIds", start);
+  assert.ok(start >= 0 && end > start);
+  const rows = source.slice(start, end);
+  assert.doesNotMatch(rows, /\b(?:video|train):\s*\{/);
+  assert.doesNotMatch(rows, /pending:\s*capabilitiesUnknown|disabled:\s*chatOnly/);
+  assert.match(rows, /tasks:\s*\{/);
 });
 
 test("a measured row is left exactly as it was", async () => {

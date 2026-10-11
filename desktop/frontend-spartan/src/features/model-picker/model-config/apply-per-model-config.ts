@@ -1,12 +1,15 @@
+// Store/configuration cycles must not import the chat UI registration barrel.
+// eslint-disable-next-line no-restricted-imports
 import {
   GPU_LAYERS_AUTO,
-  defaultInferenceParams,
   normalizeSpeculativeType,
   readPersistedGpuMemoryMode,
   readPersistedSpeculativeType,
   reconcilePersistedGpuSelection,
   useChatRuntimeStore,
-} from "@/features/chat";
+} from "@/features/chat/stores/chat-runtime-store";
+// eslint-disable-next-line no-restricted-imports
+import { defaultInferenceParams } from "@/features/chat/presets/preset-policy";
 // Its own module so hosts needing only the signature skip the chat runtime store.
 import { gpuFieldsSignature } from "./config-signature";
 import {
