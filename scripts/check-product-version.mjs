@@ -15,6 +15,18 @@ for (const directory of ['', 'desktop/frontend-spartan', 'landing']) {
   const lock = read(name);
   if (lock.version !== version || lock.packages[''].version !== version) throw new Error(`Version mismatch: ${name}`);
 }
+const readme = readFileSync(path.join(root, 'README.md'), 'utf8');
+for (const artifact of [
+  `Sparta-Agent-Windows-${version}-Setup.exe`,
+  `Sparta-Agent-Mac-${version}-arm64-Installer.dmg`,
+  `Sparta-Agent-Mac-${version}-x64-Installer.dmg`,
+  `Sparta-Agent-Linux-${version}.AppImage`,
+]) {
+  if (!readme.includes(`/releases/download/v${version}/${artifact}`)) {
+    throw new Error(`README download does not match product version: ${artifact}`);
+  }
+}
+if (!readme.includes(`badge/version-v${version}-`)) throw new Error('README version badge does not match product');
 const requestedTag = process.argv[2];
 if (requestedTag && requestedTag !== `v${version}`) throw new Error(`Tag ${requestedTag} does not match v${version}`);
 readFileSync(path.join(root, `docs/releases/v${version}.md`), 'utf8');
