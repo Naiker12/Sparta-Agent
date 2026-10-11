@@ -48,7 +48,9 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-test.beforeEach(() => {
+test.beforeEach((t) => {
+  // Ingestion polling belongs to its test; reset the mocked timers before the next handler.
+  t.mock.timers.enable({ apis: ["setTimeout"] });
   recordedToasts.length = 0;
   setAuthFetchHandler(null);
 });
@@ -127,7 +129,7 @@ test("a quiet save still reports its own failure", async () => {
   assert.equal(recordedToasts[0].kind, "error");
 });
 
-test("an ingest that fails after the upload is not left silent", async () => {
+test("an ingest that fails after the upload is not left silent", async (t) => {
   const seen = collectUpdates();
   setAuthFetchHandler((input) => {
     if (input.includes("/jobs/")) {
@@ -141,6 +143,7 @@ test("an ingest that fails after the upload is not left silent", async () => {
     return json({ documentId: "d4", jobId: "j4", filename: "Chat.md" });
   });
   await saveMarkdownAsProjectSource("p4", "# Chat\n", "Chat");
+  t.mock.timers.tick(2_000);
   // The panel hides failed documents, so the success toast would otherwise be
   // the only thing the user ever sees about a source that never arrives.
   const failure = await waitFor(() =>
@@ -156,7 +159,7 @@ async function waitFor<T>(read: () => T | undefined): Promise<T | undefined> {
   for (let attempt = 0; attempt < 100; attempt++) {
     const value = read();
     if (value !== undefined) return value;
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => setImmediate(resolve));
   }
   return undefined;
 }

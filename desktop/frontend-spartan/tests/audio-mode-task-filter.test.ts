@@ -1,4 +1,3 @@
-
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -17,14 +16,6 @@ const catalogSource = readFileSync(
   new URL("../src/features/audio/catalog.ts", import.meta.url),
   "utf8",
 );
-
-test("Hub discovery follows the active audio mode", () => {
-  assert.match(
-    pageSource,
-    /speak: \["text-to-speech"\],[\s\S]*transcribe: \["automatic-speech-recognition"\]/,
-  );
-  assert.match(pageSource, /task=\{HUB_TASKS_BY_MODE\[mode\]\}/);
-});
 
 test("resident sidecar keys restore canonical repo casing", () => {
   assert.equal(

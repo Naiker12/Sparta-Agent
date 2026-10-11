@@ -1,0 +1,333 @@
+[
+  {
+    "file": "export-gguf-token-fallback.test.ts",
+    "reason": "Contract belongs solely to removed local/media/export UI or a removed helper; no production implementation exists in the shipped application.",
+    "tests": [
+      "a local imatrix export falls back to the load token",
+      "a hub push prefers its own upload token over the load token",
+      "no token anywhere sends null rather than undefined",
+      "the fallback matches the LoRA request, which already had it",
+      "the load phase keeps using the load token on its own"
+    ],
+    "scope": "retired_test_file"
+  },
+  {
+    "file": "export-progress-percent.test.ts",
+    "reason": "Contract belongs solely to removed local/media/export UI or a removed helper; no production implementation exists in the shipped application.",
+    "tests": [
+      "idle is 0 and loading is a fixed 8",
+      "an active export never reaches 100 - the band stops at 87",
+      "quantIndex beyond quantTotal clamps instead of overshooting",
+      "a zero or negative quantTotal does not divide by zero",
+      "only success reports 100",
+      "error and canceled freeze near where they stopped instead of snapping to 0",
+      "the panel stays visible for terminal phases, not just active ones"
+    ],
+    "scope": "retired_test_file"
+  },
+  {
+    "file": "image-generation-defaults.test.ts",
+    "reason": "Contract belongs solely to removed local/media/export UI or a removed helper; no production implementation exists in the shipped application.",
+    "tests": [
+      "distinguishes Klein base checkpoints from distilled checkpoints",
+      "keeps the existing family defaults and fallback",
+      "routed image picks apply and transactionally roll back model defaults",
+      "failed image picks release their recipe hydration claim"
+    ],
+    "scope": "retired_test_file"
+  },
+  {
+    "file": "image-generation-stop.test.ts",
+    "reason": "Contract belongs solely to removed local/media/export UI or a removed helper; no production implementation exists in the shipped application.",
+    "tests": [
+      "a mounted page with no stop keeps generating",
+      "Stop breaks the run loop, so a count > 1 request does not start its next run",
+      "an unmounted page stops generating regardless of the stop latch",
+      "the cancelled sentinel is not reported as an error",
+      "a stopped run reports nothing even when the message is not the sentinel",
+      "a real failure is still reported",
+      "a Stop the backend did not act on does not explain away a real failure",
+      "a Stop the backend confirmed still silences the run it stopped"
+    ],
+    "scope": "retired_test_file"
+  },
+  {
+    "file": "loaded-build-panel-rows.test.ts",
+    "reason": "Contract belongs solely to removed local/media/export UI or a removed helper; no production implementation exists in the shipped application.",
+    "tests": [
+      "the Memory recipe row renders on an offload with no memory mode",
+      "sd.cpp attention is not reported as Native SDPA"
+    ],
+    "scope": "retired_test_file"
+  },
+  {
+    "file": "loaded-models-q8-precision-repro.test.ts",
+    "reason": "Contract belongs solely to removed local/media/export UI or a removed helper; no production implementation exists in the shipped application.",
+    "tests": [
+      "fixed: a Q8 Z-Image GGUF row names Q8 instead of its BF16 compute dtype"
+    ],
+    "scope": "retired_test_file"
+  },
+  {
+    "file": "media-eject-busy-state.test.ts",
+    "reason": "Contract belongs solely to removed local/media/export UI or a removed helper; no production implementation exists in the shipped application.",
+    "tests": [
+      "Dynamic template: `the ${page} page settles its busy state on an external eject`",
+      "Dynamic template: `the ${page} page still stops the poll it is replacing`",
+      "Dynamic template: `the ${page} page leaves a generation alone`"
+    ],
+    "scope": "retired_test_file"
+  },
+  {
+    "file": "media-idle-unload-api-only.test.ts",
+    "reason": "Contract belongs solely to removed local/media/export UI or a removed helper; no production implementation exists in the shipped application.",
+    "tests": [
+      "the API-only switch is reachable whenever a media TTL is saved",
+      "it is still reachable from the chat TTL alone",
+      "the KV-save option stays with the chat TTL it belongs to",
+      "the media row still says when a veto is holding its TTL"
+    ],
+    "scope": "retired_test_file"
+  },
+  {
+    "file": "media-status-sequencing.test.ts",
+    "reason": "Contract belongs solely to removed local/media/export UI or a removed helper; no production implementation exists in the shipped application.",
+    "tests": [
+      "Dynamic template: `the ${name} page lets only the newest status read write`",
+      "Dynamic template: `the ${name} page claims its ticket before awaiting, not after`"
+    ],
+    "scope": "retired_test_file"
+  },
+  {
+    "file": "video-download-plan-payload.test.ts",
+    "reason": "Contract belongs solely to removed local/media/export UI or a removed helper; no production implementation exists in the shipped application.",
+    "tests": [
+      "the video download plan is asked with the selected precision",
+      "the staged plan pins its controls through the eventual load",
+      "the video picker resolves the full GGUF footprint",
+      "the staged plan carries the memory request too",
+      "the selected H3 task reaches both the plan and the load",
+      "a routed H3 pipeline pick asks for the task instead of loading a default",
+      "reapply preserves the loaded H3 task"
+    ],
+    "scope": "retired_test_file"
+  },
+  {
+    "file": "video-gallery-clear-confirmation.test.ts",
+    "reason": "Contract belongs solely to removed local/media/export UI or a removed helper; no production implementation exists in the shipped application.",
+    "tests": [
+      "video gallery bulk deletion requires an explicit confirmation",
+      "video gallery confirmation stays controlled while clearing and off-route",
+      "leaving the video route closes the confirmation rather than hiding it"
+    ],
+    "scope": "retired_test_file"
+  },
+  {
+    "file": "video-generate-refusal-resync.test.ts",
+    "reason": "Contract belongs solely to removed local/media/export UI or a removed helper; no production implementation exists in the shipped application.",
+    "tests": [
+      "a refused generation re-reads the model status",
+      "the re-read is the page's own ticketed refresh",
+      "a status that comes back unloaded clears the resident-only state",
+      "a failed or superseded re-read changes nothing",
+      "a load started while the re-read was in flight is left alone",
+      "the images page already corrects itself on every generate exit"
+    ],
+    "scope": "retired_test_file"
+  },
+  {
+    "file": "video-h3-task-dialog.test.ts",
+    "reason": "Contract belongs solely to removed local/media/export UI or a removed helper; no production implementation exists in the shipped application.",
+    "tests": [
+      "only a non-hub pick skips the plan, so a cached hub pick still gets one",
+      "an on-device copy of the pipeline reaches the same dialog",
+      "hiding the page cancels the pending pick rather than dropping it"
+    ],
+    "scope": "retired_test_file"
+  },
+  {
+    "file": "video-keyframe-canvas.test.ts",
+    "reason": "Contract belongs solely to removed local/media/export UI or a removed helper; no production implementation exists in the shipped application.",
+    "tests": [
+      "previews the same canvas the backend derives from a keyframe",
+      "reads the ratio only, so the source's own scale never matters",
+      "previews nothing where the backend would refuse or has no rule"
+    ],
+    "scope": "retired_test_file"
+  },
+  {
+    "file": "spec-fallback-partial-offload-copy.test.ts",
+    "reason": "Contract belongs solely to removed local/media/export UI or a removed helper; no production implementation exists in the shipped application.",
+    "tests": [
+      "the Hybrid Mamba partial-offload stand-down has its own notice"
+    ],
+    "scope": "retired_test_file"
+  },
+  {
+    "file": "chat-local-model-options.test.ts",
+    "reason": "Contract belongs solely to removed local/media/export UI or a removed helper; no production implementation exists in the shipped application.",
+    "tests": [
+      "Ollama rows are withheld until their refs are loadable",
+      "a directory with two weight formats yields one option per load id",
+      "hf_cache rows stay out of the local list",
+      "LM Studio rows prefer the model id and keep their label",
+      "custom and models_dir rows keep the labels the picker groups on"
+    ],
+    "scope": "retired_test_file"
+  },
+  {
+    "file": "loaded-models-sources.test.ts",
+    "reason": "Retire image/video status mappers removed from loaded-models-sources; retain every Chat/STT-only behavior contract.",
+    "tests": [
+      "image and video rows omit the parts the backend did not report",
+      "a row names the precision the pipeline actually loaded at",
+      "a bf16 video load falls back to the pipeline dtype",
+      "a GGUF video row names its selected quant instead of its compute dtype",
+      "a lowercase quant filename still reads as an upper-case quant",
+      "a GGUF image load does not print GGUF twice",
+      "a GGUF image row names the quant that was picked, not the compute dtype",
+      "a native GGUF image row names its selected quant without model_kind",
+      "a GGUF pick the dense fast path replaced names that build instead"
+    ],
+    "scope": "selected_obsolete_contracts"
+  },
+  {
+    "file": "loaded-models-backcompat.test.ts",
+    "reason": "Retire image/video status mappers removed from loaded-models-sources; retain every Chat/STT-only behavior contract.",
+    "tests": [
+      "a diffusion payload missing dtype, device and family still renders",
+      "undefined and null are the same absence",
+      "empty strings are dropped rather than printed as separators",
+      "fields a future backend adds are ignored, not rendered",
+      "a backend with no gguf_variant field still reports the compute dtype",
+      "an unrecognised precision is passed through rather than dropped"
+    ],
+    "scope": "selected_obsolete_contracts"
+  },
+  {
+    "file": "loaded-models-platform-matrix.test.ts",
+    "reason": "Retire image/video status mappers removed from loaded-models-sources; retain every Chat/STT-only behavior contract.",
+    "tests": [
+      "every device the diffusion resolver can report renders",
+      "the sd.cpp engine still says GGUF without a model_kind",
+      "a GGUF image model under the diffusers engine is not doubled",
+      "a diffusion runtime with no repo id yields no row",
+      "video precision prefers the transformer quant over the dtype",
+      "video falls back to the dtype when unquantised",
+      "a \"none\" quant is not printed as a precision",
+      "a host that can never run video reports an empty runtime, not an error"
+    ],
+    "scope": "selected_obsolete_contracts"
+  },
+  {
+    "file": "appearance-accent-vars.test.ts",
+    "reason": "Source binding to a retired page/helper or Rust ownership contract; retain contracts of current components and shared behavior.",
+    "tests": [
+      "loaded-model stripes stay on the semantic success color"
+    ],
+    "scope": "selected_obsolete_contracts"
+  },
+  {
+    "file": "audio-mode-task-filter.test.ts",
+    "reason": "Source binding to a retired page/helper or Rust ownership contract; retain contracts of current components and shared behavior.",
+    "tests": [
+      "Hub discovery follows the active audio mode"
+    ],
+    "scope": "selected_obsolete_contracts"
+  },
+  {
+    "file": "hub-recovery-paths.test.ts",
+    "reason": "Source binding to a retired page/helper or Rust ownership contract; retain contracts of current components and shared behavior.",
+    "tests": [
+      "clients with their own request keep their own reachability"
+    ],
+    "scope": "selected_obsolete_contracts"
+  },
+  {
+    "file": "chat-model-residency.test.ts",
+    "reason": "Source binding to a retired page/helper or Rust ownership contract; retain contracts of current components and shared behavior.",
+    "tests": [
+      "the hub cards ask residency before saying Loaded"
+    ],
+    "scope": "selected_obsolete_contracts"
+  },
+  {
+    "file": "chat-remembers-its-model.test.ts",
+    "reason": "Source binding to a retired page/helper or Rust ownership contract; retain contracts of current components and shared behavior.",
+    "tests": [
+      "switching back to a single-file local GGUF still loads as a GGUF",
+      "a single .gguf file carries its format out of the local inventory",
+      "a GGUF directory is not claimed as a GGUF, since its quant is unknown"
+    ],
+    "scope": "selected_obsolete_contracts"
+  },
+  {
+    "file": "llama-extra-args-panel-hydration.test.ts",
+    "reason": "Source binding to a retired page/helper or Rust ownership contract; retain contracts of current components and shared behavior.",
+    "tests": [
+      "applying from the Hub settings page carries the arguments into the load"
+    ],
+    "scope": "selected_obsolete_contracts"
+  },
+  {
+    "file": "linked-folders-lease-gate.test.ts",
+    "reason": "Source binding to a retired page/helper or Rust ownership contract; retain contracts of current components and shared behavior.",
+    "tests": [
+      "an adopted backend keeps running and only loses lease-backed actions"
+    ],
+    "scope": "selected_obsolete_contracts"
+  },
+  {
+    "file": "read-aloud-tts-model-row.test.ts",
+    "reason": "Source binding to a retired page/helper or Rust ownership contract; retain contracts of current components and shared behavior.",
+    "tests": [
+      "the studio TTS row offers the Audio page it tells the user to use",
+      "a studio preview shows the generate wait instead of an idle button"
+    ],
+    "scope": "selected_obsolete_contracts"
+  },
+  {
+    "file": "media-generation-preset-claims.test.ts",
+    "reason": "Removed media pages or removed settings-sheet/local Whisper presentation; retained shared state queues, cap arithmetic and current picker refusal tests.",
+    "tests": [
+      "retired Images/Video page wiring loop",
+      "video defers both status seeds to a preset picked during the load"
+    ],
+    "scope": "selected_obsolete_contracts"
+  },
+  {
+    "file": "media-load-cancel.test.ts",
+    "reason": "Removed media pages or removed settings-sheet/local Whisper presentation; retained shared state queues, cap arithmetic and current picker refusal tests.",
+    "tests": [
+      "retired Images/Video page wiring loop",
+      "cancelling a deploy does not leave the adapter queued"
+    ],
+    "scope": "selected_obsolete_contracts"
+  },
+  {
+    "file": "provider-max-output-tokens.test.ts",
+    "reason": "Removed media pages or removed settings-sheet/local Whisper presentation; retained shared state queues, cap arithmetic and current picker refusal tests.",
+    "tests": [
+      "preset application clamps live Max Tokens to the active external cap",
+      "lowering an active external cap immediately clamps live Max Tokens"
+    ],
+    "scope": "selected_obsolete_contracts"
+  },
+  {
+    "file": "audio-picker-policy.test.ts",
+    "reason": "Removed media pages or removed settings-sheet/local Whisper presentation; retained shared state queues, cap arithmetic and current picker refusal tests.",
+    "tests": [
+      "a local Whisper checkpoint is not advertised as a routable ASR row"
+    ],
+    "scope": "selected_obsolete_contracts"
+  },
+  {
+    "file": "dataset-data-recipes-navigation.test.ts",
+    "reason": "Dataset selector and training section removed; preserve full recipe execution inventory invalidation.",
+    "tests": [
+      "the empty local-dataset action uses side-effect-free SPA navigation",
+      "the dataset section has no raw Data Recipes document navigation"
+    ],
+    "scope": "selected_obsolete_contracts"
+  }
+]

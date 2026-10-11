@@ -1,4 +1,3 @@
-
 // The browser SPA is served by the same process that answers /api, so it can
 // never be older than its backend. The desktop app can: it ships its own
 // frontend bundle, is versioned separately from the pip wheel, and adopts an
@@ -15,10 +14,8 @@ import test from "node:test";
 
 import {
   type SttStatusResponse,
-  describeDiffusionStatus,
   describeInferenceStatus,
   describeSttStatus,
-  describeVideoStatus,
   mergeLoadedModels,
   sttEngineStatus,
 } from "../src/features/loaded-models/loaded-models-sources.ts";
@@ -27,36 +24,6 @@ import {
 // 401/403 on an expired token, a 500, or the 10s timeout -- reaches the mappers
 // as null, because settled() collapses them all.
 const UNREACHABLE = null;
-
-test("a backend with no video route at all still lists the other runtimes", () => {
-  // /api/inference/video/status landed 2026-08-04. Before that it 404s, which
-  // parseJson throws on and settled() turns into null.
-  const rows = mergeLoadedModels([
-    describeInferenceStatus({
-      active_model: "unsloth/Qwen3-4B-GGUF",
-      loaded: ["unsloth/Qwen3-4B-GGUF"],
-      is_gguf: true,
-      gguf_variant: "Q4_K_M",
-    } as never),
-    describeDiffusionStatus(UNREACHABLE),
-    describeVideoStatus(UNREACHABLE),
-    describeSttStatus(UNREACHABLE),
-  ]);
-  assert.equal(rows.length, 1, "one dead runtime must not blank the others");
-  assert.equal(rows[0].name, "unsloth/Qwen3-4B-GGUF");
-});
-
-test("every runtime unreachable is an empty list, never a crash", () => {
-  assert.deepEqual(
-    mergeLoadedModels([
-      describeInferenceStatus(UNREACHABLE),
-      describeDiffusionStatus(UNREACHABLE),
-      describeVideoStatus(UNREACHABLE),
-      describeSttStatus(UNREACHABLE),
-    ]),
-    [],
-  );
-});
 
 test("a pre-split dictation backend reports through the legacy fields", () => {
   // Before 2026-07-23 there were no per-engine blocks: the resident Transformers
@@ -125,84 +92,6 @@ test("a chat payload missing every optional field still renders", () => {
   assert.equal(rows[0].kind, "text");
 });
 
-test("a diffusion payload missing dtype, device and family still renders", () => {
-  const rows = describeDiffusionStatus({
-    loaded: true,
-    repo_id: "black-forest-labs/FLUX.1-dev",
-  } as never);
-  assert.equal(rows.length, 1);
-  assert.equal(rows[0].detail, "", "no parts is an empty line, not a stray dot");
-  assert.equal(rows[0].name, "black-forest-labs/FLUX.1-dev");
-});
-
-test("undefined and null are the same absence", () => {
-  const withNulls = describeVideoStatus({
-    loaded: true,
-    repo_id: "Wan-AI/Wan2.2-T2V-A14B",
-    family: null,
-    device: null,
-    dtype: null,
-    transformer_quant: null,
-  } as never);
-  const withUndefined = describeVideoStatus({
-    loaded: true,
-    repo_id: "Wan-AI/Wan2.2-T2V-A14B",
-  } as never);
-  assert.deepEqual(withNulls, withUndefined);
-});
-
-test("empty strings are dropped rather than printed as separators", () => {
-  const rows = describeDiffusionStatus({
-    loaded: true,
-    repo_id: "x/y",
-    family: "",
-    device: "cuda",
-    dtype: "",
-  } as never);
-  assert.equal(rows[0].detail, "cuda");
-});
-
-test("fields a future backend adds are ignored, not rendered", () => {
-  // Forward compatibility: an old desktop bundle against a newer wheel.
-  const rows = describeDiffusionStatus({
-    loaded: true,
-    repo_id: "x/y",
-    family: "flux",
-    device: "cuda",
-    dtype: "bfloat16",
-    some_future_field: "should not appear",
-    nested: { also: "ignored" },
-  } as never);
-  assert.equal(rows[0].detail, "flux · BF16 · cuda");
-});
-
-test("a backend with no gguf_variant field still reports the compute dtype", () => {
-  // gguf_variant is additive. An older wheel sends model_kind but not the quant, and the row must
-  // keep the line it has always shown rather than losing its precision part entirely.
-  const rows = describeDiffusionStatus({
-    loaded: true,
-    repo_id: "unsloth/Z-Image-Turbo-GGUF",
-    family: "z-image",
-    model_kind: "gguf",
-    dtype: "bfloat16",
-    device: "cuda",
-  } as never);
-  assert.equal(rows[0].detail, "z-image · GGUF · BF16 · cuda");
-});
-
-test("an unrecognised precision is passed through rather than dropped", () => {
-  // precisionLabel upper-cases anything it does not know, so a quant added
-  // later still tells the user something instead of vanishing.
-  const rows = describeVideoStatus({
-    loaded: true,
-    repo_id: "x/y",
-    family: "wan",
-    device: "cuda",
-    transformer_quant: "nvfp4",
-  } as never);
-  assert.equal(rows[0].detail, "wan · NVFP4 · cuda");
-});
-
 test("a chat runtime caching past the active model marks the extras inactive", () => {
   // Only the Transformers backend can do this, and only the active model is
   // ejectable by the normal path -- the rest need naming directly.
@@ -229,4 +118,20 @@ test("the same row arriving from two sources is merged once", () => {
     active_model: "unsloth/Qwen3-4B",
   } as never);
   assert.equal(mergeLoadedModels([row, row]).length, 1);
+});
+
+test("an unreachable dictation runtime does not blank chat", () => {
+  const rows = mergeLoadedModels([
+    describeInferenceStatus({ active_model: "chat/model" } as never),
+    describeSttStatus(UNREACHABLE),
+  ]);
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].name, "chat/model");
+});
+
+test("every active runtime unreachable is an empty list, never a crash", () => {
+  assert.deepEqual(mergeLoadedModels([
+    describeInferenceStatus(UNREACHABLE),
+    describeSttStatus(UNREACHABLE),
+  ]), []);
 });

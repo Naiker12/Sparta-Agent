@@ -1,4 +1,3 @@
-
 import assert from "node:assert/strict";
 import test from "node:test";
 
@@ -7,10 +6,8 @@ import test from "node:test";
 import { modelIdsMatch } from "../src/features/hub/lib/model-identity.ts";
 import {
   type LoadedModelEntry,
-  describeDiffusionStatus,
   describeInferenceStatus,
   describeSttStatus,
-  describeVideoStatus,
   loadedModelTarget,
   mergeLoadedModels,
   withPendingLoads,
@@ -30,20 +27,6 @@ function inferenceStatus(
     ...overrides,
   } as Parameters<typeof describeInferenceStatus>[0];
 }
-
-test("no runtime loaded produces no rows", () => {
-  assert.deepEqual(describeInferenceStatus(inferenceStatus()), []);
-  assert.deepEqual(describeDiffusionStatus({ loaded: false } as never), []);
-  assert.deepEqual(describeVideoStatus({ loaded: false } as never), []);
-  assert.deepEqual(describeSttStatus({}), []);
-});
-
-test("an unreachable runtime yields no rows rather than throwing", () => {
-  assert.deepEqual(describeInferenceStatus(null), []);
-  assert.deepEqual(describeDiffusionStatus(null), []);
-  assert.deepEqual(describeVideoStatus(null), []);
-  assert.deepEqual(describeSttStatus(null), []);
-});
 
 test("a GGUF chat model reports its variant", () => {
   const [row] = describeInferenceStatus(
@@ -151,146 +134,6 @@ test("a real device is still reported next to its engine", () => {
   assert.equal(row.detail, "Transformers · cuda");
 });
 
-test("image and video rows omit the parts the backend did not report", () => {
-  const [image] = describeDiffusionStatus({
-    loaded: true,
-    repo_id: "unsloth/FLUX.1-dev",
-    family: "flux",
-    device: null,
-  } as never);
-  assert.equal(image.detail, "flux");
-  const [video] = describeVideoStatus({
-    loaded: true,
-    repo_id: "unsloth/Wan2.2-T2V-A14B",
-    family: "wan",
-    model_kind: "gguf",
-    device: "cuda",
-  } as never);
-  assert.equal(video.detail, "wan · GGUF · cuda");
-});
-
-test("a row names the precision the pipeline actually loaded at", () => {
-  const [image] = describeDiffusionStatus({
-    loaded: true,
-    repo_id: "unsloth/FLUX.1-dev",
-    family: "flux",
-    dtype: "bfloat16",
-    device: "cuda",
-  } as never);
-  assert.equal(image.detail, "flux · BF16 · cuda");
-
-  // The dense transformer's quantisation is what tells the builds apart, so it
-  // wins over the pipeline dtype.
-  const [video] = describeVideoStatus({
-    loaded: true,
-    repo_id: "unsloth/Wan2.2-T2V-A14B",
-    family: "wan",
-    dtype: "bfloat16",
-    transformer_quant: "fp8",
-    device: "cuda",
-  } as never);
-  assert.equal(video.detail, "wan · FP8 · cuda");
-});
-
-test("a bf16 video load falls back to the pipeline dtype", () => {
-  const [video] = describeVideoStatus({
-    loaded: true,
-    repo_id: "unsloth/Wan2.2-T2V-A14B",
-    family: "wan",
-    dtype: "bfloat16",
-    // "none" is the backend's word for plain bf16, not a precision to print.
-    transformer_quant: "none",
-    device: "cuda",
-  } as never);
-  assert.equal(video.detail, "wan · BF16 · cuda");
-});
-
-test("a GGUF video row names its selected quant instead of its compute dtype", () => {
-  const [video] = describeVideoStatus({
-    loaded: true,
-    repo_id: "unsloth/Wan2.2-T2V-A14B-GGUF",
-    family: "wan",
-    model_kind: "gguf",
-    gguf_variant: "Q4_K_M",
-    dtype: "bfloat16",
-    device: "cuda",
-  } as never);
-  assert.equal(video.detail, "wan · GGUF · Q4_K_M · cuda");
-});
-
-test("a lowercase quant filename still reads as an upper-case quant", () => {
-  // Hub repos ship q8_0 filenames, and every other quant label in the UI is upper-cased.
-  const [image] = describeDiffusionStatus({
-    loaded: true,
-    repo_id: "unsloth/Z-Image-Turbo-GGUF",
-    family: "z-image",
-    model_kind: "gguf",
-    gguf_variant: "q8_0",
-    dtype: "bfloat16",
-    device: "cuda",
-  } as never);
-  assert.equal(image.detail, "z-image · GGUF · Q8_0 · cuda");
-});
-
-test("a GGUF image load does not print GGUF twice", () => {
-  const [image] = describeDiffusionStatus({
-    loaded: true,
-    repo_id: "unsloth/FLUX.1-dev-GGUF",
-    family: "flux",
-    model_kind: "gguf",
-    dtype: "gguf",
-    device: "cuda",
-  } as never);
-  assert.equal(image.detail, "flux · GGUF · cuda");
-});
-
-test("a GGUF image row names the quant that was picked, not the compute dtype", () => {
-  // The reported bug: the picker chip said "GGUF \u00b7 Q8_0" and the row beside it said "BF16",
-  // because `dtype` is the pipeline COMPUTE dtype and reads bf16 for every CUDA load. The
-  // quant is what distinguishes the file that was downloaded and opened.
-  const [image] = describeDiffusionStatus({
-    loaded: true,
-    repo_id: "unsloth/Z-Image-Turbo-GGUF",
-    family: "z-image",
-    model_kind: "gguf",
-    gguf_variant: "Q8_0",
-    transformer_quant: null,
-    dtype: "bfloat16",
-    device: "cuda",
-  } as never);
-  assert.equal(image.detail, "z-image \u00b7 GGUF \u00b7 Q8_0 \u00b7 cuda");
-});
-
-test("a native GGUF image row names its selected quant without model_kind", () => {
-  // The sd.cpp engine reports dtype "gguf" and no model_kind, so the GGUF chip and the quant
-  // both have to survive on that field alone.
-  const [image] = describeDiffusionStatus({
-    loaded: true,
-    repo_id: "unsloth/Z-Image-Turbo-GGUF",
-    family: "z-image",
-    gguf_variant: "Q8_0",
-    dtype: "gguf",
-    device: "cpu",
-  } as never);
-  assert.equal(image.detail, "z-image \u00b7 GGUF \u00b7 Q8_0 \u00b7 cpu");
-});
-
-test("a GGUF pick the dense fast path replaced names that build instead", () => {
-  // The fast path denoises with a torchao build of the base transformer and never opens the
-  // .gguf, so the row must neither call it GGUF nor print a quant no tensor carries.
-  const [image] = describeDiffusionStatus({
-    loaded: true,
-    repo_id: "unsloth/Z-Image-Turbo-GGUF",
-    family: "z-image",
-    model_kind: "gguf",
-    gguf_variant: "Q8_0",
-    transformer_quant: "fp8",
-    dtype: "bfloat16",
-    device: "cuda",
-  } as never);
-  assert.equal(image.detail, "z-image \u00b7 FP8 \u00b7 cuda");
-});
-
 // Gemma 3n and friends take audio in but answer as chat. Every backend sets
 // is_audio from `audio_type is not None and audio_type != "audio_vlm"`
 // (model_config.py, mlx_inference.py; llama_cpp.py keeps _is_audio False for
@@ -313,16 +156,7 @@ test("a row opens the page its runtime is used on", () => {
     to: "/chat",
     label: "Chat",
   });
-  assert.deepEqual(loadedModelTarget("image"), {
-    open: "route",
-    to: "/images",
-    label: "Images",
-  });
-  assert.deepEqual(loadedModelTarget("video"), {
-    open: "route",
-    to: "/video",
-    label: "Video",
-  });
+
 });
 
 // Dictation has no page of its own, so it opens the tab that drives it.
@@ -346,27 +180,6 @@ test("the target follows the runtime, not the kind", () => {
   );
   assert.equal(chatWhisper.kind, "stt");
   assert.equal(loadedModelTarget(chatWhisper.source).label, "Chat");
-});
-
-test("every runtime's rows appear together, in a fixed order", () => {
-  const merged = mergeLoadedModels([
-    describeInferenceStatus(
-      inferenceStatus({
-        active_model: "unsloth/orpheus-3b-0.1-ft",
-        is_audio: true,
-      }),
-    ),
-    describeDiffusionStatus({
-      loaded: true,
-      repo_id: "unsloth/FLUX.1-dev",
-    } as never),
-    describeVideoStatus(null),
-    describeSttStatus({ gguf: { loaded_model: "ggml-base.en" } }),
-  ]);
-  assert.deepEqual(
-    merged.map((row) => row.kind),
-    ["tts", "image", "stt"],
-  );
 });
 
 test("one runtime naming the same model twice is still one row", () => {
@@ -468,64 +281,47 @@ test("a dictation sidecar that is starting shows as loading", () => {
 test("an announced load shows before any status confirms it", () => {
   const rows = withPendingLoads(
     [],
-    new Map([["image", "unsloth/Z-Image-Turbo-GGUF"]]),
+    new Map([["chat", "unsloth/Qwen3-4B-GGUF"]]),
   );
   assert.equal(rows.length, 1);
-  assert.equal(rows[0].kind, "image");
+  assert.equal(rows[0].kind, "text");
   assert.equal(rows[0].loading, true);
-  assert.equal(rows[0].name, "unsloth/Z-Image-Turbo-GGUF");
+  assert.equal(rows[0].name, "unsloth/Qwen3-4B-GGUF");
 });
 
 // The backend's answer wins: otherwise a finished load shows twice for the
 // moment between the status arriving and the settle event.
-test("a status row for that runtime replaces the announced one", () => {
-  const loaded = describeDiffusionStatus({
-    loaded: true,
-    repo_id: "unsloth/Z-Image-Turbo-GGUF",
-    family: "z-image",
-  } as never);
-  const rows = withPendingLoads(
-    loaded,
-    new Map([["image", "unsloth/Z-Image-Turbo-GGUF"]]),
-  );
-  assert.equal(rows.length, 1);
-  assert.notEqual(rows[0].loading, true);
-});
 
 test("nothing announced leaves the polled rows untouched", () => {
   const rows: LoadedModelEntry[] = [];
   assert.equal(withPendingLoads(rows, new Map()), rows);
 });
 
-// Swapping one image model for another: the outgoing one stays resident until
-// the backend drops it, so yielding on source alone showed nothing loading for
-// the whole swap, which is exactly when the toast says it is working.
-test("a swap shows the incoming model alongside the outgoing one", () => {
-  const resident = describeDiffusionStatus({
-    loaded: true,
-    repo_id: "unsloth/FLUX.1-dev",
-    family: "flux",
-  } as never);
-  const rows = withPendingLoads(
-    resident,
-    new Map([["image", "unsloth/Z-Image-Turbo-GGUF"]]),
-  );
-  assert.equal(rows.length, 2);
-  const incoming = rows.find((row) => row.loading);
-  assert.equal(incoming?.name, "unsloth/Z-Image-Turbo-GGUF");
-  assert.ok(rows.some((row) => row.name === "unsloth/FLUX.1-dev"));
+test("no active runtime loaded produces no rows", () => {
+  assert.deepEqual(describeInferenceStatus(inferenceStatus()), []);
+  assert.deepEqual(describeSttStatus({}), []);
 });
 
-test("the announced row yields once that same model is resident", () => {
-  const resident = describeDiffusionStatus({
-    loaded: true,
-    repo_id: "unsloth/Z-Image-Turbo-GGUF",
-    family: "z-image",
-  } as never);
-  const rows = withPendingLoads(
-    resident,
-    new Map([["image", "unsloth/Z-Image-Turbo-GGUF"]]),
-  );
-  assert.equal(rows.length, 1);
-  assert.notEqual(rows[0].loading, true);
+test("an unreachable active runtime yields no rows rather than throwing", () => {
+  assert.deepEqual(describeInferenceStatus(null), []);
+  assert.deepEqual(describeSttStatus(null), []);
+});
+
+test("chat and dictation rows appear together in a fixed order", () => {
+  const rows = mergeLoadedModels([
+    describeInferenceStatus(inferenceStatus({ active_model: "chat/model" })),
+    describeSttStatus({ gguf: { loaded_model: "ggml-base.en" } }),
+  ]);
+  assert.deepEqual(rows.map((row) => row.source), ["chat", "stt"]);
+});
+
+test("a status row replaces the announced load only for the same model", () => {
+  const resident = describeInferenceStatus(inferenceStatus({ active_model: "chat/old" }));
+  const matching = withPendingLoads(resident, new Map([["chat", "chat/old"]]));
+  assert.equal(matching.length, 1);
+  assert.notEqual(matching[0].loading, true);
+  const swapping = withPendingLoads(resident, new Map([["chat", "chat/new"]]));
+  assert.equal(swapping.length, 2);
+  assert.equal(swapping.find((row) => row.loading)?.name, "chat/new");
+  assert.ok(swapping.some((row) => row.name === "chat/old"));
 });

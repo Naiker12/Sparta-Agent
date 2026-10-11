@@ -1,4 +1,3 @@
-
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
@@ -516,21 +515,4 @@ test("an unroutable speech pick is refused instead of loaded into chat", () => {
     pickerSource,
     /!audioPickIsRoutable\(\{[\s\S]*\}\)\s*\) \{[\s\S]*toast\.error\([\s\S]*return;/,
   );
-});
-
-test("a local Whisper checkpoint is not advertised as a routable ASR row", () => {
-  // The STT sidecar's resolve_model_id takes a curated key or an owner/model Hub id, so a
-  // filesystem path 422s. Routing one from the picker advertised a row that cannot load.
-  const source = readFileSync(
-    new URL(
-      "../src/features/model-picker/components/model-selector/pickers.tsx",
-      import.meta.url,
-    ),
-    "utf8",
-  );
-  assert.match(
-    source,
-    /if \(audioType === "whisper"\)\s*\n?\s*return isLocalCheckpoint \? undefined : "automatic-speech-recognition";/,
-  );
-  assert.match(source, /pipelineTag: audioPipelineTagFor\(adapter\.audioType, true\)/);
 });

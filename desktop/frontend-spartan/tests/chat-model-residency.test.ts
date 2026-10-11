@@ -1,4 +1,3 @@
-
 // The header used to read "loaded" off the picker selection alone. Loading an
 // image or video model evicts the chat model (the GPU arbiter allows one owner),
 // which leaves the selection untouched, so the header kept its tick and the next
@@ -94,12 +93,8 @@ test("the selector's tick asks the caller, and defaults to the old rule", () => 
     new URL("../src/features/chat/chat-page.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(
-    page,
-    /loaded=\{chatModelLoaded\(\{/,
-    "the chat header must pass it",
-  );
-  assert.match(page, /residentCheckpoint,/);
+  assert.match(page, /<ApiProviderModelSelector/);
+  assert.doesNotMatch(page, /<ModelSelector[\s>]/);
 });
 
 test("a model still loading is not loaded yet", () => {
@@ -138,14 +133,6 @@ test("the picker's Loaded badge asks residency, not the selection", () => {
   );
 });
 
-test("the hub cards ask residency before saying Loaded", () => {
-  const hub = readFileSync(
-    new URL("../src/features/hub/hub-page.tsx", import.meta.url),
-    "utf8",
-  );
-  assert.match(hub, /residentCheckpoint !== null\s*\n?\s*\? checkpoint/);
-});
-
 // Nothing in the chat runtime polls /status: refresh runs on mount and when the
 // model lists change, never on a timer. So an eviction caused by the Images
 // page was never observed and residentCheckpoint stayed undefined, which reads
@@ -167,7 +154,7 @@ test("another runtime loading re-reads the chat status", () => {
   );
   assert.match(hook, /subscribeModelLifecycle\(\(\{ runtime \}\) => \{/);
   // Dictation holds no GPU ownership, so it is the one that stays excluded.
-  assert.match(hook, /if \(runtime === "chat" \|\| runtime === "stt"\) return;/);
+  assert.match(hook, /if \(runtime === "chat" \|\| runtime === "stt"\) \{\s*return;\s*\}/);
   assert.doesNotMatch(
     hook,
     /if \(loading \|\| runtime === "chat"\) return;/,
@@ -190,7 +177,7 @@ test("an eviction drops the pick, not just the loaded marks", () => {
     "utf8",
   );
   // Anchored on the branch, not on the file: other catches sit above it now.
-  const branchStart = hook.indexOf("} else if (!statusRes.active_model");
+  const branchStart = hook.indexOf("} else if (!(statusRes.active_model || isExternalSelectionActive))");
   const branch = hook.slice(
     branchStart,
     hook.indexOf("} catch (error) {", branchStart),

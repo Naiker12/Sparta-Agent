@@ -107,7 +107,7 @@ test("the dismissal key is cleared by Reset all local preferences", () => {
     new URL("../src/features/settings/tabs/general-tab.tsx", import.meta.url),
     "utf8",
   );
-  assert.match(generalTab, /LOADED_MODELS_PREFERENCE_KEYS\.dismissed,/);
+  assert.match(generalTab, /Object\.values\(LOADED_MODELS_PREFERENCE_KEYS\)/);
 });
 
 test("the card carries a close button, and a load brings it back", () => {
@@ -118,7 +118,7 @@ test("the card carries a close button, and a load brings it back", () => {
     ),
     "utf8",
   );
-  assert.match(indicator, /aria-label="Close loaded models"/);
+  assert.match(indicator, /aria-label=\{uiT\("ui.close_loaded_models"\)\}/);
   assert.match(
     indicator,
     /onClick=\{\(\) => setLoadedModelsDismissed\(true\)\}/,
@@ -168,7 +168,7 @@ test("a row ejects with the eject glyph, the header closes with an X", () => {
   assert.doesNotMatch(row, /icon=\{Cancel01Icon\}/);
   // The close button keeps the X, as the Live monitor's does.
   const header = indicator.slice(
-    indicator.indexOf('aria-label="Close loaded models"'),
+    indicator.indexOf('aria-label={uiT("ui.close_loaded_models")}'),
   );
   assert.match(header, /icon=\{Cancel01Icon\}/);
 });

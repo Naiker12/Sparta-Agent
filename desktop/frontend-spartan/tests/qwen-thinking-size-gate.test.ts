@@ -78,7 +78,7 @@ test("non-qwen3.5/3.6 models are never gated", () => {
   assert.equal(thinkingDefaultOff(""), false);
 });
 
-test("all four copies of the gate pattern stay in sync", () => {
+test("both active frontend gates stay in sync with the behavior fixture", () => {
   const here = path.dirname(fileURLToPath(import.meta.url));
   const read = (rel: string) => readFileSync(path.join(here, rel), "utf8");
   const patterns = [
@@ -87,9 +87,6 @@ test("all four copies of the gate pattern stay in sync", () => {
     ),
     read("../src/features/chat/lib/apply-inference-status-to-store.ts").match(
       /const sizeRe = \/(.+?)\/;/,
-    ),
-    read("../../backend/core/inference/llama_cpp.py").match(
-      /size_re = r"(.+?)"\n/,
     ),
   ];
   for (const found of patterns) assert.ok(found, "size gate pattern not found");

@@ -1,4 +1,3 @@
-
 // Every thread row has carried modelId since long before this notice, so the model a chat
 // was started on is already known for chats that already exist. What was missing was
 // showing it and offering it back. The rules below are the ones that keep the offer from
@@ -10,15 +9,14 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { chatModelSwitchMeta } from "../src/features/chat/components/chat-model-notice-switch.ts";
-import { chatLocalModelOptions } from "../src/features/chat/local-model-options.ts";
 
 function read(path: string): string {
-  return readFileSync(new URL(path, import.meta.url), "utf8");
+  return readFileSync(new URL(path, import.meta.url), "utf8").replace(/\r\n/g, "\n");
 }
 
 const notice = read("../src/features/chat/components/chat-model-notice.tsx");
 const page = read("../src/features/chat/chat-page.tsx");
-const sidebar = read("../src/components/app-sidebar.tsx");
+const sidebar = read("../src/components/sidebar/chat-sidebar-item.tsx");
 const items = read("../src/features/chat/hooks/use-chat-sidebar-items.ts");
 const thread = read("../src/components/assistant-ui/thread.tsx");
 const researchPanel = read(
@@ -67,11 +65,11 @@ test("the notice stays quiet when it has nothing to offer", () => {
   // no stamp, already on it, or a model that has since gone away
   assert.match(
     body,
-    /if \(!createdModelId \|\| createdModelId === checkpoint\) return null;/,
+    /if \(!createdModelId \|\| createdModelId === checkpoint\) \{\s*return null;\s*\}/,
   );
   assert.match(
     body,
-    /if \(!selectableModelIds\.has\(createdModelId\)\) return null;/,
+    /if \(!selectableModelIds\.has\(createdModelId\)\) \{\s*return null;\s*\}/,
   );
 });
 
@@ -88,7 +86,7 @@ test("switching chats does not show the outgoing chat's model", () => {
   assert.match(hook, /setRead\(\{ threadId, modelId:/);
   assert.match(hook, /return read && read\.threadId === threadId \? read\.modelId : null;/);
   // and a read that resolves after the chat changed is dropped
-  assert.match(hook, /if \(!cancelled\) setRead/);
+  assert.match(hook, /if \(!cancelled\) \{\s*setRead/);
   assert.match(hook, /cancelled = true;/);
 });
 
@@ -289,58 +287,6 @@ test("a chat started as New Chat gets the notice once its row exists", () => {
 // nor the external ids, so with the bare id selectModel resolves isGguf false and the
 // /load request loses n_parallel, n_batch, n_ubatch and llama_extra_args and sizes the
 // context down the transformers path.
-
-test("switching back to a single-file local GGUF still loads as a GGUF", () => {
-  const meta = chatModelSwitchMeta("/models/qwen3-4b-q4.gguf", [
-    {
-      id: "/models/qwen3-4b-q4.gguf",
-      name: "qwen3-4b-q4",
-      source: "local",
-      isGguf: true,
-    },
-  ]);
-  assert.deepEqual(meta, {
-    source: "local",
-    isLora: false,
-    isDownloaded: true,
-    isGguf: true,
-  });
-});
-
-test("a single .gguf file carries its format out of the local inventory", () => {
-  // chatLocalModelOptions is where the format is either kept or lost; the resolver
-  // above has nothing else to read it from.
-  const [option] = chatLocalModelOptions([
-    {
-      id: "/models/qwen3-4b-q4.gguf",
-      display_name: "qwen3-4b-q4",
-      path: "/models/qwen3-4b-q4.GGUF",
-      source: "custom",
-      model_format: "gguf",
-    },
-  ]);
-  assert.equal(option.isGguf, true);
-});
-
-test("a GGUF directory is not claimed as a GGUF, since its quant is unknown", () => {
-  // That row expands in the picker to pick a variant, and a chat row records only
-  // modelId. Sending llama-server flags for a quant nobody chose is worse than the
-  // plain switch.
-  const [option] = chatLocalModelOptions([
-    {
-      id: "/models/Qwen3-4B-GGUF",
-      display_name: "Qwen3-4B-GGUF",
-      path: "/models/Qwen3-4B-GGUF",
-      source: "models_dir",
-      model_format: "gguf",
-    },
-  ]);
-  assert.equal(option.isGguf, undefined);
-  assert.equal(
-    chatModelSwitchMeta("/models/Qwen3-4B-GGUF", [option])?.isGguf,
-    false,
-  );
-});
 
 test("switching back to a fine-tuned row mirrors the picker's own metadata", () => {
   // Same fields the fine-tuned list's selectionMeta sets, so the two doors agree.

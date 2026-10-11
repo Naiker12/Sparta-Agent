@@ -1,33 +1,15 @@
-
-// The indicator is the only screen that reads all four runtimes at once, so it
-// is also the only one that sees every hardware shape the backend can report.
-// None of that is visible from a CUDA dev box: ROCm reports itself as "cuda"
-// (diffusion_device.py, "Apple Silicon maps to MPS and ROCm to cuda"), Apple
-// reports "mps" and never "mlx", Intel XPU reports "xpu" for images but "cpu"
-// for dictation because stt_sidecar._pick_device never checks torch.xpu, and the
-// sd.cpp engine Macs and CPU-only hosts fall back to omits model_kind entirely
-// and puts "gguf" in dtype instead.
-//
-// So this walks the payloads [Windows, Linux, WSL, macOS] x [NVIDIA, AMD ROCm,
-// Intel XPU, CPU-only, Apple] actually produce, and asserts the row each one
-// renders. The OS axis is not a separate assertion for the chat/images/video
-// rows because the backend emits identical JSON for it -- what the OS changes is
-// which accelerator branch is reachable, and that is the axis enumerated here.
+// Hardware payload coverage for the supported chat and dictation runtimes.
 
 import assert from "node:assert/strict";
 import test from "node:test";
 
 import type { InferenceStatusResponse } from "../src/features/chat/types/api.ts";
-import type { DiffusionStatus } from "../src/features/images/api.ts";
 import {
   type SttStatusResponse,
-  describeDiffusionStatus,
   describeInferenceStatus,
   describeSttStatus,
-  describeVideoStatus,
   mergeLoadedModels,
 } from "../src/features/loaded-models/loaded-models-sources.ts";
-import type { VideoStatus } from "../src/features/video/api.ts";
 
 // The handler returns a bare model with every flag false when nothing is
 // loaded, so a partial fixture stands in for the full response.
@@ -46,33 +28,6 @@ function chat(
     ...overrides,
   } as InferenceStatusResponse;
 }
-
-function diffusion(overrides: Partial<DiffusionStatus>): DiffusionStatus {
-  return {
-    loaded: false,
-    repo_id: null,
-    family: null,
-    device: null,
-    dtype: null,
-    model_kind: null,
-    ...overrides,
-  } as DiffusionStatus;
-}
-
-function video(overrides: Partial<VideoStatus>): VideoStatus {
-  return {
-    loaded: false,
-    repo_id: null,
-    family: null,
-    device: null,
-    dtype: null,
-    model_kind: null,
-    transformer_quant: null,
-    ...overrides,
-  } as VideoStatus;
-}
-
-// ── Chat runtime: the accelerator axis ──────────────────────────────────
 
 test("a GGUF chat model reads the same on every accelerator", () => {
   // llama.cpp runs on NVIDIA, AMD, Intel, Apple and plain CPU, and the GGUF
@@ -176,121 +131,7 @@ test("audio_type without is_audio does not make an audio row", () => {
 
 // ── Diffusion: the device vocabulary, and the two engines ───────────────
 
-test("every device the diffusion resolver can report renders", () => {
-  // resolve_diffusion_device_target() emits exactly these four, never cuda:0.
-  const expected: Record<string, string> = {
-    cuda: "flux · BF16 · cuda", // NVIDIA, and AMD ROCm, which reports cuda too
-    xpu: "flux · BF16 · xpu", // Intel Arc / Data Center GPU
-    mps: "flux · BF16 · mps", // Apple Silicon under the diffusers engine
-    cpu: "flux · BF16 · cpu", // no accelerator, or no torch at all
-  };
-  for (const [device, detail] of Object.entries(expected)) {
-    const rows = describeDiffusionStatus(
-      diffusion({
-        loaded: true,
-        repo_id: "black-forest-labs/FLUX.1-dev",
-        family: "flux",
-        device,
-        dtype: "bfloat16",
-        model_kind: "pipeline",
-      }),
-    );
-    assert.equal(rows[0].detail, detail, device);
-    assert.equal(rows[0].source, "image", device);
-  }
-});
-
-test("the sd.cpp engine still says GGUF without a model_kind", () => {
-  // sd_cpp_backend.status() has no model_kind key at all and puts the literal
-  // "gguf" in dtype. This is the Mac / CPU-only shape, so it is the one most
-  // likely to go untested on a CUDA box.
-  const rows = describeDiffusionStatus(
-    diffusion({
-      loaded: true,
-      repo_id: "unsloth/FLUX.1-dev-GGUF",
-      family: "flux",
-      device: "cpu",
-      dtype: "gguf",
-    }),
-  );
-  assert.equal(rows[0].detail, "flux · GGUF · cpu");
-});
-
-test("a GGUF image model under the diffusers engine is not doubled", () => {
-  // Here model_kind IS "gguf" and dtype is a real precision, so both the kind
-  // and the precision have something to say and neither should repeat.
-  const rows = describeDiffusionStatus(
-    diffusion({
-      loaded: true,
-      repo_id: "unsloth/FLUX.1-dev-GGUF",
-      family: "flux",
-      device: "cuda",
-      dtype: "gguf",
-      model_kind: "gguf",
-    }),
-  );
-  assert.equal(rows[0].detail, "flux · GGUF · cuda");
-});
-
-test("a diffusion runtime with no repo id yields no row", () => {
-  // loaded and repo_id are always set together, but a row with no name would be
-  // unejectable, so refusing it is worth pinning.
-  assert.deepEqual(
-    describeDiffusionStatus(diffusion({ loaded: true, repo_id: null })),
-    [],
-  );
-});
-
 // ── Video: NVIDIA/Intel only in practice, but the payload is the contract ──
-
-test("video precision prefers the transformer quant over the dtype", () => {
-  const rows = describeVideoStatus(
-    video({
-      loaded: true,
-      repo_id: "Wan-AI/Wan2.2-T2V-A14B",
-      family: "wan",
-      device: "cuda",
-      dtype: "bfloat16",
-      transformer_quant: "fp8",
-    }),
-  );
-  assert.equal(rows[0].detail, "wan · FP8 · cuda");
-  assert.equal(rows[0].kind, "video");
-});
-
-test("video falls back to the dtype when unquantised", () => {
-  const rows = describeVideoStatus(
-    video({
-      loaded: true,
-      repo_id: "Wan-AI/Wan2.2-T2V-A14B",
-      family: "wan",
-      device: "cuda",
-      dtype: "bfloat16",
-      transformer_quant: null,
-    }),
-  );
-  assert.equal(rows[0].detail, "wan · BF16 · cuda");
-});
-
-test('a "none" quant is not printed as a precision', () => {
-  const rows = describeVideoStatus(
-    video({
-      loaded: true,
-      repo_id: "Wan-AI/Wan2.2-T2V-A14B",
-      family: "wan",
-      device: "cuda",
-      dtype: "none",
-      transformer_quant: "none",
-    }),
-  );
-  assert.equal(rows[0].detail, "wan · cuda");
-});
-
-test("a host that can never run video reports an empty runtime, not an error", () => {
-  // The video router is registered unconditionally and imports torch lazily, so
-  // macOS and CPU-only hosts get a clean loaded:false rather than a 404.
-  assert.deepEqual(describeVideoStatus(video({ loaded: false })), []);
-});
 
 // ── Dictation: three engines, and a "device" that is not a device ────────
 
@@ -333,45 +174,6 @@ test("an engine holding nothing contributes no row", () => {
 
 // ── The merge, across a fully loaded host ───────────────────────────────
 
-test("a host holding all four runtimes lists them in a fixed order", () => {
-  const rows = mergeLoadedModels([
-    describeInferenceStatus(
-      chat({
-        active_model: "unsloth/Qwen3-4B-GGUF",
-        is_gguf: true,
-        gguf_variant: "Q4_K_M",
-      }),
-    ),
-    describeDiffusionStatus(
-      diffusion({
-        loaded: true,
-        repo_id: "black-forest-labs/FLUX.1-dev",
-        family: "flux",
-        device: "cuda",
-        dtype: "bfloat16",
-      }),
-    ),
-    describeVideoStatus(
-      video({
-        loaded: true,
-        repo_id: "Wan-AI/Wan2.2-T2V-A14B",
-        family: "wan",
-        device: "cuda",
-        dtype: "bfloat16",
-      }),
-    ),
-    describeSttStatus({
-      transformers: { loaded_model: "large-v3", device: "cuda" },
-    } as SttStatusResponse),
-  ]);
-  assert.deepEqual(
-    rows.map((row) => row.source),
-    ["chat", "image", "video", "stt"],
-    "a stable order stops rows jumping between polls",
-  );
-  assert.equal(new Set(rows.map((row) => row.id)).size, 4, "ids are unique");
-});
-
 test("a whisper model in chat and in dictation is two rows, not one", () => {
   // These really are two resident copies: chat loads it inside the inference
   // subprocess, dictation in its own in-process sidecar. Collapsing them would
@@ -394,4 +196,13 @@ test("a whisper model in chat and in dictation is two rows, not one", () => {
     ["chat", "stt"],
     "each row must eject through its own runtime",
   );
+});
+
+test("a host holding chat and dictation lists them in a fixed order", () => {
+  const rows = mergeLoadedModels([
+    describeInferenceStatus(chat({ active_model: "chat/model", is_gguf: true })),
+    describeSttStatus({ transformers: { loaded_model: "large-v3", device: "cuda" } } as SttStatusResponse),
+  ]);
+  assert.deepEqual(rows.map((row) => row.source), ["chat", "stt"]);
+  assert.equal(new Set(rows.map((row) => row.id)).size, 2);
 });

@@ -349,6 +349,12 @@ async function raceWorld() {
     "../src/features/chat/utils/thread-scoped-settings.ts"
   );
   const store = () => mod.useChatRuntimeStore.getState();
+  // Wait for the persistence acknowledgement; event-loop turns alone depend on Node's loader timing.
+  settleWrites = () => Promise.all(
+    ["A", "B", "L", ...threadRows.rows.keys(), store().activeThreadId]
+      .filter((id): id is string => Boolean(id))
+      .map((id) => mod.awaitThreadScopedSettingsWrite(id)),
+  );
   return {
     mod,
     store,
@@ -373,6 +379,8 @@ async function raceWorld() {
   };
 }
 
+let settleWrites: () => Promise<unknown> = async () => {};
+
 async function settle(tick: (ms: number) => void): Promise<void> {
   for (let round = 0; round < 3; round += 1) {
     tick(1000);
@@ -380,6 +388,7 @@ async function settle(tick: (ms: number) => void): Promise<void> {
       await new Promise((resolve) => setImmediate(resolve));
     }
   }
+  await settleWrites();
 }
 
 test("B1: a slider moved while /api/chat/settings is still in flight survives it", async (t) => {

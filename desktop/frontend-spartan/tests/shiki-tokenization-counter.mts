@@ -15,7 +15,9 @@ export const createHighlighter = async (
   highlighter.codeToTokens = (code, options) => {
     tokenized.characters += code.length;
     tokenized.calls += 1;
-    return codeToTokens(code, options);
+    // This fixture measures character work and exact tokens, not Shiki's wall-clock fallback.
+    // A descheduled worker can exhaust the default 500ms line budget under concurrent CI load.
+    return codeToTokens(code, { ...options, tokenizeTimeLimit: 0 });
   };
   return highlighter;
 };

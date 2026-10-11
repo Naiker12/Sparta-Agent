@@ -1,4 +1,3 @@
-
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFile } from "node:fs/promises";
@@ -20,24 +19,11 @@ function body(source: string, start: string, end: string): string {
   return source.slice(at, to);
 }
 
-test("clients with their own request keep their own reachability", async () => {
-  const page = await read("../src/features/hub/hub-page.tsx");
-  // This value reaches useHubFeed and, through useModelsSelection, the selected
-  // model's metadata lookup. Those are independent requests: on the discovery
-  // phase they stayed blocked at "probing" until a listing succeeded, and the
-  // Downloaded tab has no Retry to make one happen.
-  assert.match(page, /const online = useOnlineStatus\(\);/);
-  assert.ok(
-    !/useHubAvailability\(\)\.phase/.test(page),
-    "the feed's phase must not gate a client that never runs a listing",
-  );
-});
-
 test("the panel still reads the classified cause, not that boolean", async () => {
-  const page = await read("../src/features/hub/hub-page.tsx");
+  const page = await read("../src/features/hub/hooks/use-discover-search.ts");
   // Reverting `online` must not quietly revert the diagnosis with it: the panel
   // is driven by searchFailure, which useDiscoverSearch reads off the phase.
-  assert.match(page, /searchFailure,/);
+  assert.match(page, /const searchFailure = isDiscoverTab \? failure : null;/);
   const search = await read("../src/features/hub/hooks/use-discover-search.ts");
   assert.match(search, /const \{ phase, failure \} = useHubAvailability\(\);/);
   assert.match(search, /const online = phase === "available";/);
