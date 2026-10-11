@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.4.0] - Unreleased
+## [0.4.1] - Unreleased
 
 ### Added
 
@@ -25,7 +25,7 @@
 
 ### Release
 
-- Candidato en preparación: el tag y la publicación requieren resolver los bloqueos de validación registrados en la auditoría de 0.4.0.
+- Candidato en preparación: el tag y la publicación requieren resolver los bloqueos de validación registrados en `docs/audits/2026-10-11-release-0.4.1.md`.
 
 ## [0.3.3] - 2026-10-02
 
