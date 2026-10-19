@@ -32,14 +32,21 @@ const PROVIDER_LOGO_EXT: Record<string, "svg" | "png" | "jpg"> = {
   sambanova: "png",
 };
 
+function providerLogoKey(providerType: string): string {
+  return providerType === "openai_codex"
+    ? "openai"
+    : providerType === "local_llamacpp"
+      ? "llama_cpp"
+      : providerType.replace(/^local_/, "");
+}
+
 export function apiProviderLogoSrc(
   providerType: string | undefined | null,
 ): string | undefined {
   if (!providerType) {
     return undefined;
   }
-  const logoProviderType =
-    providerType === "openai_codex" ? "openai" : providerType === "local_llamacpp" ? "llama_cpp" : providerType.replace(/^local_/, "");
+  const logoProviderType = providerLogoKey(providerType);
   const ext = PROVIDER_LOGO_EXT[logoProviderType];
   if (!ext) {
     return undefined;
@@ -97,7 +104,7 @@ export function ApiProviderLogo({
       onError={() => setFailedSrc(src)}
       className={cn(
         "shrink-0 object-contain",
-        providerType && DARK_INVERT_LOGOS.has(providerType) && "dark:invert",
+        providerType && DARK_INVERT_LOGOS.has(providerLogoKey(providerType)) && "dark:invert",
         className,
       )}
     />

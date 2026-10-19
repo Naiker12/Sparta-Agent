@@ -1,3 +1,4 @@
+import { getAppLocation } from "@/lib/app-location";
 import { translate as uiTranslate } from "@/i18n";
 import { authFetch } from "@/features/auth";
 import { subscribeAutomationRun } from "@/features/tasks/automation-run-polling";
@@ -1396,7 +1397,7 @@ function useStudioRuntimeAdapters(
         const itemState = aui.threadListItem().getState();
         const searchThreadId =
           typeof window !== "undefined"
-            ? new URLSearchParams(window.location.search).get("thread")
+            ? getAppLocation().searchParams.get("thread")
             : null;
         const remoteId =
           itemState.remoteId ||

@@ -1,3 +1,4 @@
+import { reloadAppAt, getAppLocation } from "@/lib/app-location";
 import { translate as uiTranslate } from "@/i18n";
 import { apiUrl, getApiBase, getBackendError, isElectron, isTauri } from "@/lib/api-base";
 import {
@@ -104,11 +105,11 @@ async function redirectToAuth(): Promise<void> {
     // Fall through to /login on error
   }
 
-  if (window.location.pathname === target) {
+  if (getAppLocation().pathname === target) {
     isRedirecting = false;
     return;
   }
-  window.location.href = target;
+  reloadAppAt(target);
 }
 
 function asTransportFailure(err: unknown): unknown {

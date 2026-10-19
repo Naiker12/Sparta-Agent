@@ -1,3 +1,4 @@
+import { cpSync } from 'node:fs'
 import { defineConfig, createLogger } from 'vite'
 import path from 'node:path'
 import { builtinModules } from 'node:module'
@@ -75,6 +76,18 @@ export default defineConfig(() => {
     plugins: [
       tailwindcss(),
       react(),
+      {
+        name: 'sparta-frontend-public-assets',
+        apply: 'build',
+        writeBundle(options) {
+          // Runtime URLs need the complete desktop public directory, not only root public/.
+          cpSync(
+            path.join(__dirname, 'desktop/frontend-spartan/public'),
+            path.resolve(__dirname, options.dir ?? 'dist'),
+            { recursive: true },
+          )
+        },
+      },
       electron({
         main: {
           entry: path.join(__dirname, 'desktop/ia-sparta-app-shell/src/electron-main.ts'),

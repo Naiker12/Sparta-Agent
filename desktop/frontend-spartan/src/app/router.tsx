@@ -1,3 +1,4 @@
+import { createAppHistory } from "@/lib/app-history";
 import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/i18n";
@@ -65,6 +66,7 @@ function DefaultNotFound() {
 
 export const router = createRouter({
   routeTree,
+  history: createAppHistory(),
   defaultNotFoundComponent: DefaultNotFound,
 });
 

@@ -20,6 +20,21 @@ function findAsarFiles(directory) {
   })
 }
 
+// Public assets addressed at runtime never appear in the JS import graph.
+function publicAssetNames(directory, prefix = '') {
+  return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+    if (entry.name.startsWith('.')) return []
+    const relative = prefix ? `${prefix}/${entry.name}` : entry.name
+    return entry.isDirectory()
+      ? publicAssetNames(join(directory, entry.name), relative)
+      : [relative]
+  })
+}
+const expectedPublicAssets = new Set([
+  ...publicAssetNames(join(process.cwd(), 'public')),
+  ...publicAssetNames(join(process.cwd(), 'desktop/frontend-spartan/public')),
+])
+
 const archives = existsSync(releaseRoot) && statSync(releaseRoot).isFile()
   ? [releaseRoot]
   : findAsarFiles(releaseRoot)
@@ -52,6 +67,13 @@ for (const archive of archives) {
     if (!entries.some((entry) => entry.endsWith(required))) {
       console.error(`ERROR DE EMPAQUETADO: ${required} falta en ${archive}`)
       process.exit(1)
+    }
+  }
+
+  const entrySet = new Set(entries)
+  for (const asset of expectedPublicAssets) {
+    if (!entrySet.has(`/dist/${asset}`)) {
+      throw new Error(`Missing renderer public asset in ${archive}: ${asset}`)
     }
   }
 

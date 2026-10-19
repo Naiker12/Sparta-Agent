@@ -1,3 +1,4 @@
+import { getAppLocation } from "@/lib/app-location";
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 
@@ -27,7 +28,8 @@ function currentRoute(): string {
   if (typeof window === "undefined") {
     return "";
   }
-  return window.location.pathname + window.location.search;
+  const location = getAppLocation();
+  return location.pathname + location.search;
 }
 
 // Create-project dialog for the composer, sidebar, and projects page. Creating

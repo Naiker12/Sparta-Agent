@@ -1,3 +1,4 @@
+import { getAppLocation, usesFileRouting } from "./app-location";
 import { isTauri } from "@/lib/api-base";
 
 /**
@@ -12,7 +13,10 @@ export function openLink(url: string): boolean {
 
   // Anchor links scroll within the page, don't open externally
   if (url.startsWith("#")) {
-    window.location.hash = url;
+    const route = getAppLocation();
+    window.location.hash = usesFileRouting(window.location)
+      ? `${route.pathname}${route.search}${url}`
+      : url;
     return true;
   }
 

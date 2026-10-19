@@ -66,6 +66,9 @@ jobs:
       - name: Document first open and format switching in the browser
         run: npm run test:documents:browser
 
+      - name: Packaged file navigation and provider assets
+        run: xvfb-run --auto-servernum npm run test:assets:electron
+
   backend-contracts:
     runs-on: ubuntu-latest
     steps:
