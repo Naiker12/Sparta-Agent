@@ -20,6 +20,7 @@ import {
   setAssistantCodexReasoning,
 } from "./replay-content";
 import { isWrappedWithText } from "./tool-results";
+import { panelModelReceipt } from "../../response-ui/panels";
 
 export type {
   OpenAIChatMessage,
@@ -272,7 +273,7 @@ export function serializeToolResultPart(
 
   return {
     role: "tool" as const,
-    content,
+    content: tc.toolName === "present_ui" ? panelModelReceipt(content) ?? content : content,
     tool_call_id: tc.toolCallId,
     ...(tc.toolName ? { name: tc.toolName } : {}),
   };

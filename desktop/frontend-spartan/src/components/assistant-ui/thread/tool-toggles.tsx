@@ -246,6 +246,11 @@ export const ToolStatusDisplay: FC = () => {
   }
   const elapsed = Math.max(0, Math.floor((now - startedAt) / 1000));
   const kind = toolStatusKind(toolStatus);
+  // Web activity already appears in the assistant's tool cards. Keep search
+  // queries out of the composer, which belongs to the user's next message.
+  if (kind === "web") {
+    return null;
+  }
   const isNudging = kind === "nudge";
   const StatusIcon = kind === "terminal" ? TerminalIcon : GlobeIcon;
   return (

@@ -29,7 +29,10 @@ import { MemoryGraph } from "./memory-graph";
 import { MemoryDetails } from "./memory-details";
 import { MemoryEditor } from "./memory-editor";
 import { filterMemoryGraph } from "./memory-graph-data";
-import { MEMORY_TYPES, type MemoryNode } from "./memory-types";
+import {
+  MEMORY_TYPES,
+  type MemoryNode,
+} from "./memory-types";
 
 export function MemoryPage() {
   const uiT = useUiT();
@@ -46,6 +49,15 @@ export function MemoryPage() {
   const visible = useMemo(
     () => filterMemoryGraph(memory.graph, view, type, project),
     [memory.graph, view, type, project],
+  );
+  const listedNodes = useMemo(
+    () =>
+      [...visible.nodes].sort(
+        (a, b) =>
+          (b.updatedAt ?? b.createdAt ?? 0) -
+          (a.updatedAt ?? a.createdAt ?? 0),
+      ),
+    [visible.nodes],
   );
   const selected = memory.graph.nodes.find((node) => node.id === selectedId);
   const projects = [
@@ -216,30 +228,30 @@ export function MemoryPage() {
               </SelectContent>
             </Select>
             <details className="relative">
-              <summary className="cursor-pointer text-xs text-muted-foreground">
-                {uiT("ui.list_of")}{" "}
-                {view === "episodes"
-                  ? uiT("ui.episodes_")
-                  : uiT("ui.memories_")}
-              </summary>
-              <div className="absolute top-7 z-10 flex max-h-72 w-72 flex-col overflow-y-auto rounded-xl border bg-background p-2 shadow-sm">
-                {visible.nodes.map((node) => (
-                  <Button
-                    key={node.id}
-                    variant="ghost"
-                    className="h-auto justify-start whitespace-normal text-left"
-                    onClick={(event) => {
-                      event.currentTarget
-                        .closest("details")
-                        ?.removeAttribute("open");
-                      setEditor(null);
-                      setSelectedId(node.id);
-                    }}
-                  >
-                    {node.label}
-                  </Button>
-                ))}
-              </div>
+                <summary className="cursor-pointer text-xs text-muted-foreground">
+                  {uiT("ui.list_of")}{" "}
+                  {view === "episodes"
+                    ? uiT("ui.episodes_")
+                    : uiT("ui.memories_")}
+                </summary>
+                <div className="absolute top-7 z-10 flex max-h-72 w-72 flex-col overflow-y-auto rounded-xl border bg-background p-2 shadow-sm">
+                  {listedNodes.map((node) => (
+                    <Button
+                      key={node.id}
+                      variant="ghost"
+                      className="h-auto justify-start whitespace-normal text-left"
+                      onClick={(event) => {
+                        event.currentTarget
+                          .closest("details")
+                          ?.removeAttribute("open");
+                        setEditor(null);
+                        setSelectedId(node.id);
+                      }}
+                    >
+                      {node.label}
+                    </Button>
+                  ))}
+                </div>
             </details>
           </div>
           <div

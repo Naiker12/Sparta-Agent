@@ -1,4 +1,6 @@
 export const chat = {
+  visualResponses: "Visual responses",
+  visualResponsesDescription: "Show tables, charts, reference images, panels and forms. You can always return to text.",
   projectsSection: "Show projects section",
   projectsSectionDescription:
     "Group project chats under a Projects heading. Turn this off to list them in Recents instead.",

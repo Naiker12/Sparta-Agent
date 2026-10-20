@@ -13,6 +13,8 @@ import {
   useIntentAwareAutoScroll,
 } from "@/components/assistant-ui/use-intent-aware-autoscroll";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
+import { ConversationNavigator } from "./thread/conversation-navigator";
 import {
   YoutubeTranscriptPrompt,
   extractYoutubeVideoId,
@@ -109,7 +111,7 @@ import {
   useAuiEvent,
   useAuiState,
 } from "@assistant-ui/react";
-import { flushResourcesSync } from "@assistant-ui/tap";
+import { flushTapSync } from "@assistant-ui/tap";
 import {
   AttachmentIcon,
   BubbleChatTemporaryIcon,
@@ -224,7 +226,8 @@ export const Thread: FC<{
   hideComposer?: boolean;
   hideWelcome?: boolean;
   targetThreadId?: string;
-}> = memo(({ hideComposer, hideWelcome, targetThreadId }) => {
+  composer?: ReactNode;
+}> = memo(({ hideComposer, hideWelcome, targetThreadId, composer }) => {
   const uiT = useUiT();
 
   // Intent-aware autoscroll replaces assistant-ui's built-in autoscroll to
@@ -504,28 +507,36 @@ export const Thread: FC<{
               {!hideWelcome && (
                 <AuiIf
                   condition={({ thread }) =>
-                    thread.isEmpty && !thread.isLoading
+                    thread.isEmpty && !thread.isLoading && !isComposerAttachPending
                   }
                 >
                   <ThreadWelcome
                     hideComposer={hideComposer}
                     threadId={threadId}
-                    composer={<ComposerAnimated threadId={threadId} />}
+                    composer={composer ?? <ComposerAnimated threadId={threadId} />}
                   />
                 </AuiIf>
               )}
 
-              {hideWelcome && (
-                <AuiIf
-                  condition={({ thread }) => thread.isEmpty && thread.isLoading}
+              <AuiIf
+                condition={({ thread }) =>
+                  isComposerAttachPending || (thread.isEmpty && thread.isLoading)
+                }
+              >
+                <div
+                  className="flex flex-1 flex-col items-center justify-center gap-3 py-24 text-muted-foreground"
+                  data-testid="conversation-loading"
+                  aria-busy="true"
                 >
-                  <div className="flex flex-1 flex-col items-center justify-center py-24 text-muted-foreground animate-in fade-in duration-300">
-                    <div className="size-6 animate-spin rounded-full border-2 border-primary border-t-transparent mb-3" />
-                    <p className="text-sm font-medium">
-                      {uiT("ui.loading_conversation")}</p>
-                  </div>
-                </AuiIf>
-              )}
+                  <Spinner
+                    className="size-6 motion-reduce:animate-none"
+                    label={uiT("ui.loading_conversation")}
+                  />
+                  <p className="text-sm font-medium" aria-hidden="true">
+                    {uiT("ui.loading_conversation")}
+                  </p>
+                </div>
+              </AuiIf>
 
               {incognito && (
                 <AuiIf
@@ -593,6 +604,8 @@ export const Thread: FC<{
               </AuiIf>
             </ThreadPrimitive.Viewport>
 
+            <ConversationNavigator viewport={viewportEl} onNavigate={autoScrollContext.detachFromBottom} bottom={hideComposer ? 24 : (composerHeight ?? 160) + 24} />
+
             <GeneratedImageViewportOverlay
               hideComposer={hideComposer}
               bottomOffsetPx={footerBottomPx}
@@ -605,11 +618,11 @@ export const Thread: FC<{
                   threadId={threadId}
                   onHeightChange={setComposerHeight}
                 >
-                  <ComposerAnimated
+                  {composer ?? <ComposerAnimated
                     disabled={isComposerAttachPending}
                     threadId={threadId}
                     menuSide="top"
-                  />
+                  />}
                 </ThreadComposerDock>
               </AuiIf>
             )}
@@ -2371,7 +2384,7 @@ const Composer: FC<{
               return;
             }
             void composer.clearAttachments();
-            flushResourcesSync(() => {
+            flushTapSync(() => {
               composer.setText("");
             });
             clearStoredDraft();
@@ -2487,7 +2500,7 @@ const Composer: FC<{
         if (cleared.trim() !== queuedPrompt) {
           return;
         }
-        flushResourcesSync(() => {
+        flushTapSync(() => {
           aui.composer().setText("");
         });
         clearStoredDraft();
@@ -3032,7 +3045,7 @@ const Composer: FC<{
         // Live, not composerText: a late DOM write carries exactly what the
         // textarea held, whitespace and all, and that is what must be armed.
         const visibleBeforeWrap = aui.composer().getState().text;
-        flushResourcesSync(() => {
+        flushTapSync(() => {
           aui
             .composer()
             .setText(
@@ -3221,7 +3234,7 @@ const Composer: FC<{
                   if (cleared.trim() !== queuedPrompt) {
                     return;
                   }
-                  flushResourcesSync(() => {
+                  flushTapSync(() => {
                     aui.composer().setText("");
                   });
                   clearStoredDraft();

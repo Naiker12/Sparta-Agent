@@ -78,6 +78,9 @@ import { ModelLoadInlineStatus } from "./components/model-load-status";
 import { ProjectLanding } from "./components/project-landing";
 import { ProjectSwitcher } from "./components/project-switcher";
 import { SingleContent } from "./components/single-content";
+import { WorkspacePanelContainer } from "@/components/workspace-rail";
+import { PlusIcon } from "lucide-react";
+import { ChatPanelsWorkspace } from "./components/chat-panels-workspace";
 import { WorkspaceGitReviewSheet } from "./components/workspace-git-review-sheet";
 import {
   buildExternalModelId,
@@ -123,6 +126,7 @@ import {
 import { useExternalProvidersStore } from "./stores/external-providers-store";
 import { useResearchRunStore } from "./stores/research-run-store";
 import { useWorkspaceStore } from "./stores/use-workspace-store";
+import { useChatPanelsStore } from "./stores/chat-panels-store";
 import { buildChatTourSteps } from "./tour";
 import type { ChatView } from "./types";
 import {
@@ -145,6 +149,7 @@ export function ChatPage({
   const t = useT();
 
   const incognito = useChatRuntimeStore((s) => s.incognito);
+  const hasChatPanels = useChatPanelsStore(state => state.panes.length > 0);
   const workspacePanelOpen = useWorkspaceStore((s) => s.isOpen);
   const workspacePanelWidth = useWorkspaceStore((s) => s.panelWidth);
   const setIncognito = useChatRuntimeStore((s) => s.setIncognito);
@@ -188,7 +193,7 @@ export function ChatPage({
     }
 
     let canceled = false;
-    void getStoredChatThread(threadId)
+    void getStoredChatThread(threadId, { waitForWrites: true })
       .then((thread) => {
         if (canceled || thread) {
           return;
@@ -210,9 +215,10 @@ export function ChatPage({
         });
       })
       .catch(() => {
-        if (useChatRuntimeStore.getState().activeThreadId === threadId) {
-          useChatRuntimeStore.getState().setActiveThreadId(null);
-        }
+        // A transport failure is not evidence the chat is gone. Keep the
+        // current runtime (and any first send) attached; cleanup also makes
+        // failures from a previous navigation irrelevant.
+        if (canceled) return;
       });
 
     return () => {
@@ -1594,6 +1600,7 @@ export function ChatPage({
                     right: workspacePanelOpen
                       ? `calc(min(${workspacePanelWidth}px, 60vw) + 3rem)`
                       : "3rem",
+                    ...(hasChatPanels ? { left: "auto", width: "auto" } : {}),
                   }
                 : undefined
             }
@@ -1613,10 +1620,11 @@ export function ChatPage({
                     : "pl-[calc(0.5rem+max(0px,var(--studio-mac-traffic-light-inset,0px)-var(--sidebar-width-icon,3rem)))]",
               view.mode === "compare" &&
                 "right-0 left-auto w-auto bg-transparent pl-0 pr-3 md:pr-4",
+              view.mode === "single" && hasChatPanels && !isMobile && "bg-transparent pl-0",
             )}
           >
             <div className="pointer-events-auto flex items-center gap-1">
-              {isTauri && !isMobile && !pinned && view.mode !== "compare" && (
+              {isTauri && !isMobile && !pinned && view.mode !== "compare" && !hasChatPanels && (
                 <Button
                   type="button"
                   variant="ghost"
@@ -1637,7 +1645,7 @@ export function ChatPage({
                   />
                 </Button>
               )}
-              {view.mode !== "compare" && currentProjectId && (
+              {view.mode !== "compare" && currentProjectId && !(view.mode === "single" && hasChatPanels && !isMobile) && (
                 <nav
                   aria-label={uiT("ui.project_location")}
                   className="flex h-[var(--studio-chat-control-height,34px)] min-w-0 items-center gap-1.5 self-center text-ui-13p5 tracking-nav text-muted-foreground"
@@ -1716,6 +1724,7 @@ export function ChatPage({
               ) : null}
             </div>
             <div className="pointer-events-auto ml-auto flex items-center gap-1">
+              {view.mode === "single" && <Button type="button" variant="ghost" size="icon-sm" disabled={incognito} aria-label={t("chat.panels.new")} title={t("chat.panels.new")} onClick={() => window.dispatchEvent(new Event("spartan:new-chat-pane"))}><PlusIcon /></Button>}
               {view.mode === "single" && (
                 <Tooltip>
                   <TooltipPrimitive.Trigger asChild={true}>
@@ -1848,6 +1857,8 @@ export function ChatPage({
               }
             >
               <NativeAttachmentTargetContext.Provider value={artifactViewKey}>
+                <div className="flex min-h-0 min-w-0 flex-1">
+                <ChatPanelsWorkspace primaryThreadId={view.threadId} projectId={view.projectId}>
                 <SingleContent
                   key={view.projectId ?? "single"}
                   threadId={view.threadId}
@@ -1857,6 +1868,9 @@ export function ChatPage({
                   artifactSurface={artifactSurface}
                   onCloseArtifact={closeArtifactSurface}
                 />
+                </ChatPanelsWorkspace>
+                <div className="hidden min-h-0 shrink-0 md:flex"><WorkspacePanelContainer projectId={view.projectId} /></div>
+                </div>
               </NativeAttachmentTargetContext.Provider>
             </ChatComposerModelSelectorProvider>
           ) : (

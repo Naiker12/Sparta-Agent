@@ -4,7 +4,7 @@
  * (japonés, chino, coreano) y maneja atajos de teclado Enter / Mod+Enter.
  */
 
-import { isPromptQueueChord } from "@/features/chat";
+import { isPromptQueueChord } from "@/features/chat/utils/prompt-queue-input";
 import {
   type SentTextGuard,
   applySentTextGuard,
@@ -12,7 +12,7 @@ import {
   markSentTextGuardUserInput,
 } from "@/features/chat/utils/composer-send-guard";
 import { useAui } from "@assistant-ui/react";
-import { flushResourcesSync } from "@assistant-ui/tap";
+import { flushTapSync } from "@assistant-ui/tap";
 import {
   type ChangeEvent,
   type CompositionEvent,
@@ -139,7 +139,7 @@ export function useImeComposerInputHandlers({
           return false;
         }
       }
-      flushResourcesSync(() => {
+      flushTapSync(() => {
         composer.setText(value);
       });
       return true;

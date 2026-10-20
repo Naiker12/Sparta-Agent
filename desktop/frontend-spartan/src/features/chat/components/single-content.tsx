@@ -7,12 +7,12 @@
 
 import { Thread } from "@/components/assistant-ui/thread";
 import { AutomationRunControls } from './automation-run-controls';
+import { ChatPaneToolbar } from "./chat-panels-workspace";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { WorkspacePanelContainer } from "@/components/workspace-rail";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { type ReactElement, memo, useEffect, useRef, useState } from "react";
@@ -156,8 +156,9 @@ export const SingleContent = memo(function SingleContent({
 
   const threadPane = (
     <div className="flex min-h-0 min-w-0 flex-1 basis-0 flex-col overflow-hidden">
+      <ChatPaneToolbar sourceId={threadId ?? activeThreadId ?? undefined} />
       <AutomationRunControls threadId={threadId ?? activeThreadId} />
-      <Thread hideWelcome={Boolean(threadId)} targetThreadId={threadId} />
+      <Thread targetThreadId={threadId} />
     </div>
   );
 
@@ -243,7 +244,6 @@ export const SingleContent = memo(function SingleContent({
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
-        {!isMobile && <WorkspacePanelContainer projectId={projectId} />}
       </div>
       {openResearchRunId && researchMatchesThread ? (
         <ResearchActivitySheet

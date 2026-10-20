@@ -39,8 +39,67 @@
   animation: welcome-logo-arrive 560ms var(--ease-out-quart) both;
 }
 
+@keyframes memory-nebula-drift {
+  0%,
+  100% {
+    transform: translate3d(calc(-2% + var(--memory-depth-x, 0px)), var(--memory-depth-y, 0px), 0) scale(1);
+  }
+  50% {
+    transform: translate3d(calc(2% + var(--memory-depth-x, 0px)), calc(1% + var(--memory-depth-y, 0px)), 0) scale(1.08);
+  }
+}
+
+@keyframes memory-stars-drift {
+  from {
+    transform: translate3d(var(--memory-stars-x, 0px), var(--memory-stars-y, 0px), 0);
+    background-position: 0 0, 0 0, 0 0, 0 0;
+  }
+  to {
+    transform: translate3d(calc(var(--memory-stars-x, 0px) + 16px), calc(var(--memory-stars-y, 0px) - 11px), 0);
+    background-position: 38px 24px, -24px 35px, 18px -30px, -32px -18px;
+  }
+}
+
+.dark .memory-universe-surface {
+  isolation: isolate;
+  background-color: #090d16;
+}
+
+.dark .memory-universe-surface::before,
+.dark .memory-universe-surface::after {
+  content: "";
+  position: absolute;
+  inset: -4%;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.dark .memory-universe-surface::before {
+  background:
+    radial-gradient(ellipse at 24% 38%, rgb(89 91 207 / 25%), transparent 40%),
+    radial-gradient(ellipse at 72% 58%, rgb(24 139 169 / 21%), transparent 38%),
+    radial-gradient(ellipse at 54% 18%, rgb(147 72 174 / 17%), transparent 34%),
+    radial-gradient(ellipse at 48% 48%, rgb(42 77 143 / 12%), transparent 62%);
+  filter: blur(22px);
+  animation: memory-nebula-drift 32s ease-in-out infinite alternate;
+}
+
+.dark .memory-universe-surface::after {
+  inset: 0;
+  opacity: 0.62;
+  background-image:
+    radial-gradient(1px 1px at 18px 27px, rgb(224 235 255 / 85%) 99%, transparent),
+    radial-gradient(1px 1px at 83px 61px, rgb(160 190 255 / 72%) 99%, transparent),
+    radial-gradient(1.5px 1.5px at 142px 112px, rgb(255 255 255 / 78%) 99%, transparent),
+    radial-gradient(2px 2px at 55px 132px, rgb(173 210 255 / 72%) 99%, transparent);
+  background-size: 190px 150px, 230px 190px, 270px 220px, 310px 260px;
+  animation: memory-stars-drift 42s linear infinite alternate;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .aui-thread-welcome-logo {
+  .aui-thread-welcome-logo,
+  .dark .memory-universe-surface::before,
+  .dark .memory-universe-surface::after {
     animation: none;
   }
 }
@@ -1261,7 +1320,7 @@ html[data-chat-font] .aui-root {
     padding-right: 6px;
   }
   .project-folder-row .sidebar-row-action {
-    @apply static size-6 justify-center p-0;
+    @apply static size-6 justify-center p-0 opacity-100 pointer-events-auto;
   }
   .project-folder-row .sidebar-row-action.is-unpin-action {
     right: auto;
@@ -3676,5 +3735,38 @@ html[data-chat-font] .aui-root {
       transparent
     );
     color: color-mix(in srgb, var(--control-accent) 60%, var(--foreground));
+  }
+}
+/* Panel classes style the library's inner node; hide its outer flex item so
+   inactive mobile chats do not reserve width. Keep runtimes mounted. */
+.chat-panels-mobile > [data-pane-hidden="true"] {
+  display: none !important;
+}
+
+/* Each pane owns its header. The workspace reserves the application toolbar once. */
+.chat-panels-workspace .aui-thread-viewport {
+  padding-top: 1rem;
+}
+.chat-panels-workspace [data-chat-pane-id] {
+  container-type: inline-size;
+}
+.chat-pane-resize-handle {
+  flex: 0 0 5px;
+  width: 5px;
+  -webkit-app-region: no-drag;
+}
+.chat-pane-header {
+  -webkit-app-region: no-drag;
+}
+.chat-panels-workspace[data-inline-pane-headers="true"] [data-chat-pane-header] {
+  height: var(--studio-chat-header-height, 48px);
+  min-height: var(--studio-chat-header-height, 48px);
+}
+.chat-panels-workspace[data-inline-pane-headers="true"] [data-pane-last="true"] [data-chat-pane-header] {
+  padding-right: 132px;
+}
+@container (max-width: 480px) {
+  [data-pane-composer] .pane-control-label {
+    display: none;
   }
 }

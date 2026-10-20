@@ -1048,6 +1048,8 @@ async def stream_with_studio_tools(
         round_id += 1
         assistant_tool_calls: list[dict[str, Any]] = []
         tool_messages: list[dict[str, Any]] = []
+        presented_form = False
+        presentation_failed = False
         noop_messages: list[dict[str, Any]] = []
         turn_executed_real_tool = False
 
@@ -1274,6 +1276,17 @@ async def stream_with_studio_tools(
                 tool_stream.close()
 
             completion = controller.record_result(decision, result)
+            if name == "present_ui":
+                try:
+                    from core.inference.response_panels import validate_panel
+                    rendered = json.loads(result)
+                    if rendered.get("kind") == "response_panel":
+                        panel = validate_panel(rendered.get("panel"))
+                        presented_form = presented_form or any(block["kind"] == "form" for block in panel["blocks"])
+                    else:
+                        presentation_failed = True
+                except (ValueError, TypeError, AttributeError, KeyError):
+                    presentation_failed = True
             # Counted whether or not the tool succeeded: a failing call has
             # already done its work (and possibly its side effects), so letting
             # it run for free would put the budget past max_calls. Counted per
@@ -1322,6 +1335,10 @@ async def stream_with_studio_tools(
                 continue_final_message = run.continue_final_message,
             )
         conversation.extend(tool_messages)
+        # A displayed form is the response: collect input in the next user turn.
+        # Complete all calls first, and keep mixed tool steps on the ordinary path.
+        if presented_form and not presentation_failed and assistant_tool_calls and all(call["function"]["name"] == "present_ui" for call in assistant_tool_calls):
+            break
         # Deferred to after the results so a no-op never splits a call from them,
         # and merged into a trailing user turn so the roles keep alternating.
         _append_user_turn(

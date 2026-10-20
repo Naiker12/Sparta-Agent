@@ -4,11 +4,13 @@ import { readFileSync } from "node:fs";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
+import { frontendDependencyCacheKey } from "../../scripts/frontend-dependency-cache.mjs";
 
 const { version } = JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8"));
 
 // https://vite.dev/config/
 export default defineConfig({
+  cacheDir: path.resolve(__dirname, "node_modules/.vite", `spartan-${frontendDependencyCacheKey()}`),
   define: { __SPARTA_VERSION__: JSON.stringify(version) },
   plugins: [react(), tailwindcss()],
   // Keep an unrelated PostCSS config in an ancestor directory from leaking

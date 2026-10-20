@@ -74,6 +74,19 @@ test("the gpt-5.6 family gets the gpt-5.5 reasoning ladder", () => {
   }
 });
 
+test("Groq models use their documented max-output limits", () => {
+  assert.equal(
+    getExternalMaxOutputTokens("groq", "llama-prompt-guard-2-22m"),
+    512,
+  );
+  assert.equal(getExternalMaxOutputTokens("groq", "openai/gpt-oss-20b"), 65536);
+  assert.equal(getExternalMaxOutputTokens("groq", "qwen/qwen3.8-27b"), 16384);
+  assert.equal(
+    getExternalMaxOutputTokens("groq", "qwen/qwen3.8-27b", 32768),
+    16384,
+  );
+});
+
 test("ChatGPT subscription models expose Studio-owned search and code tools", () => {
 
   setProviderModelCapabilities("openai_codex", {

@@ -10,11 +10,12 @@ import {
   toolOutputKey,
   useToolPaneScope,
   useUnresolvedToolPaneScope,
-} from "@/features/chat";
+} from "@/features/chat/tool-output-scope";
 import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 import { useCollapseScrollLock } from "@/hooks/use-collapse-scroll-lock";
 import { cn } from "@/lib/utils";
 import { useAuiState } from "@assistant-ui/react";
+import { useT } from "@/i18n";
 import { Wrench01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type VariantProps, cva } from "class-variance-authority";
@@ -116,7 +117,11 @@ function ToolGroupTrigger({
   count: number;
   active?: boolean;
 }) {
-  const label = `${count} tool ${count === 1 ? "call" : "calls"}`;
+  const t = useT();
+  const label = t(
+    active ? "chat.responseUi.searching" : "chat.responseUi.activity",
+    { count },
+  );
 
   return (
     <CollapsibleTrigger
@@ -217,13 +222,26 @@ const ToolGroupImpl: FC<
   PropsWithChildren<{ startIndex: number; endIndex: number }>
 > = ({ children, startIndex, endIndex }) => {
   const toolCount = endIndex - startIndex + 1;
+  const onlyWebSearch = useAuiState(({ message }) =>
+    message.parts
+      .slice(startIndex, endIndex + 1)
+      .every(
+        (part) =>
+          part.type === "tool-call" &&
+          (part.toolName === "web_search" || part.toolName === "web_fetch"),
+      ),
+  );
   const containsUngroupedTool = useAuiState(({ message }) =>
     message.parts
       .slice(startIndex, endIndex + 1)
       .some(
         (part) =>
           part.type === "tool-call" &&
-          (part.toolName === "render_html" || part.toolName === "python"),
+          (part.toolName === "present_ui" || part.toolName === "render_html" ||
+            part.toolName === "python" ||
+            (part.toolName === "web_search" &&
+              (part.args as { search_type?: string })?.search_type ===
+                "images")),
       ),
   );
   // A blocking allow/deny prompt must never be hidden inside a collapsed
@@ -243,6 +261,24 @@ const ToolGroupImpl: FC<
   );
   const messageRunning = useAuiState(
     ({ message }) => message.status?.type === "running",
+  );
+  const webCallRunning = useAuiState(({ message }) =>
+    message.parts
+      .slice(startIndex, endIndex + 1)
+      .some(
+        (part) => part.type === "tool-call" && part.status?.type === "running",
+      ),
+  );
+  const hasFailedCall = useAuiState(({ message }) =>
+    message.parts
+      .slice(startIndex, endIndex + 1)
+      .some(
+        (part) =>
+          part.type === "tool-call" &&
+          (part.status?.type === "incomplete" ||
+            (typeof part.result === "string" &&
+              /^(?:Error:|Failed|Blocked:)/i.test(part.result))),
+      ),
   );
   // Force the group open when any call is receiving tool_output events.
   const toolLiveOutput = useChatRuntimeStore((s) => s.toolLiveOutput);
@@ -272,18 +308,22 @@ const ToolGroupImpl: FC<
   }
   const forceOpen =
     hasPendingConfirmation ||
+    hasFailedCall ||
     (hasLiveOutput && messageRunning) ||
     (forcedOpenRef.current && messageRunning);
 
   // Render single calls, canvases, and Python scripts directly so their
   // persistent content never hides in a collapsed group.
-  if (toolCount <= 1 || containsUngroupedTool) {
+  if ((toolCount <= 1 && !onlyWebSearch) || containsUngroupedTool) {
     return <>{children}</>;
   }
 
   return (
     <ToolGroupRoot open={forceOpen ? true : undefined}>
-      <ToolGroupTrigger count={toolCount} />
+      <ToolGroupTrigger
+        count={toolCount}
+        active={messageRunning && onlyWebSearch && webCallRunning}
+      />
       <ToolGroupContent>{children}</ToolGroupContent>
     </ToolGroupRoot>
   );

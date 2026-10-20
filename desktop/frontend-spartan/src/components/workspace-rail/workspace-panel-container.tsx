@@ -2,6 +2,7 @@ import { useT as useUiT } from "@/i18n";
 import { useChatProjects } from "@/features/chat/hooks/use-chat-projects";
 import { useThreadFileScope } from "@/features/chat/hooks/use-thread-file-scope";
 import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
+import { useChatPanelsStore } from "@/features/chat/stores/chat-panels-store";
 import { useWorkspaceStore } from "@/features/chat/stores/use-workspace-store";
 import {
   Empty,
@@ -41,7 +42,9 @@ export function WorkspacePanelContainer({
   const activeTab = useWorkspaceStore((state) => state.activeTab);
   const setOpen = useWorkspaceStore((state) => state.setOpen);
   const activeProjectId = useChatRuntimeStore((state) => state.activeProjectId);
-  const threadId = useChatRuntimeStore((state) => state.activeThreadId);
+  const activeThreadId = useChatRuntimeStore((state) => state.activeThreadId);
+  const pane = useChatPanelsStore(state => state.workspaceMounted ? state.panes.find(candidate => candidate.id === state.focusedId) : undefined);
+  const threadId = pane?.thread.id ?? activeThreadId;
   const {
     scope,
     error: scopeError,
@@ -51,7 +54,7 @@ export function WorkspacePanelContainer({
   // A new chat does not yet have a project id in its URL, but its composer can
   // already be connected to the active project workspace. Use that project for
   // the Files rail so attaching a folder immediately exposes its contents.
-  const resolvedProjectId = projectId ?? activeProjectId;
+  const resolvedProjectId = pane ? pane.thread.projectId : projectId ?? activeProjectId;
   const project =
     scope ??
     projects.find((candidate) => candidate.id === resolvedProjectId) ??
@@ -103,7 +106,7 @@ export function WorkspacePanelContainer({
   };
 
   return (
-    <div className="flex h-full min-h-0 overflow-hidden bg-background">
+    <div data-workspace-panel-container className="flex h-full min-h-0 overflow-hidden bg-background">
       {isOpen && (
         <div
           style={{ width: `min(${panelWidth}px, 60vw)` }}

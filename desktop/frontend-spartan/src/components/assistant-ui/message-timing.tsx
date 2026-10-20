@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
-import { useMessage, useMessageTiming } from "@assistant-ui/react";
+import { useAuiState, useMessageTiming } from "@assistant-ui/react";
 import type { FC } from "react";
 
 const formatTimingMs = (ms: number | undefined): string => {
@@ -48,7 +48,7 @@ export const MessageTiming: FC<{
   const uiT = useUiT();
 
   const timing = useMessageTiming();
-  const message = useMessage();
+  const message = useAuiState((s) => s.message);
   const t = useT();
 
   if (timing?.totalStreamTime === undefined) {

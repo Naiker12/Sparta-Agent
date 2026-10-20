@@ -1,5 +1,7 @@
 // Browser verification of the actual composer controls with a simulated provider.
 import { chromium } from "playwright";
+import { viteDependencyBase } from "./helpers/vite-dependency-base.mjs";
+const dependencyBase = await viteDependencyBase();
 import { mkdirSync } from "node:fs";
 const browser = await chromium.launch({ headless: true, channel: "msedge" });
 const page = await browser.newPage({ viewport: { width: 960, height: 560 } });
@@ -17,7 +19,7 @@ import RefreshRuntime from '/@react-refresh'; RefreshRuntime.injectIntoGlobalHoo
 window.$RefreshReg$=()=>{}; window.$RefreshSig$=()=>type=>type; window.__vite_plugin_react_preamble_installed__=true;
 </script>
 <script type="module">
-import React from '/node_modules/.vite/deps/react.js'; import ReactDOM from '/node_modules/.vite/deps/react-dom_client.js';
+import React from '${dependencyBase}/react.js'; import ReactDOM from '${dependencyBase}/react-dom_client.js';
 import '/desktop/frontend-spartan/src/index.css';
 import {setLocale} from '/desktop/frontend-spartan/src/i18n/index.ts';
 import {ApiProviderModelSelector} from '/desktop/frontend-spartan/src/features/chat/components/api-provider-model-selector.tsx';
@@ -28,7 +30,7 @@ import {useChatRuntimeStore as runtime} from '${runtimeUrl}';
 import {useExternalProvidersStore as connections} from '/desktop/frontend-spartan/src/features/chat/stores/external-providers-store.ts';
 import {buildExternalModelId} from '/desktop/frontend-spartan/src/features/chat/external-providers.ts';
 import {getExternalReasoningCapabilities} from '/desktop/frontend-spartan/src/features/chat/provider-capabilities.ts';
-import {Toaster} from '/node_modules/.vite/deps/sonner.js';
+import {Toaster} from '${dependencyBase}/sonner.js';
 setLocale('es');
 connections.getState().setConnectionsEnabled(true);
 connections.getState().setProviders([{id:'test',providerType:'openrouter',name:'OpenRouter',baseUrl:'https://openrouter.ai/api/v1',models:['openrouter/free'],hasApiKey:true}]);

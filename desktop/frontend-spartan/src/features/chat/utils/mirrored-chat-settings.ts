@@ -25,7 +25,7 @@ const MIRRORED_BOOLEAN_KEYS = [
 ] as const satisfies readonly (keyof PersistedChatSettings)[];
 
 const MIRRORED_ENUM_VALUES = {
-  // "full" (Full access) is session-only and never persisted.
+  // Full access is device-local and never mirrored to other clients.
   permissionMode: ["ask", "auto", "off"],
   ragMode: ["hybrid", "lexical", "dense"],
   ragAutoInject: ["auto", "on", "off"],

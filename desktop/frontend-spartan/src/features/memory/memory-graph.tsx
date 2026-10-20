@@ -4,6 +4,64 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { MemoryGraphData } from "./memory-types";
 
+type GraphPosition = { x: number; y: number };
+type LayoutPositions = Record<string, GraphPosition>;
+const POSITION_STORAGE_KEY = "spartan.memory.graph.positions.v2";
+const TOPOLOGY_STORAGE_KEY = "spartan.memory.graph.topology.v2";
+
+function hash(value: string) {
+  let result = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    result ^= value.charCodeAt(index);
+    result = Math.imul(result, 16777619);
+  }
+  return result >>> 0;
+}
+
+function seedPosition(id: string): GraphPosition {
+  const seed = hash(id);
+  const angle = (seed / 0xffffffff) * Math.PI * 2;
+  const radius = 120 + ((seed >>> 8) % 180);
+  return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius };
+}
+
+function readSavedPositions(): LayoutPositions {
+  try {
+    const parsed = JSON.parse(
+      localStorage.getItem(POSITION_STORAGE_KEY) ?? "{}",
+    ) as LayoutPositions;
+    return Object.fromEntries(
+      Object.entries(parsed).filter(
+        ([, point]) =>
+          Number.isFinite(point?.x) && Number.isFinite(point?.y),
+      ),
+    );
+  } catch {
+    return {};
+  }
+}
+
+function readSavedTopology() {
+  try {
+    return localStorage.getItem(TOPOLOGY_STORAGE_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function savePositions(positions: LayoutPositions, topology: string) {
+  try {
+    const previous = readSavedPositions();
+    localStorage.setItem(
+      POSITION_STORAGE_KEY,
+      JSON.stringify({ ...previous, ...positions }),
+    );
+    localStorage.setItem(TOPOLOGY_STORAGE_KEY, topology);
+  } catch {
+    // Private browsing or storage limits should not prevent graph rendering.
+  }
+}
+
 // Cytoscape expects RGB colors; the app's theme uses OKLCH tokens.
 function graphColor(color: string) {
   const canvas = document.createElement("canvas");
@@ -14,20 +72,6 @@ function graphColor(color: string) {
   const [red, green, blue] = context.getImageData(0, 0, 1, 1).data;
   return `rgb(${red}, ${green}, ${blue})`;
 }
-
-const nodeIcon = (type: string) => {
-  const paths: Record<string, string> = {
-    entity:
-      '<circle cx="12" cy="8" r="3"/><path d="M5 21v-2a7 7 0 0 1 14 0v2"/>',
-    preference:
-      '<path d="M20 5a5 5 0 0 0-8 1 5 5 0 0 0-8-1c-4 4 0 9 8 15 8-6 12-11 8-15Z"/>',
-    event:
-      '<rect x="4" y="5" width="16" height="16" rx="3"/><path d="M8 3v4M16 3v4M4 11h16"/>',
-    episode: '<path d="M21 11a9 9 0 0 1-9 9H4l-2 2V11a9 9 0 0 1 19 0Z"/>',
-    fact: '<path d="M9 18h6M9 21h6M8 14a6 6 0 1 1 8 0l-1 3H9Z"/>',
-  };
-  return `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#183956" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${paths[type] ?? paths.fact}</svg>`)}`;
-};
 
 export function MemoryGraph({
   graph,
@@ -42,6 +86,8 @@ export function MemoryGraph({
 
   const container = useRef<HTMLDivElement>(null);
   const instance = useRef<Core | null>(null);
+  const layoutWorker = useRef<Worker | null>(null);
+  const savedPositions = useRef<LayoutPositions | null>(null);
   const selection = useRef(onSelect);
   useEffect(() => {
     selection.current = onSelect;
@@ -59,15 +105,15 @@ export function MemoryGraph({
         {
           selector: "node",
           style: {
-            label: "data(label)",
-            width: 40,
-            height: 40,
-            "background-image": "data(icon)",
-            "background-width": "58%",
-            "background-height": "58%",
+            // A large episode graph is unreadable with every sentence painted
+            // at once. Labels appear only for the hovered node and selection.
+            label: "",
+            width: 16,
+            height: 16,
             "background-color": "#319cff",
-            "border-width": 2,
-            "border-color": "#f4efe6",
+            "border-width": 0.8,
+            "border-color": "#d9e5f5",
+            "border-opacity": 0.7,
             "font-size": 13,
             "font-family": "Figtree, sans-serif",
             "text-valign": "bottom",
@@ -95,23 +141,35 @@ export function MemoryGraph({
         {
           selector: "edge",
           style: {
-            width: 1.2,
-            "line-color": "#a9b4c4",
+            width: 0.85,
+            "line-color": "#9aa9c0",
             "curve-style": "bezier",
             "target-arrow-shape": "triangle",
-            "target-arrow-color": "#a9b4c4",
-            "arrow-scale": 0.65,
-            opacity: 0.55,
+            "target-arrow-color": "#9aa9c0",
+            "arrow-scale": 0.45,
+            opacity: 0.34,
           },
         },
         { selector: ".muted", style: { opacity: 0.25 } },
         {
+          selector: "node.focus, node.hover",
+          style: {
+            label: "data(label)",
+            "text-background-color": "#f4efe6",
+            "text-background-opacity": 0.96,
+            "text-background-padding": "4px",
+            "text-wrap": "wrap",
+            "text-max-width": "180px",
+            "z-index": 10,
+          },
+        },
+        {
           selector: "node:selected",
           style: {
             "border-color": "#299cff",
-            "border-width": 4,
-            width: 52,
-            height: 52,
+            "border-width": 2,
+            width: 22,
+            height: 22,
           },
         },
         {
@@ -140,6 +198,9 @@ export function MemoryGraph({
       cy.style()
         .selector("node")
         .style("color", foreground)
+        .selector("node.focus, node.hover")
+        .style("text-background-color", background)
+        .style("color", foreground)
         .selector("edge.focus")
         .style("color", foreground)
         .style("text-background-color", background)
@@ -156,6 +217,8 @@ export function MemoryGraph({
       attributeFilter: ["class", "style"],
     });
     cy.on("tap", "node", (event) => selection.current(event.target.id()));
+    cy.on("mouseover", "node", (event) => event.target.addClass("hover"));
+    cy.on("mouseout", "node", (event) => event.target.removeClass("hover"));
     cy.on("tap", (event) => {
       if (event.target === cy) selection.current(null);
     });
@@ -179,6 +242,8 @@ export function MemoryGraph({
     return () => {
       resize.disconnect();
       themeObserver.disconnect();
+      layoutWorker.current?.terminate();
+      layoutWorker.current = null;
       cy.destroy();
       instance.current = null;
     };
@@ -188,63 +253,108 @@ export function MemoryGraph({
     if (!cy) return;
     const signature = JSON.stringify(graph);
     if (cy.scratch("signature") === signature) return;
+    savedPositions.current ??= readSavedPositions();
+    const topologySignature = JSON.stringify({
+      nodes: graph.nodes.map(({ id }) => id).sort(),
+      edges: graph.edges
+        .map(({ id, source, target }) => [id, source, target])
+        .sort(([left], [right]) => String(left).localeCompare(String(right))),
+    });
     const oldPositions = new Map(
       cy.nodes().map((node) => [node.id(), node.position()] as const),
     );
+    const existingNodeIds = new Set(cy.nodes().map((node) => node.id()));
+    const existingEdgeIds = new Set(cy.edges().map((edge) => edge.id()));
     const changedTopology =
       graph.nodes.length !== cy.nodes().length ||
       graph.edges.length !== cy.edges().length ||
-      graph.nodes.some((node) => !oldPositions.has(node.id));
+      graph.nodes.some((node) => !existingNodeIds.has(node.id)) ||
+      graph.edges.some((edge) => {
+        const previous = cy.getElementById(edge.id);
+        return (
+          !existingEdgeIds.has(edge.id) ||
+          previous.data("source") !== edge.source ||
+          previous.data("target") !== edge.target
+        );
+      });
     cy.batch(() => {
       cy.elements().remove();
       cy.add([
-        ...graph.nodes.map((node, index) => ({
+        ...graph.nodes.map((node) => ({
           data: {
             ...node,
-            icon: nodeIcon(node.type),
             label:
               node.label.length > 65
                 ? `${node.label.slice(0, 62)}…`
                 : node.label,
           },
-          position: oldPositions.get(node.id) ?? {
-            x: (index % 6) * 180,
-            y: Math.floor(index / 6) * 150,
-          },
+          position:
+            oldPositions.get(node.id) ??
+            savedPositions.current?.[node.id] ??
+            seedPosition(node.id),
         })),
         ...graph.edges.map((edge) => ({ data: edge })),
       ]);
     });
     cy.scratch("signature", signature);
-    if (changedTopology && graph.nodes.length) {
-      cy.layout({
-        name: "cose",
-        animate: false,
-        randomize: false,
-        padding: 45,
-        nodeDimensionsIncludeLabels: true,
-        nodeRepulsion: () => 4500,
-        idealEdgeLength: () => 110,
-        componentSpacing: 60,
-        nodeOverlap: 35,
-      }).run();
-      // Keep the local map readable rather than fitting a very spread-out layout.
-      const bounds = cy.nodes().boundingBox();
-      const scale = Math.min(
-        1,
-        850 / Math.max(bounds.w, 1),
-        520 / Math.max(bounds.h, 1),
+    const canReuseSavedLayout =
+      graph.nodes.length > 0 &&
+      graph.nodes.every((node) => savedPositions.current?.[node.id]) &&
+      readSavedTopology() === topologySignature;
+    if (changedTopology && graph.nodes.length && !canReuseSavedLayout) {
+      layoutWorker.current?.terminate();
+      const worker = new Worker(
+        new URL("./memory-layout.worker.ts", import.meta.url),
+        { type: "module" },
       );
-      if (scale < 1)
-        cy.nodes().positions((node) => ({
-          x: node.position("x") * scale,
-          y: node.position("y") * scale,
-        }));
+      layoutWorker.current = worker;
+      worker.onmessage = (event: MessageEvent<LayoutPositions>) => {
+        if (layoutWorker.current !== worker || instance.current !== cy) return;
+        cy.batch(() => {
+          cy.nodes().forEach((node) => {
+            const point = event.data[node.id()];
+            if (point) node.position(point);
+          });
+        });
+        savedPositions.current = {
+          ...(savedPositions.current ?? {}),
+          ...event.data,
+        };
+        savePositions(event.data, topologySignature);
+        worker.terminate();
+        layoutWorker.current = null;
+        cy.fit(undefined, 45);
+        if (graph.nodes.length === 1) {
+          cy.zoom(1);
+          cy.center();
+        }
+      };
+      worker.onerror = () => {
+        if (layoutWorker.current !== worker) return;
+        worker.terminate();
+        layoutWorker.current = null;
+        cy.layout({
+          name: "cose",
+          animate: true,
+          animationDuration: 450,
+          randomize: true,
+          padding: 45,
+          nodeDimensionsIncludeLabels: false,
+          nodeRepulsion: () => 4500,
+          idealEdgeLength: () => 90,
+          componentSpacing: 50,
+          nodeOverlap: 24,
+        }).run();
+      };
+      worker.postMessage({
+        nodes: graph.nodes.map((node) => ({
+          id: node.id,
+          ...(oldPositions.get(node.id) ?? savedPositions.current?.[node.id] ?? seedPosition(node.id)),
+        })),
+        edges: graph.edges,
+      });
+    } else if (changedTopology && graph.nodes.length) {
       cy.fit(undefined, 45);
-      if (graph.nodes.length === 1) {
-        cy.zoom(1);
-        cy.center();
-      }
     }
   }, [graph]);
   useEffect(() => {
@@ -258,12 +368,30 @@ export function MemoryGraph({
         node.select();
         const nearby = node.closedNeighborhood();
         cy.elements().difference(nearby).addClass("muted");
+        nearby.nodes().addClass("focus");
         node.connectedEdges().addClass("focus");
       }
     });
   }, [selectedId, graph]);
   return (
-    <div className="relative h-full min-h-0">
+    <div
+      className="memory-universe-surface relative h-full min-h-0 overflow-hidden rounded-lg"
+      onPointerMove={(event) => {
+        const bounds = event.currentTarget.getBoundingClientRect();
+        const x = ((event.clientX - bounds.left) / bounds.width - 0.5) * 2;
+        const y = ((event.clientY - bounds.top) / bounds.height - 0.5) * 2;
+        event.currentTarget.style.setProperty("--memory-depth-x", `${(x * 14).toFixed(1)}px`);
+        event.currentTarget.style.setProperty("--memory-depth-y", `${(y * 10).toFixed(1)}px`);
+        event.currentTarget.style.setProperty("--memory-stars-x", `${(x * -9).toFixed(1)}px`);
+        event.currentTarget.style.setProperty("--memory-stars-y", `${(y * -7).toFixed(1)}px`);
+      }}
+      onPointerLeave={(event) => {
+        event.currentTarget.style.setProperty("--memory-depth-x", "0px");
+        event.currentTarget.style.setProperty("--memory-depth-y", "0px");
+        event.currentTarget.style.setProperty("--memory-stars-x", "0px");
+        event.currentTarget.style.setProperty("--memory-stars-y", "0px");
+      }}
+    >
       <div
         ref={container}
         className="h-full w-full"

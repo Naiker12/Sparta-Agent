@@ -66,6 +66,28 @@ export function snapshotQueuedChatRunSettings(
   return structuredClone(snapshot);
 }
 
+/** Keep a send's choices stable while model loading and navigation await IO. */
+export function bindChatRunSettings(state: ChatRuntimeState) {
+  const snapshot = snapshotQueuedChatRunSettings(state);
+  return (live: ChatRuntimeState): ChatRuntimeState => {
+    const bound = { ...live, ...structuredClone(snapshot) };
+    // An empty selection can be filled by the local model auto-loader. Its
+    // capabilities are only known after loading; permission choices remain
+    // those of the sending chat, including explicit false values.
+    if (!snapshot.params.checkpoint) {
+      bound.params.checkpoint = live.params.checkpoint;
+      for (const key of [
+        "supportsTools", "supportsReasoning", "reasoningAlwaysOn",
+        "reasoningStyle", "supportsReasoningOff", "reasoningEffortLevels",
+        "supportsPreserveThinking", "ggufContextLength",
+      ] as const) {
+        Object.assign(bound, { [key]: live[key] });
+      }
+    }
+    return bound;
+  };
+}
+
 export function registerQueuedChatRunSettings(
   threadIds: string[],
   settings: QueuedChatRunSettings,

@@ -1,4 +1,6 @@
 import { chromium } from "playwright";
+import { viteDependencyBase } from "./helpers/vite-dependency-base.mjs";
+const dependencyBase = await viteDependencyBase();
 const browser = await chromium.launch({headless:true, channel:"msedge", args:["--disable-features=LocalNetworkAccessChecks,LocalNetworkAccessChecksWebSockets"]});
 const page = await browser.newPage();
 const errors = [];
@@ -16,8 +18,8 @@ import RefreshRuntime from '/@react-refresh'; RefreshRuntime.injectIntoGlobalHoo
 window.$RefreshReg$=()=>{}; window.$RefreshSig$=()=>type=>type; window.__vite_plugin_react_preamble_installed__=true;
 </script>
 <script type="module">
-import React from '/node_modules/.vite/deps/react.js';
-import ReactDOM from '/node_modules/.vite/deps/react-dom_client.js';
+import React from '${dependencyBase}/react.js';
+import ReactDOM from '${dependencyBase}/react-dom_client.js';
 import {AssistantRuntimeProvider,useLocalRuntime,ComposerPrimitive} from '${assistantUrl}';
 import {ComposerMentions} from '/desktop/frontend-spartan/src/features/chat/composer-mentions.tsx';
 import {withRunErrorStatus} from '/desktop/frontend-spartan/src/features/chat/utils/run-error-status.ts';

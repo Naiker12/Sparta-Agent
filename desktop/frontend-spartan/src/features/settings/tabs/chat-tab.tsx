@@ -114,6 +114,8 @@ const PLUS_MENU_SETTINGS: {
 
 export function ChatTab() {
   const t = useT();
+  const visualResponses = useChatPreferencesStore((s) => s.visualResponses);
+  const setVisualResponses = useChatPreferencesStore((s) => s.setVisualResponses);
   const plusPins = usePlusMenuPrefsStore((state) => state.pins);
   const togglePlusPin = usePlusMenuPrefsStore((state) => state.togglePin);
   const autoTitle = useChatRuntimeStore((state) => state.autoTitle);
@@ -203,6 +205,9 @@ export function ChatTab() {
         title={t("settings.chat.response.title")}
         description={t("settings.chat.response.description")}
       >
+        <SettingsRow label={t("settings.chat.visualResponses")} description={t("settings.chat.visualResponsesDescription")}>
+          <Switch checked={visualResponses} onCheckedChange={setVisualResponses} aria-label={t("settings.chat.visualResponses")} />
+        </SettingsRow>
         <SettingsRow
           label={t("settings.chat.response.systemPrompt")}
           description={t("settings.chat.response.systemPromptDescription")}

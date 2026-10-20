@@ -4,10 +4,12 @@ import {
   PROMPT_QUEUE_STOP_EVENT,
   type PromptQueueRunFailedEventDetail,
   type PromptQueueStopEventDetail,
-  planLocalPromptQueueStop,
+} from "@/features/chat/utils/prompt-queue-boundary";
+import { planLocalPromptQueueStop } from "@/features/chat/utils/prompt-queue-model-boundary";
+import {
   promptQueueActiveItemChanged,
   reorderPromptQueueItems,
-} from "@/features/chat";
+} from "@/features/chat/utils/prompt-queue-reorder";
 import { resolveProjectId } from "@/features/chat/api/chat-adapter";
 import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 import {

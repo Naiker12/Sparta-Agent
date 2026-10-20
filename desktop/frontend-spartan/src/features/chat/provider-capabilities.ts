@@ -91,6 +91,16 @@ const EXTERNAL_MAX_OUTPUT_TOKENS_BY_MODEL: Array<{
   prefixes: readonly string[];
   cap: number;
 }> = [
+  // Groq documents model-specific limits that are much lower for its guard
+  // models than the generic external-provider fallback. Without these entries
+  // the chat adapter can send 32,768 tokens to a model that accepts only 512.
+  { providerType: "groq", prefixes: ["llama-prompt-guard-2-22m"], cap: 512 },
+  {
+    providerType: "groq",
+    prefixes: ["openai/gpt-oss-20b", "openai/gpt-oss-120b"],
+    cap: 65536,
+  },
+  { providerType: "groq", prefixes: ["qwen/qwen3.8-27b"], cap: 16384 },
   // OpenAI
   {
     providerType: "openai",

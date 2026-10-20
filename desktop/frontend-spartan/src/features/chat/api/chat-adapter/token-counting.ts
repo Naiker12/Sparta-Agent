@@ -1,5 +1,6 @@
 import { clampReasoningEffortToLevels } from "../../provider-capabilities";
 import { useChatRuntimeStore } from "../../stores/chat-runtime-store";
+import { useChatPreferencesStore } from "../../stores/chat-preferences-store";
 import type { ThreadRecord } from "../../types";
 import {
   getStoredChatThread,
@@ -116,9 +117,10 @@ export async function buildLocalTokenCountExtras(
     ? Boolean(await getThreadWorkspace(threadId).catch(() => null))
     : false;
   const ragOn = ragEnabled || projectRagEnabled;
+  const panelUiEnabled = useChatPreferencesStore.getState().visualResponses;
   if (
     !(
-      toolsEnabled ||
+      panelUiEnabled || toolsEnabled ||
       codeToolsEnabled ||
       artifactsEnabled ||
       mcpEnabledForChat ||
@@ -134,6 +136,7 @@ export async function buildLocalTokenCountExtras(
     auto_heal_tool_calls: autoHealToolCalls,
     bypass_permissions: bypassPermissions,
     enabled_tools: [
+      ...(panelUiEnabled ? ["present_ui"] : []),
       ...(ragOn ? ["search_knowledge_base"] : []),
       ...(toolsEnabled ? ["web_search"] : []),
       ...(codeToolsEnabled ? ["python", "terminal", "edit_file"] : []),

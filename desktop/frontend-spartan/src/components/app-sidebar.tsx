@@ -1999,7 +1999,7 @@ export function AppSidebar() {
                                         e.stopPropagation();
                                         openNewChat(project.id);
                                       }}
-                                      className="sidebar-row-action sidebar-touch-reveal is-unpin-action group-hover/recent-item:opacity-100 group-hover/recent-item:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto"
+                                      className="sidebar-row-action is-unpin-action"
                                     >
                                       <span className="sidebar-row-action-glyph">
                                         <HugeiconsIcon
@@ -2018,7 +2018,7 @@ export function AppSidebar() {
                                           aria-label={t(
                                             "shell.navigation.projectOptions",
                                           )}
-                                          className="sidebar-row-action sidebar-touch-reveal group-hover/recent-item:opacity-100 group-hover/recent-item:pointer-events-auto focus-visible:opacity-100 focus-visible:pointer-events-auto"
+                                          className="sidebar-row-action"
                                         >
                                           <span className="sidebar-row-action-glyph">
                                             <HugeiconsIcon

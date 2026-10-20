@@ -3,6 +3,7 @@ import { translate as uiTranslate } from "@/i18n";
 import { authFetch } from "@/features/auth";
 import { subscribeAutomationRun } from "@/features/tasks/automation-run-polling";
 import { withRunErrorStatus } from "./utils/run-error-status";
+import type { QueuedChatRunSettings } from "./utils/queued-chat-run-settings";
 import {
   AssistantRuntimeProvider,
   type Attachment,
@@ -16,12 +17,12 @@ import {
   type PendingAttachment,
   type ThreadHistoryAdapter,
   type ThreadMessage,
-  type unstable_RemoteThreadListAdapter,
+  type RemoteThreadListAdapter,
   useAui,
   useAuiEvent,
   useAuiState,
   useLocalRuntime,
-  unstable_useRemoteThreadListRuntime as useRemoteThreadListRuntime,
+  useRemoteThreadListRuntime,
 } from "@assistant-ui/react";
 import { createAssistantStream } from "assistant-stream";
 import {
@@ -779,7 +780,7 @@ function createStudioDbAdapter(
   pairId?: string,
   projectId?: string | null,
   listThreads = true,
-): unstable_RemoteThreadListAdapter {
+): RemoteThreadListAdapter {
   return {
     async fetch(remoteId: string) {
       // assistant-ui assigns a __LOCALID_* while a new conversation only lives
@@ -1092,6 +1093,7 @@ async function waitForRunStartHistoryAppend(
 
 function createPersistedRunAdapter(
   adapter: ChatModelAdapter,
+  isolated = false,
 ): ChatModelAdapter {
   return withRunErrorStatus({
     ...adapter,
@@ -1101,7 +1103,7 @@ function createPersistedRunAdapter(
       );
       const reservationThreadIds = preStreamRunThreadIdsForRuntime(
         [options.unstable_threadId, ...trackedRunStartThreadIds],
-        useChatRuntimeStore.getState().activeThreadId,
+        isolated ? undefined : useChatRuntimeStore.getState().activeThreadId,
       );
       const reservationToken =
         findPreStreamRunReservation(reservationThreadIds);
@@ -1404,8 +1406,8 @@ function useStudioRuntimeAdapters(
           (itemState.id && !isAssistantLocalThreadId(itemState.id)
             ? itemState.id
             : undefined) ||
-          useChatRuntimeStore.getState().activeThreadId ||
-          searchThreadId ||
+          (!pairId ? useChatRuntimeStore.getState().activeThreadId : undefined) ||
+          (!pairId ? searchThreadId : undefined) ||
           undefined;
 
         if (!remoteId) {
@@ -1661,15 +1663,27 @@ function useStudioRuntimeAdapters(
           // loading. The later title generator honours this title instead of
           // replacing it, so this is also the deterministic fallback.
           if (message.role === "user") {
-            const thread = await ensureStoredChatThread(remoteId).catch(
-              () => undefined,
-            );
-            if (isDefaultChatTitle(thread?.title)) {
-              const title = fallbackTitleFromUserText(titleTextOf(message));
-              if (!isDefaultChatTitle(title)) {
-                await updateStoredChatThread(remoteId, { title });
+            // Naming is cosmetic: neither its latency nor a failed title PATCH
+            // should fail a send whose user message was already persisted.
+            void (async () => {
+              const thread = await ensureStoredChatThread(remoteId);
+              if (
+                isChatThreadDeleted(remoteId) ||
+                chatHistoryClearBoundary.capture() !== historyClearGeneration
+              ) {
+                return;
               }
-            }
+              if (isDefaultChatTitle(thread?.title)) {
+                const title = fallbackTitleFromUserText(titleTextOf(message));
+                if (!isDefaultChatTitle(title)) {
+                  await updateStoredChatThread(remoteId, { title });
+                }
+              }
+            })().catch((error: unknown) => {
+              if (!isExpectedBackgroundChatStorageError(error)) {
+                console.warn("Could not save the opening chat title", error);
+              }
+            });
           }
           await throwIfHistoryWasCleared(remoteId);
         })();
@@ -1727,23 +1741,26 @@ function useStudioRuntimeAdapters(
 function useRuntimeHook(
   modelType: ModelType,
   pairId?: string,
+  getRunSettings?: () => QueuedChatRunSettings,
+  projectId?: string | null,
 ): ReturnType<typeof useLocalRuntime> {
   const adapters = useStudioRuntimeAdapters(modelType, pairId);
   const persistedChatAdapter = useMemo(
     () =>
       createPersistedRunAdapter(
-        createOpenAIStreamAdapter({ modelType, pairId }),
+        createOpenAIStreamAdapter({ modelType, pairId, getRunSettings, projectId }),
+        Boolean(getRunSettings),
       ),
-    [modelType, pairId],
+    [modelType, pairId, getRunSettings, projectId],
   );
   return useLocalRuntime(persistedChatAdapter, { adapters });
 }
 
-function createRuntimeHook(modelType: ModelType, pairId?: string) {
+function createRuntimeHook(modelType: ModelType, pairId?: string, getRunSettings?: () => QueuedChatRunSettings, projectId?: string | null) {
   return function useConfiguredRuntimeHook(): ReturnType<
     typeof useLocalRuntime
   > {
-    return useRuntimeHook(modelType, pairId);
+    return useRuntimeHook(modelType, pairId, getRunSettings, projectId);
   };
 }
 
@@ -1792,6 +1809,7 @@ function ThreadNewChatSwitch({
 }: { nonce: string }): ReactElement | null {
   const aui = useAui();
   const isLoading = useAuiState(({ threads }) => threads.isLoading);
+  const switchedNonce = useRef<string | null>(null);
   const checkpoint = useChatRuntimeStore((s) => s.params.checkpoint);
   const ggufContextLength = useChatRuntimeStore((s) => s.ggufContextLength);
   const modelLoading = useChatRuntimeStore((s) => s.modelLoading);
@@ -1801,9 +1819,13 @@ function ThreadNewChatSwitch({
   );
   // The outgoing thread is not read here: New Chat leaves it running.
   useEffect(() => {
-    if (isLoading) {
+    if (isLoading || switchedNonce.current === nonce) {
       return;
     }
+    // Initializing the first message can update the thread-list loading state
+    // or client reference. It must not replay the same New Chat navigation
+    // and detach the run the user just started (including StrictMode replay).
+    switchedNonce.current = nonce;
     // Saved chats keep running in the background. A temporary chat is never
     // persisted, so abandoning it must also discard its otherwise unreachable
     // queue. Queue provenance remains reliable even if incognito was cleared first.
@@ -2345,6 +2367,7 @@ export function ChatRuntimeProvider({
   newThreadNonce,
   syncActiveThreadId = true,
   listThreads = true,
+  getRunSettings,
 }: {
   children: ReactNode;
   modelType?: ModelType;
@@ -2354,17 +2377,13 @@ export function ChatRuntimeProvider({
   newThreadNonce?: string;
   syncActiveThreadId?: boolean;
   listThreads?: boolean;
+  getRunSettings?: () => QueuedChatRunSettings;
 }): ReactElement {
-  // When the backing runtime changes, @assistant-ui/react starts its internal
-  // version counter at 0. This happens not only for model/compare changes, but
-  // also when router navigation selects a different persisted thread. Components
-  // already committed to a higher version (notably the
-  // composer mention popover) otherwise receive a downward version jump.
-  // Components already committed to a higher version (e.g. ComposerPrimitive.
-  // TriggerPopover via useResource) throw "Version is less than committed version".
-  // Giving the inner tree a new key forces React to fully unmount before mounting
-  // the new runtime so no component ever sees a downward version jump.
-  const runtimeKey = [modelType, pairId ?? "", initialThreadId ?? ""].join(":");
+  // Only a different runtime configuration needs a new React tree. The first
+  // save publishes initialThreadId while its response is starting: keying by
+  // that id would unmount the running engine and abort the first response.
+  // ThreadAutoSwitch handles navigation within this persistent thread list.
+  const runtimeKey = [modelType, pairId ?? ""].join(":");
   return (
     <ChatRuntimeProviderImpl
       key={runtimeKey}
@@ -2375,6 +2394,7 @@ export function ChatRuntimeProvider({
       newThreadNonce={newThreadNonce}
       syncActiveThreadId={syncActiveThreadId}
       listThreads={listThreads}
+      getRunSettings={getRunSettings}
     >
       {children}
     </ChatRuntimeProviderImpl>
@@ -2390,6 +2410,7 @@ function ChatRuntimeProviderImpl({
   newThreadNonce,
   syncActiveThreadId = true,
   listThreads = true,
+  getRunSettings,
 }: {
   children: ReactNode;
   modelType?: ModelType;
@@ -2399,14 +2420,19 @@ function ChatRuntimeProviderImpl({
   newThreadNonce?: string;
   syncActiveThreadId?: boolean;
   listThreads?: boolean;
+  getRunSettings?: () => QueuedChatRunSettings;
 }): ReactElement {
   const runtimeHook = useMemo(
-    () => createRuntimeHook(modelType, pairId),
-    [modelType, pairId],
+    () => createRuntimeHook(modelType, pairId, getRunSettings, projectId),
+    [modelType, pairId, getRunSettings, projectId],
+  );
+  const threadListAdapter = useMemo(
+    () => createStudioDbAdapter(modelType, pairId, projectId, listThreads),
+    [modelType, pairId, projectId, listThreads],
   );
   const runtime = useRemoteThreadListRuntime({
     runtimeHook,
-    adapter: createStudioDbAdapter(modelType, pairId, projectId, listThreads),
+    adapter: threadListAdapter,
   });
 
   const aui = useAui({});
@@ -2425,7 +2451,7 @@ function ChatRuntimeProviderImpl({
             !initialThreadId
           }
         />
-        <ThreadScopedSettingsSync enabled={modelType === "base" && !pairId} />
+        {!getRunSettings && <ThreadScopedSettingsSync enabled={modelType === "base" && !pairId} />}
         <ActiveBranchRegistrar enabled={modelType === "base" && !pairId} />
         <ThreadContextUsageRecount enabled={modelType === "base" && !pairId} />
         <ThreadBackendAutosave modelType={modelType} pairId={pairId} />

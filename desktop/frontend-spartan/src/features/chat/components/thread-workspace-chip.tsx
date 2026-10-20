@@ -71,9 +71,11 @@ function label(path: string): string {
 /** The visible workspace capability for the currently open chat. */
 export function ThreadWorkspaceChip({
   isRunning = false,
-}: { isRunning?: boolean }) {
+  threadId: explicitThreadId,
+}: { isRunning?: boolean; threadId?: string }) {
   const t = useT();
-  const threadId = useChatRuntimeStore((state) => state.activeThreadId);
+  const activeThreadId = useChatRuntimeStore((state) => state.activeThreadId);
+  const threadId = explicitThreadId ?? activeThreadId;
   const { projects, isLoading, error, retry } = useChatProjects();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -81,7 +83,7 @@ export function ThreadWorkspaceChip({
   const barRef = useRef<HTMLDivElement>(null);
   const [binding, setBinding] = useState<ThreadWorkspaceBinding | null>(null);
   const [pending, setPending] = useState<PendingWorkspace | null>(
-    getPendingWorkspace,
+    () => explicitThreadId ? null : getPendingWorkspace(),
   );
   const [gitStatus, setGitStatus] = useState<{
     isRepository?: boolean;
@@ -94,13 +96,13 @@ export function ThreadWorkspaceChip({
 
   useEffect(() => {
     const refresh = () => {
-      setPending(getPendingWorkspace());
+      setPending(explicitThreadId ? null : getPendingWorkspace());
       setRevision((value) => value + 1);
     };
     window.addEventListener("sparta:workspace-changed", refresh);
     return () =>
       window.removeEventListener("sparta:workspace-changed", refresh);
-  }, []);
+  }, [explicitThreadId]);
 
   useEffect(() => {
     setOpen(false);
@@ -134,7 +136,7 @@ export function ThreadWorkspaceChip({
         }
         setBinding(next);
         setPending(null);
-        if (next.projectId)
+        if (next.projectId && !explicitThreadId)
           useChatRuntimeStore.getState().setActiveProjectId(next.projectId);
         const bridge = (window as Window & { fs?: NativeWorkspaceBridge }).fs;
         const configured = await bridge?.setWorkspaceBinding?.(
@@ -160,7 +162,7 @@ export function ThreadWorkspaceChip({
     return () => {
       cancelled = true;
     };
-  }, [threadId, t, revision]);
+  }, [threadId, t, revision, explicitThreadId]);
 
   async function selectFolder() {
     setOpen(false);
@@ -184,7 +186,7 @@ export function ThreadWorkspaceChip({
 
   async function connectFolder(folder: string) {
     const access: WorkspaceAccess =
-      useChatRuntimeStore.getState().permissionMode === "full"
+      !explicitThreadId && useChatRuntimeStore.getState().permissionMode === "full"
         ? "write"
         : "write_no_delete";
     setBusy(true);
@@ -210,7 +212,7 @@ export function ThreadWorkspaceChip({
         throw new Error(configured.error);
       }
       setBinding(next);
-      if (next.projectId)
+      if (next.projectId && !explicitThreadId)
         useChatRuntimeStore.getState().setActiveProjectId(next.projectId);
       window.dispatchEvent(new Event("sparta:workspace-changed"));
     } catch (error) {
@@ -224,7 +226,7 @@ export function ThreadWorkspaceChip({
 
   async function disconnect() {
     setOpen(false);
-    setPendingWorkspace(null);
+    if (!explicitThreadId) setPendingWorkspace(null);
     setPending(null);
     if (!threadId || isAssistantLocalThreadId(threadId) || !binding) {
       setBinding(null);
@@ -275,7 +277,7 @@ export function ThreadWorkspaceChip({
   useEffect(() => {
     let cancelled = false;
     setGitStatus(null);
-    useWorkspaceStore
+    if (!explicitThreadId) useWorkspaceStore
       .getState()
       .setCapabilities({ hasGit: false, hasGithub: false });
     if (!currentPath || !scopeId) return;
@@ -291,7 +293,7 @@ export function ThreadWorkspaceChip({
           await getProjectNativeFilesystem()?.getGitStatus?.(scopeId);
         if (!cancelled) {
           setGitStatus(result?.success ? result : null);
-          useWorkspaceStore
+          if (!explicitThreadId) useWorkspaceStore
             .getState()
             .setCapabilities({
               hasGit: Boolean(result?.success && result.isRepository),
@@ -315,7 +317,7 @@ export function ThreadWorkspaceChip({
       window.clearInterval(timer);
       window.removeEventListener("focus", onFocus);
     };
-  }, [currentPath, scopeId, currentAccess, isBinding, revision]);
+  }, [currentPath, scopeId, currentAccess, isBinding, revision, explicitThreadId]);
   function openRepository(kind: "changes" | "github") {
     if (!scope) return;
     setOpen(false);

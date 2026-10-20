@@ -21,6 +21,7 @@ _ONE_SHOT_TOOLS = frozenset({"render_html"})
 # Only built-in observations known not to change the workspace. Arbitrary shell,
 # Python and MCP calls may mutate it, including before returning an error.
 _READ_ONLY_TOOLS = frozenset({
+    "present_ui",
     "propose_automation",
     "web_search", "search_knowledge_base", "list_mcp_servers",
     "search_mcp_catalog", "list_skills", "search_skill_catalog",
@@ -235,6 +236,8 @@ def provisional_tool_provenance(tool_name: str) -> dict[str, object]:
 
 def status_for_tool(tool_name: str, arguments: Mapping[str, Any]) -> str:
     """Return the status text already used by local tool streams."""
+    if tool_name == "present_ui":
+        return "Preparing panel..."
     if tool_name == "web_search":
         url = str(arguments.get("url") or "").strip()
         if url:
@@ -362,6 +365,18 @@ _SANDBOX_TOOLS = frozenset({"python", "terminal", "generate_document"})
 def strip_result_for_model(result: str, tool_name: "str | None" = None) -> str:
     """Remove frontend-only sentinels (image paths, RAG source map) before
     feeding the result back to the model."""
+    if tool_name == "present_ui":
+        try:
+            panel_result = json.loads(result)
+            if isinstance(panel_result, dict) and panel_result.get("kind") == "response_panel":
+                from core.inference.response_panels import validate_panel
+                panel = validate_panel(panel_result.get("panel"))
+                return json.dumps({"presentationPrepared": True, "title": panel["title"],
+                                   "forms": [block["id"] for block in panel["blocks"] if block["kind"] == "form"],
+                                   "externalActionExecuted": False,
+                                   "nextStep": "The panel is already visible. Reply with at most one brief confirmation; do not repeat its fields or instructions. If it contains a form, wait for the user's submission."}, ensure_ascii=False)
+        except (ValueError, TypeError, KeyError, RecursionError):
+            pass
     result = _strip_mcp_image_suffix(result)
     if tool_name is None or tool_name in _SANDBOX_TOOLS:
         result = _strip_files_sentinel(result)

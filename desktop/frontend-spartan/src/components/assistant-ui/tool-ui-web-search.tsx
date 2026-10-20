@@ -9,6 +9,9 @@ import { GlobeIcon } from "lucide-react";
 
 import { stringifyToolResult } from "@/lib/strip-ansi";
 import { memo, useEffect, useState } from "react";
+import { ResponseImageGallery } from "@/features/chat/response-ui/response-ui";
+import { parseReferenceImages } from "@/features/chat/response-ui/contracts";
+import { deduplicateSources } from "@/features/chat/response-ui/sources";
 import { Source, SourceIcon, SourceTitle } from "./sources";
 import {
   ToolFallbackContent,
@@ -117,7 +120,8 @@ const WebSearchToolUIImpl: ToolCallMessagePartComponent = ({
   })();
   const isRunning = status?.type === "running";
   const resultText = result == null ? "" : stringifyToolResult(result);
-  const sources = resultText ? parseSearchResults(resultText) : [];
+  const sources = resultText ? deduplicateSources(parseSearchResults(resultText)) : [];
+  const images = parseReferenceImages(resultText);
 
   // Collapse when LLM starts generating text after the tool call
   const hasText = useAuiState(({ message }) =>
@@ -138,6 +142,7 @@ const WebSearchToolUIImpl: ToolCallMessagePartComponent = ({
   }, [isRunning, hasText]);
 
   return (
+    <ResponseImageGallery images={images}>
     <ToolFallbackRoot open={open} onOpenChange={setOpen}>
       <ToolFallbackTrigger
         toolName={
@@ -168,20 +173,23 @@ const WebSearchToolUIImpl: ToolCallMessagePartComponent = ({
             </span>
           </div>
         ) : sources.length > 0 ? (
-          <div className="flex flex-wrap gap-1.5">
+          <ul className="grid gap-3 sm:grid-cols-2">
             {sources.map((source, i) => (
+              <li key={`${source.url}-${i}`} className="flex min-w-0 flex-col gap-1">
               <Source
-                key={`${source.url}-${i}`}
                 href={source.url}
                 variant="outline"
                 size="sm"
                 className="inline-flex items-center gap-1.5"
               >
-                <SourceIcon url={source.url} size={3} />
+                <SourceIcon url={source.url} size={3} allowRemoteIcons={false} />
                 <SourceTitle>{source.title}</SourceTitle>
               </Source>
+              <span className="text-xs text-muted-foreground">{new URL(source.url).hostname.replace(/^www\./, "")}</span>
+              {source.snippet && <p className="line-clamp-3 text-sm text-muted-foreground">{source.snippet}</p>}
+              </li>
             ))}
-          </div>
+          </ul>
         ) : resultText ? (
           <div>
             <pre className="max-h-40 overflow-auto whitespace-pre-wrap break-words rounded bg-muted/50 p-2 text-xs">
@@ -191,6 +199,7 @@ const WebSearchToolUIImpl: ToolCallMessagePartComponent = ({
         ) : null}
       </ToolFallbackContent>
     </ToolFallbackRoot>
+    </ResponseImageGallery>
   );
 };
 

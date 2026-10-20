@@ -1,7 +1,7 @@
 import { useT as useUiT } from "@/i18n";
 "use client";
 
-import { useMessage } from "@assistant-ui/react";
+import { useAuiState } from "@assistant-ui/react";
 import type { FC } from "react";
 
 import { type Citation, parseCitations } from "./citation-utils";
@@ -44,7 +44,7 @@ export const DocumentSourcesGroup: FC<{ sources: Citation[] }> = ({
 };
 
 export const RagSourcesGroup: FC = () => {
-  const message = useMessage();
+  const message = useAuiState((s) => s.message);
 
   const sources: Citation[] = [];
   for (const part of message.content ?? []) {

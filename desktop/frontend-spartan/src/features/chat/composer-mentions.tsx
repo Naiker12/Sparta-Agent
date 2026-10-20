@@ -7,6 +7,7 @@ import {
   listThreadDocuments,
 } from "@/features/rag/api/rag-api";
 import { useT } from "@/i18n";
+import { useRagAvailabilityStore } from "@/features/rag/api/rag-availability";
 import {
   ComposerPrimitive,
   unstable_useMentionAdapter,
@@ -67,6 +68,7 @@ function ComposerMentionsContent({ threadId }: { threadId: string | null }) {
   const [mcps, setMcps] = useState<Mention[]>([]);
   const [files, setFiles] = useState<Mention[]>([]);
   const [skills, setSkills] = useState<Mention[]>([]);
+  const ragUnavailable = useRagAvailabilityStore((s) => s.isUnavailable());
 
   useEffect(() => {
     void listMcpServers()
@@ -105,6 +107,10 @@ function ComposerMentionsContent({ threadId }: { threadId: string | null }) {
   }, [t]);
 
   useEffect(() => {
+    if (ragUnavailable) {
+      setFiles([]);
+      return;
+    }
     let cancelled = false;
     const requests = [
       threadId ? listThreadDocuments(threadId) : Promise.resolve([]),
@@ -137,7 +143,7 @@ function ComposerMentionsContent({ threadId }: { threadId: string | null }) {
     return () => {
       cancelled = true;
     };
-  }, [activeProjectId, t, threadId]);
+  }, [activeProjectId, t, threadId, ragUnavailable]);
 
   const project = projects.find((item) => item.id === activeProjectId);
   const categories = useMemo(

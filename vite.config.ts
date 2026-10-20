@@ -6,6 +6,7 @@ import electron from 'vite-plugin-electron/simple'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import packageJson from './package.json'
+import { frontendDependencyCacheKey } from './scripts/frontend-dependency-cache.mjs'
 
 // Codex and some Node toolchains set this flag for Electron's Node runtime.
 // It must never reach the child process spawned by vite-plugin-electron, or
@@ -61,6 +62,7 @@ export default defineConfig(() => {
   ]
 
   return {
+    cacheDir: path.join(__dirname, 'node_modules/.vite', `spartan-${frontendDependencyCacheKey()}`),
     resolve: {
       alias: {
         '@': path.join(__dirname, 'desktop/frontend-spartan/src'),

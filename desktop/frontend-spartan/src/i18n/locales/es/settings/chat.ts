@@ -1,4 +1,6 @@
 export const chat = {
+  visualResponses: "Respuestas visuales",
+  visualResponsesDescription: "Presenta tablas, gráficos, imágenes de referencia, paneles y formularios. Siempre puedes volver al texto.",
   projectsSection: "Mostrar la sección Proyectos",
   projectsSectionDescription:
     "Agrupa los chats de proyecto bajo un encabezado Proyectos. Desactívalo para listarlos en Recientes.",

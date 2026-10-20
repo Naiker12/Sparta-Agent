@@ -8,6 +8,10 @@ import {
 import { DRAFT_N_MAX_SPEC_TYPES } from "@/lib/speculative-modes";
 import { create } from "zustand";
 import {
+  DEVICE_FULL_ACCESS_KEY,
+  restoreDevicePermissionMode,
+} from "../utils/device-permission-mode";
+import {
   externalModelSupportsStudioTools,
   isExternalModelId,
   parseExternalModelId,
@@ -693,7 +697,7 @@ function readThreadScopedSettings(
   for (const key of THREAD_SCOPED_SETTING_KEYS) {
     source[key] = readThreadScopedValue(state, key);
   }
-  // drops "full" with it: a stored bypass would come back without the warning dialog.
+  // Full access is a device preference, never part of a shared thread snapshot.
   return sanitizeThreadScopedSettings(source);
 }
 
@@ -1916,20 +1920,24 @@ function loadShowCanvasMenuItem(): boolean {
 }
 
 /**
- * "full" is intentionally not restorable: it disables the sandbox and every
- * confirmation gate, so it must be re-enabled (through the warning dialog)
- * each session. First run falls back to the legacy "Confirm tool calls"
+ * Full access is remembered only on this device after explicit selection.
+ * First run falls back to the legacy "Confirm tool calls"
  * toggle so existing users keep their behavior (on -> ask, explicitly
  * off -> "off", i.e. no prompts); fresh installs default to "auto".
  */
 function loadPermissionMode(): PermissionMode {
-  return normalizeStoredPermissionMode(
-    readStorageValue(CHAT_PERMISSION_MODE_KEY),
-    loadOptionalBool(CHAT_CONFIRM_TOOL_CALLS_KEY),
+  return restoreDevicePermissionMode(
+    readStorageValue(DEVICE_FULL_ACCESS_KEY),
+    normalizeStoredPermissionMode(
+      readStorageValue(CHAT_PERMISSION_MODE_KEY),
+      loadOptionalBool(CHAT_CONFIRM_TOOL_CALLS_KEY),
+    ),
   );
 }
 
 function savePermissionMode(mode: PermissionMode): void {
+  // Write synchronously even with a thread open; shared settings exclude full.
+  writeStorageValue(DEVICE_FULL_ACCESS_KEY, String(mode === "full"));
   if (mode === "full") {
     return;
   }
@@ -2386,7 +2394,7 @@ type ChatRuntimeStore = {
   /**
    * Permission level. Single source of truth for the bypass dropdowns;
    * bypassPermissions and confirmToolCalls mirror it so legacy call sites
-   * keep working. "full" is session-only (never persisted).
+   * keep working. "full" is remembered only on this device.
    */
   permissionMode: PermissionMode;
   /** Whether the "Enable Bypass Permissions?" warning dialog is open. Lifted out
@@ -3360,7 +3368,7 @@ function getHydratedSettingsState(
   }
   for (const key of SCALAR_SETTING_KEYS) {
     const value = settings[key];
-    // Full access is session-only, so a stored level must not silently drop the
+    // Full access is device-local, so a shared level must not silently drop the
     // sandbox bypass the user accepted a warning for, and Full access never
     // confirms a tool call whatever the saved toggle says.
     if (
@@ -3522,7 +3530,9 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
   toolsEnabled: loadBool(CHAT_TOOLS_ENABLED_KEY, false),
   codeToolsEnabled: loadBool(CHAT_CODE_TOOLS_ENABLED_KEY, false),
   imageToolsEnabled: loadBool(CHAT_IMAGE_TOOLS_ENABLED_KEY, false),
-  deepResearchEnabled: loadBool(CHAT_DEEP_RESEARCH_ENABLED_KEY, false),
+  deepResearchEnabled:
+    INITIAL_PERMISSION_MODE !== "full" &&
+    loadBool(CHAT_DEEP_RESEARCH_ENABLED_KEY, false),
   researchWebsitePolicy: loadResearchWebsitePolicy(),
   researchModelTimeoutSeconds: loadResearchModelTimeoutSeconds(),
   artifactsEnabled: loadBool(CHAT_ARTIFACTS_ENABLED_KEY, false),
@@ -3537,10 +3547,8 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
   // agree on load.
   confirmToolCalls:
     INITIAL_PERMISSION_MODE === "ask" || INITIAL_PERMISSION_MODE === "auto",
-  // Never restore Bypass Permissions from storage: it disables the sandbox and
-  // the confirmation gate, so it must be re-enabled (through the warning
-  // dialog) each session rather than silently reactivating on reload.
-  bypassPermissions: false,
+  // Restore both the label and effective sandbox policy from the device choice.
+  bypassPermissions: INITIAL_PERMISSION_MODE === "full",
   permissionMode: INITIAL_PERMISSION_MODE,
   bypassConfirmOpen: false,
   alwaysAllowToolsBySession: new Map<string, Set<string>>(),
@@ -4342,8 +4350,12 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
       saveBool(CHAT_DEEP_RESEARCH_ENABLED_KEY, deepResearchEnabled);
       // the level this chat carries, or the global one when it carries none.
       const permissionMode =
-        threadScopedOverride("permissionMode") ?? loadPermissionMode();
+        threadScopedOverride("permissionMode") ?? normalizeStoredPermissionMode(
+          readStorageValue(CHAT_PERMISSION_MODE_KEY),
+          loadOptionalBool(CHAT_CONFIRM_TOOL_CALLS_KEY),
+        );
       if (deepResearchEnabled) {
+        writeStorageValue(DEVICE_FULL_ACCESS_KEY, "false");
         saveBool(CHAT_TOOLS_ENABLED_KEY, false);
         saveBool(CHAT_IMAGE_TOOLS_ENABLED_KEY, false);
         saveBool(CHAT_CODE_TOOLS_ENABLED_KEY, false);
@@ -4460,7 +4472,7 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
     }),
   setPermissionMode: (permissionMode) =>
     set((state) => {
-      // "full" is session-only (never persisted, see init); ask/auto/off
+      // "full" is device-local; ask/auto/off
       // persist and keep the legacy confirm toggle in sync (the gate is
       // requested for both ask and auto).
       savePermissionMode(permissionMode);
@@ -4487,10 +4499,9 @@ export const useChatRuntimeStore = create<ChatRuntimeStore>((set, get) => ({
       };
     }),
   setBypassPermissions: (bypassPermissions) =>
-    // Deliberately not persisted (see init): a reload must not silently keep
-    // the sandbox/confirmation bypass active without re-accepting the warning.
-    // Turning bypass off returns to the last persisted ask/auto level.
+    // Legacy control uses the same device preference as the permission menu.
     set((state) => {
+      writeStorageValue(DEVICE_FULL_ACCESS_KEY, String(bypassPermissions));
       if (bypassPermissions) {
         // Full access never prompts; mirror confirm_tool_calls=false in the
         // store so metadata does not report confirmations as enabled.

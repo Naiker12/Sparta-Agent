@@ -19,7 +19,9 @@ import { LayoutAlignLeftIcon, Search01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Link } from "@tanstack/react-router";
 import { Tooltip as TooltipPrimitive } from "radix-ui";
-import type { ReactElement } from "react";
+import {useRef, type ReactElement} from "react";
+import {isElectron} from "@/lib/api-base";
+import {useElectronDragBoundary} from "@/hooks/use-electron-drag-boundary";
 
 export function SidebarBrandHeader({
   showSidebarBrand,
@@ -47,6 +49,8 @@ export function SidebarBrandHeader({
   const uiT = useUiT();
 
   const t = useT();
+  const controlsRef = useRef<HTMLDivElement>(null);
+  useElectronDragBoundary(controlsRef, isElectron);
 
   return (
     <SidebarHeader
@@ -71,6 +75,7 @@ export function SidebarBrandHeader({
             </div>
           )}
           <div
+            ref={controlsRef}
             data-tauri-drag-region={usesNativeMacTitlebar || undefined}
             className={cn(
               "relative z-10 flex items-center gap-[8.5px] group-data-[collapsible=icon]:hidden",

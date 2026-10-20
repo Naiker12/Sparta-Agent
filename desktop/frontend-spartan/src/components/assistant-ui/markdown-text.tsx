@@ -2,7 +2,8 @@ import { translate as uiTranslate } from "@/i18n";
 import { useT as useUiT } from "@/i18n";
 "use client";
 
-import { ArtifactCard, useChatRuntimeStore } from "@/features/chat";
+import { ArtifactCard } from "@/features/chat/artifacts/artifact-card";
+import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 import {
   getCodeFence,
   isFullHtmlDocument,
@@ -39,6 +40,8 @@ import {
   type StreamdownProps,
 } from "streamdown";
 import { AudioPlayer } from "./audio-player";
+import { ResponseTable, ResponseUiEnabledContext } from "@/features/chat/response-ui/response-ui";
+import { useChatPreferencesStore } from "@/features/chat/stores/chat-preferences-store";
 import { stabilizeStreamingMarkdown } from "./streaming-markdown";
 import {
   IncrementalMarkdownCache,
@@ -447,7 +450,9 @@ function StreamdownBlockContent(props: BlockProps) {
     );
   }
 
-  return <Block {...blockProps} />;
+  return <ResponseTable markdown={props.content} incomplete={props.isIncomplete}>
+    <Block {...blockProps} />
+  </ResponseTable>;
 }
 const StreamdownBlock = memo(StreamdownBlockContent);
 const AUDIO_PLAYER_RE = /<audio-player\s+src="([^"]+)"\s*\/>/;
@@ -594,6 +599,8 @@ function useOptionalMarkdownPlugins(markdown: string): {
 }
 
 const MarkdownTextImpl = () => {
+  // One preference subscription per text part, not one per Markdown block.
+  const visualResponses = useChatPreferencesStore((s) => s.visualResponses);
   const { text, status } = useMessagePartText();
   // Parts are keyed by index, so switching conversations hands this instance a
   // different message, and Streamdown only extends its parsed blocks: key it per
@@ -632,6 +639,7 @@ const MarkdownTextImpl = () => {
   }
 
   return (
+    <ResponseUiEnabledContext.Provider value={visualResponses}>
     <RenderHtmlToolPresenceContext.Provider
       value={messageHasRenderableRenderHtmlTool}
     >
@@ -654,6 +662,7 @@ const MarkdownTextImpl = () => {
         </Streamdown>
       </div>
     </RenderHtmlToolPresenceContext.Provider>
+    </ResponseUiEnabledContext.Provider>
   );
 };
 

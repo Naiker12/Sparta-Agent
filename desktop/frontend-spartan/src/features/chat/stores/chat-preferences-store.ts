@@ -15,6 +15,8 @@ import {
 // streaming open.
 // pastedTextMinChars: paste length that becomes a .txt attachment. 0 is off.
 export interface ChatPreferencesState {
+  visualResponses: boolean;
+  setVisualResponses: (value: boolean) => void;
   confirmDeleteChats: boolean;
   setConfirmDeleteChats: (value: boolean) => void;
   alwaysDeleteChatFiles: boolean;
@@ -41,6 +43,8 @@ function normalisePastedTextMinChars(value: unknown): number {
 export const useChatPreferencesStore = create<ChatPreferencesState>()(
   persist(
     (set) => ({
+      visualResponses: false,
+      setVisualResponses: (visualResponses) => set({ visualResponses }),
       confirmDeleteChats: true,
       setConfirmDeleteChats: (confirmDeleteChats) =>
         set({ confirmDeleteChats }),
@@ -66,6 +70,7 @@ export const useChatPreferencesStore = create<ChatPreferencesState>()(
         const saved = persisted as Partial<ChatPreferencesState> | undefined;
         return {
           ...current,
+          visualResponses: saved?.visualResponses === true,
           confirmDeleteChats: saved?.confirmDeleteChats ?? true,
           alwaysDeleteChatFiles: saved?.alwaysDeleteChatFiles ?? false,
           showModelDisclaimer: saved?.showModelDisclaimer ?? true,

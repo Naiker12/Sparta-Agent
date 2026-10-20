@@ -68,7 +68,9 @@ export function toThreadMessage(m: MessageRecord): ThreadMessage {
       role: "user" as const,
       content: content as Extract<ThreadMessage, { role: "user" }>["content"],
       attachments: cloneAttachments(m.attachments),
-      metadata: { custom: {} },
+      // Form submissions carry their origin and values in user metadata.
+      // Restoring them as an empty object would enable an already sent form.
+      metadata: { custom: clonePersistedValue(m.metadata ?? {}, {}) },
     };
   }
 

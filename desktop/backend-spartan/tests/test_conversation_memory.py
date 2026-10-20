@@ -89,6 +89,10 @@ class ConversationMemoryTests(unittest.TestCase):
         self.assertLess(len(output), 6200)
         evidence = json.loads(output.split("\n", 1)[1])
         self.assertEqual(evidence[0]["role"], "assistant")
+        self.assertEqual(
+            evidence[0]["sourceStatus"],
+            "original_assistant_response_unverified",
+        )
         self.assertEqual(evidence[0]["sourceMessageId"], "long")
         self.assertEqual(evidence[0]["confidence"], 0)
         self.assertLessEqual(len(evidence[0]["content"]), 1200)

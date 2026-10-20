@@ -115,7 +115,16 @@ export async function getStoredChatThreadReadResult(
 
 export async function getStoredChatThread(
   threadId: string,
+  options: { waitForWrites?: boolean } = {},
 ): Promise<ThreadRecord | undefined> {
+  // Navigation must not mistake an initializing row for a deleted chat.
+  // Opt-in: the row creator itself reads here and must never await its own write.
+  if (options.waitForWrites) {
+    await awaitStoredChatThreadWrites(threadId);
+    if (failedThreadRecordByThreadId.has(threadId)) {
+      throw new Error("Chat initialization has not been persisted yet");
+    }
+  }
   return (await getStoredChatThreadReadResult(threadId)).thread;
 }
 

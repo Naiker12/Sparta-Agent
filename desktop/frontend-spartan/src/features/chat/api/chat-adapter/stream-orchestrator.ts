@@ -1,4 +1,6 @@
 import { translate as uiTranslate } from "@/i18n";
+import { useChatPreferencesStore } from "../../stores/chat-preferences-store";
+import { responsePresentationInstruction } from "../../response-ui/instructions";
 import {
   SANDBOX_FILE_TOOLS,
   type SandboxFile,
@@ -30,7 +32,7 @@ import {
   releasePreStreamRunReservation,
 } from "../../utils/pre-stream-run-reservation";
 import { notifyPromptQueueRunFailed } from "../../utils/prompt-queue-boundary";
-import { consumeQueuedChatRunSettings } from "../../utils/queued-chat-run-settings";
+import { bindChatRunSettings, consumeQueuedChatRunSettings } from "../../utils/queued-chat-run-settings";
 import { mergeQueuedModelCapabilities } from "../../utils/queued-model-capabilities";
 
 import {
@@ -295,7 +297,7 @@ export function createOpenAIStreamAdapter(
       // first resolveProjectId, and a send survives navigation. Only consulted
       // while the thread's own row is still missing.
       const composerProjectIdAtSend =
-        useChatRuntimeStore.getState().activeProjectId ?? null;
+        options.getRunSettings ? options.projectId ?? null : useChatRuntimeStore.getState().activeProjectId ?? null;
       await useChatRuntimeStore.getState().hydratePersistedSettings();
       // Every run reaches here: the composer, Reload, Continue, and send from the edit
       // composer. Waiting for the open chat's own settings in this one place is what
@@ -305,21 +307,22 @@ export function createOpenAIStreamAdapter(
       // Bound to this run's own chat: a run for A released by B's pairing ending would
       // resume and read B's settings for A.
       const runThreadId =
-        unstable_threadId ?? useChatRuntimeStore.getState().activeThreadId;
+        unstable_threadId ?? (options.getRunSettings ? undefined : useChatRuntimeStore.getState().activeThreadId);
       // Refused rather than run on whatever the store holds now: the wait only runs out
       // for a chat the user left mid-read, and the settings on screen are then some
       // other chat's. The run is recoverable by reopening the chat; a message sent with
       // another chat's tools and permission level is not.
-      if (!(await awaitThreadScopedPairing(runThreadId))) {
+      if (!options.getRunSettings && !(await awaitThreadScopedPairing(runThreadId))) {
         throw new Error(
           uiTranslate("ui.this_chat_s_settings_could_not_be_loaded_so_the_message_was_not_s"),
         );
       }
-      let runtime = useChatRuntimeStore.getState();
+      let runtime = { ...useChatRuntimeStore.getState(), ...options.getRunSettings?.() };
+      const readRunRuntime = bindChatRunSettings(runtime);
       // Capture the thread ID once so it stays stable even if the user
       // switches chats while waiting for model load / auto-load.
       const resolvedThreadId =
-        (runThreadId ?? runtime.activeThreadId) || undefined;
+        (runThreadId ?? (options.getRunSettings ? undefined : runtime.activeThreadId)) || undefined;
       if (resolvedThreadId) {
         rememberComposerProjectForRun(
           resolvedThreadId,
@@ -362,7 +365,7 @@ export function createOpenAIStreamAdapter(
           runtime = { ...runtime, deepResearchEnabled: false };
         } else {
           runtime.setDeepResearchEnabled(false);
-          runtime = useChatRuntimeStore.getState();
+          runtime = { ...readRunRuntime(useChatRuntimeStore.getState()), deepResearchEnabled: false };
         }
       }
       if (
@@ -397,7 +400,7 @@ export function createOpenAIStreamAdapter(
             throw new Error(uiTranslate("ui.load_a_model_first"));
           }
         }
-        const liveRuntime = useChatRuntimeStore.getState();
+        const liveRuntime = readRunRuntime(useChatRuntimeStore.getState());
         runtime = queuedRunSettings
           ? queuedRunSettings.params.checkpoint
             ? { ...liveRuntime, ...queuedRunSettings }
@@ -737,7 +740,7 @@ export function createOpenAIStreamAdapter(
       }
 
       // Re-read store after auto-load / model-ready wait.
-      const liveRuntime = useChatRuntimeStore.getState();
+      const liveRuntime = readRunRuntime(useChatRuntimeStore.getState());
       runtime = queuedRunSettings
         ? queuedRunSettings.params.checkpoint
           ? { ...liveRuntime, ...queuedRunSettings }
@@ -1024,6 +1027,7 @@ export function createOpenAIStreamAdapter(
       // The run's messages stop at the user turn (this is a sibling branch), so the
       // partial is appended here for the backend to resume.
       const continuation = readContinuationRequest(runConfig);
+      const panelUiEnabledForThisTurn = documentGenerationEnabledForThisTurn && useChatPreferencesStore.getState().visualResponses && !continuation;
       if (continuation) {
         outboundMessages.push({
           role: "assistant",
@@ -1162,6 +1166,12 @@ export function createOpenAIStreamAdapter(
           : disabledToolGuard;
       addSystemInstruction(outboundMessages, effectiveDisabledToolGuard);
       addSystemInstruction(outboundMessages, artifactInstruction);
+      addSystemInstruction(outboundMessages, responsePresentationInstruction(
+        useChatPreferencesStore.getState().visualResponses && !continuation && !geminiImageModeForThisTurn,
+        Boolean(toolsEnabled || webSearchEnabledForThisTurn || webFetchEnabledForThisTurn),
+        Boolean(toolsEnabled && supportsStudioToolsForThisTurn && !geminiImageModeForThisTurn),
+        panelUiEnabledForThisTurn,
+      ));
 
       // Block when ANY image is in the outbound payload (current or prior
       // turns) and the loaded model can't process images. Once a chat
@@ -1950,6 +1960,7 @@ export function createOpenAIStreamAdapter(
                         ? ["search_knowledge_base"]
                         : []),
                       ...(documentGenerationEnabledForThisTurn ? ["generate_document", "propose_automation"] : []),
+                      ...(panelUiEnabledForThisTurn ? ["present_ui"] : []),
                       ...(toolsEnabled ? ["web_search"] : []),
                       ...studioLocalCodeTools,
                       ...(workspaceEnabled ? WORKSPACE_TOOL_NAMES : []),
@@ -2196,6 +2207,7 @@ export function createOpenAIStreamAdapter(
                       ? ["search_knowledge_base"]
                       : []),
                     ...(documentGenerationEnabledForThisTurn ? ["generate_document", "propose_automation"] : []),
+                    ...(panelUiEnabledForThisTurn ? ["present_ui"] : []),
                     ...(toolsEnabled ? ["web_search"] : []),
                     ...(codeToolsEnabled
                       ? ["python", "terminal", "edit_file"]
@@ -3491,7 +3503,7 @@ export function createOpenAIStreamAdapter(
     async *run(args) {
       const preStreamThreadIds = preStreamRunThreadIdsForAdapter(
         args.unstable_threadId,
-        useChatRuntimeStore.getState().activeThreadId,
+        options.getRunSettings ? undefined : useChatRuntimeStore.getState().activeThreadId,
       );
       const reservationToken = findPreStreamRunReservation(preStreamThreadIds);
       if (reservationToken) {

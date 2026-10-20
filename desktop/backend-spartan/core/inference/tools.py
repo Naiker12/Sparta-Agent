@@ -4530,6 +4530,7 @@ def _render_html_reaches_network(arguments: dict) -> bool:
 # to pause them and their safety needs no argument scan. render_html is handled
 # separately above because a networked canvas does need approval.
 _ALWAYS_SAFE_TOOLS = frozenset({
+    "present_ui",
     "propose_automation",
     "web_search",
     "search_knowledge_base",
@@ -9398,7 +9399,9 @@ WEB_SEARCH_TOOL = {
         "name": "web_search",
         "description": (
             "Search the web and fetch page content. Returns snippets for all results. "
-            "Use the url parameter to fetch full page text from a specific URL."
+            "Use the url parameter to fetch full page text from a specific URL. "
+            "Set search_type='images' only when the user requests image references. "
+            "Image results are metadata with source pages, not generated images, visual analysis or verified reuse licenses."
         ),
         "parameters": {
             "type": "object",
@@ -9406,6 +9409,11 @@ WEB_SEARCH_TOOL = {
                 "query": {
                     "type": "string",
                     "description": "The search query",
+                },
+                "search_type": {
+                    "type": "string",
+                    "enum": ["web", "images"],
+                    "description": "Web pages by default; images for explicitly requested reference images. Do not combine images with url.",
                 },
                 "url": {
                     "type": "string",
@@ -10252,8 +10260,10 @@ TOGGLE_SKILL_TOOL = {
 
 from core.documents.generation import GENERATE_DOCUMENT_TOOL
 from core.inference.automation_proposals import PROPOSE_AUTOMATION_TOOL
+from core.inference.response_panels import PRESENT_UI_TOOL
 
 ALL_TOOLS = [
+    PRESENT_UI_TOOL,
     PROPOSE_AUTOMATION_TOOL,
     GENERATE_DOCUMENT_TOOL,
     WEB_SEARCH_TOOL,
@@ -10603,6 +10613,14 @@ def execute_tool(
         from core.inference.skill_actions import toggle_skill_for_model
         return toggle_skill_for_model(arguments)
     if name == "web_search":
+        if arguments.get("search_type") == "images":
+            if arguments.get("url"):
+                return "Error: image search takes a query, not a url."
+            from core.inference.reference_images import search_reference_images
+            return search_reference_images(
+                arguments.get("query", ""), timeout=effective_timeout,
+                cancel_event=cancel_event, website_policy=website_policy,
+            )
         return _web_search(
             arguments.get("query", ""),
             url = arguments.get("url"),
@@ -10621,6 +10639,9 @@ def execute_tool(
     if name == "propose_automation":
         from core.inference.automation_proposals import propose_automation
         return propose_automation(arguments)
+    if name == "present_ui":
+        from core.inference.response_panels import present_ui
+        return present_ui(arguments)
     if name == "python":
         with _session_in_flight(session_id):
             return _python_exec(

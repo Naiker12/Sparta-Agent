@@ -177,6 +177,21 @@ def _visible_text(lines) -> str:
 
 # ── Structured tool calls (a well-behaved provider) ───────────────
 
+@pytest.mark.parametrize("valid", [True, False])
+def test_form_presentation_finishes_without_another_model_step_only_after_success(monkeypatch, executed, valid):
+    from core.inference.response_panels import PRESENT_UI_TOOL, present_ui
+    panel = {"version": 1, "title": "Task", "blocks": [{"kind": "form", "id": "task", "title": "Details", "fields": [{"id": "name", "label": "Name", "type": "text"}]}]}
+    arguments = {"panel": panel} if valid else {"panel": {"version": 99}}
+    monkeypatch.setattr(loop_mod, "execute_tool", lambda name, args, **kwargs: present_ui(args))
+    transport = FakeTransport([
+        [_sse({"tool_calls": [{"index": 0, "id": "form-call", "type": "function", "function": {"name": "present_ui", "arguments": json.dumps(arguments)}}]}), _sse(finish="tool_calls"), _DONE],
+        [_sse({"content": "Follow-up"}), _sse(finish="stop"), _DONE],
+    ])
+    lines = _run(transport, tools=[PRESENT_UI_TOOL])
+    assert len(transport.requests) == (1 if valid else 2)
+    assert ("Follow-up" in _visible_text(lines)) is not valid
+    assert len(_events(lines, "tool_end")) == 1
+
 
 def test_structured_call_executes_and_continues(executed):
     transport = FakeTransport(

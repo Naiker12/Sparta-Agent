@@ -1,5 +1,7 @@
 // Run with `node tests/startup-flow.browser.mjs` while `npm run dev` is running.
 import { chromium } from "playwright";
+import { viteDependencyBase } from "./helpers/vite-dependency-base.mjs";
+const dependencyBase = await viteDependencyBase();
 
 const browser = await chromium.launch({ headless: true, channel: "msedge" });
 const url = "http://127.0.0.1:5173/startup-smoke";
@@ -12,8 +14,8 @@ window.$RefreshSig$ = () => type => type;
 window.__vite_plugin_react_preamble_installed__ = true;
 </script>
 <script type="module">
-import React from '/node_modules/.vite/deps/react.js';
-import ReactDOM from '/node_modules/.vite/deps/react-dom_client.js';
+import React from '${dependencyBase}/react.js';
+import ReactDOM from '${dependencyBase}/react-dom_client.js';
 import {StartupGate} from '/desktop/frontend-spartan/src/features/setup/startup-gate.tsx';
 ReactDOM.createRoot(document.getElementById('root')).render(
  React.createElement(StartupGate,null,React.createElement('div',{'data-testid':'ready'},'Ready'))

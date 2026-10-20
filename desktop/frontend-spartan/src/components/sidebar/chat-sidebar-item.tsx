@@ -1,4 +1,5 @@
 import { useT as useUiT } from "@/i18n";
+import { CHAT_PANE_MIME, requestChatPane, useChatPanelsStore } from "@/features/chat/stores/chat-panels-store";
 /**
  * Spartan – Chat Sidebar Item Component
  *
@@ -289,6 +290,13 @@ export function ChatSidebarItem({
           {...(drag
             ? rowDragProps(drag.scope, drag.orderedIds, item.id)
             : undefined)}
+          onDragStart={event => {
+            if (drag) rowDragProps(drag.scope, drag.orderedIds, item.id).onDragStart?.(event);
+            if (item.type === "single") {
+              event.dataTransfer.setData(CHAT_PANE_MIME, item.id);
+              event.dataTransfer.effectAllowed = "copyMove";
+            }
+          }}
         >
           <SidebarMenuButton
             data-testid="recent-thread"
@@ -305,6 +313,12 @@ export function ChatSidebarItem({
               }
               clearSelection();
               clearChatNotifications(item);
+              const pane = useChatPanelsStore.getState().panes.find(pane => pane.thread.id === item.id);
+              if (item.type === "single" && pane && useChatPanelsStore.getState().workspaceMounted) {
+                useChatPanelsStore.getState().focus(pane.id);
+                closeMobileIfOpen();
+                return;
+              }
               navigate({
                 to: "/chat",
                 search:
@@ -429,6 +443,11 @@ export function ChatSidebarItem({
               sideOffset={0}
               className="spartan-plus-menu menu-flat-destructive w-56"
             >
+              {item.type === "single" && <DropdownMenuItem onSelect={() => {
+                requestChatPane(item.id);
+                if (!useChatPanelsStore.getState().workspaceMounted) navigate({ to: "/chat", search: activeThreadId ? { thread: activeThreadId } : {} });
+                closeMobileIfOpen();
+              }}>{uiT("chat.panels.open")}</DropdownMenuItem>}
               <DropdownMenuItem onSelect={() => openRenameChat(item)}>
                 <HugeiconsIcon
                   icon={Edit03Icon}

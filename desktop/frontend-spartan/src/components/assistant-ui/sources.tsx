@@ -8,7 +8,8 @@ import {
 } from "@/components/ui/hover-card";
 import { openLink } from "@/lib/open-link";
 import { cn } from "@/lib/utils";
-import { useMessage } from "@assistant-ui/react";
+import { useAuiState } from "@assistant-ui/react";
+import { deduplicateSources } from "@/features/chat/response-ui/sources";
 import {
   type ComponentProps,
   type FC,
@@ -203,7 +204,7 @@ const SourcesGroup: FC<{
 }> = ({ sources: suppliedSources, allowRemoteIcons = true }) => {
   const uiT = useUiT();
 
-  const message = useMessage();
+  const message = useAuiState((s) => s.message);
   const containerRef = useRef<HTMLDivElement>(null);
   const [visibleCount, setVisibleCount] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -233,7 +234,7 @@ const SourcesGroup: FC<{
       }
     }
   }
-  const sources = suppliedSources ?? messageSources;
+  const sources = deduplicateSources(suppliedSources ?? messageSources);
 
   // Measure how many badges fit in 2 rows
   const measure = useCallback(() => {

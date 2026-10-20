@@ -86,6 +86,7 @@ export const SETTINGS_SEARCH_INDEX: Record<SettingsTab, TranslationKey[]> = {
     "settings.resources.liveUpdates",
   ],
   chat: [
+    "settings.chat.visualResponses",
     "settings.general.chatDefaults",
     "settings.general.autoTitleNewChats",
     "settings.chat.projectAttachments",

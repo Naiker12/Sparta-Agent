@@ -7,6 +7,7 @@ import { AutomationProposalToolUI } from "@/features/tasks";
  */
 
 import { UserMessageAttachments } from "@/components/assistant-ui/attachment";
+import { UserFormSubmission } from "@/components/assistant-ui/user-form-submission";
 import { MarkdownText } from "@/components/assistant-ui/markdown-text";
 import { MessageHtmlArtifacts } from "@/components/assistant-ui/message-html-artifacts";
 import { MessageResponseModelBadge } from "@/components/assistant-ui/message-response-details-sheet";
@@ -29,6 +30,7 @@ import { PythonToolUI } from "@/components/assistant-ui/tool-ui-python";
 import { RenderHtmlToolUI } from "@/components/assistant-ui/tool-ui-render-html";
 import { TerminalToolUI } from "@/components/assistant-ui/tool-ui-terminal";
 import { WebSearchToolUI } from "@/components/assistant-ui/tool-ui-web-search";
+import { PresentUiToolUI } from "@/components/assistant-ui/tool-ui-present-ui";
 import { ProfileChatAvatar } from "@/features/profile";
 import { Button } from "@/components/ui/button";
 import {
@@ -282,6 +284,7 @@ export const ASSISTANT_PART_COMPONENTS = {
   ToolGroup: ToolGroup,
   tools: {
     by_name: {
+      present_ui: withToolConfirmation(PresentUiToolUI),
       web_search: WebSearchToolUIConfirmable,
       search_knowledge_base: KnowledgeBaseToolUIConfirmable,
       generate_document: withToolConfirmation(DocumentToolUI),
@@ -401,6 +404,7 @@ export const AssistantMessage: FC = () => {
     <MessagePrimitive.Root
       className="group/assistant-message aui-assistant-message-root relative mx-auto min-w-0 w-full max-w-(--thread-content-max-width) pt-0.5 pb-4 text-ui-15p5 [font-weight:410] tracking-[0.01em] dark:tracking-[0.02em]"
       data-role="assistant"
+      data-chat-message-id={messageId}
       tabIndex={0}
       ref={focusReveal.ref}
       onFocus={focusReveal.onFocus}
@@ -495,17 +499,19 @@ export const UserMessageAudio: FC = () => {
 };
 
 export const UserMessage: FC = () => {
+  const messageId = useAuiState(({message}) => message.id);
   return (
     <MessagePrimitive.Root
       className="aui-user-message-root fade-in slide-in-from-bottom-1 mx-auto flex w-full max-w-(--thread-content-max-width) animate-in flex-col items-end gap-y-2 pt-6 pb-4 text-ui-15p5 [font-weight:410] tracking-[0.01em] dark:tracking-[0.02em] duration-150"
       data-role="user"
+      data-chat-message-id={messageId}
     >
       <UserMessageAttachments />
       <UserMessageAudio />
 
       <div className="aui-user-message-content-wrapper flex max-w-[80%] min-w-0 flex-col items-end">
         <div className="aui-user-message-content wrap-break-word w-fit max-w-full rounded-[24px] bg-[#f5f5f5] px-4 py-2.5 text-[#0d0d0d] dark:text-foreground dark:bg-card">
-          <MessagePrimitive.Parts />
+          <UserFormSubmission><MessagePrimitive.Parts /></UserFormSubmission>
         </div>
         <div className="mt-1 -mr-[var(--icon-btn-inset)] flex min-h-8 items-center">
           <UserActionBar />

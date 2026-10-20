@@ -29,6 +29,8 @@
     "test:electron:smoke": "npm --prefix ./desktop/frontend-spartan run build && node tests/electron-startup.smoke.mjs",
     "test:automations:browser": "node tests/automations-flow.browser.mjs",
     "test:documents:browser": "node tests/document-preview-flow.browser.mjs",
+    "test:assistant-ui:browser": "node tests/assistant-ui-upgrade.browser.mjs",
+    "test:openui:browser": "node tests/openui-response.browser.mjs",
     "test:assets:electron": "node tests/packaged-assets.electron.mjs",
     "test:watch": "vitest",
     "postinstall": "node -e \"try { require('fs').rmSync('node_modules/.vite', { recursive: true, force: true }); console.log('✓ Vite cache cleaned'); } catch(e) { /* ignore */ }\""
