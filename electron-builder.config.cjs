@@ -8,6 +8,7 @@ const targetPlatform = process.env.TARGET_PLATFORM || (
   process.platform === 'darwin' ? (process.arch === 'arm64' ? 'darwin-arm64' : 'darwin-x64') :
   'linux-x64'
 );
+const macArch = targetPlatform === 'darwin-arm64' ? 'arm64' : 'x64';
 console.log(`[electron-builder] Building for target platform: ${targetPlatform}`);
 
 module.exports = {
@@ -79,7 +80,10 @@ module.exports = {
   mac: {
     // Squirrel.Mac consumes the ZIP and latest-mac.yml; the DMG is only the
     // manual installer. Keep both artifacts in every macOS release.
-    target: ['dmg', 'zip'],
+    target: [
+      { target: 'dmg', arch: [macArch] },
+      { target: 'zip', arch: [macArch] },
+    ],
     artifactName: 'Sparta-Agent-Mac-\${version}-\${arch}-Installer.\${ext}',
     hardenedRuntime: true,
     gatekeeperAssess: false,

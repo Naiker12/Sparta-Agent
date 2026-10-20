@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  NODE_OPTIONS: "--max-old-space-size=12288"
+  NODE_OPTIONS: "--max-old-space-size=10240"
 
 jobs:
   quality:
@@ -27,7 +27,9 @@ jobs:
         include:
           - os: windows-latest
             platform: win32-x64
-          - os: macos-latest
+          # Standard Apple Silicon runners have 7 GB RAM. Build both Mac
+          # architectures on the 14 GB Intel runner and select arch explicitly.
+          - os: macos-15-intel
             platform: darwin-arm64
           - os: macos-15-intel
             platform: darwin-x64
