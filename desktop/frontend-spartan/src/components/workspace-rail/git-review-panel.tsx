@@ -77,7 +77,7 @@ function ReviewFile({
     };
   }, [visible, item, preview.scope.id, mode, t]);
   return (
-    <div ref={element} className="min-h-24 border-b">
+    <div ref={element} className="min-w-0 shrink-0 border-b">
       {file ? (
         <DiffViewer file={file} />
       ) : (

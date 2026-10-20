@@ -11,7 +11,7 @@ from .catalog import COMMANDS, command_reply
 from .executor import respond
 from .delivery import DeliveryRevoked, deliver
 from .images import ChannelReply
-from . import voice, documents, profile, controls, project_context
+from . import voice, documents, profile, controls, project_context, files, permissions
 from .requests import RequestCancelled, command, receive, respond_with_progress
 from .telegram import Telegram, TelegramError
 
@@ -61,15 +61,42 @@ async def _worker(account):
                 update_id, message = pending
                 run_id = None
                 generation_complete = False
+                output = None
                 if message['user_id'] not in account['allowed_user_ids']:
                     repo.finish(account_id, update_id, 'failed')
                     continue
                 try:
                     conversation_reply = False
                     from . import automation_plans
+                    if message.get('action') in ('send_file', 'cancel_file'):
+                        try:
+                            output = await files.confirm_delivery(transport, account, message)
+                        except files.FileError as error:
+                            output = files.notice(error.code, account['locale'])
+                    elif files.file_url(message['text']) and not message['media']:
+                        if repo.reserve_provider_request(account_id):
+                            try:
+                                async def download_file():
+                                    return await files.download(transport, account, message, files.file_url(message['text']))
+                                document = await respond_with_progress(transport, account, update_id, message,
+                                    download_file, action='upload_document')
+                                output = ChannelReply(('Descarga lista. Confirma para enviarla a este chat: ' if account['locale'] == 'es' else 'Download ready. Confirm to send it to this chat: ') + document.filename)
+                                output.file_document = document
+                            except RequestCancelled:
+                                output = 'Descarga cancelada. No se envió ningún archivo.' if account['locale'] == 'es' else 'Download cancelled. No file was sent.'
+                            except files.FileError as error:
+                                output = files.notice(error.code, account['locale'])
+                        else:
+                            output = 'Se alcanzó el límite de 30 consultas por hora. Intenta más tarde.' if account['locale'] == 'es' else 'The 30 requests per hour limit has been reached. Try again later.'
+                    elif message['media'] in ('photo', 'video', 'video_note', 'animation', 'sticker'):
+                        output = ('Por ahora no puedo procesar fotos ni videos por Telegram. Envía texto, una nota de voz o un documento compatible.' if account['locale'] == 'es' else 'I cannot process photos or videos over Telegram yet. Send text, a voice note, or a supported document.')
+                    elif message.get('action'):
+                        output = 'La acción ya no está disponible.' if account['locale'] == 'es' else 'That action is no longer available.'
                     schedule_result = automation_plans.resolve(account, message) if not message['media'] else None
                     requested_name = profile.name_request(account_id, message['user_id'], message['text']) if not message['media'] else None
-                    if schedule_result is not None:
+                    if output is not None and (message.get('action') or files.file_url(message['text']) or message['media'] in ('photo', 'video', 'video_note', 'animation', 'sticker')):
+                        pass
+                    elif schedule_result is not None:
                         output = schedule_result
                     elif requested_name:
                         if profile.change_name(account_id, message['user_id'], requested_name):
@@ -119,13 +146,8 @@ async def _worker(account):
                                             # deterministic control commands such as /reset.
                                             message['text'] = text
                                             work.update_prompt(run_id, account_id, text)
-                                            spoken_name = profile.name_request(account_id, message['user_id'], text)
-                                            if spoken_name:
-                                                work.set_stage(run_id, account_id, 'updating_profile')
-                                                if profile.change_name(account_id, message['user_id'], spoken_name):
-                                                    repo.event(account_id, 'profile_updated')
-                                                    return ('Tu nombre en Spartan ahora es ' if account['locale'] == 'es' else 'Your Spartan name is now ') + spoken_name + '.'
-                                                return profile.setup_reply(account, message['user_id'])
+                                            transcript_notice = ('🎙 Entendí: ' if account['locale'] == 'es' else '🎙 I heard: ') + text
+                                            await transport.send(message['chat_id'], transcript_notice)
                                         work.set_stage(run_id, account_id, 'responding')
                                         arguments = {'document': document} if document is not None else {}
                                         return await respond(account, message['text'], history=history.messages(account_id, message['user_id']),
@@ -168,10 +190,48 @@ async def _worker(account):
                         if run_id:
                             work.finish(run_id, 'failed', reason='voice_disabled')
                         continue
-                    if isinstance(output, ChannelReply) and output.images:
+                    if getattr(output, 'file_document', None):
+                        if permissions.file_allowed(current, message['user_id'], 'file_send'):
+                            await transport.send_controls(message['chat_id'], str(output), controls.file_keyboard(current, message, output.file_document))
+                        else:
+                            output = files.notice('file_send_disabled', account['locale'])
+                            await transport.send(message['chat_id'], output)
+                    elif getattr(output, 'documents', ()):
+                        await transport.send_controls(message['chat_id'], str(output), controls.files_keyboard(current, message, output.documents))
+                    else:
+                        # Voice is an additional format; text remains authoritative and is
+                        # always sent, even if synthesis or audio upload is unavailable.
+                        if current.get('voice_enabled'):
+                            from core.inference import voice_providers
+                            try:
+                                text_for_voice = str(output)
+                                spoken = text_for_voice[:1500]
+                                if len(text_for_voice) > len(spoken):
+                                    spoken += '…'
+                                    text_for_voice += ('\n\nEl audio contiene solo el inicio; el texto completo está arriba.' if account['locale'] == 'es'
+                                                       else '\n\nThe audio contains only the beginning; the full reply is above.')
+                                from .delivery import check_access
+                                from .progress import typing
+                                async with typing(transport, message['chat_id'], action='record_voice'):
+                                    raw_voice = await voice_providers.synthesize(spoken, language=account['locale'],
+                                        check=lambda: check_access(account_id, message['user_id']))
+                                output = ChannelReply(text_for_voice, getattr(output, 'images', ()), raw_voice)
+                            except Exception as error:
+                                repo.event(account_id, 'voice_reply_unavailable')
+                                code = error.args[0] if getattr(error, 'args', ()) else ''
+                                if code == 'tts_not_configured':
+                                    note = ('\n\nPara recibir respuestas habladas, configura una clave de ElevenLabs en Ajustes → Voz.' if account['locale'] == 'es'
+                                            else '\n\nTo receive spoken replies, configure an ElevenLabs key in Settings → Voice.')
+                                else:
+                                    note = ('\n\nNo pude generar el audio; aquí tienes la respuesta escrita.' if account['locale'] == 'es'
+                                            else '\n\nI could not generate the audio; here is the written reply.')
+                                output = ChannelReply(str(output) + note, getattr(output, 'images', ()))
+                        else:
+                            output = ChannelReply(str(output), getattr(output, 'images', ()))
+                    if isinstance(output, ChannelReply) and (output.images or output.voice):
                         try:
                             output = await respond_with_progress(transport, account, update_id, message,
-                                lambda: deliver(transport, account, message, output), action='upload_photo')
+                                lambda: deliver(transport, account, message, output), action='record_voice' if output.voice and not output.images else 'upload_photo')
                         except RequestCancelled:
                             repo.finish(account_id, update_id, 'failed')
                             if run_id:

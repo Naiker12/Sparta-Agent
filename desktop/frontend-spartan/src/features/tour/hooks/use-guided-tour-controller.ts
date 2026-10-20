@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { TourStep } from "../types";
+import { hasSeenTour, rememberTour } from "../lib/tour-history";
 
 export const TOUR_OPEN_EVENT = "omx:tour:open";
 
@@ -35,9 +36,10 @@ export function useGuidedTourController({
     if (steps.length === 0) {
       return;
     }
-    if (localStorage.getItem(autoKey)) {
+    if (hasSeenTour(autoKey)) {
       return;
     }
+    rememberTour(autoKey, "shown");
     setOpen(true);
   }, [autoKey, autoWhen, enabled, hasRuntime, steps.length]);
 
@@ -53,24 +55,25 @@ export function useGuidedTourController({
       if (steps.length === 0) {
         return;
       }
+      if (autoKey) rememberTour(autoKey, "shown");
       setOpen(true);
     }
     window.addEventListener(TOUR_OPEN_EVENT, onOpen);
     return () => window.removeEventListener(TOUR_OPEN_EVENT, onOpen);
-  }, [enabled, hasRuntime, id, steps.length]);
+  }, [autoKey, enabled, hasRuntime, id, steps.length]);
 
   const onSkip = useCallback(() => {
     if (!autoKey) {
       return;
     }
-    localStorage.setItem(autoKey, "skipped");
+    rememberTour(autoKey, "skipped");
   }, [autoKey]);
 
   const onComplete = useCallback(() => {
     if (!autoKey) {
       return;
     }
-    localStorage.setItem(autoKey, "done");
+    rememberTour(autoKey, "done");
   }, [autoKey]);
 
   const tourProps = useMemo(

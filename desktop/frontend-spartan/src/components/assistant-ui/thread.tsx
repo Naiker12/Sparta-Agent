@@ -227,7 +227,8 @@ export const Thread: FC<{
   hideWelcome?: boolean;
   targetThreadId?: string;
   composer?: ReactNode;
-}> = memo(({ hideComposer, hideWelcome, targetThreadId, composer }) => {
+  mountDocumentPreview?: boolean;
+}> = memo(({ hideComposer, hideWelcome, targetThreadId, composer, mountDocumentPreview = true }) => {
   const uiT = useUiT();
 
   // Intent-aware autoscroll replaces assistant-ui's built-in autoscroll to
@@ -629,7 +630,7 @@ export const Thread: FC<{
           </IntentAwareScrollProvider>
         </ThreadPrimitive.Root>
         {/* Document preview, opened by citation badges. */}
-        <DocumentPreviewMount />
+        {mountDocumentPreview && <DocumentPreviewMount />}
       </PageDragContext.Provider>
     </GeneratedImageOverlayProvider>
   );
@@ -3153,13 +3154,13 @@ const Composer: FC<{
               so the waveform is the sole status indicator. */}
           {isDictating ? null : (
             <>
-              <PermissionModeComposerPill side={effectiveMenuSide} />
+              <span className="inline-flex" data-tour="chat-permissions"><PermissionModeComposerPill side={effectiveMenuSide} /></span>
               {effectiveDeepResearchEnabled ? (
                 <DeepResearchComposerButton
                   onConfigure={() => setResearchWebsiteAccessOpen(true)}
                 />
               ) : null}
-              <WebSearchToggle />
+              <span className="inline-flex" data-tour="chat-search"><WebSearchToggle /></span>
               <CodeToolsToggle />
               <ImagesToggle />
               {artifactsEnabled ? <ArtifactsToggle /> : null}
@@ -3263,6 +3264,7 @@ const Composer: FC<{
     <PromptQueueContext.Provider value={queueContextValue}>
       <ComposerPrimitive.Unstable_TriggerPopoverRoot>
         <ComposerPrimitive.Root
+          data-tour="chat-composer"
           ref={attachComposer}
           className="aui-composer-root relative flex w-full flex-col"
           aria-disabled={disabled}

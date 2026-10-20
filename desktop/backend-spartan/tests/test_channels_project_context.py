@@ -44,6 +44,91 @@ def test_owner_context_and_guests_need_separate_permission(saved, monkeypatch):
     assert project_context.load(saved['id'], '999', 'question') == (None, None)
 
 
+def test_file_permissions_defaults_are_narrow_and_revocation_clears_grants(saved):
+    from core.channels.permissions import file_allowed
+    assert file_allowed(saved, '123', 'web_download')
+    assert file_allowed(saved, '123', 'file_create')
+    assert not file_allowed(saved, '123', 'file_send')
+    assert not any(file_allowed(saved, '456', permission) for permission in ('web_download', 'file_create', 'file_send'))
+    repo.set_file_permissions(saved['id'], 'desktop', '123', {'web_download': True, 'file_create': True, 'file_send': True})
+    updated = repo.get_account(saved['id'])
+    assert file_allowed(updated, '123', 'file_send')
+    repo.revoke_user(saved['id'], 'desktop', '123')
+    assert '123' not in repo.get_account(saved['id']).get('file_permissions', {})
+
+
+def test_file_permissions_api_returns_defaults_and_requires_owner(saved, monkeypatch):
+    from contextlib import nullcontext
+    from fastapi import FastAPI
+    from fastapi.testclient import TestClient
+    import importlib
+    module = importlib.import_module('routes.channels.router')
+    monkeypatch.setattr(module, 'current_credential_write', lambda *_: nullcontext())
+    app = FastAPI()
+    app.include_router(module.router, prefix='/channels')
+    app.dependency_overrides[module.ui_credential] = lambda: ('desktop', None)
+    path = '/channels/' + saved['id'] + '/files'
+    with TestClient(app) as client:
+        result = client.get(path).json()['permissions']
+        assert result['123'] == {'web_download': True, 'file_create': True, 'file_send': False}
+        assert result['456'] == {'web_download': False, 'file_create': False, 'file_send': False}
+        assert client.put(path, json={'user_id': '456', 'web_download': False, 'file_create': False, 'file_send': True}).status_code == 200
+        assert client.get(path).json()['permissions']['456']['file_send'] is True
+        assert client.put(path, json={'user_id': 'nope', 'web_download': True, 'file_create': True, 'file_send': True}).status_code == 422
+
+
+def test_telegram_document_tools_stage_file_but_never_send(saved, tmp_path, monkeypatch):
+    from core.channels import attachments
+    from core.channels.artifact_tools import STAGE_FILE_TOOL, build_executor
+    monkeypatch.setattr(attachments, 'studio_root', lambda: tmp_path)
+    monkeypatch.setenv('UNSLOTH_STUDIO_HOME', str(tmp_path))
+    import utils.paths as paths
+    monkeypatch.setattr(paths, 'tmp_root', lambda: tmp_path / 'tmp')
+    permissions = {'web_download': True, 'file_create': True, 'file_send': True}
+    repo.set_file_permissions(saved['id'], 'desktop', '123', permissions)
+    current = repo.get_account(saved['id'])
+    from core.documents.generation import GENERATE_DOCUMENT_TOOL
+    documents = []
+    executor = build_executor(current, '123', {'user_id': '123', 'chat_id': 123},
+        catalog=[GENERATE_DOCUMENT_TOOL, STAGE_FILE_TOOL], selected_project=None,
+        project_context=False, documents=documents, plans=[], event_loop=asyncio.new_event_loop())
+    generated = json.loads(executor('generate_document', {'filename': 'report.txt', 'title': 'Report', 'content': 'Prepared text'}))
+    staged = executor('stage_file_for_send', {'outbox_id': generated['outbox_id']})
+    result = json.loads(staged)
+    assert result['ready_for_confirmation'] is True
+    assert 'No file was sent' in result['note']
+    assert len(documents) == 1 and documents[0].filename == 'report.txt'
+    actual, raw = attachments.read_staged(saved['id'], '123', generated['outbox_id'])
+    assert actual.filename == 'report.txt' and raw
+
+
+def test_telegram_agent_can_create_and_prepare_excel_in_one_reply(saved, tmp_path, monkeypatch):
+    import core.inference.task_scheduler as scheduler
+    import core.inference.studio_tool_loop as tool_loop
+    from core.channels import attachments
+    from core.channels.executor import respond
+    repo.set_file_permissions(saved['id'], 'desktop', '123', {'web_download': True, 'file_create': True, 'file_send': True})
+    monkeypatch.setattr(project_context, 'load', lambda *_: ([None, True], None))
+    monkeypatch.setattr(scheduler, 'make_client', lambda *_: object())
+    monkeypatch.setattr(attachments, 'studio_root', lambda: tmp_path)
+    seen = {}
+    async def fake_loop(transport, *, run, policy, cancel_event):
+        names = {item['function']['name'] for item in policy.tools}
+        assert {'generate_document', 'stage_file_for_send', 'fetch_public_file'} <= names
+        generated = policy.executor('generate_document', {'filename': 'sales.xlsx', 'title': 'Sales',
+            'headers': ['Month', 'Total'], 'rows': [['January', 12]]}, cancel_event=cancel_event)
+        generated_data = json.loads(generated)
+        staged = policy.executor('stage_file_for_send', {'outbox_id': generated_data['outbox_id']}, cancel_event=cancel_event)
+        seen['staged'] = json.loads(staged)['ready_for_confirmation']
+        yield 'data: ' + json.dumps({'choices': [{'delta': {'content': 'Excel prepared. Confirm to send it.'}}]}) + '\n\n'
+        yield 'data: ' + json.dumps({'choices': [], 'usage': {'prompt_tokens': 20, 'completion_tokens': 8, 'total_tokens': 28}}) + '\n\n'
+    monkeypatch.setattr(tool_loop, 'stream_with_studio_tools', fake_loop)
+    result = asyncio.run(respond(repo.get_account(saved['id']), 'Hazme un Excel de ventas', user_id='123'))
+    assert seen['staged'] and len(result.documents) == 1
+    assert result.documents[0].filename == 'sales.xlsx'
+    assert 'confirm' in str(result).lower()
+
+
 def test_revocation_archive_and_switch_invalidate_context(saved, monkeypatch):
     monkeypatch.setattr(project_context, 'indexed_excerpts', lambda *_: ([], 'no_matches'))
     projects.select(saved['id'], '123', 'p1')

@@ -1,66 +1,48 @@
 ---
 title: "Voz y audio"
-description: "Configura la transcripción local o por API y comprueba su funcionamiento."
+description: "Configura transcripción local o por API y respuestas habladas en Telegram."
 ---
 
-## Entrada de voz actual
+## Dos funciones distintas
 
-El desarrollo de Canales incorpora un servicio compartido de transcripción en **Ajustes → Voz**. Telegram ya lo utiliza con notas de voz y archivos de audio de usuarios autorizados. Los demás canales y la voz del chat se conectarán después. La versión instalada puede ser anterior a estos cambios.
+En Telegram, la **entrada de voz** transcribe una nota para convertirla en texto antes de consultar al proveedor del chat. La **respuesta hablada** genera audio de la respuesta escrita y lo envía como un mensaje de voz. Una función puede fallar sin eliminar la otra.
 
-Transcribir convierte el audio en texto. El proveedor del chat recibe ese texto y genera una respuesta escrita. Esto no incluye síntesis de voz, conversación por micrófono en el escritorio ni un asistente en tiempo real.
+La síntesis de voz está disponible para respuestas de Telegram cuando la opción de voz está habilitada y hay una clave de ElevenLabs configurada. El texto se envía siempre; si la síntesis o la carga del audio fallan, Spartan conserva la respuesta escrita. La voz del chat de escritorio y la conversación de voz en tiempo real son funciones separadas.
 
-## Elige cómo transcribir
+## Elegir el proveedor de transcripción
 
-| Opción | Preparación | Dónde se procesa el audio |
+Configura la entrada en **Ajustes → Voz**. Este proveedor es independiente del proveedor de IA del chat.
+
+| Opción | Modelo inicial | Procesamiento |
 | --- | --- | --- |
-| Whisper base local | Motor y modelo multilingüe; sin clave API | En tu PC |
-| ElevenLabs | Modelo, clave API y consentimiento | En ElevenLabs |
-| Groq | Modelo, clave API y consentimiento | En Groq |
-| API compatible | URL pública HTTPS completa, modelo, clave y consentimiento | En el servicio configurado |
+| Whisper local | Small multilingüe | En tu PC, sin clave de transcripción |
+| ElevenLabs | `scribe_v2` | Audio enviado a ElevenLabs |
+| Groq | `whisper-large-v3-turbo` | Audio enviado a Groq |
+| API compatible | `whisper-1` | Audio enviado al servicio configurado |
 
-El proveedor de transcripción es independiente del proveedor del chat. No se cambia automáticamente de local a remoto cuando falla Whisper. Los enlaces oficiales para crear claves están en el formulario y en [Canales y Telegram](/docs/features/channels).
+1. Selecciona el proveedor y el modelo.
+2. Para un proveedor remoto, añade la clave, acepta el envío de audio y guarda la configuración.
+3. Pulsa **Probar transcripción** y revisa el texto.
+4. Activa la entrada de voz de la conexión de Telegram y envía una nota breve.
 
-<DocsDiagram type="voice-provider" />
+La clave se guarda cifrada. La prueba real envía audio y puede generar consumo. El servicio compatible requiere HTTPS público, una ruta de transcripción aceptada y no permite destinos privados, localhost ni redirecciones.
 
-## Preparación y prueba
+## Configurar respuestas habladas
 
-### Whisper local
+Guarda una clave de ElevenLabs en **Ajustes → Voz** y habilita voz en la conexión de Telegram. Spartan sintetiza la respuesta en español o inglés de acuerdo con el idioma de la conexión. El audio incluye como máximo los primeros **1.500 caracteres**; la respuesta escrita completa permanece en Telegram.
 
-1. Pulsa **Preparar voz local**.
-2. Revisa el progreso de descarga, que requiere internet.
-3. Espera la comprobación de arranque y el estado final.
+La síntesis puede generar cargos según las condiciones de ElevenLabs. No se envía audio de voz saliente a Groq ni al proveedor compatible de transcripción.
 
-<Callout type="warn" title="Validación pendiente">
-Hay un fallo de arranque en el equipo afectado. La transcripción local completa en español e inglés todavía no está validada.
-</Callout>
+## Límites de entrada
 
-### Servicio externo
+- Hasta **cinco minutos** y **20 MB** por nota de voz.
+- Whisper local requiere descargar el motor y el modelo; la primera preparación necesita internet.
+- En proveedores remotos, el audio se valida y se convierte en memoria antes de enviarlo al servicio seleccionado.
+- El texto reconocido se envía al proveedor del chat para generar una respuesta.
+- No hay cambio automático a un proveedor remoto si Whisper local falla.
 
-1. Guarda el modelo, la clave y el consentimiento.
-2. Abre **Probar transcripción** con un audio breve.
-3. Revisa el texto devuelto antes de activar la voz del bot.
+## Diagnóstico y validación
 
-<Callout type="info" title="La prueba puede generar consumo">
-Configurado confirma el guardado, no la validez de la clave. Los adaptadores tienen pruebas automatizadas; falta validar el flujo con una clave real.
-</Callout>
+Si el modelo local no está listo, revisa su estado en **Ajustes → Voz** y prepara el motor antes de volver a enviar el audio. Si un proveedor remoto rechaza la solicitud, verifica la clave, sus permisos y el modelo. Los límites o errores de red requieren revisar el servicio y reintentar más tarde.
 
-### Recuperación
-
-| Problema | Acción |
-| --- | --- |
-| No carga la configuración | Reintenta o elige otro proveedor |
-| Clave rechazada | Revisa permisos y clave |
-| Solicitud rechazada | Comprueba modelo y archivo |
-| Cuota o tiempo de espera | Revisa el proveedor y reintenta cuando esté disponible |
-
-El selector y los campos permanecen disponibles ante un error de carga. Los errores no muestran secretos.
-
-## Límites y privacidad
-
-La entrada admite hasta **cinco minutos y 20 MB** por audio. En local, el audio se transcribe en el PC; en remoto, se valida y convierte en memoria antes de enviarlo al servicio elegido. El texto reconocido se envía al proveedor del chat. Este flujo no guarda el archivo de audio en el PC.
-
-Las claves se guardan cifradas. Una API compatible requiere un destino público y no acepta localhost, servidores privados ni redirecciones. Activar voz en un bot conserva las restricciones por usuario de esa conexión.
-
-## Qué queda para después
-
-Primero hay que validar Whisper en el equipo afectado y completar pruebas reales de los proveedores externos y de las notas de Telegram. La entrada por micrófono en el chat, la respuesta hablada y el asistente en tiempo real son etapas posteriores.
+Los adaptadores y controles tienen pruebas automatizadas. Antes de depender de esta función, comprueba la descarga y el arranque de Whisper en el equipo real, las credenciales de transcripción y la síntesis de ElevenLabs. Las pruebas con servicios simulados no validan permisos, cuotas ni disponibilidad de una cuenta externa.

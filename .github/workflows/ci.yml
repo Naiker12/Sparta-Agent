@@ -90,7 +90,7 @@ jobs:
         working-directory: desktop/backend-spartan
         env:
           PYTHONPATH: .
-        run: python -m pytest --noconftest tests/test_channels.py tests/test_channels_controls.py tests/test_channels_date.py tests/test_channels_documents.py tests/test_channels_images.py tests/test_channels_intents.py tests/test_channels_permissions_command.py tests/test_channels_personal_pairing.py tests/test_channels_profile.py tests/test_channels_profile_capability.py tests/test_channels_project_context.py tests/test_channels_projects.py tests/test_channels_voice.py tests/test_telegram_delivery_errors.py -q
+        run: python -m pytest --noconftest tests/test_channels.py tests/test_channels_attachments.py tests/test_channels_controls.py tests/test_channels_date.py tests/test_channels_documents.py tests/test_channels_files.py tests/test_channels_images.py tests/test_channels_intents.py tests/test_channels_permissions_command.py tests/test_channels_personal_pairing.py tests/test_channels_profile.py tests/test_channels_profile_capability.py tests/test_channels_project_context.py tests/test_channels_projects.py tests/test_channels_voice.py tests/test_studio_tool_loop.py tests/test_telegram_delivery_errors.py tests/test_voice_providers.py tests/test_voice_setup.py -q
       - name: Document generation and unique workspace folders
         working-directory: desktop/backend-spartan
         env:

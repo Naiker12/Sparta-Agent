@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.5.0]
+
+### Añadido
+
+- Herramientas de Telegram para leer documentos, crear archivos y preparar descargas públicas, con entrega pendiente de confirmación explícita.
+- Permisos por usuario para creación, descarga y envío de archivos; acceso de proyecto limitado a la carpeta autorizada.
+- Respuestas de voz en Telegram mediante ElevenLabs cuando se configura el servicio; la respuesta escrita se conserva como alternativa.
+- Mejoras de distribución y lectura del grafo de memoria, espacios de trabajo con varios paneles y presentación más clara de actividad de herramientas.
+- Ajustes a la visita guiada, temas y apertura/cierre de vistas de documentos y cambios.
+
+### Corregido y mejorado
+
+- El panel de vista previa de documentos o cambios se cierra al salir del chat.
+- Se endurecen los límites de descarga, los formatos y tamaños aceptados y la vigencia de archivos pendientes de confirmación.
+- Se mejora la recuperación de voz y la gestión de errores de entrega en Telegram.
+
 ## [0.4.1] - 2026-10-11
 
 ### Added

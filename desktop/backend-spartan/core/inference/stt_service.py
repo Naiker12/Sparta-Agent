@@ -13,8 +13,10 @@ async def transcribe_local(raw, model, language, fast, engine, *, sidecar=None, 
     owner = cancel_event if cancel_event is not None else threading.Event()
     def run():
         from .stt_sidecar import SttModelBusyError, SttTranscriptionCancelledError
-        if not _slot.acquire(blocking=False):
-            raise SttModelBusyError('Local transcription is busy.')
+        # The desktop dictation and Telegram share this slot. Wait a bounded
+        # minute for an in-flight transcription instead of failing immediately.
+        if not _slot.acquire(timeout=60):
+            raise SttModelBusyError('Local transcription queue timed out.')
         try:
             if owner.is_set():
                 raise SttTranscriptionCancelledError('Transcription cancelled.')

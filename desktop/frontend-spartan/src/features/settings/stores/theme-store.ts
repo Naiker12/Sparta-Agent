@@ -93,32 +93,40 @@ function applyToDocument(resolved: ResolvedTheme) {
 }
 
 export function syncNativeTitlebar() {
-    const probe = document.createElement("span");
-    probe.style.cssText = "position:fixed;visibility:hidden;background:var(--background);color:var(--foreground)";
-    document.documentElement.appendChild(probe);
+  if (typeof document === "undefined" || typeof window === "undefined") return;
+  const probe = document.createElement("span");
+  probe.style.cssText = "position:fixed;visibility:hidden;background:var(--background);color:var(--foreground)";
+  document.documentElement.appendChild(probe);
+  try {
     const computed = getComputedStyle(probe);
+    // Computed CSS colors can remain oklch(), lab() or color(). Let the
+    // browser convert them to sRGB instead of treating their numbers as RGB.
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = 1;
+    const context = canvas.getContext("2d", { willReadFrequently: true });
+    if (!context) return;
     const hex = (value: string) => {
-      const channels = value.match(/[\d.]+/g)?.slice(0, 3);
-      return channels?.length === 3 ? "#" + channels.map((channel) => Math.round(Number(channel)).toString(16).padStart(2, "0")).join("") : null;
+      context.clearRect(0, 0, 1, 1);
+      context.fillStyle = value;
+      context.fillRect(0, 0, 1, 1);
+      const [r, g, b] = context.getImageData(0, 0, 1, 1).data;
+      return "#" + [r, g, b].map(channel => channel.toString(16).padStart(2, "0")).join("");
     };
-    const color = hex(computed.backgroundColor);
-    const symbolColor = hex(computed.color);
-    probe.remove();
-    if (!color || !symbolColor) return;
-    const colors = { color, symbolColor };
-    try {
-      const electron = window as unknown as {
-        electron?: { send: (channel: string, data: unknown) => void };
-        electronAPI?: { setTitleBarOverlay?: (c: typeof colors) => void };
-      };
-      if (electron.electronAPI?.setTitleBarOverlay) {
-        electron.electronAPI.setTitleBarOverlay(colors);
-      } else if (electron.electron?.send) {
-        electron.electron.send("titlebar:set-overlay", colors);
-      }
-    } catch {
-      // ignore
+    const colors = { color: hex(computed.backgroundColor), symbolColor: hex(computed.color) };
+    const electron = window as unknown as {
+      electron?: { send: (channel: string, data: unknown) => void };
+      electronAPI?: { setTitleBarOverlay?: (c: typeof colors) => void };
+    };
+    if (electron.electronAPI?.setTitleBarOverlay) {
+      electron.electronAPI.setTitleBarOverlay(colors);
+    } else if (electron.electron?.send) {
+      electron.electron.send("titlebar:set-overlay", colors);
     }
+  } catch {
+    // Native decorations are optional in browser previews.
+  } finally {
+    probe.remove();
+  }
 }
 
 function applyPaletteToDocument(palette: Palette) {

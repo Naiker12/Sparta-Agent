@@ -95,9 +95,22 @@ export const channels = {
     empty: "Crea un proyecto en Spartan para autorizarlo aquí.",
     user: "Usuario de Telegram",
   },
+  files: {
+    restartRequired: "El servidor activo todavía no incluye la gestión de permisos de archivos. Cierra y vuelve a abrir Spartan para cargar la versión actual. Tus permisos no se han cambiado.",
+    accountUnavailable: "Esta conexión ya no está disponible. Actualiza la lista de canales antes de gestionar sus permisos.",
+    title: "Archivos y documentos",
+    help: "Concede por separado la descarga pública, la creación de documentos y la preparación para enviar archivos. Todo envío requiere confirmación en Telegram.",
+    manage: "Gestionar permisos de archivos",
+    web_download: "Descargar archivos públicos por HTTPS",
+    web_downloadHelp: "Solo enlaces públicos HTTPS compatibles; los archivos quedan pendientes en el outbox temporal.",
+    file_create: "Crear PDF, Excel, Word o texto",
+    file_createHelp: "Genera documentos en un espacio temporal y limitado.",
+    file_send: "Permitir preparar archivos para enviar",
+    file_sendHelp: "Requiere que el remitente confirme con el botón de Telegram. Desactivado para todos de forma predeterminada.",
+  },
   documents: "Documentos recibidos",
   documentsHelp:
-    "Envía TXT, Markdown, CSV o JSON en UTF-8 (hasta 256 KB y 24.000 caracteres), con tu pregunta como descripción. El texto se envía al proveedor elegido; no se guarda el archivo en el PC. PDF y Word están pendientes. La consulta del documento no usa búsquedas web.",
+    "Envía TXT, Markdown, CSV, JSON, PDF, DOCX, XLSX, PPTX, ODT, RTF o EPUB (hasta 10 MB). Se extraen hasta 24.000 caracteres y se envían al proveedor elegido; la consulta del documento no usa búsquedas web.",
   voice: {
     providerScope:
       "Configuración de transcripción de Spartan. Telegram ya la usa; los demás canales y la voz del chat se conectarán más adelante.",
@@ -536,7 +549,7 @@ export const channels = {
   available: "Disponible",
   pending: "Pendiente",
   capabilityNote:
-    "Las notas de voz y los audios requieren entrada de voz activa y un modelo local preparado. PDF, Word y las acciones remotas siguen pendientes.",
+    "Las notas de voz requieren entrada de voz activa y un modelo local preparado. Crear o enviar archivos por Telegram requiere los permisos explícitos de Archivos y documentos y confirmación en el chat.",
   activityDescription:
     "Eventos recientes sin contenido de mensajes ni credenciales.",
   noActivity: "Sin actividad todavía",

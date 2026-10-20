@@ -29,6 +29,7 @@ export const chat = {
     imageReference: "Imágenes de referencia", loadImages: "Cargar imágenes",
     imageFailed: "No se pudo cargar la imagen. Puedes consultar el origen.",
     activity: "Actividad · {count}", searching: "Buscando información…",
+    toolCancelled: "Cancelada", toolRunning: "Ejecutando", toolUsed: "Herramienta",
   },
   tools: {
     preparingFile: "Preparando archivo…",
@@ -501,6 +502,7 @@ export const chat = {
     chunks: "Fragmentos",
   },
   repository: {
+    collapseFile: "Ocultar cambios de {path}", expandFile: "Mostrar cambios de {path}",
     noAgents: "Sin agentes conectados",
     noAgentsDescription: "No hay datos de agentes disponibles para este espacio de trabajo.",
     changes: "Cambios", pullRequests: "Pull requests", refresh: "Actualizar", loading: "Consultando repositorio…",

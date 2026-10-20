@@ -6,6 +6,8 @@ COMMANDS = {
 }
 COMMANDS['es'].append(('search', 'Buscar un tema público en internet'))
 COMMANDS['en'].append(('search', 'Search a public topic on the internet'))
+COMMANDS['es'].append(('file', 'Descargar un archivo desde una URL HTTPS pública'))
+COMMANDS['en'].append(('file', 'Download a file from a public HTTPS URL'))
 
 
 
@@ -15,7 +17,7 @@ CAPABILITIES = (
     ('conversationContext', 'available', 'Contexto de conversación', 'Conversation context'),
     ('projectContext', 'available', 'Instrucciones y documentos indexados del proyecto', 'Project instructions and indexed documents'),
     ('typingCancellation', 'available', 'Escritura y cancelación', 'Typing and cancellation'),
-    ('documents', 'available', 'Documentos TXT, Markdown, CSV y JSON', 'TXT, Markdown, CSV and JSON documents'),
+    ('documents', 'available', 'Documentos compatibles', 'Supported documents'),
     ('publicWebSearch', 'available', 'Búsqueda pública en internet', 'Public web search'),
     ('publicPageRead', 'available', 'Lectura de páginas públicas', 'Public page reading'),
     ('referenceImages', 'available', 'Imágenes de referencia con fuentes', 'Reference images with sources'),
@@ -43,8 +45,14 @@ def capability_summary(account, user_id=None, *, locale=None):
         lines.append('Puedes solicitar el cambio de nombre desde Telegram después de vincular tu usuario en Configuración → Canales y permisos → Perfil de Spartan.' if spanish else 'Profile name changes require linking this Telegram user in Spartan Settings > Channels and permissions > Spartan profile. After linking, the user can request a name change directly from this Telegram conversation.')
     lines.append('La aplicación ejecuta el cambio de nombre fuera del modelo. El asistente debe explicar esta función y el vínculo necesario; no afirmar que solo conversa ni que todos los cambios deben hacerse manualmente en el escritorio. No puede crear el vínculo desde Telegram.' if spanish else 'The application executes explicit profile name changes outside the language model. As the Spartan assistant, explain this supported feature and any required linking; do not say you only chat or that all name changes must be performed manually in the desktop app. Linking itself must be done in the desktop app.')
     from .permissions import project_context_allowed
-    lines.append(('Al seleccionar un proyecto autorizado, puedes consultar sus instrucciones y fragmentos de documentos indexados. No puedes abrir carpetas ni modificar archivos. Las consultas con proyecto seleccionado no usan herramientas web públicas.' if spanish else 'Selecting an authorized project allows its instructions and matching indexed document excerpts. You cannot open folders or modify files. Requests with a selected project do not use public web tools.') if project_context_allowed(account, user_id) else ('Puedes seleccionar proyectos autorizados para vincular actividad; la lectura de contexto requiere permiso en Configuración → Canales y permisos.' if spanish else 'You can select authorized projects to link activity; reading context requires permission in Settings > Channels and permissions.'))
-    lines.append('Pendiente: archivos locales, comandos del sistema, ejecución de skills/MCP, generación de imágenes y respuestas de voz.' if spanish else 'Not implemented: local file access, shell execution, skill/MCP execution, image generation and spoken audio replies.')
+    lines.append(('Al seleccionar un proyecto autorizado puedes consultar sus instrucciones y documentos indexados. Si el proyecto tiene una carpeta disponible, puedes leer archivos compatibles con rutas limitadas; enviar uno requiere el permiso separado de envío. No se modifican archivos y las búsquedas web públicas se desactivan con un proyecto seleccionado.' if spanish else 'Selecting an authorized project lets you use its instructions and indexed documents. If the project has an available folder, supported files can be read through scoped paths; sending one requires the separate delivery permission. Files cannot be modified and public web searches are disabled while a project is selected.') if project_context_allowed(account, user_id) else ('Puedes seleccionar proyectos autorizados para vincular actividad; la lectura de contexto requiere permiso en Configuración → Canales y permisos.' if spanish else 'You can select authorized projects to link activity; reading context requires permission in Settings > Channels and permissions.'))
+    from .permissions import file_allowed
+    if file_allowed(account, user_id, 'file_send'):
+        lines.append(('El envío de archivos está habilitado para ti. Puedes pedir crear PDF, Excel, Word, CSV o texto y descargar archivos HTTPS públicos si tienes esos permisos. La aplicación siempre espera que pulses Confirmar en Telegram; límite de 25 MB.' if spanish else 'File delivery is enabled for you. You can ask for PDF, Excel, Word, CSV or text files and fetch public HTTPS files if those permissions are enabled. The app always waits for you to press Confirm in Telegram; 25 MB limit.'))
+    else:
+        lines.append(('El envío de archivos está desactivado para ti. El propietario puede habilitarlo en Configuración → Canales y permisos → Archivos y documentos. Sin ese permiso no se prepara un botón de envío.' if spanish else 'File delivery is disabled for you. The connection owner can enable it in Settings > Channels and permissions > Files and documents. Without it, no delivery button is prepared.'))
+    lines.append(('Respuestas de voz: se intentan con ElevenLabs si hay una clave guardada; siempre se conserva la respuesta escrita.' if spanish else 'Voice replies: attempted with ElevenLabs when a key is saved; the written reply is always preserved.') if account.get('voice_enabled') else ('La entrada de voz está desactivada en esta conexión.' if spanish else 'Voice input is disabled for this connection.'))
+    lines.append('No está disponible el acceso a archivos fuera de proyectos seleccionados autorizados, ni los comandos del sistema, la edición/eliminación, la ejecución de skills/MCP o la generación de imágenes.' if spanish else 'Not implemented: local file access outside selected authorized projects, system commands, file editing/deletion, skill/MCP execution or image generation.')
     return '\n'.join(lines)
 
 
@@ -84,7 +92,7 @@ def command_reply(text: str, account: dict, *, user_id=None, buttons=False):
         from .permissions import project_context_allowed
         from storage.channels.repository import get_account
         current = get_account(account['id']) or account
-        access = ('Instrucciones y documentos indexados disponibles. No abre carpetas ni modifica archivos. Las búsquedas web se desactivan mientras este proyecto esté seleccionado.' if spanish else 'Instructions and indexed documents are available. No folder access or file modification. Public web lookups are disabled while this project is selected.') if project and project_context_allowed(current, user_id) else ('Solo vincula la actividad; no concede acceso a archivos.' if spanish else 'Links activity only; does not grant file access.')
+        access = ('Instrucciones y documentos indexados disponibles. También puede leer archivos compatibles con rutas limitadas si la carpeta del proyecto está disponible. Para preparar un archivo para envío se necesita el permiso separado de Archivos y documentos. No modifica archivos; las búsquedas web se desactivan mientras el proyecto está seleccionado.' if spanish else 'Instructions and indexed documents are available. Supported files can also be read through scoped paths if the project folder is available. Preparing a file for delivery requires the separate Files and documents permission. Files cannot be modified; public web lookups are disabled while this project is selected.') if project and project_context_allowed(current, user_id) else ('Solo vincula la actividad; no concede acceso a archivos.' if spanish else 'Links activity only; does not grant file access.')
         return (('Proyecto seleccionado: ' if spanish else 'Selected project: ') + project['name'] if project else ('Sin proyecto seleccionado.' if spanish else 'No project selected.')) + '\n' + access + (' Cambiar de proyecto reinicia el contexto del chat. Usa /project off para salir.' if spanish else ' Switching projects resets chat context. Use /project off to leave.')
     if command in ('/search', '/read', '/images'):
         return None

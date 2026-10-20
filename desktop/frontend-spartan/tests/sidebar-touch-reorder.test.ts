@@ -8,10 +8,11 @@ import test from "node:test";
 // coarse pointers, which silently takes manual ordering away from touch users.
 
 async function sidebarSource(): Promise<string> {
-  return readFile(
-    new URL("../src/components/app-sidebar.tsx", import.meta.url),
-    "utf8",
-  );
+  const [sidebar, chatItems] = await Promise.all([
+    readFile(new URL("../src/components/app-sidebar.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/sidebar/chat-sidebar-item.tsx", import.meta.url), "utf8"),
+  ]);
+  return `${sidebar}\n${chatItems}`;
 }
 
 /** The className string of the button carrying `label`. */
@@ -45,10 +46,14 @@ test("rows that reorder can open their menu on touch", async () => {
     assert.match(cls, /sidebar-touch-reveal/);
   }
 
-  // The project folder menu holds the folder reorder controls.
+  // Folder actions are statically reserved and always visible, so they do not
+  // need the coarse-pointer reveal class used by hover-only chat row actions.
+  const projectOptions = actionClassFor(source, "shell.navigation.projectOptions");
+  const css = await readFile(new URL("../src/index.css", import.meta.url), "utf8");
+  assert.ok(projectOptions.includes("sidebar-row-action"));
   assert.match(
-    actionClassFor(source, "shell.navigation.projectOptions"),
-    /sidebar-touch-reveal/,
+    css,
+    /\.project-folder-row \.sidebar-row-action\s*\{\s*@apply static[^}]*opacity-100 pointer-events-auto/s,
   );
 });
 

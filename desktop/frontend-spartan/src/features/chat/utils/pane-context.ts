@@ -1,6 +1,7 @@
 import type { ThreadMessage } from "@assistant-ui/react";
 import type { MessageRecord } from "../types";
 import { paneContextEvidence, PANE_EVIDENCE_LIMITS } from "./pane-context-evidence.ts";
+import { cleanToolProtocolDisplay } from "./tool-protocol-display.ts";
 
 /** Copy the visible branch plus inert evidence, with new ids and no execution state. */
 export function copyPaneContext(
@@ -22,9 +23,11 @@ export function copyPaneContext(
   }
   for (const [index, message] of messages.entries()) {
     if (message.role !== "user" && message.role !== "assistant") continue;
-    const text = message.content
+    const rawText = message.content
       .filter(part => part.type === "text")
       .map(part => part.type === "text" ? part.text : "").join("\n").trim();
+    const text = cleanToolProtocolDisplay(rawText, message.role === "assistant" &&
+      message.content.some(part => part.type === "tool-call")).trim();
     const evidence = evidenceByMessage[index] ?? "";
     if (!text && !evidence) continue;
     const content = [text, evidence].filter(Boolean).join("\n\n");

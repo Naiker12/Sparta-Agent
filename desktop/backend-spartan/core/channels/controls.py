@@ -5,7 +5,7 @@ import time
 _pending = {}
 
 
-def issue(account_id, user_id, chat_id, text, *, cancel_for=None):
+def issue(account_id, user_id, chat_id, text='', *, cancel_for=None, action=None, ref=None):
     now = time.monotonic()
     for key in list(_pending):
         if _pending[key]['expires'] <= now:
@@ -15,6 +15,7 @@ def issue(account_id, user_id, chat_id, text, *, cancel_for=None):
     token = 'sc:' + secrets.token_urlsafe(18)
     _pending[token] = dict(account_id=account_id, user_id=user_id,
                            chat_id=chat_id, text=text, cancel_for=cancel_for,
+                           action=action, ref=ref,
                            expires=now + 600)
     return token
 
@@ -54,9 +55,33 @@ def consume(account, update):
         return None
     _pending.pop(token)
     result = dict(user_id=str(user), chat_id=chat_id, text=control['text'], media=None)
+    if control.get('action'):
+        result['action'] = control['action']
+    if control.get('ref'):
+        result['ref'] = control['ref']
     if control['cancel_for'] is not None:
         result['cancel_for'] = control['cancel_for']
     return result
+
+
+def file_keyboard(account, message, document):
+    size = f"{document.size / (1024 * 1024):.1f} MB" if document.size >= 1024 * 1024 else f"{max(1, document.size // 1024)} KB"
+    send = issue(account['id'], message['user_id'], message['chat_id'],
+                 action='send_file', ref=document.outbox_id)
+    cancel = issue(account['id'], message['user_id'], message['chat_id'],
+                   action='cancel_file', ref=document.outbox_id)
+    es = account['locale'] == 'es'
+    return {'inline_keyboard': [[
+        {'text': (f'Enviar «{document.filename}» · {size}' if es else f'Send “{document.filename}” · {size}')[:64], 'callback_data': send},
+        {'text': 'Cancelar' if es else 'Cancel', 'callback_data': cancel},
+    ]]}
+
+
+def files_keyboard(account, message, documents):
+    rows = []
+    for document in tuple(documents)[:5]:
+        rows.extend(file_keyboard(account, message, document)['inline_keyboard'])
+    return {'inline_keyboard': rows} if rows else None
 
 
 def project_keyboard(account, message):

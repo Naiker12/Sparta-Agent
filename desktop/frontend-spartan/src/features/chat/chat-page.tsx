@@ -128,6 +128,7 @@ import { useResearchRunStore } from "./stores/research-run-store";
 import { useWorkspaceStore } from "./stores/use-workspace-store";
 import { useChatPanelsStore } from "./stores/chat-panels-store";
 import { buildChatTourSteps } from "./tour";
+import { CHAT_TOUR_AUTO_KEY } from "@/features/tour/lib/tour-history";
 import type { ChatView } from "./types";
 import {
   getStoredChatThread,
@@ -1546,16 +1547,16 @@ export function ChatPage({
     () =>
       buildChatTourSteps({
         t,
-        canCompare,
-        enterCompare,
-        exitCompare,
       }),
-    [t, canCompare, enterCompare, exitCompare],
+    [t],
   );
 
   const tour = useGuidedTourController({
     id: "chat",
     steps: tourSteps,
+    enabled: active,
+    autoKey: CHAT_TOUR_AUTO_KEY,
+    autoWhen: settingsHydrated,
   });
 
   const showArtifactOverlay = Boolean(
@@ -1567,7 +1568,7 @@ export function ChatPage({
     // Provides `active` to ChatRuntimeProvider (drops the message views/composers
     // while off-route, keeping the runtime alive) and to the compare chrome.
     <ChatActiveContext.Provider value={active}>
-      <div className="flex min-h-0 min-w-0 flex-1 basis-0 overflow-hidden bg-background pt-[var(--studio-content-top-inset,0px)]">
+      <div data-tour="chat-interface" className="flex min-h-0 min-w-0 flex-1 basis-0 overflow-hidden bg-background pt-[var(--studio-content-top-inset,0px)]">
         {/* Portaled surfaces render to document.body, escaping the parent's hidden
           wrapper, so gate them on `active` to keep them off other tabs. */}
         {active && <GuidedTour {...tour.tourProps} />}
@@ -1724,7 +1725,7 @@ export function ChatPage({
               ) : null}
             </div>
             <div className="pointer-events-auto ml-auto flex items-center gap-1">
-              {view.mode === "single" && <Button type="button" variant="ghost" size="icon-sm" disabled={incognito} aria-label={t("chat.panels.new")} title={t("chat.panels.new")} onClick={() => window.dispatchEvent(new Event("spartan:new-chat-pane"))}><PlusIcon /></Button>}
+              {view.mode === "single" && <Button data-tour="chat-new-panel" type="button" variant="ghost" size="icon-sm" disabled={incognito} aria-label={t("chat.panels.new")} title={t("chat.panels.new")} onClick={() => window.dispatchEvent(new Event("spartan:new-chat-pane"))}><PlusIcon /></Button>}
               {view.mode === "single" && (
                 <Tooltip>
                   <TooltipPrimitive.Trigger asChild={true}>

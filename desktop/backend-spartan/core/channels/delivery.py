@@ -41,5 +41,21 @@ async def deliver(transport, account, message, output):
         if index + 1 < len(attachments):
             from .progress import delay
             await delay(1)
+    voice = getattr(output, 'voice', None)
+    if voice:
+        check_access(account_id, message['user_id'])
+        try:
+            await transport.send_voice_file(message['chat_id'], voice,
+                'Respuesta de voz' if account['locale'] == 'es' else 'Voice reply')
+            repo.event(account_id, 'voice_reply_sent')
+        except TelegramError as error:
+            if error.code != 'upload_rejected':
+                raise
+            repo.event(account_id, 'voice_reply_unavailable')
+            notice = ('No pude enviar el audio; la respuesta escrita está arriba.' if account['locale'] == 'es'
+                      else 'I could not send the audio; the written reply is above.')
+            check_access(account_id, message['user_id'])
+            await transport.send(message['chat_id'], notice)
+            delivered += '\n\n' + notice
     check_access(account_id, message['user_id'])
     return delivered

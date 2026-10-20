@@ -44,6 +44,7 @@ import {
 } from "./api/chat-adapter";
 import { CHAT_HISTORY_UPDATED_EVENT } from "./api/chat-api";
 import { getResearchThreadState } from "./api/research-api";
+import { claimPendingWorkspace } from "./utils/pending-workspace";
 import { AudioAttachmentAdapter } from "./audio-attachment-adapter";
 import {
   loadConnectionsEnabled,
@@ -839,6 +840,9 @@ function createStudioDbAdapter(
       const remoteId = isAssistantLocalThreadId(threadId)
         ? crypto.randomUUID()
         : threadId;
+      if (isAssistantLocalThreadId(threadId) && !pairId) {
+        claimPendingWorkspace(remoteId);
+      }
       // assistant-ui withholds the first message until this resolves, so the row write is tracked, not awaited.
       // Captured here, not inside the creator: a retry belongs to the send that initialized it,
       // not to a later incognito or checkpoint selection.

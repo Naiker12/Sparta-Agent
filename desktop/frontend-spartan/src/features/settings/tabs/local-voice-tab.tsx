@@ -117,7 +117,7 @@ export function LocalVoiceTab() {
     <section className="flex flex-col gap-4">
       <h2 className="font-medium">{t("channels.voice.title")}</h2>
       <div className="flex items-center gap-2">
-        <span className="font-medium">Whisper base</span>
+        <span className="font-medium">Whisper small</span>
         <Badge variant="secondary">{t("channels.voice.recommended")}</Badge>
       </div>
       <p className="text-muted-foreground text-sm">
@@ -134,7 +134,7 @@ export function LocalVoiceTab() {
         )}
       </Badge>
       <p className="text-muted-foreground text-sm">
-        Whisper base · {t("channels.voice.local")}
+        Whisper small · {t("channels.voice.local")}
       </p>
       {preparing && (
         <div className="flex flex-col gap-2" role="status" aria-live="polite">

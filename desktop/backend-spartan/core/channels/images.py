@@ -23,9 +23,11 @@ class ReferenceImage:
 
 class ChannelReply(str):
     """Keep the existing text/history contract, with trusted adapter attachments."""
-    def __new__(cls, text, images=()):
+    def __new__(cls, text, images=(), voice=None, documents=()):
         value = super().__new__(cls, text)
         value.images = tuple(images)
+        value.voice = voice
+        value.documents = tuple(documents)
         return value
 
 

@@ -1,0 +1,37 @@
+import assert from "node:assert/strict";
+import { fileURLToPath } from "node:url";
+import { createServer } from "../desktop/frontend-spartan/node_modules/vite/dist/node/index.js";
+import react from "../desktop/frontend-spartan/node_modules/@vitejs/plugin-react/dist/index.js";
+import tailwind from "../desktop/frontend-spartan/node_modules/@tailwindcss/vite/dist/index.mjs";
+import { chromium } from "playwright";
+const root = fileURLToPath(new URL("../desktop/frontend-spartan/", import.meta.url));
+const vite = await createServer({configFile: false, root, cacheDir: `${root}node_modules/.vite/diff-tests`, resolve: {alias: {"@": `${root}src`}}, css: {postcss: {plugins: []}}, plugins: [react(), tailwind(), {name: "tour-test", configureServer(server) {server.middlewares.use("/diff-test", async (_req, res) => {res.setHeader("Content-Type", "text/html");res.end(await server.transformIndexHtml("/diff-test", '<!doctype html><meta charset="utf-8"><div id="root"></div><script type="module" src="/tests/fixtures/diff-viewer.tsx"></script>'));});}}], server: {host: "127.0.0.1", port: 0, hmr: false, watch: null}});
+let browser;
+try {
+  await vite.listen();
+  browser = await chromium.launch({channel: "msedge", headless: true});
+  const page = await browser.newPage({viewport: {width: 1280, height: 800}});
+  page.setDefaultTimeout(60000);
+  const errors = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto(`http://127.0.0.1:${vite.httpServer.address().port}/diff-test`, {timeout: 120000});
+  const first = page.locator('[data-diff-file="scripts/long.py"]');
+  const second = page.locator('[data-diff-file="short.txt"]');
+  const binary = page.locator('[data-diff-file="image.png"]');
+  await first.getByRole("button", {name: "Ocultar cambios de scripts/long.py", exact: true}).waitFor();
+  const before = await first.boundingBox();
+  assert.ok((await second.boundingBox()).y >= before.y + before.height - 1, "file rows must not overlap even with a long diff");
+  await first.getByRole("button", {name: "Ocultar cambios de scripts/long.py", exact: true}).click();
+  const collapsed = await first.boundingBox();
+  assert.ok(collapsed.height < 70 && before.height > 1000, "collapse must reclaim the complete diff height");
+  await first.getByRole("button", {name: "Mostrar cambios de scripts/long.py", exact: true}).click();
+  assert.ok((await first.boundingBox()).height > 1000);
+  await first.getByRole("button", {name: "Ocultar cambios de scripts/long.py", exact: true}).click();
+  await binary.getByRole("button", {name: "Ocultar cambios de image.png", exact: true}).waitFor();
+  await binary.getByRole("button", {name: "Ocultar cambios de image.png", exact: true}).click();
+  assert.equal(await binary.getByText("No hay diferencias de texto disponibles para este archivo.", {exact: true}).count(), 0);
+  await page.setViewportSize({width: 480, height: 700});
+  await page.screenshot({path: `${process.env.TEMP}/spartan-diff-viewer.png`, animations: "disabled"});
+  assert.deepEqual(errors, []);
+  console.log("Diff viewer OK: no overlap, collapse/reopen, file names without text diffs, narrow layout");
+} finally { await browser?.close(); await vite.close(); }

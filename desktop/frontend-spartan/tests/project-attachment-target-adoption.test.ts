@@ -139,7 +139,7 @@ test("the run keeps the project it started in", () => {
   );
   assert.match(
     source,
-    /const composerProjectIdAtSend =\s*useChatRuntimeStore\.getState\(\)\.activeProjectId \?\? null;\s*await useChatRuntimeStore\.getState\(\)\.hydratePersistedSettings\(\);/,
+    /const composerProjectIdAtSend =\s*options\.getRunSettings \? options\.projectId \?\? null : useChatRuntimeStore\.getState\(\)\.activeProjectId \?\? null;\s*await useChatRuntimeStore\.getState\(\)\.hydratePersistedSettings\(\);/,
     "captured before the first await",
   );
   assert.match(

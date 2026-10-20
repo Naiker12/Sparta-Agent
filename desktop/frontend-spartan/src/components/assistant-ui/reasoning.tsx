@@ -41,7 +41,7 @@ import {
 const ANIMATION_DURATION = 200;
 const AUTO_SCROLL_THRESHOLD_PX = 24;
 
-export const reasoningVariants = cva("aui-reasoning-root mt-3 mb-4 w-full", {
+export const reasoningVariants = cva("aui-reasoning-root my-1.5 w-full", {
   variants: {
     variant: {
       outline: "rounded-lg border px-3 py-2",
@@ -195,6 +195,7 @@ function ReasoningContent({
         "data-[state=closed]:pointer-events-none",
         "data-[state=open]:duration-(--animation-duration)",
         "data-[state=closed]:duration-(--animation-duration)",
+        "motion-reduce:animate-none",
         className,
       )}
       {...props}

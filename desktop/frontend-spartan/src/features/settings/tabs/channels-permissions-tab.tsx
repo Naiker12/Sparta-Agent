@@ -30,6 +30,7 @@ import {
 import {
   ChannelProfile,
   ChannelProjects,
+  ChannelFiles,
   ChannelVoice,
   ChannelCapabilities,
   AccountCard,
@@ -212,6 +213,13 @@ export function ChannelsPermissionsTab() {
             </section>
             <section data-settings-label={t("channels.projects.title")}>
               <ChannelProjects
+                account={account}
+                onChanged={changed}
+                onError={() => setActionError(true)}
+              />
+            </section>
+            <section data-settings-label={t("channels.files.title")}>
+              <ChannelFiles
                 account={account}
                 onChanged={changed}
                 onError={() => setActionError(true)}

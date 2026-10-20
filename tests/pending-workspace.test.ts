@@ -4,7 +4,7 @@ vi.mock("../desktop/frontend-spartan/src/features/chat/api/modules/workspaces-ap
   bindThreadWorkspace: vi.fn(async (threadId, folder, access) => ({threadId, canonicalPath: folder, access, bindingId: threadId})),
   getThreadWorkspace: vi.fn(async () => null),
 }));
-import { getPendingWorkspace, setPendingWorkspace, ensureThreadWorkspace } from "../desktop/frontend-spartan/src/features/chat/utils/pending-workspace";
+import { claimPendingWorkspace, getPendingWorkspace, setPendingWorkspace, ensureThreadWorkspace } from "../desktop/frontend-spartan/src/features/chat/utils/pending-workspace";
 
 function storage() {
   const values = new Map<string, string>();
@@ -30,6 +30,7 @@ it("rejects malformed saved capabilities and disconnect clears both stores", () 
 });
 it("persists the selected capability when converting a draft to a chat", async () => {
   setPendingWorkspace({folder: "D:/work", access: "read"});
+  claimPendingWorkspace("saved-thread");
   const binding = await ensureThreadWorkspace("saved-thread");
   expect(binding?.access).toBe("read");
   expect(getPendingWorkspace()).toBeNull();

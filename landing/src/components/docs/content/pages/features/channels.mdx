@@ -14,13 +14,14 @@ Telegram es la primera integración implementada. Discord, WhatsApp y Slack est�
 | Bot privado, vinculación y autorización en Spartan | Implementado |
 | Texto, indicador de escritura y cancelación | Implementado |
 | Búsqueda pública, enlaces e imágenes de referencia | Implementado |
-| Documentos TXT, Markdown, CSV y JSON | Implementado con límites |
-| Whisper local | Preparación implementada; arranque pendiente de validar en el equipo afectado |
-| ElevenLabs, Groq y API compatible | Adaptadores implementados; la prueba real de ElevenLabs sigue rechazando el permiso de transcripción |
-| Proyectos | Visibilidad y selección para asociar actividad |
+| Documentos TXT, Markdown, CSV, JSON, PDF y formatos Office | Implementado; extracción limitada a 24.000 caracteres |
+| Whisper local y proveedores externos | Implementados; la validación real del equipo y de las claves sigue pendiente |
+| Respuestas de voz por ElevenLabs | Implementadas cuando la voz está activa y hay configuración válida; el texto se conserva |
+| Archivos en Telegram | Descarga pública o generación, permisos por usuario y confirmación antes de enviar |
+| Proyectos | Selección y lectura acotada al proyecto autorizado; envío sujeto a permiso y confirmación |
 | Nombre de perfil desde Telegram | Implementado; requiere vínculo de perfil guardado |
 | Botones de proyectos y cancelación | Implementados; validación real pendiente |
-| Archivos del PC y ejecución de skills/MCP | Pendiente |
+| Acceso arbitrario al PC, ejecución de skills/MCP desde Telegram | No disponible |
 | Discord, WhatsApp, Slack y asistente de voz en tiempo real | Pendiente |
 
 ## Conecta tu bot
@@ -59,7 +60,7 @@ Search the web astronomy news
 </CodeBlockTab>
 </CodeBlockTabs>
 
-Estas peticiones explícitas usan el buscador público aunque el modelo no admita herramientas. Para voz, envía una nota con el micrófono de Telegram; no necesitas `/voice`.
+Estas peticiones explícitas usan el buscador público aunque el modelo no admita herramientas. Para voz, habilita la opción en la conexión y envía una nota con el micrófono de Telegram. Si ElevenLabs está configurado, también se intenta enviar una respuesta hablada; la respuesta escrita siempre queda disponible.
 
 <details>
 <summary>Qué aparece en el menú / y cómo se envían los comandos</summary>
@@ -109,7 +110,7 @@ Estos ejemplos muestran peticiones que puedes enviar; las respuestas dependen de
 | Seleccionar un proyecto | `/projects`, después el `/project ID` que aparece en la respuesta |
 | Enviar una pregunta por voz | Nota con el micrófono de Telegram, después de habilitar la voz del bot |
 
-Seleccionar un proyecto asocia la actividad: pedir «envía un archivo de esa carpeta» todavía no permite leerlo ni exportarlo.
+El contexto de proyecto es opcional y debe estar habilitado para ese usuario. Las lecturas y rutas se limitan a la carpeta vinculada; las rutas sensibles no se exponen. El envío de un archivo del proyecto requiere además habilitar **Enviar archivos** y confirmar la entrega en Telegram.
 
 ## Voz local
 
@@ -125,7 +126,7 @@ Whisper transcribe en tu PC, sin clave API. El texto reconocido se envía despu�
 | Descarga inicial | Requiere internet |
 | Idiomas | Español e inglés, detección automática |
 | Audio | Hasta cinco minutos y 20 MB |
-| Respuesta | Texto; el tiempo depende del equipo |
+| Respuesta | Texto; si ElevenLabs está configurado para voz, también se intenta enviar audio |
 
 <Callout type="warn" title="Preparación local pendiente de validar">
 El paquete descargado no garantiza que el motor arranque. Hay un fallo de arranque pendiente en el equipo afectado; ese estado no se considera voz lista.
@@ -158,7 +159,7 @@ ElevenLabs y Groq ya incluyen la URL inicial en el formulario. No pegues tu clav
 4. Revisa el texto; activa **Entrada de voz** en el bot y envía una nota desde Telegram.
 
 <Callout type="info" title="Configurado no significa probado">
-El estado confirma el guardado. La prueba envía audio al servicio elegido y puede generar consumo; no envía mensajes al bot.
+El estado confirma el guardado. La prueba envía audio al servicio elegido y puede generar consumo; no envía mensajes al bot. La síntesis de respuestas habladas de Telegram usa ElevenLabs y es independiente de la transcripción.
 </Callout>
 
 <DocsDiagram type="voice-provider" />
@@ -201,7 +202,7 @@ El servicio debe aceptar archivos multipart y responder con un campo `text`:
 - En remoto, el audio se valida y convierte a WAV en memoria antes de enviarlo.
 - El servicio de transcripción recibe el audio; el proveedor del chat recibe el texto reconocido.
 - No se cambia automáticamente de Whisper a un servicio externo.
-- Telegram usa esta configuración. Otros canales, la voz del chat y el asistente en tiempo real quedan para después.
+- Telegram usa esta configuración. La voz del chat de escritorio y el asistente en tiempo real son flujos independientes.
 - El servicio `/api/voice` requiere una sesión de la aplicación para configurar y probar.
 
 </details>
@@ -240,9 +241,13 @@ Envía cada comando por separado. La nota de voz se envía con el micrófono de 
 
 ## Documentos
 
-Envía **TXT, Markdown, CSV o JSON en UTF-8**, con tu pregunta en la descripción. Sin pregunta se solicita un resumen. Límites: **256 KB y 24.000 caracteres**. PDF y Word están pendientes.
+Envía **TXT, Markdown, CSV, JSON, PDF, DOCX, XLSX, PPTX, ODT, RTF o EPUB**, con tu pregunta en la descripción. Sin pregunta se solicita un resumen. Límite del adjunto: **10 MB**; el texto extraído se limita a **24.000 caracteres**.
 
-El archivo se lee en memoria, sin guardarlo en el PC. Su texto se envía al proveedor como datos separados de la pregunta. Esa consulta no habilita búsquedas web ni ejecución. El contenido completo no se añade al historial; la respuesta puede incluir extractos.
+El contenido se procesa temporalmente y su texto se envía al proveedor como datos separados de la pregunta. Esa consulta no habilita por sí sola búsquedas web ni ejecución. El contenido completo no se añade al historial; la respuesta puede incluir extractos.
+
+Para crear un documento o descargar un archivo público, solicita la tarea al bot. El envío queda preparado, pero **no ocurre hasta que confirmes el botón del archivo en Telegram**. Se admiten PDF, DOCX, XLSX, PPTX, CSV, TXT, Markdown, JSON, PNG, JPG y WebP, hasta **25 MB** por archivo. Las descargas requieren una URL HTTPS pública permitida.
+
+El propietario configura estas capacidades en **Canales y permisos → Telegram → Archivos y documentos → Gestionar permisos de archivos**. La descarga pública y la creación de documentos están habilitadas inicialmente solo para el propietario; el envío se mantiene desactivado hasta concederlo expresamente.
 
 <DocsDiagram type="channel-input" />
 
@@ -323,4 +328,4 @@ Revisión de esta guía: **6 de octubre de 2026**. El comportamiento de Spartan 
 - [ElevenLabs: transcripción Speech to Text](https://elevenlabs.io/docs/overview/capabilities/speech-to-text).
 - [Groq: transcripción Speech to Text](https://console.groq.com/docs/speech-to-text).
 
-Los límites indicados aquí son los de Spartan. Consulta al proveedor para sus modelos, cuotas, precios y condiciones actuales. La entrada de voz convierte audio en texto; síntesis de voz y conversación en tiempo real son funciones distintas y siguen pendientes. Consulta [Voz y audio](/docs/features/voice-audio).
+Los límites indicados aquí son los de Spartan. Consulta al proveedor para sus modelos, cuotas, precios y condiciones actuales. La entrada de voz convierte audio en texto; la respuesta hablada de Telegram es una función separada y requiere ElevenLabs configurado. La voz del chat de escritorio y la conversación en tiempo real no forman parte de esta integración. Consulta [Voz y audio](/docs/features/voice-audio).

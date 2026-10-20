@@ -10,9 +10,11 @@ import type {
 
 export class ChannelApiError extends Error {
   code: string;
-  constructor(code: string) {
+  status?: number;
+  constructor(code: string, status?: number) {
     super(code);
     this.code = code;
+    this.status = status;
   }
 }
 
@@ -36,6 +38,7 @@ async function request<T>(path = "", init?: RequestInit): Promise<T> {
     const payload = await response.json().catch(() => ({}));
     throw new ChannelApiError(
       typeof payload.detail === "string" ? payload.detail : "request_failed",
+      response.status,
     );
   }
   return response.json() as Promise<T>;
@@ -61,6 +64,19 @@ export const channelsApi = {
       access?: Record<string, "all" | "selected">;
       context?: Record<string, boolean>;
     }>(`/${encodeURIComponent(id)}/projects`),
+  filePermissions: (id: string) =>
+    request<{ permissions: Record<string, { web_download: boolean; file_create: boolean; file_send: boolean }> }>(
+      `/${encodeURIComponent(id)}/files`,
+    ),
+  setFilePermissions: (
+    id: string,
+    userId: string,
+    permissions: { web_download: boolean; file_create: boolean; file_send: boolean },
+  ) =>
+    request(`/${encodeURIComponent(id)}/files`, {
+      method: "PUT",
+      ...json({ user_id: userId, ...permissions }),
+    }),
   grantProjects: (
     id: string,
     userId: string,

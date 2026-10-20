@@ -133,11 +133,9 @@ export function GuidedTour({
     let t = 0;
 
     function findTarget(): HTMLElement | null {
-      const found = document.querySelector(sel);
-      if (!(found instanceof HTMLElement)) {
-        return null;
-      }
-      return found;
+      return Array.from(document.querySelectorAll(sel)).find(
+        (found): found is HTMLElement => found instanceof HTMLElement && isUsableTarget(found),
+      ) ?? null;
     }
 
     function isUsableTarget(candidate: HTMLElement): boolean {
@@ -241,11 +239,15 @@ export function GuidedTour({
   }, [open, step?.id]);
 
   useLayoutEffect(() => {
-    if (!(open && spotlightRect && vw && vh)) {
+    if (!(open && vw && vh)) {
       return;
     }
     const card = cardRef.current?.getBoundingClientRect();
     if (!card) {
+      return;
+    }
+    if (!spotlightRect) {
+      setCardPos({left: Math.max(12, (vw - card.width) / 2), top: Math.max(12, (vh - card.height) / 2)});
       return;
     }
 
@@ -357,7 +359,7 @@ export function GuidedTour({
                   exit={{ opacity: 0, scale: 0.99, y: 10 }}
                   transition={{ duration: 0.22, ease: [0.165, 0.84, 0.44, 1] }}
                   className={cn(
-                    "relative overflow-hidden rounded-[28px] corner-squircle",
+                    "relative flex max-h-[calc(100dvh-1.5rem)] flex-col overflow-clip rounded-[28px] corner-squircle",
                     "bg-white/95 text-foreground ring-1 ring-black/10 dark:bg-zinc-900/96 dark:text-zinc-100 dark:ring-white/12",
                     "shadow-[0_30px_120px_rgba(0,0,0,0.35)]",
                   )}
@@ -383,7 +385,7 @@ export function GuidedTour({
                   <div className="absolute -left-14 -top-16 size-44 rounded-full bg-control-accent/20 blur-2xl dark:bg-control-accent/26" />
                   <div className="absolute -right-14 -bottom-16 size-44 rounded-full bg-cyan-300/18 blur-2xl dark:bg-cyan-300/24" />
 
-                  <div className="relative p-5">
+                  <div className="relative min-h-0 overflow-y-auto p-5">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="inline-flex items-center gap-2 rounded-full bg-black/[0.04] px-2.5 py-1 text-ui-10 font-mono text-foreground/60 ring-1 ring-black/10 dark:bg-white/[0.04] dark:text-zinc-200/75 dark:ring-white/14">
@@ -467,7 +469,7 @@ export function GuidedTour({
                   </div>
 
                   <div className="h-px bg-gradient-to-r from-transparent via-black/10 to-transparent dark:via-white/14" />
-                  <div className="px-5 py-3 text-ui-11 text-foreground/55 dark:text-zinc-300/65">
+                  <div className="shrink-0 px-5 py-3 text-ui-11 text-foreground/55 dark:text-zinc-300/65">
                     {t("tour.tip")}
                   </div>
                 </motion.div>

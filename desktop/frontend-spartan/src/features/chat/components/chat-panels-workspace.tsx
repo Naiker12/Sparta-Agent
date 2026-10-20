@@ -76,7 +76,7 @@ function initialSettings(thread: ThreadRecord): QueuedChatRunSettings {
 function PaneBody({ pane, settings }: { pane: ChatPane; settings: MutableRefObject<QueuedChatRunSettings> }) {
   return <>
     <ChatPaneToolbar sourceId={pane.thread.id} paneId={pane.id} onClose={() => useChatPanelsStore.getState().close(pane.id)} />
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden"><Thread targetThreadId={pane.thread.id} composer={<PaneComposer pane={pane} settings={settings} />} /></div>
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden"><Thread targetThreadId={pane.thread.id} composer={<PaneComposer pane={pane} settings={settings} />} mountDocumentPreview={false} /></div>
   </>;
 }
 

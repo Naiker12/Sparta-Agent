@@ -84,7 +84,7 @@ function ToolFallbackRoot({
       open={isOpen}
       onOpenChange={handleOpenChange}
       className={cn(
-        "aui-tool-fallback-root group/tool-fallback-root w-full py-1",
+        "aui-tool-fallback-root group/tool-fallback-root w-full py-0.5 animate-in fade-in duration-200 motion-reduce:animate-none",
         className,
       )}
       style={
@@ -135,7 +135,8 @@ function ToolFallbackTrigger({
     status?.type === "incomplete" && status.reason === "cancelled";
 
   const StatusIcon = statusIconMap[statusType];
-  const label = isCancelled ? "Cancelled tool" : "Used tool";
+  const t = useUiT();
+  const label = t(isCancelled ? "chat.responseUi.toolCancelled" : isRunning ? "chat.responseUi.toolRunning" : "chat.responseUi.toolUsed");
   const displayName =
     toolName === "memory_search"
       ? isRunning
@@ -147,7 +148,7 @@ function ToolFallbackTrigger({
     <CollapsibleTrigger
       data-slot="tool-fallback-trigger"
       className={cn(
-        "aui-tool-fallback-trigger group/trigger flex w-full cursor-pointer items-center gap-2 py-1.5 text-sm transition-colors",
+        "aui-tool-fallback-trigger group/trigger flex w-full cursor-pointer items-center gap-2 py-1 text-sm transition-colors",
         className,
       )}
       {...props}
@@ -233,6 +234,7 @@ function ToolFallbackContent({
         "data-[state=closed]:pointer-events-none",
         "data-[state=open]:duration-(--animation-duration)",
         "data-[state=closed]:duration-(--animation-duration)",
+        "motion-reduce:animate-none",
         className,
       )}
       {...props}

@@ -106,6 +106,23 @@ def set_voice_enabled(account_id: str, owner: str, enabled: bool):
         return True
 
 
+def set_file_permissions(account_id: str, owner: str, user_id: str, permissions: dict):
+    with connection() as db:
+        db.execute('BEGIN IMMEDIATE')
+        row = db.execute('SELECT config FROM channel_accounts WHERE id=? AND owner=?', (account_id, owner)).fetchone()
+        if not row:
+            return False
+        config = json.loads(row['config'])
+        if user_id not in config.get('allowed_user_ids', []):
+            raise ValueError('user_not_authorized')
+        if not isinstance(permissions, dict) or set(permissions) != {'web_download', 'file_create', 'file_send'} or any(type(value) is not bool for value in permissions.values()):
+            raise ValueError('invalid_file_permissions')
+        config.setdefault('file_permissions', {})[user_id] = dict(permissions)
+        db.execute('UPDATE channel_accounts SET config=? WHERE id=? AND owner=?', (json.dumps(config), account_id, owner))
+        db.execute('DELETE FROM channel_history WHERE account_id=? AND user_id=?', (account_id, user_id))
+        return True
+
+
 def revoke_user(account_id: str, owner: str, user_id: str):
     with connection() as db:
         db.execute('BEGIN IMMEDIATE')
@@ -116,7 +133,7 @@ def revoke_user(account_id: str, owner: str, user_id: str):
         if user_id not in config.get('allowed_user_ids', []):
             raise ValueError('user_not_authorized')
         config['allowed_user_ids'] = [value for value in config['allowed_user_ids'] if value != user_id]
-        for key in ('project_grants', 'project_access', 'project_context', 'history_project_scope', 'selected_projects'):
+        for key in ('project_grants', 'project_access', 'project_context', 'history_project_scope', 'selected_projects', 'file_permissions'):
             config.get(key, {}).pop(user_id, None)
         for key in ('profile_user_id', 'owner_user_id'):
             if config.get(key) == user_id:

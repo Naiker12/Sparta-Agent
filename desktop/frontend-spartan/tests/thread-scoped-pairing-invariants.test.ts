@@ -486,7 +486,7 @@ test("a run whose pairing never settled is refused, not run on another chat's se
   assert.match(wait, /Promise<boolean>/);
   assert.match(wait, /resolve\(false\)/);
   const adapter = read("../src/features/chat/api/chat-adapter/stream-orchestrator.ts");
-  assert.match(adapter, /if \(!\(await awaitThreadScopedPairing\(runThreadId\)\)\) \{/);
+  assert.match(adapter, /if \(!options\.getRunSettings && !\(await awaitThreadScopedPairing\(runThreadId\)\)\) \{/);
   assert.match(adapter, /ui\.this_chat_s_settings_could_not_be_loaded_so_the_message_was_not_s/);
 });
 

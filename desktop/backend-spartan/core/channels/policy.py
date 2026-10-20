@@ -14,7 +14,14 @@ def normalize_private_message(update: dict, allowed_user_ids: list[str]):
     text = message.get('text', '')
     if not isinstance(text, str) or len(text) > 32000:
         return None
-    media = 'voice' if message.get('voice') else 'document' if message.get('document') else 'audio' if message.get('audio') else None
+    media = ('voice' if message.get('voice') else
+             'document' if message.get('document') else
+             'audio' if message.get('audio') else
+             'photo' if message.get('photo') else
+             'video_note' if message.get('video_note') else
+             'video' if message.get('video') else
+             'animation' if message.get('animation') else
+             'sticker' if message.get('sticker') else None)
     if not text and not media:
         return None
     result = {'user_id': str(user_id), 'chat_id': chat_id, 'text': text, 'media': media}
@@ -23,12 +30,16 @@ def normalize_private_message(update: dict, allowed_user_ids: list[str]):
         attachment = message['document']
         name, file_id = attachment.get('file_name'), attachment.get('file_id')
         # Display name only. Never accept paths or use this name on disk.
-        if isinstance(name, str) and re.fullmatch(r'[\w .()-]{1,120}\.(txt|md|csv|json)', name, re.IGNORECASE):
+        if isinstance(name, str) and re.fullmatch(r'[\w .()-]{1,120}\.(txt|md|csv|json|pdf|docx|xlsx|pptx|odt|rtf|epub)', name, re.IGNORECASE):
             result['document'] = {'file_id': file_id if isinstance(file_id, str) and len(file_id) <= 512 else '',
                                   'file_name': name, 'file_size': attachment.get('file_size') if type(attachment.get('file_size')) is int else None}
             caption = message.get('caption', '')
             if isinstance(caption, str) and len(caption) <= 4000:
                 result['text'] = caption
+    elif media in ('photo', 'video', 'video_note', 'animation', 'sticker'):
+        caption = message.get('caption', '')
+        if isinstance(caption, str) and len(caption) <= 4000:
+            result['text'] = caption
     if media in ('voice', 'audio'):
         attachment = message[media]
         if isinstance(attachment, dict):

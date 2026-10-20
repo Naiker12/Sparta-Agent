@@ -93,9 +93,22 @@ export const channels = {
     empty: "Create a project in Spartan to authorize it here.",
     user: "Telegram user",
   },
+  files: {
+    restartRequired: "The running server does not yet include file permission management. Close and reopen Spartan to load the current version. Your permissions have not changed.",
+    accountUnavailable: "This connection is no longer available. Refresh the channel list before managing its permissions.",
+    title: "Files and documents",
+    help: "Grant public downloads, document creation and file preparation separately. Every file delivery requires confirmation in Telegram.",
+    manage: "Manage file permissions",
+    web_download: "Download public HTTPS files",
+    web_downloadHelp: "Only supported public HTTPS links; files remain pending in the temporary outbox.",
+    file_create: "Create PDF, Excel, Word or text files",
+    file_createHelp: "Creates documents in a bounded temporary workspace.",
+    file_send: "Allow preparing files for delivery",
+    file_sendHelp: "The sender must confirm with the Telegram button. Disabled for everyone by default.",
+  },
   documents: "Received documents",
   documentsHelp:
-    "Send UTF-8 TXT, Markdown, CSV or JSON (up to 256 KB and 24,000 characters), with your question as the caption. Text is sent to the selected provider; the file is not saved on the PC. PDF and Word are pending. Document queries do not use web searches.",
+    "Send TXT, Markdown, CSV, JSON, PDF, DOCX, XLSX, PPTX, ODT, RTF or EPUB files (up to 10 MB). Up to 24,000 characters are extracted and sent to the selected provider; document queries do not use web searches.",
   voice: {
     providerScope:
       "Spartan transcription configuration. Telegram uses it now; other channels and chat voice will connect later.",
@@ -531,7 +544,7 @@ export const channels = {
   available: "Available",
   pending: "Pending",
   capabilityNote:
-    "Voice notes and audio require enabled voice input and a prepared local model. PDF, Word and remote actions remain pending.",
+    "Voice notes require enabled voice input and a prepared local model. Creating or sending files through Telegram requires explicit Files and documents permissions and confirmation in the chat.",
   activityDescription: "Recent events without message content or credentials.",
   noActivity: "No activity yet",
   noActivityDescription:

@@ -4,6 +4,7 @@ export { ChannelAssistantActivity } from "./components/channel-assistant-activit
 export { useChannelAssistantStore } from "./stores/channel-assistant-store";
 export { ChannelProfile } from "./components/channel-profile";
 export { ChannelProjects } from "./components/channel-projects";
+export { ChannelFiles } from "./components/channel-files";
 export { ChannelVoice } from "./components/channel-voice";
 export { ChannelCapabilities } from "./components/channel-capabilities";
 export { AccountCard } from "./components/account-card";

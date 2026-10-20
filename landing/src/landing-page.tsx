@@ -234,7 +234,7 @@ export default function LandingPage({
               </a>
             </div>
             <p className="hero-release">
-              Código abierto · v{release.version} disponible
+              Código abierto · versión {release.version}
             </p>
           </div>
           <div id="producto" className="site-container demo-section">
@@ -302,8 +302,9 @@ export default function LandingPage({
             <h2 id="tools-title">Del pedido al archivo, en la conversación.</h2>
             <p>
               Estas funciones requieren un modelo compatible con herramientas.
-              La versión 0.4.1 mejora la generación y apertura de archivos,
-              con estados de progreso y controles de contenido.
+              Esta versión amplía los flujos de archivos
+              y permisos en Telegram, además de mejorar la lectura de actividad
+              y resultados.
             </p>
           </div>
           <div className="benefits-grid">
@@ -390,12 +391,12 @@ export default function LandingPage({
           <div className="section-heading">
             <span className="eyebrow">NOVEDADES · v{release.version}</span>
             <h2 id="release-title">Una actualización para trabajar con más continuidad.</h2>
-            <p>Esta versión incorpora programación desde la conversación y corrige interrupciones al crear documentos, abrir resultados y recuperar tus preferencias.</p>
+            <p>Esta versión reúne mejoras del espacio de trabajo, la memoria, los canales de Telegram, la voz y la presentación de herramientas.</p>
           </div>
           <div className="benefits-grid">
-            <article><Clock3 aria-hidden="true" /><h3>Tareas con un plan revisable.</h3><p>Define la tarea desde el chat o Telegram. Revisa el modelo y el horario antes de activarla y abre el chat de su ejecución.</p></article>
-            <article><FileText aria-hidden="true" /><h3>Documentos con progreso claro.</h3><p>Generación compacta, detalles de código desplegables y apertura inicial de Word, PDF y hojas de cálculo corregida. Los archivos vacíos se rechazan.</p></article>
-            <article><Check aria-hidden="true" /><h3>Tus elecciones se conservan.</h3><p>Mejoras al recuperar la mascota, el proveedor, el modelo y las preferencias entre conversaciones y reinicios.</p></article>
+            <article><GitBranch aria-hidden="true" /><h3>Un espacio de trabajo más continuo.</h3><p>Consulta archivos y cambios junto a la conversación, con paneles para organizar el trabajo y vistas que se cierran al salir del chat.</p></article>
+            <article><FileText aria-hidden="true" /><h3>Archivos en Telegram con confirmación.</h3><p>Lee documentos, prepara archivos y solicita su envío con permisos por persona y confirmación antes de la entrega.</p></article>
+            <article><Check aria-hidden="true" /><h3>Memoria y voz más completas.</h3><p>Explora episodios en un mapa dinámico y configura transcripción y respuestas habladas en Telegram con sus límites explícitos.</p></article>
           </div>
           <div className="integration-note"><BookOpen aria-hidden="true" />Conoce las mejoras y los requisitos de uso.<a href={release.url} target="_blank" rel="noopener noreferrer">Notas de v{release.version} <ArrowUpRight /></a></div>
         </section>
@@ -403,7 +404,7 @@ export default function LandingPage({
           <div className="section-heading">
             <span className="eyebrow">CÓDIGO ACTUAL · RAMA MAIN</span>
             <h2 id="main-updates-title">Más continuidad para explorar y trabajar.</h2>
-            <p>La rama principal ya reúne mejoras posteriores a la versión publicada. La descarga sigue siendo v{release.version}; consulta el alcance antes de buscar estas funciones en una instalación anterior.</p>
+            <p>La documentación describe las capacidades de esta versión. Si tu instalación es anterior, consulta sus notas para comprobar qué está disponible.</p>
           </div>
           <div className="benefits-grid">
             <article>

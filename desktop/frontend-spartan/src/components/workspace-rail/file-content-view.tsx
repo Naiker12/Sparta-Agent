@@ -25,7 +25,7 @@ export function FileContentView({ path, content, onClose }: { path: string; cont
         <span className="ml-auto text-muted-foreground">{language}</span>
       </div>
     </header>
-    <div className="min-h-0 flex-1 overflow-auto p-4 text-xs">
+    <div className={`min-h-0 flex-1 overflow-auto p-4 text-xs${!canPreview || source ? " workspace-file-source" : ""}`}>
       {canPreview && !source ? <MarkdownPreview markdown={content} /> : highlighter ? <Streamdown mode="static" plugins={{code: highlighter.code}} controls={{code:false}} shikiTheme={highlighter.themes}>{sourceFence(content, language)}</Streamdown> : <pre className="whitespace-pre-wrap font-mono">{content}</pre>}
     </div>
     <footer className="shrink-0 border-t px-3 py-2 text-xs text-muted-foreground">{uiT("ui.read_only")}{" "}{content.length.toLocaleString()} {" "}{uiT("ui.characters_preview_limit_100_000")}</footer>

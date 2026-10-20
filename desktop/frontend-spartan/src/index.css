@@ -2721,6 +2721,26 @@ html[data-chat-font] .aui-root {
     padding-left: 0;
   }
 
+  /* The file panel already provides a surface, language label and copy action. */
+  .workspace-file-source [data-streamdown="code-block"] {
+    margin: 0;
+    padding: 0;
+    gap: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    content-visibility: visible !important;
+    contain-intrinsic-size: none !important;
+  }
+
+  .workspace-file-source [data-streamdown="code-block-header"] {
+    display: none;
+  }
+
+  .workspace-file-source [data-streamdown="code-block"] pre {
+    background: transparent !important;
+  }
+
   .aui-thread-root [data-streamdown="code-block"] code > span::before {
     content: none !important;
     display: none !important;

@@ -40,7 +40,7 @@ def test_encrypted_configuration_never_returns_key_and_switch_retains_profiles()
     providers.save('groq', 'whisper-large-v3', '', '', True)
     assert providers.read()['profiles']['groq']['model'] == 'whisper-large-v3'
     providers.remove('groq')
-    assert providers.read() == {'provider': 'local', 'profiles': {}}
+    assert providers.read() == {'provider': 'local', 'local_model': 'small', 'profiles': {}}
 
 
 @pytest.mark.parametrize('url', ['http://example.com/v1/audio/transcriptions', 'https://localhost/v1/audio/transcriptions', 'https://127.0.0.1/v1/audio/transcriptions', 'https://169.254.169.254/v1/audio/transcriptions', 'https://user:pass@example.com/v1/audio/transcriptions', 'https://example.com:8443/v1/audio/transcriptions', 'https://example.com/v1/audio/transcriptions?key=secret', 'https://example.com/chat/completions', 'file:///audio/transcriptions'])
@@ -108,7 +108,7 @@ def test_dns_resolution_rejects_private_addresses_before_transport(ip, monkeypat
         original = transport.inner
         transport.inner = inner
         try:
-            with pytest.raises(ValueError, match='invalid_voice_endpoint'):
+            with pytest.raises(ValueError, match='invalid_public_endpoint'):
                 await transport.handle_async_request(httpx.Request('POST', 'https://example.com/v1/audio/transcriptions'))
             inner.handle_async_request.assert_not_called()
         finally:
@@ -131,6 +131,20 @@ def test_public_ip_is_pinned_with_original_tls_hostname(monkeypatch):
         finally:
             await original.aclose()
     asyncio.run(run())
+
+
+def test_elevenlabs_voice_reply_uses_saved_key_and_bounded_mp3(monkeypatch):
+    configure('elevenlabs')
+    async def handler(request):
+        payload = json.loads(await request.aread())
+        assert payload['model_id'] == 'eleven_flash_v2_5'
+        assert payload['language_code'] == 'es'
+        assert payload['text'] == 'Hola'
+        assert request.headers['xi-api-key'] == 'test-secret'
+        assert 'text-to-speech/' in str(request.url)
+        return httpx.Response(200, content=b'ID3' + b'\x00' * 32)
+    monkeypatch.setattr(providers, 'PublicVoiceTransport', lambda: httpx.MockTransport(handler))
+    assert asyncio.run(providers.synthesize('Hola', language='es')) == b'ID3' + b'\x00' * 32
 
 
 def test_ui_routes_sanitize_validation_and_support_save_remove():

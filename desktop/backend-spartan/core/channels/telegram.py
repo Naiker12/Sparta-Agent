@@ -152,6 +152,39 @@ class Telegram:
             payload['caption'] = caption[:1024]
         await self.call('sendVoice', **payload)
 
+    async def _upload(self, method, chat_id, filename, mime, raw, *, caption=''):
+        if not isinstance(raw, bytes) or not raw or len(raw) > 50 * 1024 * 1024:
+            raise TelegramError('upload_too_large')
+        data = {'chat_id': str(chat_id)}
+        if caption:
+            data['caption'] = caption[:1024]
+        try:
+            response = await self._client.post(
+                f'https://api.telegram.org/bot{self._token}/{method}',
+                data=data, files={method.replace('send', '').lower(): (filename, raw, mime)},
+                timeout=120,
+            )
+            payload = response.json()
+            if response.status_code == 429:
+                raise TelegramError('rate_limited', int((payload.get('parameters') or {}).get('retry_after', 5)))
+            if response.status_code in (401, 403):
+                raise TelegramError('credentials_error')
+            if response.status_code == 400 and method in ('sendDocument', 'sendVoice'):
+                raise TelegramError('upload_rejected')
+            if not response.is_success or not payload.get('ok'):
+                raise TelegramError()
+            return payload['result']
+        except TelegramError:
+            raise
+        except (httpx.HTTPError, ValueError, KeyError, TypeError):
+            raise TelegramError() from None
+
+    async def send_document(self, chat_id, filename, mime, raw, caption=''):
+        return await self._upload('sendDocument', chat_id, filename, mime, raw, caption=caption)
+
+    async def send_voice_file(self, chat_id, raw, caption=''):
+        return await self._upload('sendVoice', chat_id, 'reply.mp3', 'audio/mpeg', raw, caption=caption)
+
     async def action(self, chat_id: int, action: str = 'typing'):
         await self.call('sendChatAction', chat_id=chat_id, action=action)
 

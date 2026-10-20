@@ -54,7 +54,9 @@ export function PaneComposer({ pane, settings }: { pane: ChatPane; settings: Mut
     } catch (cause) { setError(cause instanceof Error ? cause.message : t("chat.panels.failed")); }
     finally { setChanging(false); }
   };
-  const pendingAttachments = attachments.some(item => item.status.type !== "complete");
+  // Pending adapters finish materializing on send. Only an active upload blocks
+  // submission, matching the main composer (requires-action is sendable).
+  const pendingAttachments = attachments.some(item => item.status.type === "running");
   const blocked = loading || !ready || changing || pendingAttachments || !config.params.checkpoint;
   const send = () => {
     if (blocked || running || sendLock.current) return;

@@ -63,7 +63,7 @@ def test_model_download_must_finish_before_success(monkeypatch):
     download = Mock()
     monkeypatch.setattr(cpp, 'start_model_download', download)
     voice_setup.configure(lambda _: None)
-    download.assert_called_once_with('base')
+    download.assert_called_once_with('small')
 
 
 def test_background_incompatibility_is_sanitized(monkeypatch):

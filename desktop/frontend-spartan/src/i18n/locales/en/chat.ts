@@ -29,6 +29,7 @@ export const chat = {
     imageReference: "Reference images", loadImages: "Load images",
     imageFailed: "The image could not be loaded. You can visit its source.",
     activity: "Activity · {count}", searching: "Searching for information…",
+    toolCancelled: "Cancelled", toolRunning: "Running", toolUsed: "Tool",
   },
   tools: {
     preparingFile: "Preparing file…",
@@ -496,6 +497,7 @@ export const chat = {
     chunks: "Chunks",
   },
   repository: {
+    collapseFile: "Hide changes for {path}", expandFile: "Show changes for {path}",
     noAgents: "No connected agents",
     noAgentsDescription: "No agent data is available for this workspace.",
     changes: "Changes", pullRequests: "Pull requests", refresh: "Refresh", loading: "Reading repository…",

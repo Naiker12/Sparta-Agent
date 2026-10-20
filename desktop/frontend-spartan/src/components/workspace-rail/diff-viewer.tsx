@@ -1,7 +1,7 @@
 import type { WorkspaceChangedFile } from "@/features/chat/stores/use-workspace-store";
 import { cn } from "@/lib/utils";
-import { FileCodeIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { ChevronRightIcon, FileCodeIcon } from "lucide-react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/i18n";
 import { useTheme } from "@/features/settings";
@@ -67,6 +67,8 @@ function getDiffChunksForFile(file: WorkspaceChangedFile): DiffChunk[] {
 export function DiffViewer({ file }: { file: WorkspaceChangedFile }) {
   const t = useT();
   const { resolved } = useTheme();
+  const [expanded, setExpanded] = useState(true);
+  const contentId = useId();
   const [split, setSplit] = useState(false);
   const [tokens, setTokens] = useState<
     Array<Array<{ content: string; color?: string }>>
@@ -115,30 +117,24 @@ export function DiffViewer({ file }: { file: WorkspaceChangedFile }) {
   }
   let sourceLineIndex = 0;
 
-  if (chunks.length === 0) {
-    return (
-      <p className="px-4 py-3 text-xs text-muted-foreground">
-        {t("ui.no_text_differences_available_for_this_file")}
-      </p>
-    );
-  }
 
   return (
-    <div className="flex flex-col overflow-hidden">
-      <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-border/40 text-xs font-mono">
-        <div className="flex items-center gap-2 min-w-0 truncate text-foreground/90">
+    <div className="flex min-w-0 shrink-0 flex-col overflow-hidden" data-diff-file={file.path}>
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border/40 px-3.5 py-2 text-xs font-mono">
+        <button type="button" className="flex min-w-0 flex-1 items-center gap-2 py-1 text-left text-foreground/90" aria-expanded={expanded} aria-controls={contentId} aria-label={t(expanded ? "chat.repository.collapseFile" : "chat.repository.expandFile", {path: file.path})} onClick={() => setExpanded(value => !value)}>
+          <ChevronRightIcon aria-hidden="true" className={cn("size-3.5 shrink-0 transition-transform motion-reduce:transition-none", expanded && "rotate-90")} />
           <FileCodeIcon className="size-4 shrink-0 text-muted-foreground" />
-          <span className="truncate font-medium">{file.path}</span>
-        </div>
+          <span title={file.path} className="truncate font-medium">{file.path}</span>
+        </button>
         <div className="flex items-center gap-2 shrink-0 font-medium text-[11px]">
-          <Button
+          {expanded && chunks.length > 0 && <Button
             size="sm"
             variant="ghost"
             aria-pressed={split}
             onClick={() => setSplit((value) => !value)}
           >
             {t(split ? "chat.repository.unified" : "chat.repository.split")}
-          </Button>
+          </Button>}
           <span className="text-emerald-600 dark:text-emerald-400">
             +{file.additions}
           </span>
@@ -148,7 +144,8 @@ export function DiffViewer({ file }: { file: WorkspaceChangedFile }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto text-[12px] font-mono leading-relaxed select-text">
+      {expanded && <div id={contentId} className="min-w-0 overflow-x-auto text-[12px] font-mono leading-relaxed select-text">
+        {chunks.length === 0 && <p className="px-4 py-3 font-sans text-xs text-muted-foreground">{t("ui.no_text_differences_available_for_this_file")}</p>}
         {chunks.map((chunk, chunkIdx) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: diff chunks have no ids
           <div key={chunkIdx} className="w-full">
@@ -221,7 +218,7 @@ export function DiffViewer({ file }: { file: WorkspaceChangedFile }) {
             </div>
           </div>
         ))}
-      </div>
+      </div>}
     </div>
   );
 }

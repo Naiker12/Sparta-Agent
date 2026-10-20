@@ -2,6 +2,7 @@ import { useT } from "@/i18n";
 import { Folder01Icon, FolderAddIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useRef, useState } from "react";
+import { useAuiState } from "@assistant-ui/react";
 import { CheckIcon, ChevronDownIcon, XIcon, GitBranchIcon } from "lucide-react";
 import { useDocumentPreviewStore } from "@/features/rag/components/preview-store";
 import {
@@ -31,6 +32,7 @@ import {
   type ThreadWorkspaceBinding,
   type WorkspaceAccess,
   bindThreadWorkspace,
+  getThreadWorkspace,
   unbindThreadWorkspace,
 } from "../api/chat-api";
 import {
@@ -42,7 +44,6 @@ import { workspacePathKey } from "../utils/workspace-path-key";
 import { useChatRuntimeStore } from "../stores/chat-runtime-store";
 import {
   type PendingWorkspace,
-  ensureThreadWorkspace,
   getPendingWorkspace,
   setPendingWorkspace,
 } from "../utils/pending-workspace";
@@ -74,8 +75,11 @@ export function ThreadWorkspaceChip({
   threadId: explicitThreadId,
 }: { isRunning?: boolean; threadId?: string }) {
   const t = useT();
-  const activeThreadId = useChatRuntimeStore((state) => state.activeThreadId);
-  const threadId = explicitThreadId ?? activeThreadId;
+  const runtimeThreadId = useAuiState(({ threadListItem }) => threadListItem.remoteId);
+  const threadId = explicitThreadId ?? runtimeThreadId;
+  const isDraft = !threadId || isAssistantLocalThreadId(threadId);
+  const ownerRef = useRef(threadId);
+  ownerRef.current = threadId;
   const { projects, isLoading, error, retry } = useChatProjects();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -86,6 +90,7 @@ export function ThreadWorkspaceChip({
     () => explicitThreadId ? null : getPendingWorkspace(),
   );
   const [gitStatus, setGitStatus] = useState<{
+    scopeKey: string;
     isRepository?: boolean;
     branch?: string;
     upstream?: string;
@@ -106,7 +111,9 @@ export function ThreadWorkspaceChip({
 
   useEffect(() => {
     setOpen(false);
-  }, [threadId]);
+    setBusy(false);
+    setPending(!explicitThreadId && isDraft ? getPendingWorkspace() : null);
+  }, [threadId, explicitThreadId, isDraft]);
 
   useEffect(() => {
     if (isRunning) setOpen(false);
@@ -125,7 +132,8 @@ export function ThreadWorkspaceChip({
       return;
     }
     let cancelled = false;
-    void ensureThreadWorkspace(threadId)
+    // Viewing a saved chat must never consume another draft's pending folder.
+    void getThreadWorkspace(threadId)
       .then(async (next) => {
         if (cancelled) {
           return;
@@ -172,7 +180,7 @@ export function ThreadWorkspaceChip({
         return;
       }
       if (
-        workspacePathKey(binding?.canonicalPath ?? pending?.folder ?? "") ===
+        workspacePathKey(currentPath ?? "") ===
         workspacePathKey(folder)
       )
         return;
@@ -195,6 +203,7 @@ export function ThreadWorkspaceChip({
       if (!activeThreadId || isAssistantLocalThreadId(activeThreadId)) {
         if (!useChatRuntimeStore.getState().incognito) {
           const project = await ensureFolderProject(folder);
+          if (ownerRef.current !== activeThreadId) return;
           useChatRuntimeStore.getState().setActiveProjectId(project.id);
         }
         setPendingWorkspace({ folder, access });
@@ -211,8 +220,8 @@ export function ThreadWorkspaceChip({
       if (configured && !configured.success) {
         throw new Error(configured.error);
       }
-      setBinding(next);
-      if (next.projectId && !explicitThreadId)
+      if (ownerRef.current === activeThreadId) setBinding(next);
+      if (ownerRef.current === activeThreadId && next.projectId && !explicitThreadId)
         useChatRuntimeStore.getState().setActiveProjectId(next.projectId);
       window.dispatchEvent(new Event("sparta:workspace-changed"));
     } catch (error) {
@@ -220,16 +229,16 @@ export function ThreadWorkspaceChip({
         description: error instanceof Error ? error.message : undefined,
       });
     } finally {
-      setBusy(false);
+      if (ownerRef.current === threadId) setBusy(false);
     }
   }
 
   async function disconnect() {
     setOpen(false);
-    if (!explicitThreadId) setPendingWorkspace(null);
+    if (!explicitThreadId && isDraft) setPendingWorkspace(null);
     setPending(null);
-    if (!threadId || isAssistantLocalThreadId(threadId) || !binding) {
-      setBinding(null);
+    if (!threadId || isAssistantLocalThreadId(threadId) || !visibleBinding) {
+      if (ownerRef.current === threadId) setBinding(null);
       window.dispatchEvent(new Event("sparta:workspace-changed"));
       return;
     }
@@ -237,21 +246,22 @@ export function ThreadWorkspaceChip({
     try {
       await unbindThreadWorkspace(threadId);
       const bridge = (window as Window & { fs?: NativeWorkspaceBridge }).fs;
-      await bridge?.clearWorkspaceBinding?.(binding.bindingId);
-      setBinding(null);
+      await bridge?.clearWorkspaceBinding?.(visibleBinding.bindingId);
+      if (ownerRef.current === threadId) setBinding(null);
       window.dispatchEvent(new Event("sparta:workspace-changed"));
     } catch (error) {
       toast.error(t("chat.workspace.errorDisconnect"), {
         description: error instanceof Error ? error.message : undefined,
       });
     } finally {
-      setBusy(false);
+      if (ownerRef.current === threadId) setBusy(false);
     }
   }
 
   const visibleBinding = binding?.threadId === threadId ? binding : null;
-  const currentPath = visibleBinding?.canonicalPath ?? pending?.folder;
-  const currentAccess = visibleBinding?.access ?? pending?.access;
+  const visiblePending = !explicitThreadId && isDraft ? pending : null;
+  const currentPath = visibleBinding?.canonicalPath ?? visiblePending?.folder;
+  const currentAccess = visibleBinding?.access ?? visiblePending?.access;
   const currentProject = projects.find(
     (project) =>
       currentPath &&
@@ -261,10 +271,12 @@ export function ThreadWorkspaceChip({
   );
   const scopeId =
     visibleBinding?.bindingId ??
-    (pending && currentPath
+    (visiblePending && currentPath
       ? `sparta-draft:${workspacePathKey(currentPath)}`
       : currentProject?.id);
-  const isBinding = Boolean(visibleBinding || pending);
+  const isBinding = Boolean(visibleBinding || visiblePending);
+  const gitScopeKey = `${scopeId ?? ""}\0${currentPath ?? ""}`;
+  const visibleGitStatus = gitStatus?.scopeKey === gitScopeKey ? gitStatus : null;
   const scope: GitReviewScope | null =
     currentPath && scopeId
       ? {
@@ -292,7 +304,7 @@ export function ThreadWorkspaceChip({
         const result =
           await getProjectNativeFilesystem()?.getGitStatus?.(scopeId);
         if (!cancelled) {
-          setGitStatus(result?.success ? result : null);
+          setGitStatus(result?.success ? { ...result, scopeKey: gitScopeKey } : null);
           if (!explicitThreadId) useWorkspaceStore
             .getState()
             .setCapabilities({
@@ -317,7 +329,7 @@ export function ThreadWorkspaceChip({
       window.clearInterval(timer);
       window.removeEventListener("focus", onFocus);
     };
-  }, [currentPath, scopeId, currentAccess, isBinding, revision, explicitThreadId]);
+  }, [currentPath, scopeId, currentAccess, isBinding, revision, explicitThreadId, gitScopeKey]);
   function openRepository(kind: "changes" | "github") {
     if (!scope) return;
     setOpen(false);
@@ -342,7 +354,7 @@ export function ThreadWorkspaceChip({
     >
       <span className="composer-pill-glyph">
         <HugeiconsIcon
-          icon={visibleBinding || pending ? Folder01Icon : FolderAddIcon}
+          icon={visibleBinding || visiblePending ? Folder01Icon : FolderAddIcon}
           className="size-3.5"
           strokeWidth={1.8}
         />
@@ -358,6 +370,7 @@ export function ThreadWorkspaceChip({
     <>
       <div
         ref={barRef}
+        data-tour="chat-workspace"
         className="composer-workspace-bar"
         aria-label={t("chat.workspace.contextLabel")}
       >
@@ -368,17 +381,17 @@ export function ThreadWorkspaceChip({
             align="start"
             className="w-80 max-w-[calc(100vw-2rem)] p-0"
           >
-            {currentPath && gitStatus?.isRepository && (
+            {currentPath && visibleGitStatus?.isRepository && (
               <div className="flex flex-col gap-2 border-b p-3">
                 <p className="truncate text-sm font-medium">
-                  {label(currentPath!)} · {gitStatus.branch ?? "HEAD"}
+                  {label(currentPath!)} · {visibleGitStatus.branch ?? "HEAD"}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {gitStatus.upstream ?? t("chat.repository.noUpstream")} ·{" "}
+                  {visibleGitStatus.upstream ?? t("chat.repository.noUpstream")} ·{" "}
                   {t("chat.repository.fileCount", {
-                    count: gitStatus.changed ?? 0,
+                    count: visibleGitStatus.changed ?? 0,
                   })}{" "}
-                  · +{gitStatus.insertions ?? 0} −{gitStatus.deletions ?? 0}
+                  · +{visibleGitStatus.insertions ?? 0} −{visibleGitStatus.deletions ?? 0}
                 </p>
                 <div className="flex gap-2">
                   <Button
@@ -476,16 +489,16 @@ export function ThreadWorkspaceChip({
             </Command>
           </PopoverContent>
         </Popover>
-        {currentPath && gitStatus?.isRepository && (
+        {currentPath && visibleGitStatus?.isRepository && (
           <Button
             size="sm"
             variant="ghost"
             disabled={busy || isRunning}
-            aria-label={`${t("chat.repository.changes")} · ${gitStatus.branch ?? "HEAD"}`}
+            aria-label={`${t("chat.repository.changes")} · ${visibleGitStatus.branch ?? "HEAD"}`}
             onClick={() => openRepository("changes")}
           >
             <GitBranchIcon />
-            {gitStatus.branch ?? "HEAD"}
+            {visibleGitStatus.branch ?? "HEAD"}
           </Button>
         )}
         {currentAccess ? (

@@ -45,6 +45,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import threading
 
 from dataclasses import dataclass, field
@@ -1005,6 +1006,20 @@ async def stream_with_studio_tools(
             # gets one nudge to actually do it, the same recovery the local loops
             # give a stalled small model, then the answer stands as written.
             visible_answer = "".join(turn.text)
+            if (
+                allowed_tool_names
+                and re.fullmatch(r"\s*(?:</?tool_call>\s*)+", visible_answer)
+            ):
+                # Empty envelopes are neither a final answer nor authorization
+                # to guess/retry file operations. End explicitly and preserve
+                # every real tool result already emitted by this run.
+                yield _sse({"choices": [{"index": 0, "delta": {"content": (
+                    "\n\nEl modelo devolvió llamadas de herramienta vacías y no pudo "
+                    "completar la respuesta. Esas llamadas vacías no ejecutaron "
+                    "ninguna acción. Revisa la actividad para comprobar cuáles "
+                    "operaciones anteriores sí se realizaron antes de reintentar."
+                )}}]})
+                break
             if (
                 tools_available
                 and not controller.force_final_answer

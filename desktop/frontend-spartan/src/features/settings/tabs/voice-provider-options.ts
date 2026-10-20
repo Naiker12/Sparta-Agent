@@ -10,7 +10,7 @@ export const voiceProviderOptions: Record<
     helpUrl?: string;
   }
 > = {
-  local: { name: "Whisper", model: "base", endpoint: "" },
+  local: { name: "Whisper", model: "small", endpoint: "" },
   elevenlabs: {
     name: "ElevenLabs",
     model: "scribe_v2",

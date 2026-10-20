@@ -164,12 +164,36 @@ def test_shared_service_cancellation_owns_event_and_keeps_slot_until_worker_stop
             with pytest.raises(asyncio.CancelledError):
                 await task
             assert owners[0].is_set()
-            with pytest.raises(SttModelBusyError):
-                await stt_service.transcribe_local(b'audio', 'base', None, True, 'gguf', sidecar=sidecar, load_stt=lambda *args: None)
+            assert not stt_service._slot.acquire(blocking=False)
         finally:
             stop.set()
             assert await asyncio.to_thread(done.wait, 1)
     asyncio.run(scenario())
+
+
+def test_local_transcription_waits_for_shared_slot(monkeypatch):
+    assert stt_service._slot.acquire(blocking=False)
+    calls = []
+    class Sidecar:
+        def transcribe(self, *args, **kwargs):
+            calls.append('done')
+            return {'text': 'queued'}
+    async def scenario():
+        task = asyncio.create_task(stt_service.transcribe_local(
+            b'audio', 'small', 'es', False, 'gguf', sidecar=Sidecar(), load_stt=lambda *args: None))
+        await asyncio.sleep(.05)
+        assert not task.done()
+        stt_service._slot.release()
+        assert await task == {'text': 'queued'}
+    try:
+        asyncio.run(scenario())
+    finally:
+        # The task releases the slot after acquiring it.
+        try:
+            stt_service._slot.release()
+        except ValueError:
+            pass
+    assert calls == ['done']
 
 
 @pytest.mark.parametrize('enabled,ready', [(False, True), (True, False)])
@@ -190,7 +214,7 @@ def test_voice_transcription_is_local_and_rechecks_permissions(monkeypatch):
     recognize = AsyncMock(return_value={'text': '  Hola desde Telegram  '})
     monkeypatch.setattr(stt_service, 'transcribe_local', recognize)
     assert asyncio.run(voice.transcribe(transport, saved, message())) == 'Hola desde Telegram'
-    recognize.assert_awaited_once_with(b'audio', 'base', None, True, 'gguf', max_audio_seconds=300)
+    recognize.assert_awaited_once_with(b'audio', 'small', 'es', True, 'gguf', max_audio_seconds=300)
     assert {item['code'] for item in repo.events('owner')} == {'audio_transcription_started', 'audio_transcription_completed'}
     async def revoked(*args, **kwargs):
         repo.set_voice_enabled(saved['id'], 'owner', False)
@@ -200,6 +224,20 @@ def test_voice_transcription_is_local_and_rechecks_permissions(monkeypatch):
     with pytest.raises(voice.VoiceError, match='voice_disabled'):
         asyncio.run(voice.transcribe(transport, saved, message()))
     recognize.assert_not_called()
+
+
+def test_voice_fast_mode_only_for_short_clips_and_uses_account_language(monkeypatch):
+    saved = account()
+    saved['locale'] = 'en'
+    candidate = message()
+    candidate['audio']['duration'] = 21
+    transport = AsyncMock()
+    transport.download_audio.return_value = b'audio'
+    monkeypatch.setattr(voice, 'status', prepared)
+    recognize = AsyncMock(return_value={'text': 'recognized'})
+    monkeypatch.setattr(stt_service, 'transcribe_local', recognize)
+    assert asyncio.run(voice.transcribe(transport, saved, candidate)) == 'recognized'
+    recognize.assert_awaited_once_with(b'audio', 'small', 'en', False, 'gguf', max_audio_seconds=300)
 
 
 @pytest.mark.parametrize('error,code', [
@@ -314,18 +352,18 @@ def test_prepare_reuses_existing_downloader_and_does_not_start_twice(monkeypatch
     monkeypatch.setattr(stt_sidecar, 'start_model_download', lambda model: starts.append(model))
     assert voice.prepare()['downloading']
     assert voice.prepare()['downloading']
-    assert starts == ['base']
+    assert starts == ['small']
 
 
 def test_ready_status_does_not_confuse_another_model_download_failure(monkeypatch):
     from core.inference import stt_ggml_sidecar, stt_sidecar
     monkeypatch.setattr(stt_ggml_sidecar, 'is_available', lambda: True)
     monkeypatch.setattr(stt_ggml_sidecar, '_cached_model_path', lambda model: None)
-    monkeypatch.setattr(stt_ggml_sidecar, 'download_status', lambda: {'requested_model': 'small', 'error': 'private raw failure'})
+    monkeypatch.setattr(stt_ggml_sidecar, 'download_status', lambda: {'requested_model': 'base', 'error': 'private raw failure'})
     monkeypatch.setattr(stt_sidecar, 'download_status', lambda: {})
     monkeypatch.setattr(stt_sidecar, 'is_model_downloaded', lambda model: False)
     assert not voice.status()['download_failed']
-    monkeypatch.setattr(stt_ggml_sidecar, 'download_status', lambda: {'requested_model': 'base', 'error': 'private raw failure'})
+    monkeypatch.setattr(stt_ggml_sidecar, 'download_status', lambda: {'requested_model': 'small', 'error': 'private raw failure'})
     result = voice.status()
     assert result['download_failed'] and 'private raw' not in json.dumps(result)
 

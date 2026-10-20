@@ -13,7 +13,7 @@ from storage.channels import usage
 from storage.credential_secrets import delete_secret, upsert_secret
 from core.channels import runtime, voice
 from core.channels.catalog import inventory
-from core.channels.permissions import project_context_allowed
+from core.channels.permissions import project_context_allowed, file_allowed
 from core.channels.telegram import Telegram, TelegramError
 
 # Keep prior channel voice URLs as aliases; new consumers use /api/voice.
@@ -44,6 +44,38 @@ class ProjectGrantInput(BaseModel):
     project_ids: list[str] = Field(max_length=100)
     mode: Literal['selected', 'all'] = 'selected'
     context: bool | None = None
+
+
+class FilePermissionsInput(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    user_id: str = Field(min_length=1, max_length=20, pattern=r'^\d{1,20}$')
+    web_download: bool
+    file_create: bool
+    file_send: bool
+
+
+@router.get('/{account_id}/files')
+def file_permissions(account_id: str, credential=Depends(ui_credential)):
+    account = repo.get_account(account_id, credential[0])
+    if not account:
+        raise HTTPException(404, 'account_not_found')
+    return {'permissions': {user: {key: file_allowed(account, user, key) for key in ('web_download', 'file_create', 'file_send')}
+                            for user in account['allowed_user_ids']}}
+
+
+@router.put('/{account_id}/files')
+async def update_file_permissions(account_id: str, body: FilePermissionsInput, credential=Depends(ui_credential)):
+    async with runtime.control_lock:
+        try:
+            with current_credential_write(credential):
+                if not repo.set_file_permissions(account_id, credential[0], body.user_id,
+                        {'web_download': body.web_download, 'file_create': body.file_create, 'file_send': body.file_send}):
+                    raise HTTPException(404, 'account_not_found')
+                repo.event(account_id, 'file_access_updated')
+        except ValueError as error:
+            raise HTTPException(404 if str(error) == 'account_not_found' else 422, str(error)) from None
+        await runtime.stop(account_id)
+    return {'ok': True}
 
 
 @router.get('/{account_id}/projects')

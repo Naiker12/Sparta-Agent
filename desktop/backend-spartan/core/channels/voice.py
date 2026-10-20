@@ -8,7 +8,6 @@ from storage.channels import repository as repo
 from .delivery import check_access
 from .telegram import TelegramError
 
-MODEL = 'base'
 MAX_BYTES = 20 * 1024 * 1024
 MAX_SECONDS = 300
 
@@ -72,9 +71,12 @@ async def transcribe(transport, account, message):
         raw = await transport.download_audio(file_id, max_bytes=MAX_BYTES)
         check_voice_access(account, message)
         from core.inference.stt_service import transcribe_local
+        duration = message.get('audio', {}).get('duration', 0)
+        language = account.get('locale') if account.get('locale') in ('es', 'en') else 'es'
+        fast = type(duration) is int and duration <= 20
         async with asyncio.timeout(360):
-            result = (await transcribe_local(raw, MODEL, None, True, prepared['engine'], max_audio_seconds=MAX_SECONDS)
-                      if config['provider'] == 'local' else await voice_providers.transcribe(raw, config, lambda: check_voice_access(account, message)))
+            result = (await transcribe_local(raw, voice_providers.local_model(config), language, fast, prepared['engine'], max_audio_seconds=MAX_SECONDS)
+                      if config['provider'] == 'local' else await voice_providers.transcribe(raw, config, lambda: check_voice_access(account, message), language=language))
         check_voice_access(account, message)
         text = result.get('text')
         if not isinstance(text, str) or not text.strip():

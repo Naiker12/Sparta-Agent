@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/sheet";
 import { Spinner } from "@/components/ui/spinner";
 import { useT } from "@/i18n";
+import { useRouterState } from "@tanstack/react-router";
 import { useDocumentPreviewStore } from "./preview-store";
 
 // pdf.js / react-pdf are heavy (~0.5 MB gzip): defer until the first citation
@@ -91,7 +92,18 @@ export function preloadDocumentPreview() {
 
 export function DocumentPreviewMount() {
   const open = useDocumentPreviewStore((s) => s.open);
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const [mounted, setMounted] = useState(false);
+
+  // This viewer belongs to the chat workspace. The chat can stay mounted
+  // while the user navigates to another app view, so close its global preview
+  // explicitly when leaving /chat instead of letting a diff/document float
+  // over the destination page.
+  useEffect(() => {
+    if (!pathname.startsWith("/chat")) {
+      useDocumentPreviewStore.getState().closePreview();
+    }
+  }, [pathname]);
 
   useEffect(() => {
     if (open) {

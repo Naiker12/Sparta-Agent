@@ -6,8 +6,8 @@ import type { MemoryGraphData } from "./memory-types";
 
 type GraphPosition = { x: number; y: number };
 type LayoutPositions = Record<string, GraphPosition>;
-const POSITION_STORAGE_KEY = "spartan.memory.graph.positions.v2";
-const TOPOLOGY_STORAGE_KEY = "spartan.memory.graph.topology.v2";
+const POSITION_STORAGE_KEY = "spartan.memory.graph.positions.v3";
+const TOPOLOGY_STORAGE_KEY = "spartan.memory.graph.topology.v3";
 
 function hash(value: string) {
   let result = 2166136261;
@@ -114,6 +114,9 @@ export function MemoryGraph({
             "border-width": 0.8,
             "border-color": "#d9e5f5",
             "border-opacity": 0.7,
+            "underlay-padding": 4,
+            "underlay-color": "#8ebeff",
+            "underlay-opacity": 0.2,
             "font-size": 13,
             "font-family": "Figtree, sans-serif",
             "text-valign": "bottom",
@@ -141,13 +144,13 @@ export function MemoryGraph({
         {
           selector: "edge",
           style: {
-            width: 0.85,
+            width: 0.75,
             "line-color": "#9aa9c0",
             "curve-style": "bezier",
             "target-arrow-shape": "triangle",
             "target-arrow-color": "#9aa9c0",
             "arrow-scale": 0.45,
-            opacity: 0.34,
+            opacity: 0.27,
           },
         },
         { selector: ".muted", style: { opacity: 0.25 } },
@@ -160,6 +163,8 @@ export function MemoryGraph({
             "text-background-padding": "4px",
             "text-wrap": "wrap",
             "text-max-width": "180px",
+            "underlay-padding": 9,
+            "underlay-opacity": 0.5,
             "z-index": 10,
           },
         },

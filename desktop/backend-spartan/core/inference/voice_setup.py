@@ -1,4 +1,4 @@
-"""Shared installation of the CPU Whisper runtime and multilingual base model."""
+"""Shared installation of the CPU Whisper runtime and selected local model."""
 import subprocess
 import logging
 import os
@@ -55,7 +55,7 @@ def status():
         return dict(_state)
 
 
-def configure(progress=print):
+def configure(progress=print, model='small'):
     from core.inference import stt_ggml_sidecar as cpp
     if not cpp.is_available() and cpp.runtime_inference_failure() not in ('voice_runtime_blocked', 'voice_runtime_launch_failed'):
         progress('Instalando motor de voz local Whisper (CPU)...')
@@ -71,28 +71,28 @@ def configure(progress=print):
         if not cpp.is_available():
             raise RuntimeError('voice_runtime_unavailable')
     probe_runtime(cpp)
-    if cpp._cached_model_path('base') is None:
-        progress('Preparando Whisper base multilingüe...')
+    if cpp._cached_model_path(model) is None:
+        progress(f'Preparando Whisper {model} multilingüe...')
         if not cpp.download_status().get('downloading'):
-            cpp.start_model_download('base')
+            cpp.start_model_download(model)
         deadline = time.monotonic() + 900
         while cpp.download_status().get('downloading'):
             if time.monotonic() >= deadline:
                 raise RuntimeError('voice_model_timeout')
             time.sleep(0.5)
-        if cpp._cached_model_path('base') is None:
+        if cpp._cached_model_path(model) is None:
             raise RuntimeError('voice_model_unavailable')
-    progress('Voz local preparada: Whisper base, español e inglés.')
+    progress(f'Voz local preparada: Whisper {model}, español e inglés.')
 
 
-def start():
+def start(model='small'):
     with _lock:
         if _state['installing']:
             return
         _state.update(installing=True, setup_failed=False, failure_code=None)
     def worker():
         try:
-            configure(lambda _: None)
+            configure(lambda _: None, model=model)
         except Exception as error:
             with _lock:
                 _state['setup_failed'] = True

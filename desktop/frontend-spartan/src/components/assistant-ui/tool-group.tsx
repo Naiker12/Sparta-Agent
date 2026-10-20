@@ -6,11 +6,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Spinner } from "@/components/ui/spinner";
-import {
-  toolOutputKey,
-  useToolPaneScope,
-  useUnresolvedToolPaneScope,
-} from "@/features/chat/tool-output-scope";
 import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 import { useCollapseScrollLock } from "@/hooks/use-collapse-scroll-lock";
 import { cn } from "@/lib/utils";
@@ -37,7 +32,7 @@ const toolGroupVariants = cva("aui-tool-group-root group/tool-group w-full", {
   variants: {
     variant: {
       outline: "corner-squircle rounded-lg border py-3",
-      ghost: "py-2",
+      ghost: "py-1",
       muted:
         "corner-squircle rounded-lg border border-muted-foreground/30 bg-muted/30 py-3",
     },
@@ -111,15 +106,17 @@ function ToolGroupRoot({
 function ToolGroupTrigger({
   count,
   active = false,
+  searching = false,
   className,
   ...props
 }: ComponentProps<typeof CollapsibleTrigger> & {
   count: number;
   active?: boolean;
+  searching?: boolean;
 }) {
   const t = useT();
   const label = t(
-    active ? "chat.responseUi.searching" : "chat.responseUi.activity",
+    searching ? "chat.responseUi.searching" : "chat.responseUi.activity",
     { count },
   );
 
@@ -192,6 +189,7 @@ function ToolGroupContent({
         "data-[state=closed]:pointer-events-none",
         "data-[state=open]:duration-(--animation-duration)",
         "data-[state=closed]:duration-(--animation-duration)",
+        "motion-reduce:animate-none",
         className,
       )}
       {...props}
@@ -201,7 +199,7 @@ function ToolGroupContent({
           "mt-2 flex flex-col gap-2",
           "group-data-[variant=outline]/tool-group-root:mt-3 group-data-[variant=outline]/tool-group-root:border-t group-data-[variant=outline]/tool-group-root:px-4 group-data-[variant=outline]/tool-group-root:pt-3",
           "group-data-[variant=muted]/tool-group-root:mt-3 group-data-[variant=muted]/tool-group-root:border-t group-data-[variant=muted]/tool-group-root:px-4 group-data-[variant=muted]/tool-group-root:pt-3",
-          "group-data-[variant=ghost]/tool-group-root:mt-1 group-data-[variant=ghost]/tool-group-root:gap-1",
+          "group-data-[variant=ghost]/tool-group-root:mt-1 group-data-[variant=ghost]/tool-group-root:gap-0",
         )}
       >
         {children}
@@ -269,48 +267,8 @@ const ToolGroupImpl: FC<
         (part) => part.type === "tool-call" && part.status?.type === "running",
       ),
   );
-  const hasFailedCall = useAuiState(({ message }) =>
-    message.parts
-      .slice(startIndex, endIndex + 1)
-      .some(
-        (part) =>
-          part.type === "tool-call" &&
-          (part.status?.type === "incomplete" ||
-            (typeof part.result === "string" &&
-              /^(?:Error:|Failed|Blocked:)/i.test(part.result))),
-      ),
-  );
-  // Force the group open when any call is receiving tool_output events.
-  const toolLiveOutput = useChatRuntimeStore((s) => s.toolLiveOutput);
-  const paneScope = useToolPaneScope();
-  const unresolvedScope = useUnresolvedToolPaneScope();
-  const hasLiveOutput = useAuiState(({ message }) =>
-    message.parts.slice(startIndex, endIndex + 1).some(
-      (part) =>
-        part.type === "tool-call" &&
-        // Either scope: a first turn writes under the unresolved one for its whole
-        // life, even after the autosave assigns the id (see useToolOutputFor).
-        (Object.prototype.hasOwnProperty.call(
-          toolLiveOutput,
-          toolOutputKey(paneScope, part.toolCallId),
-        ) ||
-          Object.prototype.hasOwnProperty.call(
-            toolLiveOutput,
-            toolOutputKey(unresolvedScope, part.toolCallId),
-          )),
-    ),
-  );
-  // Keep the group open once a confirmation or live output forced it (so an
-  // allow/deny doesn't snap it shut between calls); reverts once the turn ends.
-  const forcedOpenRef = useRef(false);
-  if (hasPendingConfirmation || hasLiveOutput) {
-    forcedOpenRef.current = true;
-  }
-  const forceOpen =
-    hasPendingConfirmation ||
-    hasFailedCall ||
-    (hasLiveOutput && messageRunning) ||
-    (forcedOpenRef.current && messageRunning);
+  // History and live output start collapsed, including failed operations.
+  // Only a pending approval must remain visible until the user answers.
 
   // Render single calls, canvases, and Python scripts directly so their
   // persistent content never hides in a collapsed group.
@@ -319,12 +277,17 @@ const ToolGroupImpl: FC<
   }
 
   return (
-    <ToolGroupRoot open={forceOpen ? true : undefined}>
+    <ToolGroupRoot
+      open={hasPendingConfirmation ? true : undefined}
+    >
       <ToolGroupTrigger
         count={toolCount}
-        active={messageRunning && onlyWebSearch && webCallRunning}
+        active={messageRunning && webCallRunning}
+        searching={messageRunning && onlyWebSearch && webCallRunning}
       />
-      <ToolGroupContent>{children}</ToolGroupContent>
+      <ToolGroupContent
+        className={hasPendingConfirmation ? undefined : "[&>div]:max-h-80 [&>div]:overflow-y-auto [&>div]:overscroll-contain"}
+      >{children}</ToolGroupContent>
     </ToolGroupRoot>
   );
 };

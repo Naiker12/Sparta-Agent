@@ -20,7 +20,7 @@ async function manager() {
   (globalThis as any).window = new EventTarget();
   const mocks: Record<string, string> = {
     "@/i18n": "export const translate = key => key;",
-    "react": "export const createContext = value => value;",
+    "react": "const React={createContext:value=>value,useSyncExternalStore:(_subscribe,getSnapshot)=>getSnapshot(),useCallback:callback=>callback,useDebugValue:()=>{}}; export const createContext=React.createContext; export default React;",
     "@/features/auth": `export const AUTH_SESSION_CLEARED_EVENT='cleared'; export const getAuthSessionEpoch=()=>globalThis.__queueEnv.epoch;`,
     "@/lib/toast": "export const toast={error:()=>{}};",
     "@/features/chat": `export const PROMPT_QUEUE_RUN_FAILED_EVENT='failed', PROMPT_QUEUE_STOP_EVENT='stop';

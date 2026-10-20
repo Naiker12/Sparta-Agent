@@ -74,6 +74,18 @@ def test_keyboard_only_authorized_projects(monkeypatch):
     assert controls.consume(account(), update(button['callback_data']))['text'] == '/project p'
 
 
+def test_file_confirmation_is_sender_bound_single_use():
+    from types import SimpleNamespace
+    document = SimpleNamespace(outbox_id='a' * 32, filename='report.pdf', size=1536)
+    keyboard = controls.file_keyboard(account(), {'user_id': '123', 'chat_id': 123}, document)
+    send, cancel = [row[0] for row in keyboard['inline_keyboard'][0:1]][0], keyboard['inline_keyboard'][0][1]
+    assert controls.consume(account(), update(send['callback_data'], 456)) is None
+    approved = controls.consume(account(), update(send['callback_data']))
+    assert approved['action'] == 'send_file' and approved['ref'] == 'a' * 32
+    assert controls.consume(account(), update(send['callback_data'])) is None
+    assert controls.consume(account(), update(cancel['callback_data']))['action'] == 'cancel_file'
+
+
 def test_cancel_button_interrupts_provider_and_is_removed(monkeypatch):
     from core.channels import requests
     monkeypatch.setattr(requests.repo, 'offset', lambda _: 0)

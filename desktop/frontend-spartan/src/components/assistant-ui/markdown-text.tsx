@@ -43,6 +43,7 @@ import { AudioPlayer } from "./audio-player";
 import { ResponseTable, ResponseUiEnabledContext } from "@/features/chat/response-ui/response-ui";
 import { useChatPreferencesStore } from "@/features/chat/stores/chat-preferences-store";
 import { stabilizeStreamingMarkdown } from "./streaming-markdown";
+import { cleanToolProtocolDisplay } from "@/features/chat/utils/tool-protocol-display";
 import {
   IncrementalMarkdownCache,
   withoutStreamdownAnimationPlugin,
@@ -612,10 +613,13 @@ const MarkdownTextImpl = () => {
     message.parts.some(isRenderableRenderHtmlToolPart),
   );
   const isStreaming = status.type === "running";
+  const messageHasTools = useAuiState(({ message }) =>
+    message.parts.some((part) => part.type === "tool-call"),
+  );
   const displayText = useCoalescedStreamingText(text, isStreaming, messageId);
   const processedText = useMemo(
-    () => stabilizeStreamingMarkdown(preprocessLaTeX(displayText), isStreaming),
-    [displayText, isStreaming],
+    () => stabilizeStreamingMarkdown(preprocessLaTeX(cleanToolProtocolDisplay(displayText, messageHasTools, isStreaming)), isStreaming),
+    [displayText, isStreaming, messageHasTools],
   );
   const markdownRenderers = useOptionalMarkdownPlugins(processedText);
   const incrementalCacheRef = useRef({

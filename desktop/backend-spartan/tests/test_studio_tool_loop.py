@@ -193,6 +193,17 @@ def test_form_presentation_finishes_without_another_model_step_only_after_succes
     assert len(_events(lines, "tool_end")) == 1
 
 
+def test_empty_tool_protocol_ends_with_diagnostic_without_execution(executed):
+    transport = FakeTransport([
+        [_sse({"content": "<tool_call>\n</tool_call> <tool_call>\n</tool_call>"}), _sse(finish="stop"), _DONE],
+    ])
+    lines = _run(transport)
+    assert executed == []
+    assert len(transport.requests) == 1
+    assert "no ejecutaron" in _visible_text(lines)
+    assert "operaciones anteriores" in _visible_text(lines)
+
+
 def test_structured_call_executes_and_continues(executed):
     transport = FakeTransport(
         [

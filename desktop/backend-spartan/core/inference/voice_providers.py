@@ -4,7 +4,6 @@ import io
 import ipaddress
 import json
 import re
-import socket
 import threading
 import wave
 from urllib.parse import urlsplit
@@ -14,10 +13,13 @@ from storage.credential_secrets import get_secret, upsert_secret, delete_secret
 
 KIND = 'voice_configuration'
 SCOPE = 'default'
+LOCAL_MODEL = 'small'
+LOCAL_MODELS = {'tiny', 'base', 'small', 'large-v3-turbo', 'large-v3'}
+TTS_DEFAULT_VOICE_ID = 'JBFqnCBsd6RMkjVDRZzb'
 _lock = threading.RLock()
 _decode_slot = threading.BoundedSemaphore(1)
 CATALOG = {
-    'local': {'name': 'Whisper', 'model': 'base', 'endpoint': ''},
+    'local': {'name': 'Whisper', 'model': LOCAL_MODEL, 'endpoint': ''},
     'elevenlabs': {'name': 'ElevenLabs', 'model': 'scribe_v2', 'endpoint': 'https://api.elevenlabs.io/v1/speech-to-text'},
     'groq': {'name': 'Groq', 'model': 'whisper-large-v3-turbo', 'endpoint': 'https://api.groq.com/openai/v1/audio/transcriptions'},
     'compatible': {'name': 'API', 'model': 'whisper-1', 'endpoint': ''},
@@ -28,13 +30,25 @@ def read():
     with _lock:
         raw = get_secret(KIND, SCOPE)
         if not raw:
-            return {'provider': 'local', 'profiles': {}}
-        return json.loads(raw)
+            return {'provider': 'local', 'local_model': LOCAL_MODEL, 'profiles': {}}
+        value = json.loads(raw)
+        if not isinstance(value, dict):
+            return {'provider': 'local', 'local_model': LOCAL_MODEL, 'profiles': {}}
+        model = value.get('local_model')
+        value['local_model'] = model if model in LOCAL_MODELS else LOCAL_MODEL
+        value.setdefault('profiles', {})
+        return value
+
+
+def local_model(value=None):
+    config = value if isinstance(value, dict) else read()
+    model = config.get('local_model')
+    return model if model in LOCAL_MODELS else LOCAL_MODEL
 
 
 def public():
     value = read()
-    return {'provider': value['provider'], 'profiles': {
+    return {'provider': value['provider'], 'local_model': local_model(value), 'profiles': {
         key: {'model': profile['model'], 'endpoint': profile['endpoint'], 'has_key': bool(profile.get('key'))}
         for key, profile in value['profiles'].items()
     }}
@@ -70,7 +84,12 @@ def save(provider, model, endpoint, api_key, consent):
         raise ValueError('invalid_voice_provider')
     with _lock:
         value = read()
-        if provider != 'local':
+        if provider == 'local':
+            model = model or LOCAL_MODEL
+            if model not in LOCAL_MODELS:
+                raise ValueError('invalid_voice_model')
+            value['local_model'] = model
+        else:
             if not consent:
                 raise ValueError('voice_consent_required')
             if not re.fullmatch(r'[\w./:-]{1,200}', model, flags=re.ASCII):
@@ -102,23 +121,11 @@ def remove(provider):
     return public()
 
 
-class PublicVoiceTransport(httpx.AsyncBaseTransport):
-    """Pin each connection to a validated public address, retaining TLS hostname."""
-    def __init__(self):
-        self.inner = httpx.AsyncHTTPTransport(retries=0)
+from core.net.public_transport import PublicPinnedTransport
 
-    async def handle_async_request(self, request):
-        host = request.url.host
-        addresses = await asyncio.to_thread(socket.getaddrinfo, host, 443, 0, socket.SOCK_STREAM)
-        ips = [item[4][0] for item in addresses]
-        if not ips or any(not ipaddress.ip_address(ip).is_global for ip in ips):
-            raise ValueError('invalid_voice_endpoint')
-        request.extensions['sni_hostname'] = host
-        request.url = request.url.copy_with(host=ips[0])
-        return await self.inner.handle_async_request(request)
 
-    async def aclose(self):
-        await self.inner.aclose()
+class PublicVoiceTransport(PublicPinnedTransport):
+    """Compatibility alias for existing voice-provider callers."""
 
 
 async def audio_wav(raw):
@@ -145,7 +152,7 @@ async def audio_wav(raw):
         raise
 
 
-async def transcribe(raw, snapshot=None, check=None):
+async def transcribe(raw, snapshot=None, check=None, *, language='es', prompt='Sparta, Telegram, FastAPI, Tauri, React, Whisper, GeoMaps'):
     value = snapshot or read()
     provider = value['provider']
     if provider == 'local' or provider not in value['profiles']:
@@ -159,7 +166,9 @@ async def transcribe(raw, snapshot=None, check=None):
         raise ValueError('voice_not_ready')
     if check is not None:
         check()
-    fields = {'model_id': profile['model'], 'tag_audio_events': 'false', 'diarize': 'false'} if provider == 'elevenlabs' else {'model': profile['model'], 'response_format': 'json'}
+    fields = ({'model_id': profile['model'], 'tag_audio_events': 'false', 'diarize': 'false', 'language_code': language}
+              if provider == 'elevenlabs' else
+              {'model': profile['model'], 'response_format': 'json', 'language': language, 'prompt': prompt})
     headers = {'xi-api-key': profile['key']} if provider == 'elevenlabs' else {'Authorization': 'Bearer ' + profile['key']}
     async with httpx.AsyncClient(transport=PublicVoiceTransport(), timeout=120, follow_redirects=False, trust_env=False) as client:
         async with client.stream('POST', profile['endpoint'], headers=headers, data=fields,
@@ -197,3 +206,40 @@ async def transcribe(raw, snapshot=None, check=None):
     if not isinstance(text, str) or not text.strip() or len(text) > 16000:
         raise ValueError('audio_empty')
     return {'text': text.strip()}
+
+
+async def synthesize(text, *, language='es', check=None):
+    """Create bounded Spanish/English MP3 speech using the saved ElevenLabs key."""
+    value = read()
+    profile = value.get('profiles', {}).get('elevenlabs')
+    if not isinstance(profile, dict) or not profile.get('key'):
+        raise ValueError('tts_not_configured')
+    if not isinstance(text, str) or not text.strip() or len(text) > 5000:
+        raise ValueError('tts_text_invalid')
+    if check:
+        check()
+    payload = {'text': text, 'model_id': 'eleven_flash_v2_5',
+               'language_code': 'es' if language == 'es' else 'en'}
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{TTS_DEFAULT_VOICE_ID}?output_format=mp3_22050_32"
+    async with httpx.AsyncClient(transport=PublicVoiceTransport(), timeout=60,
+                                 follow_redirects=False, trust_env=False) as client:
+        async with client.stream('POST', url, headers={'xi-api-key': profile['key'],
+                                                       'accept': 'audio/mpeg'}, json=payload) as response:
+            if response.status_code in (401, 403):
+                raise ValueError('tts_auth_failed')
+            if response.status_code == 429:
+                raise ValueError('tts_rate_limited')
+            if response.status_code != 200:
+                raise ValueError('tts_unavailable')
+            raw = bytearray()
+            async for block in response.aiter_bytes():
+                raw.extend(block)
+                if len(raw) > 10 * 1024 * 1024:
+                    raise ValueError('tts_unavailable')
+    if read() != value:
+        raise ValueError('tts_not_configured')
+    if check:
+        check()
+    if len(raw) < 4 or not (raw.startswith(b'ID3') or raw[:2] == b'\xff\xfb' or raw[:2] == b'\xff\xf3'):
+        raise ValueError('tts_unavailable')
+    return bytes(raw)

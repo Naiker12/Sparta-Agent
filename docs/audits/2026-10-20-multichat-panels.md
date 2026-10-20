@@ -12,6 +12,15 @@ Implementación del 20 de octubre de 2026.
 - Cerrar conserva el historial y el borrador. El cierre se deshabilita durante la generación.
 - Continuar en otro panel guarda una conversación independiente desde la rama visible.
 - El chat principal conserva su árbol React al abrir, cerrar o enfocar secundarios.
+- Las cabeceras comparten la fila de controles de escritorio; se reserva espacio
+  para el botón de nuevo panel y el chat temporal, sin una franja vacía adicional.
+- Un único explorador de archivos permanece en el extremo derecho y consulta el chat
+  enfocado. Ya no queda dentro de la columna principal entre conversaciones.
+- Los secundarios usan Thread, su bienvenida y su dock flotante con las mismas
+  primitivas y superficie visual del compositor principal. Tienen adjuntos, carpeta,
+  modelo y ajustes locales. La copia de contexto queda en el menú de la cabecera.
+- El asa de la cabecera reordena secundarios sin crear chats ni remontar sus runtimes;
+  los separadores de cinco píxeles permiten ajustar el ancho con el ratón.
 
 ## Aislamiento
 
@@ -44,8 +53,9 @@ completos ni ejecuciones reproducibles. Las referencias tienen límites de 6.000
 por resultado, 12.000 por mensaje y 48.000 en total, priorizando los resultados recientes.
 Las referencias recortadas llevan una indicación para consultar el original. El texto
 normal de la conversación se conserva. Se excluyen imágenes binarias y sesiones de sandbox.
-Los secundarios tienen un compositor de texto; los adjuntos
-y controles avanzados del compositor principal continúan disponibles en el principal.
+Los secundarios permiten adjuntos mediante el adaptador de su propio runtime. Los ajustes
+de búsqueda, código, razonamiento y aprobación se guardan en su conversación. El compositor
+principal conserva sus controles avanzados de cola y de investigación.
 La lista y el orden de paneles secundarios y su selección se restauran al reiniciar;
 los anchos vuelven a su distribución inicial. Las conversaciones y borradores también
 quedan guardados. El layout local guarda únicamente ids, selección y versión, sin
@@ -78,3 +88,11 @@ en curso para impedir que una respuesta tardía vuelva a abrir paneles de esa se
 - La continuación recibe resultados y extractos en el payload de su primer envío;
   conserva el ajuste de aprobación obligatoria y no activa bypass, sin comandos
   anteriores ni identificadores de sesión copiados.
+- Corrección visual comprobada en modo oscuro: títulos alineados con la barra existente,
+  explorador único en el extremo derecho y bienvenida normal para un panel vacío.
+- Ratón real en Playwright: separadores cambian el ancho y asas reordenan secundarios.
+- Selector de archivo real con un TXT: el contenido llega al envío de alpha y no al
+  de beta. Los adjuntos pendientes que se materializan al enviar no bloquean el botón;
+  solo lo hace una carga activa, igual que en el compositor principal.
+- Los secundarios comparten el host de vista previa del chat principal para evitar
+  abrir varias copias de un mismo diálogo al previsualizar un adjunto.

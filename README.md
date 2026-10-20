@@ -4,7 +4,7 @@
   <p><strong>Un espacio de trabajo para construir software con agentes, proveedores de IA por API y control humano.</strong></p>
 
   <p>
-    <a href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.4.1"><img src="https://img.shields.io/badge/version-v0.4.1-111827?style=flat-square&logo=github&logoColor=white" alt="Versión del proyecto" /></a>
+    <a href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.5.0"><img src="https://img.shields.io/badge/version-v0.5.0-111827?style=flat-square&logo=github&logoColor=white" alt="Versión en preparación" /></a>
     <img src="https://img.shields.io/badge/desktop-Electron-47848F?style=flat-square&logo=electron&logoColor=white" alt="Electron" />
     <img src="https://img.shields.io/badge/interface-React%2019-111827?style=flat-square&logo=react&logoColor=white" alt="React 19" />
     <img src="https://img.shields.io/badge/license-MIT-111827?style=flat-square" alt="Licencia MIT" />
@@ -32,16 +32,16 @@
 
 ## Empieza aquí
 
-Descarga el instalador de [Sparta Agent 0.4.1](https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.4.1). En el primer arranque, Sparta Agent prepara su motor local en su propio directorio de datos y muestra el progreso; no reutiliza la instalación de otra aplicación.
+**Versión en preparación: 0.5.0.** Esta actualización todavía no está publicada. La última versión disponible es [Sparta Agent 0.4.1](https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.4.1); los instaladores de 0.5.0 no estarán disponibles hasta que se apruebe y publique la release. En el primer arranque, Sparta Agent prepara su motor local en su propio directorio de datos y muestra el progreso; no reutiliza la instalación de otra aplicación.
 
-| Plataforma | Descargar 0.4.1 |
+| Plataforma | Instalador previsto para 0.5.0 |
 | --- | --- |
-| Windows x64 | [Instalador EXE](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.4.1/Sparta-Agent-Windows-0.4.1-Setup.exe) |
-| macOS Apple silicon | [Instalador DMG](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.4.1/Sparta-Agent-Mac-0.4.1-arm64-Installer.dmg) |
-| macOS Intel | [Instalador DMG](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.4.1/Sparta-Agent-Mac-0.4.1-x64-Installer.dmg) |
-| Linux x64 | [AppImage](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.4.1/Sparta-Agent-Linux-0.4.1.AppImage) |
+| Windows x64 | [Instalador EXE previsto](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.0/Sparta-Agent-Windows-0.5.0-Setup.exe) |
+| macOS Apple silicon | [Instalador DMG previsto](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.0/Sparta-Agent-Mac-0.5.0-arm64-Installer.dmg) |
+| macOS Intel | [Instalador DMG previsto](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.0/Sparta-Agent-Mac-0.5.0-x64-Installer.dmg) |
+| Linux x64 | [AppImage previsto](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.0/Sparta-Agent-Linux-0.5.0.AppImage) |
 
-**Por qué actualizar:** programa tareas desde el chat con un plan revisable, abre sus resultados en una conversación y crea documentos con progreso más claro. Esta versión corrige la apertura inicial de visores, la recuperación de mascota/modelo y el restablecimiento de preferencias. Consulta las [notas completas de 0.4.1](docs/releases/v0.4.1.md) para requisitos y alcance.
+**Cambios preparados para 0.5.0:** mejoras en el espacio de trabajo del chat, una visualización de memoria más orgánica, estados de herramientas más claros, mejoras en la experiencia inicial y nuevas capacidades controladas por permisos para Telegram, archivos y voz. Consulta las [notas de preparación de 0.5.0](docs/releases/v0.5.0.md) y el [estado de calificación](docs/audits/2026-10-20-release-candidate-v0.5.0.md). La disponibilidad final depende de completar las comprobaciones y aprobar la publicación.
 
 Para desarrollo:
 
