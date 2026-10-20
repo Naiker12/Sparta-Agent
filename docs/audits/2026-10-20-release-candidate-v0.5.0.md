@@ -29,7 +29,7 @@ Los manifiestos del producto y los metadatos raíz de sus lockfiles se prepararo
 - Pruebas de navegador: `npm run test:automations:browser` pasó el flujo de activación, ejecución y aprobación explícita; `npm run test:documents:browser` pasó apertura en frío, Word, PDF, hoja de cálculo, Markdown y reapertura.
 - `npm run test:assets:electron` pasó navegación de archivos empaquetados, logos de proveedores, navegación atrás/recarga, consulta del hilo, anclas y redirección de autenticación.
 - Las comprobaciones locales se ejecutaron con Node **24.19.0**. El workflow de release usa Node 22 y volverá a ejecutar sus puertas de calidad en CI.
-- El primer intento de empaquetado de `v0.5.0` pasó calidad, pero Linux, Windows y macOS Intel agotaron el heap de Node al límite configurado de 8 GB. La configuración final usa un heap máximo de 10 GB y ejecuta ambos destinos de macOS en Intel; `electron-builder` recibe la arquitectura explícita (`arm64` o `x64`) desde `TARGET_PLATFORM`. El primer job macOS Apple silicon seguía en curso al registrar esta nota; se confirmará el resultado en el siguiente intento.
+- Los dos primeros intentos de empaquetado de `v0.5.0` pasaron calidad, pero Linux y Windows agotaron el heap al límite de 8 GB y luego 10 GB. Se elevó el heap máximo a 12 GB y se limitó a 100 la cantidad de archivos que Rollup carga en paralelo. Ambos destinos de macOS se construyen en Intel, con la arquitectura explícita (`arm64` o `x64`) seleccionada por `TARGET_PLATFORM`. La tercera ejecución del tag validará estos ajustes.
 - Todavía no hay instaladores multiplataforma validados ni se probaron integraciones con un bot/cuentas reales.
 
 ## Pendiente antes de aprobar la publicación
