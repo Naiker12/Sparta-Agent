@@ -1,0 +1,47 @@
+---
+title: "Memoria y episodios"
+description: "Explora recuerdos, conversaciones de origen y relaciones guardadas en el mapa o en una lista accesible."
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+<Callout title="Disponibilidad" type="info">Esta guía describe el código actual de la rama `main`. La landing distribuye la versión 0.4.1; comprueba las notas de una versión antes de asumir que esta función está incluida en un instalador.</Callout>
+
+La vista **Memoria** reúne recuerdos estructurados y episodios de conversación. Un nodo representa un elemento guardado y una línea representa una relación registrada entre dos elementos. El mapa no crea relaciones para llenar espacios: si los datos forman componentes separados o cadenas, el dibujo conserva esa estructura.
+
+<figure>
+  <img src={`${import.meta.env.BASE_URL}docs/memory-interface-sample.png`} alt="Captura real de la pantalla Memoria con un mapa de recuerdos conectados." />
+  <figcaption>Captura de la interfaz actual de `main`; utiliza registros ficticios, no datos de una cuenta.</figcaption>
+</figure>
+
+## Buscar y filtrar
+
+- Escribe en el campo de búsqueda para filtrar el grafo y la lista.
+- Cambia entre **Recuerdos** y **Episodios**.
+- Filtra por tipo de recuerdo y por proyecto cuando haya elementos asociados.
+- Abre **Lista de recuerdos** o **Lista de episodios** para elegir un registro con controles accesibles, incluso si el mapa no es cómodo de navegar.
+
+## Leer un elemento
+
+Selecciona un nodo para abrir sus detalles. En episodios, el panel puede mostrar el texto y la conversación original cuando la fuente siga disponible. Las relaciones aparecen en el panel y permiten seguir el vínculo guardado. Usa zoom y desplazamiento para explorar áreas del mapa; **Ajustar** vuelve a encuadrar los elementos visibles.
+
+El título se revela al pasar el cursor o seleccionar un nodo para evitar que todos los nombres se encimen. El mapa distingue tipos con color. El color no reemplaza las etiquetas del panel ni la lista.
+
+## Posiciones y distribución
+
+La distribución calcula posiciones a partir de las conexiones y ejecuta el cálculo de diseño en un Web Worker. Guarda coordenadas en el almacenamiento local del navegador para conservar el acomodo entre visitas. Al cambiar el conjunto de relaciones, el mapa puede volver a calcular posiciones. El cálculo solo organiza la vista: no altera recuerdos ni añade relaciones.
+
+Si el mapa resulta demasiado denso, reduce el zoom, filtra por tipo o proyecto, o cambia a la lista. Un conjunto de recuerdos con pocas relaciones seguirá viéndose disperso; la vista refleja los datos existentes.
+
+## Añadir y mantener recuerdos
+
+Usa **Añadir recuerdo** para crear un elemento y el panel de edición para modificarlo. Antes de borrar una memoria, revisa el aviso: se elimina el elemento y sus relaciones, mientras que la conversación original se conserva. La extracción de conocimiento propone información para revisar; revisa y confirma las propuestas antes de tratarlas como recuerdos aceptados.
+
+## Límites
+
+- La vista muestra hasta 500 registros en una carga.
+- Las relaciones visibles son las que están guardadas en la memoria.
+- La fuente original puede no estar disponible para todos los episodios.
+- Las posiciones guardadas son locales al navegador y no sincronizan la memoria entre dispositivos.
+
+Si la vista no carga, pulsa **Actualizar** y revisa el mensaje de error. Si el gráfico se ve apretado, acota los datos con búsqueda y filtros antes de ajustar el zoom.

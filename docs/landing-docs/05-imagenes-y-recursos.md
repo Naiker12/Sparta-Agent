@@ -1,18 +1,24 @@
-# 05 · Imágenes y Recursos Visuales
+# 05 · Imágenes y recursos visuales
 
-## 1. Criterios de Selección: Captura Real vs. Esquema
+## Estado del inventario
 
-Para mantener la máxima autenticidad y confianza en la documentación:
-- **Screenshots Reales**: Se reservan para mostrar la interfaz real del producto (`escritorio.png`, `sparta-escritorio.png`, `SPARTAN-PRINCIPAL.png`, `CONTEXTO.png`, `Permisos antes de las acciones sensibles.png`). No se deben usar mockups sintéticos cuando la UI real ya existe en el monorepo.
-- **Diagramas Vectoriales**: Se emplean para conceptos arquitectónicos, capas lógicas y flujos de datos donde una captura de pantalla no refleja la abstracción técnica.
+Revisa los archivos existentes antes de enlazarlos. Los nombres de capturas que aparecían en el inventario anterior no corresponden a recursos del repositorio actual. Evita tratar logos, mockups o ilustraciones conceptuales como capturas de la interfaz.
 
----
+| Recurso | Tipo | Uso recomendado |
+| --- | --- | --- |
+| `docs/assets/escritorio.png` | Logo cuadrado sobre fondo claro | Identidad; no es una captura del escritorio |
+| `docs/assets/sparta-escritorio.png` | Logo cuadrado sobre fondo oscuro | Identidad; no es una captura del escritorio |
+| `docs/assets/sparta-contexto.png` | Recorte del composer | Explicar adjuntos y controles del composer; revisar que coincida con la UI actual antes de publicarlo |
+| `docs/assets/sparta-permisos.png` | Composición de permisos y composer | Explicar los modos de aprobación; validar las etiquetas frente a la versión documentada |
+| `landing/public/proyecto/SPARTAN-PRINCIPAL.png` | Mockup de estado vacío | Ilustrar el concepto de espacio de trabajo; no presentarlo como captura actual de una conversación |
+| `landing/public/docs/memory-interface-sample.png` | Captura de la interfaz actual de Memoria | Mapa de recuerdos con registros ficticios; no contiene datos de una cuenta real |
 
-## 2. Inventario de Recursos Visuales Disponibles
+La landing reutiliza la captura actual de Memoria junto a su guía y en la demo. El texto alternativo y el pie aclaran que los registros son ficticios. No reutilizar las capturas antiguas del mapa de memoria: corresponden a iteraciones previas del diseño.
 
-| Archivo en `landing/public/` | Sección Destino | Descripción |
-|---|---|---|
-| `escritorio.png` | `inicio` | Vista panorámica de la aplicación de escritorio de Sparta Agent. |
-| `SPARTAN-PRINCIPAL.png` | `agentes` | Vista del workspace con chat, editor y árbol de tareas. |
-| `Permisos antes de las acciones sensibles.png` | `permisos` | Diálogo modal de autorización explícita de comandos sensibles. |
-| `CONTEXTO.png` | `skills` / `mcp` | Panel de contexto, herramientas e integraciones activas. |
+## Criterios de publicación
+
+- Usa capturas obtenidas de la versión que se está documentando; oculta nombres, rutas y credenciales personales.
+- Comprueba que la imagen muestra el flujo descrito y que sus etiquetas siguen vigentes.
+- Usa SVG o diagramas para explicar relaciones y arquitectura, con texto alternativo o estructura legible.
+- Incluye dimensiones, compresión y texto alternativo adecuados; evita una imagen de referencia de terceros como si fuera producto propio.
+- Si no existe una captura actual, usa un esquema conceptual con esa etiqueta o deja la sección sin captura.

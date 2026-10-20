@@ -1,0 +1,33 @@
+---
+title: "Respuestas interactivas"
+description: "Cómo el chat presenta paneles, tablas, gráficos, formularios y referencias visuales, y cómo volver al texto."
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+<Callout title="Disponibilidad" type="info">Esta guía describe el código actual de `main`. La versión 0.4.1 publicada puede no incluir esta interfaz. La opción de respuestas visuales se controla desde Ajustes → Chat.</Callout>
+
+Cuando las respuestas visuales están activadas, el asistente puede mostrar contenido estructurado en la conversación: tablas, comparaciones, gráficos, galerías de imágenes de referencia, paneles de información y formularios. La respuesta sigue siendo contenido del modelo validado por la aplicación; un panel no confirma por sí solo que sus datos sean correctos.
+
+## Elegir texto o presentación visual
+
+La preferencia **Respuestas visuales** se puede activar o desactivar en Ajustes → Chat. Si se desactiva, el chat conserva una salida de texto cuando el bloque tiene una alternativa textual disponible. La presentación no habilita herramientas ni amplía permisos.
+
+Los gráficos representan los datos que el modelo proporciona. Si la fuente no contiene una cifra, el gráfico no debe interpretarse como evidencia. Revisa los enlaces y citas de la respuesta para confirmar información externa.
+
+## Imágenes de referencia
+
+Las galerías muestran resultados encontrados en fuentes externas, con el vínculo a la página de origen cuando está disponible. Son referencias recuperadas; no son imágenes generadas por Sparta. Verifica autoría, contexto y condiciones de uso en la fuente antes de reutilizarlas.
+
+## Formularios y paneles
+
+Los formularios permiten enviar campos de vuelta a la conversación. Completar un formulario solo aporta datos al chat: no aprueba una acción externa ni modifica archivos automáticamente. Las herramientas y sus permisos siguen gobernando cualquier acción posterior.
+
+## Límites y solución de problemas
+
+- La forma de la respuesta depende del modelo y de sus llamadas a herramientas.
+- Una respuesta visual puede no aparecer si el proveedor no produce un bloque compatible.
+- Los gráficos no sustituyen la explicación de fuentes o incertidumbre.
+- Desactiva **Respuestas visuales** en Ajustes → Chat si prefieres una presentación de texto.
+
+Si esperabas una galería o un panel, comprueba primero la preferencia y luego si el modelo respondió con contenido estructurado. La búsqueda web, la búsqueda de imágenes y la verificación de una fuente son capacidades distintas.

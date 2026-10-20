@@ -399,6 +399,38 @@ export default function LandingPage({
           </div>
           <div className="integration-note"><BookOpen aria-hidden="true" />Conoce las mejoras y los requisitos de uso.<a href={release.url} target="_blank" rel="noopener noreferrer">Notas de v{release.version} <ArrowUpRight /></a></div>
         </section>
+        <section className="benefits-section site-container" aria-labelledby="main-updates-title">
+          <div className="section-heading">
+            <span className="eyebrow">CÓDIGO ACTUAL · RAMA MAIN</span>
+            <h2 id="main-updates-title">Más continuidad para explorar y trabajar.</h2>
+            <p>La rama principal ya reúne mejoras posteriores a la versión publicada. La descarga sigue siendo v{release.version}; consulta el alcance antes de buscar estas funciones en una instalación anterior.</p>
+          </div>
+          <div className="benefits-grid">
+            <article>
+              <BookOpen aria-hidden="true" />
+              <h3>Memoria que puedes explorar.</h3>
+              <p>Busca recuerdos y episodios, filtra por tipo o proyecto y recorre las relaciones guardadas en un mapa o una lista.</p>
+              <a href={getPublicUrl("?docs=features/memory")}>Guía de Memoria <ArrowUpRight /></a>
+            </article>
+            <article>
+              <MessageSquare aria-hidden="true" />
+              <h3>Varios paneles en el chat.</h3>
+              <p>Mantén a la vista archivos y herramientas del proyecto mientras continúas la conversación.</p>
+              <a href={getPublicUrl("?docs=guides/workspace")}>Guía del espacio de trabajo <ArrowUpRight /></a>
+            </article>
+            <article>
+              <Sparkles aria-hidden="true" />
+              <h3>Respuestas más visuales.</h3>
+              <p>Cuando está habilitada y el modelo lo solicita, la respuesta puede presentar paneles, formularios, gráficos o imágenes de referencia.</p>
+              <a href={getPublicUrl("?docs=features/interactive-responses")}>Ver capacidades y límites <ArrowUpRight /></a>
+            </article>
+          </div>
+          <div className="integration-note">
+            <img src={getPublicUrl("docs/memory-interface-sample.png")} alt="" style={{ width: 56, height: 40, borderRadius: 8, objectFit: "cover" }} />
+            Captura de Memoria con recuerdos ficticios de demostración.
+            <a href={getPublicUrl("?docs=project/status-and-scope")}>Consultar el alcance de `main` <ArrowUpRight /></a>
+          </div>
+        </section>
         <section
           id="descargas"
           className="downloads-section site-container"

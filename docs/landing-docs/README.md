@@ -1,6 +1,6 @@
 # Rediseño del Sistema de Documentación — Sparta Agent
 
-Este directorio contiene el análisis técnico, la arquitectura de componentes y la hoja de ruta para la modernización y modularización del sistema de documentación en `landing/src/components/docs/`.
+Este directorio conserva el análisis y las decisiones del rediseño original de la documentación. El sitio actual usa páginas MDX bajo `landing/src/components/docs/content/pages/`, navegación en `landing/src/components/docs/lib/navigation.ts` y un catálogo generado desde MDX. Los documentos de arquitectura de esta carpeta son referencia histórica; comprueba las rutas actuales antes de usarlos como guía de implementación.
 
 ---
 

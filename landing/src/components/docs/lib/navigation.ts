@@ -14,7 +14,7 @@ export const docsHref = (slug: string) => `${import.meta.env.BASE_URL}?docs=${en
 export const groups = [
   { title: 'Conoce el proyecto', pages: ['index', 'project/status-and-scope'] },
   { title: 'Primeros pasos', pages: ['quickstart', 'guides/first-task', 'guides/workspace'] },
-  { title: 'Conversaciones', pages: ['core-concepts/chat-vs-agent-mode', 'core-concepts/models-and-providers', 'features/attachments-and-files', 'features/multimodal-rag', 'features/deep-research'] },
+  { title: 'Conversaciones', pages: ['core-concepts/chat-vs-agent-mode', 'core-concepts/models-and-providers', 'features/attachments-and-files', 'features/memory', 'features/interactive-responses', 'features/multimodal-rag', 'features/deep-research'] },
   { title: 'Integraciones', pages: ['features/channels', 'features/live-tools', 'features/code-execution', 'mcp/introduction', 'mcp/configuration', 'mcp/supported-servers', 'skills/overview'] },
   { title: 'Configuración', pages: ['core-concepts/security-and-sandbox', 'features/automations', 'features/api-monitor', 'features/voice-audio', 'features/remote-access', 'features/recipe-studio', 'guides/performance', 'guides/troubleshooting'] },
   { title: 'Arquitectura', pages: ['architecture/overview', 'architecture/frontend-ui', 'architecture/backend-architecture', 'architecture/ipc-bridge'] },

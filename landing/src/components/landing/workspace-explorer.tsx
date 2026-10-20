@@ -2,7 +2,6 @@ import {
   BookOpen,
   CalendarClock,
   ChefHat,
-  Check,
   FileCode,
   FileText,
   FolderOpen,
@@ -34,9 +33,9 @@ const screens = {
   memory: {
     title: "Memoria",
     subtitle:
-      "Revisa el contexto que quieres conservar para próximas conversaciones.",
+      "Explora recuerdos, episodios y las relaciones que los conectan.",
     icon: BookOpen,
-    guide: "features/multimodal-rag",
+    guide: "features/memory",
   },
   automations: {
     title: "Automatizaciones",
@@ -66,7 +65,6 @@ export default function WorkspaceExplorer({
   onChat: () => void;
   onAutomationChat: () => void;
 }) {
-  const [reviewed, setReviewed] = useState(false);
   const [paused, setPaused] = useState(false);
   const screen = screens[view];
   const Icon = screen.icon;
@@ -114,25 +112,18 @@ export default function WorkspaceExplorer({
         </div>
       )}
       {view === "memory" && (
-        <div className="explorer-card">
-          <div className="explorer-card-title">
-            <BookOpen />
-            <strong>Preferencia del proyecto</strong>
-            <span>{reviewed ? "Revisado" : "Por revisar"}</span>
-          </div>
-          <p>Usar mensajes de error claros, breves y en español.</p>
-          <div className="explorer-meta">
-            Origen: conversación del proyecto · Memoria de ejemplo
-          </div>
-          <Button
-            variant="outline"
-            disabled={reviewed}
-            onClick={() => setReviewed(true)}
-          >
-            <Check data-icon="inline-start" />
-            {reviewed ? "Revisado en la demo" : "Marcar como revisado"}
+        <figure className="explorer-card memory-preview-card">
+          <img
+            src={getPublicUrl("docs/memory-interface-sample.png")}
+            alt="Captura de la pantalla Memoria de SPARTAN, con el mapa de recuerdos abierto."
+          />
+          <figcaption>
+            Interfaz actual · La captura usa registros ficticios de demostración.
+          </figcaption>
+          <Button variant="outline" onClick={onChat}>
+            Volver a la conversación <ArrowUpRight data-icon="inline-end" />
           </Button>
-        </div>
+        </figure>
       )}
       {view === "automations" && <DemoAutomationRun onChat={onAutomationChat} />}
       {view === "api" && (
