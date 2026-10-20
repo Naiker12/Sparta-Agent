@@ -29,7 +29,8 @@ Los manifiestos del producto y los metadatos raíz de sus lockfiles se prepararo
 - Pruebas de navegador: `npm run test:automations:browser` pasó el flujo de activación, ejecución y aprobación explícita; `npm run test:documents:browser` pasó apertura en frío, Word, PDF, hoja de cálculo, Markdown y reapertura.
 - `npm run test:assets:electron` pasó navegación de archivos empaquetados, logos de proveedores, navegación atrás/recarga, consulta del hilo, anclas y redirección de autenticación.
 - Las comprobaciones locales se ejecutaron con Node **24.19.0**. El workflow de release usa Node 22 y volverá a ejecutar sus puertas de calidad en CI.
-- Todavía no se construyeron ni revisaron instaladores multiplataforma. No se probaron integraciones con un bot/cuentas reales.
+- El primer intento de empaquetado de `v0.5.0` pasó calidad, pero Linux y Windows agotaron el heap de Node en la compilación Vite al límite configurado de 8 GB. Se elevó el límite a 12 GB en el script de build y en el workflow; el tag se reintentará con ese ajuste. El empaquetado de macOS de ese primer intento seguía ejecutándose al registrar esta nota.
+- Todavía no hay instaladores multiplataforma validados ni se probaron integraciones con un bot/cuentas reales.
 
 ## Pendiente antes de aprobar la publicación
 
