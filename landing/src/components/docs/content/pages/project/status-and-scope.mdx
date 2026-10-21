@@ -7,9 +7,9 @@ description: "Qué documenta esta edición y cómo distinguir capacidades dispon
 
 Sparta Agent busca reunir conversaciones, contexto de proyecto y herramientas en un escritorio con control humano. La edición descrita en el README usa proveedores de IA mediante API y mantiene el motor de coordinación en el equipo.
 
-## Alcance de la última versión publicada: 0.4.1
+## Alcance de la versión publicada: 0.5.0
 
-La versión 0.4.1 conserva la cola persistente y la **Bandeja de trabajo**, y añade propuestas de automatización desde el chat, mejoras al abrir documentos y recuperación de preferencias.
+La versión 0.5.0 conserva las funciones de automatización y Bandeja de trabajo de versiones anteriores e incorpora un mapa de Memoria más fácil de explorar, paneles de trabajo junto al chat, respuestas interactivas y herramientas con permisos para Telegram, archivos y voz.
 
 - Recupera mensajes pendientes desde su conversación.
 - Un envío registrado no se repite automáticamente.
@@ -27,11 +27,11 @@ La versión 0.4.1 conserva la cola persistente y la **Bandeja de trabajo**, y a�
 
 Consulta [Inicio rápido](/docs/quickstart) y [Tu espacio de trabajo](/docs/guides/workspace). La disponibilidad exacta depende de la versión instalada, el proveedor y las conexiones configuradas.
 
-## Trabajo en preparación para 0.5.0
+## Cambios incluidos en 0.5.0
 
-La última descarga publicada sigue siendo 0.4.1. Los cambios de esta tabla están presentes en el desarrollo de `main` y se están preparando para 0.5.0; todavía no deben atribuirse al instalador publicado.
+Los cambios de esta tabla están incluidos en los instaladores de 0.5.0. Consulta las [notas de la release](https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.5.0) para los límites de uso y los instaladores disponibles.
 
-| Área | Cambios presentes en el código actual de `main` | Guía |
+| Área | Cambios incluidos en 0.5.0 | Guía |
 | --- | --- | --- |
 | Memoria | Mapa y lista de recuerdos y episodios, filtros y relaciones guardadas | [Memoria y episodios](/docs/features/memory) |
 | Conversación | Espacio de paneles para mantener abiertas vistas del proyecto junto al chat | [Tu espacio de trabajo](/docs/guides/workspace) |
@@ -39,7 +39,7 @@ La última descarga publicada sigue siendo 0.4.1. Los cambios de esta tabla est�
 | Canales | Herramientas acotadas para documentos/archivos en Telegram, permisos por usuario y confirmación del envío | [Canales y Telegram](/docs/features/channels) |
 | Voz | Transcripción local o remota y respuestas habladas en Telegram mediante ElevenLabs configurado | [Voz y audio](/docs/features/voice-audio) |
 
-Estas guías explican el comportamiento en preparación. Comprueba las notas de la versión instalada para saber qué está disponible en tu equipo.
+Estas guías explican el comportamiento de la versión publicada. Comprueba las notas de la versión instalada para saber qué está disponible en tu equipo.
 
 ## Qué depende de la configuración
 
@@ -71,6 +71,6 @@ Estas prioridades sirven para ordenar trabajo; no son fechas de entrega ni anunc
 
 ## Cómo seguir cambios reales
 
-La revisión de **0.4.1 del 11 de octubre de 2026** incluye documentos y [automatizaciones desde el chat](/docs/features/automations). La suite frontend pasa **3.629/3.629 casos** con Node 22, Node 24 y en CI Linux, sin omisiones. Pasan también los contratos del backend y los flujos de navegador. Los proveedores de estas pruebas son simulados: la conexión real, los permisos y las capacidades de tu modelo requieren comprobación al configurarlos.
+La release **0.5.0** pasó las puertas de calidad, los builds de Windows, Linux y las dos arquitecturas de macOS, la validación de instaladores y las comprobaciones de documentación y landing. Los flujos automatizados de proveedores usan datos de prueba; configura y comprueba tu propio bot de Telegram y tus proveedores de voz antes de depender de esas integraciones.
 
 Las [releases](https://github.com/Naiker12/Sparta-Agent/releases) describen las versiones publicadas. Los [issues](https://github.com/Naiker12/Sparta-Agent/issues) permiten seguir propuestas y defectos. Contrasta cualquier plan con su implementación y pruebas antes de atribuirlo a una versión.
