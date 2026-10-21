@@ -1,6 +1,6 @@
 # Preparación de release — Sparta Agent 0.5.0
 
-**Estado:** lint, typecheck, suites y compilación Vite del frontend aprobados; el empaquetado completo local alcanzó el límite de heap de 10 GB y no terminó. Pendiente validar empaquetados multiplataforma y publicación en CI.
+**Estado:** se corrigió el empaquetador raíz; build completo Windows aprobado localmente con heap de 8 GB. Pendiente repetir CI y validar instaladores multiplataforma antes de publicar.
 **Versión anterior publicada:** 0.4.1.  
 **Rama de trabajo:** `main`, con cambios locales aún sin commit.
 
@@ -17,7 +17,7 @@ Este inventario describe los cambios presentes en el árbol de trabajo revisado.
 
 ## Versionado preparado
 
-Los manifiestos del producto y los metadatos raíz de sus lockfiles se prepararon como `0.5.0`. Las versiones de dependencias no se cambiaron por esta actualización. El README apunta al candidato y advierte que la última descarga disponible sigue siendo 0.4.1. La nota de `docs/releases/v0.5.0.md` está redactada como base de publicación y debe cotejarse contra el diff final.
+Los manifiestos del producto y los metadatos raíz de sus lockfiles se prepararon como `0.5.0`. El ajuste correctivo del empaquetador alinea Vite raíz con Vite 8/Rolldown y sus dependencias; las versiones funcionales del producto no cambiaron. El README apunta al candidato y advierte que la última descarga disponible sigue siendo 0.4.1. La nota de `docs/releases/v0.5.0.md` está redactada como base de publicación y debe cotejarse contra el diff final.
 
 ## Comprobaciones de esta preparación
 
@@ -29,7 +29,7 @@ Los manifiestos del producto y los metadatos raíz de sus lockfiles se prepararo
 - Pruebas de navegador: `npm run test:automations:browser` pasó el flujo de activación, ejecución y aprobación explícita; `npm run test:documents:browser` pasó apertura en frío, Word, PDF, hoja de cálculo, Markdown y reapertura.
 - `npm run test:assets:electron` pasó navegación de archivos empaquetados, logos de proveedores, navegación atrás/recarga, consulta del hilo, anclas y redirección de autenticación.
 - Las comprobaciones locales se ejecutaron con Node **24.19.0**. El workflow de release usa Node 22 y volverá a ejecutar sus puertas de calidad en CI.
-- Los primeros intentos de empaquetado agotaron memoria durante la transformación de iconos. La causa era importar el índice completo de `@hugeicons/core-free-icons`, que expone más de 10.000 módulos aunque la aplicación usa una fracción pequeña. Se cambiaron 566 referencias en 149 archivos para cargar únicamente los módulos usados y se añadieron declaraciones de tipos para las rutas individuales. La compilación local de Vite del frontend pasó con heap máximo de 8 GB y transformó 8.257 módulos. El build combinado de escritorio en Windows superó el límite de 8 GB durante Vite; el workflow y el script quedan en 12 GB para validar en runners con más memoria. El empaquetado completo local no pudo concluir en el equipo de 12 GB disponibles. Se mantienen los dos destinos de macOS en Intel, seleccionando explícitamente `arm64` o `x64` según `TARGET_PLATFORM`. Falta validar los cuatro empaquetados en CI.
+- El release original agotó el heap de 12 GB en Linux y Windows; macOS Apple silicon falló igual. La importación del índice entero de `@hugeicons/core-free-icons` era una fuente de trabajo evitable: se cambiaron 566 referencias en 149 archivos a rutas individuales, con sus declaraciones de tipos. Ese cambio solo no corrigió el OOM. La causa determinante era que el comando de release usaba el Vite 7/Rollup de la raíz, mientras el frontend y su build independiente ya usan Vite 8/Rolldown. Alineé la raíz con Vite 8 y el plugin React compatible, añadí `esbuild` como dependencia explícita (la necesita `vite-plugin-electron-renderer`, aunque no la declara) y mantuve una transformación sin publicar. El build combinado transformó 8.256 módulos, terminó los bundles Electron y empaquetó/validó el instalador Windows completo en local con heap máximo de 8 GB. Se quitó `maxParallelFileOps`, que Vite 8 reportaba como opción inválida. Ambos destinos de macOS siguen usando Intel con la arquitectura explícita. La CI aún debe confirmar Linux, Windows y las dos arquitecturas de macOS con estas dependencias.
 - Todavía no hay instaladores multiplataforma validados ni se probaron integraciones con un bot/cuentas reales.
 
 ## Pendiente antes de aprobar la publicación

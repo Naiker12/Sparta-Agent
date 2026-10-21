@@ -146,9 +146,6 @@ export default defineConfig(() => {
       minify: 'esbuild',
       chunkSizeWarningLimit: 2000,
       rollupOptions: {
-        // The desktop renderer has a large module graph. Bound file loading to
-        // keep peak memory under control on standard GitHub-hosted runners.
-        maxParallelFileOps: 100,
         output: {
           manualChunks(id) {
             if (id.includes('node_modules')) {
