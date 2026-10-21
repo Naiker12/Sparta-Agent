@@ -4,7 +4,7 @@
   <p><strong>Un espacio de trabajo para construir software con agentes, proveedores de IA por API y control humano.</strong></p>
 
   <p>
-    <a href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.5.0"><img src="https://img.shields.io/badge/version-v0.5.0-111827?style=flat-square&logo=github&logoColor=white" alt="Versión publicada" /></a>
+    <a href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.5.1"><img src="https://img.shields.io/badge/version-v0.5.1-111827?style=flat-square&logo=github&logoColor=white" alt="Versión publicada" /></a>
     <img src="https://img.shields.io/badge/desktop-Electron-47848F?style=flat-square&logo=electron&logoColor=white" alt="Electron" />
     <img src="https://img.shields.io/badge/interface-React%2019-111827?style=flat-square&logo=react&logoColor=white" alt="React 19" />
     <img src="https://img.shields.io/badge/license-MIT-111827?style=flat-square" alt="Licencia MIT" />
@@ -32,16 +32,16 @@
 
 ## Empieza aquí
 
-**Ya disponible: Sparta Agent 0.5.0.** La release y los instaladores de las cuatro plataformas están publicados. En el primer arranque, Sparta Agent prepara su motor local en su propio directorio de datos y muestra el progreso; no reutiliza la instalación de otra aplicación.
+**Ya disponible: Sparta Agent 0.5.1.** Esta versión corrige las notas que aparecen en el aviso del actualizador. La release y los instaladores de las cuatro plataformas están publicados. En el primer arranque, Sparta Agent prepara su motor local en su propio directorio de datos y muestra el progreso; no reutiliza la instalación de otra aplicación.
 
-| Plataforma | Descargar 0.5.0 |
+| Plataforma | Descargar 0.5.1 |
 | --- | --- |
-| Windows x64 | [Instalador EXE](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.0/Sparta-Agent-Windows-0.5.0-Setup.exe) |
-| macOS Apple silicon | [Instalador DMG](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.0/Sparta-Agent-Mac-0.5.0-arm64-Installer.dmg) |
-| macOS Intel | [Instalador DMG](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.0/Sparta-Agent-Mac-0.5.0-x64-Installer.dmg) |
-| Linux x64 | [AppImage](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.0/Sparta-Agent-Linux-0.5.0.AppImage) |
+| Windows x64 | [Instalador EXE](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.1/Sparta-Agent-Windows-0.5.1-Setup.exe) |
+| macOS Apple silicon | [Instalador DMG](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.1/Sparta-Agent-Mac-0.5.1-arm64-Installer.dmg) |
+| macOS Intel | [Instalador DMG](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.1/Sparta-Agent-Mac-0.5.1-x64-Installer.dmg) |
+| Linux x64 | [AppImage](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.1/Sparta-Agent-Linux-0.5.1.AppImage) |
 
-**Novedades de 0.5.0:** mejoras en el espacio de trabajo del chat, una visualización de memoria más orgánica, estados de herramientas más claros, mejoras en la experiencia inicial y nuevas capacidades controladas por permisos para Telegram, archivos y voz. Consulta las [notas de Sparta Agent 0.5.0](docs/releases/v0.5.0.md) y el [registro de calificación](docs/audits/2026-10-20-release-candidate-v0.5.0.md).
+**Novedades de 0.5.1:** el aviso de actualización muestra las notas de Sparta Agent de la versión correspondiente, con un enlace correcto a sus releases. Para el alcance completo de la versión anterior, consulta las [notas de Sparta Agent 0.5.0](docs/releases/v0.5.0.md).
 
 Para desarrollo:
 

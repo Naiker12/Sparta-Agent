@@ -1,5 +1,5 @@
 
-"""Release notes for the update popup, taken from the newest GitHub release.
+"""Release notes for the update popup, taken from Sparta Agent's GitHub release.
 
 Only the announcement is shown: the install instructions, the generated "What's
 Changed" and "New Contributors" lists, the "Full Changelog" line and the
@@ -27,8 +27,8 @@ from .update_status import DISABLE_ENV_VAR, RELEASE_NOTES_URL
 # A release entry carries its whole body, about 40 KiB lately, so the endpoint's
 # maximum of 100 would be near 4 MiB, twice the cap below, and the fetch would
 # fail outright. 30 is about 1.2 MiB, and the newest release is at the top.
-RELEASES_API_URL = "https://api.github.com/repos/unslothai/unsloth/releases?per_page=30"
-RELEASES_URL_ENV_VAR = "UNSLOTH_RELEASES_URL"
+RELEASES_API_URL = "https://api.github.com/repos/Naiker12/Sparta-Agent/releases?per_page=30"
+RELEASES_URL_ENV_VAR = "SPARTA_RELEASES_URL"
 RELEASES_TIMEOUT_SECONDS = 3
 RELEASES_MAX_BYTES = 2 * 1024 * 1024
 _RELEASES_CHUNK_BYTES = 64 * 1024
@@ -578,11 +578,10 @@ def _is_platform(title: str) -> bool:
 
 
 def get_release_notes(version: str, refresh: bool = False) -> dict[str, Any]:
-    """Return the newest release's notes for the update popup.
+    """Return notes for the exact Sparta Agent version offered by the updater.
 
-    `version` is echoed back, not used to select a release: the pip popup offers
-    a PyPI version (`2026.8.7`) and releases are tagged with the Studio version
-    (`v0.1.60-beta`), so no tag could match it.
+    The update dialog must never substitute the newest release or another
+    product's notes when its requested version is not present in the response.
 
     `refresh` retries a cached failure, so the UI's retry is not stuck behind
     the failure TTL once connectivity returns.
@@ -597,6 +596,12 @@ def get_release_notes(version: str, refresh: bool = False) -> dict[str, Any]:
     remote = get_latest_release(refresh = refresh)
     if remote.release is None:
         return _notes_response(version = version, error = remote.error)
+
+    # Never show another project's notes, or notes for a different app update.
+    # The list endpoint returns newest-first, so this also handles the brief
+    # window where a newer release exists than the one this client is offered.
+    if not _release_matches_version(remote.release.tag, version):
+        return _notes_response(version = version)
 
     return _notes_response(
         version = version,
@@ -849,6 +854,18 @@ def select_release(payload: Any) -> Release | None:
         if newest is None or candidate.published_at > newest.published_at:
             newest = candidate
     return newest
+
+
+def _release_matches_version(tag: str, version: str) -> bool:
+    """Whether a release tag names exactly the version offered by the app."""
+    if not tag.startswith("v"):
+        return False
+    tag_version = tag[1:]
+    requested_version = version[1:] if version.startswith("v") else version
+    try:
+        return Version(tag_version) == Version(requested_version)
+    except InvalidVersion:
+        return False
 
 
 def _limit_read(response: Any, remaining: float) -> None:
