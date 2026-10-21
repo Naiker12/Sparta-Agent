@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.5.2] - 2026-10-20
+
+### Corregido
+
+- Se proporciona `require` al bundle ESM del proceso principal de Electron para que sus dependencias CommonJS puedan cargar módulos nativos como `fs` al iniciar la aplicación.
+- Se corrige el error de JavaScript que impedía abrir Sparta Agent en Windows.
+
+### Release
+
+- Preparación de instaladores para Windows, macOS Apple silicon/Intel y Linux, con validación automatizada antes de publicar.
+
 ## [0.5.0]
 
 ### Añadido

@@ -105,6 +105,12 @@ export default defineConfig(() => {
               sourcemap: false,
               minify: 'esbuild',
               rollupOptions: {
+                // Rolldown bundles some CommonJS dependencies with a require()
+                // shim. Since Electron loads this entry as ESM, provide the
+                // Node require binding that those bundled modules expect.
+                output: {
+                  banner: "import { createRequire as __spartaCreateRequire } from 'node:module'; const require = __spartaCreateRequire(import.meta.url);",
+                },
                 external: (id) => isNativeOrNodeModule(id) || [...externalNodeModules, ...rendererOnlyPackages].some(e => typeof e === 'string' ? e === id : e instanceof RegExp ? e.test(id) : false),
                 onwarn(warning, warn) {
                   if (warning.code === 'MODULE_LEVEL_DIRECTIVE') return
