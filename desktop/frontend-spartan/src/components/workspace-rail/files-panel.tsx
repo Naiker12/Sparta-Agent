@@ -1,6 +1,7 @@
 import { translate as uiTranslate } from "@/i18n";
 import { useT as useUiT } from "@/i18n";
 import { getProjectNativeFilesystem } from "@/features/chat/hooks/use-chat-projects";
+import { buildSandboxPreview } from "@/components/assistant-ui/sandbox-preview";
 import {
   type GitFileStatus,
   type WorkspaceChangedFile,
@@ -8,6 +9,7 @@ import {
 } from "@/features/chat/stores/use-workspace-store";
 import type { ProjectRecord } from "@/features/chat/types";
 import type { FileScope } from "@/features/chat/hooks/use-thread-file-scope";
+import { useDocumentPreviewStore, type LocalPreviewKind } from "@/features/rag/components/preview-store";
 import { cn } from "@/lib/utils";
 import {
   ChevronLeftIcon,
@@ -19,12 +21,37 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DiffViewer } from "./diff-viewer";
-import { FileContentView } from "./file-content-view";
-import { ImageFileView } from "./image-file-view";
 
 type Node = { name: string; path: string; type: "file" | "directory" };
 const basename = (path: string) =>
   path.split(/[\\/]/).filter(Boolean).pop() ?? path;
+const extensionOf = (path: string) => path.split(".").pop()?.toLowerCase() ?? "";
+const CODE_EXTENSIONS = new Set(["js", "mjs", "cjs", "ts", "tsx", "jsx", "css", "scss", "sass", "less", "json", "xml", "svg", "py", "sql", "sh", "ps1", "yml", "yaml", "toml", "rs", "go", "java", "kt", "c", "h", "cpp", "hpp", "cs", "rb", "php"]);
+function previewKindForFile(path: string): LocalPreviewKind {
+  const ext = extensionOf(path);
+  if (ext === "pdf") return "pdf";
+  if (["doc", "docx", "odt", "rtf"].includes(ext)) return "word";
+  if (["ppt", "pptx"].includes(ext)) return "powerpoint";
+  if (["xls", "xlsx"].includes(ext)) return "excel";
+  if (["csv", "tsv"].includes(ext)) return "csv";
+  if (["png", "jpg", "jpeg", "gif", "webp", "bmp", "avif", "svg"].includes(ext)) return "image";
+  if (["mp3", "wav", "ogg", "m4a", "aac", "flac"].includes(ext)) return "audio";
+  if (["mp4", "webm", "mov", "mkv"].includes(ext)) return "video";
+  if (ext === "html" || ext === "htm") return "html";
+  if (CODE_EXTENSIONS.has(ext)) return "code";
+  return "text";
+}
+function relativeWorkspacePath(root: string, target: string): string {
+  const normalizedRoot = root.replace(/\\/g, "/").replace(/\/+$/, "");
+  const normalizedTarget = target.replace(/\\/g, "/");
+  const prefix = `${normalizedRoot}/`;
+  const caseInsensitive = /^(?:[a-z]:\/|\/\/)/i.test(normalizedRoot);
+  const matches = caseInsensitive
+    ? normalizedTarget.toLowerCase().startsWith(prefix.toLowerCase())
+    : normalizedTarget.startsWith(prefix);
+  if (!matches) throw new Error("File is outside the connected folder.");
+  return normalizedTarget.slice(prefix.length);
+}
 const toStatus = (status: string): GitFileStatus =>
   status.includes("untracked") ||
   status.includes("added") ||
@@ -55,16 +82,22 @@ export function FilesPanel({
   const [nodes, setNodes] = useState<Node[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [preview, setPreview] = useState<{path: string; content: string} | null>(null);
-  const [image, setImage] = useState<{path: string; bytes: Uint8Array; mime: string} | null>(null);
   const generation = useRef(0);
   const readRequest = useRef(0);
+  const changesRequest = useRef(0);
+  const diffRequest = useRef(0);
+  const fileRequest = useRef(0);
+  const [diffLoading, setDiffLoading] = useState(false);
+  const [diffError, setDiffError] = useState<string | null>(null);
   useEffect(() => {
     generation.current++;
     readRequest.current++;
+    changesRequest.current++;
+    diffRequest.current++;
+    fileRequest.current++;
     setNodes([]); setPath(null); setError(null);
-    setPreview(null); setSelectedFilePath(null);
-    setImage(null);
+    setDiffError(null); setDiffLoading(false);
+    setSelectedFilePath(null);
     setChangedFiles([]); setSelectedDiffFile(null);
     return () => { generation.current++; };
   }, [project?.id, project?.connectedFolderPath]);
@@ -117,58 +150,89 @@ export function FilesPanel({
     return () => { cancelled = true; };
   }, [flatView, loadDirectory, project]);
 
-  const refreshChanges = useCallback(async () => {
-    if (!project) {
-      return;
-    }
-    const result = await getProjectNativeFilesystem()?.getGitChanges?.(
-      project.id,
-    );
-    if (!result?.success) {
-      setError(result?.error ?? "No se pudo leer el estado de Git.");
-      return;
-    }
-    const files = result.changes.map((change) => ({
-      path: change.path,
-      filename: basename(change.path),
-      status: toStatus(change.status),
-      additions: 0,
-      deletions: 0,
-    }));
-    setChangedFiles(files);
-    setSelectedDiffFile(files[0] ?? null);
-    setError(null);
-  }, [project, setChangedFiles, setSelectedDiffFile]);
-  useEffect(() => {
-    if (flatView) {
-      void refreshChanges();
-    }
-  }, [flatView, refreshChanges]);
-
   const selectDiff = useCallback(
     async (file: WorkspaceChangedFile) => {
       if (!project) {
         return;
       }
-      const result = await getProjectNativeFilesystem()?.getGitDiff?.(
-        project.id,
-        file.path,
-      );
-      const diff = result?.success ? (result.diff ?? "") : "";
-      const additions = diff
-        .split("\n")
-        .filter(
-          (line) => line.startsWith("+") && !line.startsWith("+++"),
-        ).length;
-      const deletions = diff
-        .split("\n")
-        .filter(
-          (line) => line.startsWith("-") && !line.startsWith("---"),
-        ).length;
-      setSelectedDiffFile({ ...file, diff, additions, deletions });
+      const current = generation.current;
+      const request = ++diffRequest.current;
+      setSelectedDiffFile({ ...file, diff: "", additions: 0, deletions: 0 });
+      setDiffLoading(true);
+      setDiffError(null);
+      try {
+        const result = await getProjectNativeFilesystem()?.getGitDiff?.(
+          project.id,
+          file.path,
+        );
+        if (current !== generation.current || request !== diffRequest.current) return;
+        if (!result?.success) {
+          setDiffError(result?.error ?? "No se pudo cargar el diff de este archivo.");
+          return;
+        }
+        const diff = result.diff ?? "";
+        const additions = diff
+          .split("\n")
+          .filter((line) => line.startsWith("+") && !line.startsWith("+++"))
+          .length;
+        const deletions = diff
+          .split("\n")
+          .filter((line) => line.startsWith("-") && !line.startsWith("---"))
+          .length;
+        setSelectedDiffFile({ ...file, diff, additions, deletions });
+      } catch (reason) {
+        if (current === generation.current && request === diffRequest.current) {
+          setDiffError(reason instanceof Error ? reason.message : "No se pudo cargar el diff de este archivo.");
+        }
+      } finally {
+        if (current === generation.current && request === diffRequest.current) setDiffLoading(false);
+      }
     },
     [project, setSelectedDiffFile],
   );
+
+  const refreshChanges = useCallback(async () => {
+    if (!project) {
+      return;
+    }
+    const current = generation.current;
+    const request = ++changesRequest.current;
+    try {
+      const result = await getProjectNativeFilesystem()?.getGitChanges?.(
+        project.id,
+      );
+      if (current !== generation.current || request !== changesRequest.current) return;
+      if (!result?.success) {
+        setError(result?.error ?? "No se pudo leer el estado de Git.");
+        return;
+      }
+      const files = result.changes.map((change) => ({
+        path: change.path,
+        filename: basename(change.path),
+        status: toStatus(change.status),
+        additions: 0,
+        deletions: 0,
+      }));
+      setChangedFiles(files);
+      setSelectedDiffFile(files[0] ?? null);
+      setDiffError(null);
+      setError(null);
+      if (files[0]) void selectDiff(files[0]);
+      else {
+        diffRequest.current++;
+        setDiffLoading(false);
+      }
+    } catch (reason) {
+      if (current === generation.current && request === changesRequest.current) {
+        setError(reason instanceof Error ? reason.message : "No se pudo leer el estado de Git.");
+      }
+    }
+  }, [project, selectDiff, setChangedFiles, setSelectedDiffFile]);
+  useEffect(() => {
+    if (flatView) {
+      void refreshChanges();
+    }
+  }, [flatView, refreshChanges]);
 
   const visibleNodes = useMemo(
     () =>
@@ -180,25 +244,58 @@ export function FilesPanel({
   async function openFile(filePath: string) {
     if (!project) return;
     const current = generation.current;
-    const ext = filePath.split(".").pop()?.toLowerCase() ?? "";
-    const mime = ({png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",gif:"image/gif",webp:"image/webp",bmp:"image/bmp",avif:"image/avif"} as Record<string,string>)[ext];
-    if (mime) {
+    const request = ++fileRequest.current;
+    const isCurrent = () => current === generation.current && request === fileRequest.current;
+    setError(null);
+    const ext = extensionOf(filePath);
+    const kind = previewKindForFile(filePath);
+    const mime = ({png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",gif:"image/gif",webp:"image/webp",bmp:"image/bmp",avif:"image/avif",svg:"image/svg+xml"} as Record<string,string>)[ext];
+    const mediaMime = ({mp3:"audio/mpeg",wav:"audio/wav",ogg:"audio/ogg",m4a:"audio/mp4",aac:"audio/aac",flac:"audio/flac",mp4:"video/mp4",webm:"video/webm",mov:"video/quicktime",mkv:"video/x-matroska"} as Record<string,string>)[ext];
+    const source = { projectId: project.id, path: filePath };
+    if (mime || ["pdf", "doc", "docx", "odt", "rtf", "ppt", "pptx", "xls", "xlsx", "csv", "tsv", "mp3", "wav", "ogg", "m4a", "aac", "flac", "mp4", "webm", "mov", "mkv"].includes(ext)) {
       try {
         const result = await getProjectNativeFilesystem()?.readPreview?.(project.id, filePath);
-        if (current !== generation.current) return;
-        if (!result?.success || !result.bytes) throw new Error(result?.error ?? "No se pudo cargar la imagen.");
-        setImage({path: filePath, bytes: new Uint8Array(result.bytes), mime});
-      } catch (reason) { if (current === generation.current) setError(reason instanceof Error ? reason.message : "Error de imagen"); }
+        if (!isCurrent()) return;
+        if (!result?.success || !result.bytes) throw new Error(result?.error ?? "No se pudo preparar la vista previa.");
+        const blob = new Blob([new Uint8Array(result.bytes).buffer], { type: mime ?? mediaMime ?? "application/octet-stream" });
+        if (!isCurrent()) return;
+        setSelectedFilePath(filePath);
+        useDocumentPreviewStore.getState().openLocalPreview({ blob, filename: filePath, kind: mime ? "image" : kind, workspaceSource: source });
+      } catch (reason) { if (isCurrent()) setError(reason instanceof Error ? reason.message : "No se pudo preparar la vista previa."); }
       return;
     }
-    if (/\.(zip|exe|dll|7z|rar|woff2?|ttf|mp4|mp3|bin)$/i.test(filePath)) { setError(uiTranslate("ui.this_binary_file_has_no_text_view")); return; }
+    if (/\.(zip|exe|dll|7z|rar|woff2?|ttf|bin)$/i.test(filePath)) { setError(uiTranslate("ui.this_binary_file_has_no_text_view")); return; }
     let result;
     try { result = await getProjectNativeFilesystem()?.readFile?.(project.id, filePath); }
-    catch (reason) { if (current === generation.current) setError(reason instanceof Error ? reason.message : "No se pudo abrir el archivo."); return; }
-    if (current !== generation.current) return;
+    catch (reason) { if (isCurrent()) setError(reason instanceof Error ? reason.message : "No se pudo abrir el archivo."); return; }
+    if (!isCurrent()) return;
     if (!result?.success) { setError(result?.error ?? "No se pudo abrir el archivo."); return; }
     setSelectedFilePath(filePath);
-    setPreview({path: filePath, content: (result.content ?? "").slice(0, 100000)});
+    const content = (result.content ?? "").slice(0, 100000);
+    let previewCode: string | undefined;
+    if (kind === "html") {
+      try {
+        const relativePath = relativeWorkspacePath(project.connectedFolderPath!, filePath);
+        const root = project.connectedFolderPath!.replace(/[\\/]+$/, "");
+        const separator = project.connectedFolderPath!.includes("\\") ? "\\" : "/";
+        previewCode = await buildSandboxPreview(relativePath, async (relative) => {
+          const absolutePath = `${root}${separator}${relative.split("/").join(separator)}`;
+          const resource = await getProjectNativeFilesystem()?.readPreview?.(project.id, absolutePath);
+          if (!resource?.success || !resource.bytes) throw new Error(resource?.error ?? "Could not read a local preview resource.");
+          return new Blob([new Uint8Array(resource.bytes).buffer], { type: "application/octet-stream" });
+        });
+      } catch {
+        // Unsupported modules or unavailable local resources stay as source code.
+      }
+      if (!isCurrent()) return;
+    }
+    useDocumentPreviewStore.getState().openLocalPreview({
+      blob: new Blob([previewCode ?? content], { type: previewCode ? "text/html" : "text/plain" }),
+      filename: filePath,
+      kind: kind === "html" && !previewCode ? "code" : kind,
+      ...(previewCode ? { previewCode } : {}),
+      workspaceSource: source,
+    });
   }
   if (!project?.connectedFolderPath) {
     return (
@@ -206,9 +303,6 @@ export function FilesPanel({
         {uiT("ui.connect_a_project_folder_to_view_its_actual_files")}</div>
     );
   }
-
-  if (image) return <ImageFileView key={image.path} {...image} onClose={() => setImage(null)} />;
-  if (preview) return <FileContentView key={preview.path} path={preview.path} content={preview.content} onClose={() => setPreview(null)} />;
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-background">
@@ -255,6 +349,9 @@ export function FilesPanel({
           {error}
         </p>
       )}
+      {flatView && diffError && (
+        <p role="alert" className="border-b p-3 text-xs text-destructive">{diffError}</p>
+      )}
       <div className="flex-1 overflow-y-auto p-3">
         {loading && <p role="status" className="p-3 text-xs text-muted-foreground">{uiT("ui.reading_files")}</p>}
         {!loading && !error && !flatView && nodes.length === 0 && <p className="p-3 text-xs text-muted-foreground">{uiT("ui.the_folder_has_no_visible_files")}</p>}
@@ -287,7 +384,8 @@ export function FilesPanel({
                 </button>
               ))
             )}
-            {selectedDiffFile && <DiffViewer file={selectedDiffFile} />}
+            {diffLoading && <p role="status" className="p-3 text-xs text-muted-foreground">Cargando diff…</p>}
+            {selectedDiffFile && !diffLoading && !diffError && <DiffViewer file={selectedDiffFile} />}
           </div>
         ) : (
           <>

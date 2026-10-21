@@ -1590,7 +1590,7 @@ export function ChatPage({
           <NativeModelDropOverlay state={nativeModelDropState} />
           {/* Fade under the top bar so messages dissolve as they scroll
             beneath it, instead of a hard cut. */}
-          {view.mode !== "compare" && (
+          {view.mode !== "compare" && !(selectedArtifact && artifactSurface === "panel") && (
             <div
               aria-hidden={true}
               className="chat-header-fade pointer-events-none absolute left-0 right-[10px] top-[calc(var(--studio-content-top-inset,0px)+var(--studio-chat-header-height,48px)+var(--studio-chat-notice-height,0px))] z-20 h-6 bg-gradient-to-b from-background to-transparent"
@@ -1609,6 +1609,7 @@ export function ChatPage({
             }
             className={cn(
               "pointer-events-none absolute top-[var(--studio-content-top-inset,0px)] left-0 z-40 flex h-[var(--studio-chat-header-height,48px)] shrink-0 items-start bg-background pt-[var(--studio-chat-header-padding-top,11px)] pr-3 md:pr-4",
+              selectedArtifact && artifactSurface === "panel" && view.mode === "single" && "hidden",
               isMobile || view.mode !== "single"
                 ? "right-0"
                 : workspacePanelOpen
@@ -1727,8 +1728,8 @@ export function ChatPage({
               ) : null}
             </div>
             <div className="pointer-events-auto ml-auto flex items-center gap-1">
-              {view.mode === "single" && <Button data-tour="chat-new-panel" type="button" variant="ghost" size="icon-sm" disabled={incognito} aria-label={t("chat.panels.new")} title={t("chat.panels.new")} onClick={() => window.dispatchEvent(new Event("spartan:new-chat-pane"))}><PlusIcon /></Button>}
-              {view.mode === "single" && (
+              {view.mode === "single" && !(selectedArtifact && artifactSurface === "panel") && <Button data-tour="chat-new-panel" type="button" variant="ghost" size="icon-sm" disabled={incognito} aria-label={t("chat.panels.new")} title={t("chat.panels.new")} onClick={() => window.dispatchEvent(new Event("spartan:new-chat-pane"))}><PlusIcon /></Button>}
+              {view.mode === "single" && !(selectedArtifact && artifactSurface === "panel") && (
                 <Tooltip>
                   <TooltipPrimitive.Trigger asChild={true}>
                     <Button

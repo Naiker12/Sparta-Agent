@@ -45,9 +45,13 @@ Estas guías explican el comportamiento de la versión publicada. Comprueba las 
 
 La versión 0.5.2 corrige un error de JavaScript en el proceso principal de Electron que impedía iniciar la aplicación en Windows. El bundle ESM proporciona el soporte `require` que necesitan las dependencias CommonJS para cargar módulos de Node.js como `fs`.
 
-## Corrección preparada para 0.5.3
+## Corrección incorporada en 0.5.3
 
-La siguiente versión corrige el arranque del backend empaquetado cuando la edición API-only omite el router RAG y su motor. Esta preparación permite continuar la instalación; no incluye las funciones RAG que dependen de ese motor.
+La versión 0.5.3 corrige el arranque del backend empaquetado cuando la edición API-only omite el router RAG y su motor. No incluye las funciones RAG que dependen de ese motor. Consulta las [notas de 0.5.3](https://github.com/Naiker12/Sparta-Agent/blob/main/docs/releases/v0.5.3.md).
+
+## Correcciones preparadas para 0.5.4
+
+La versión 0.5.4 prepara arreglos para generar fuentes de código sin ejecutar Python, previsualizar HTML de forma aislada, abrir archivos del workspace y evitar que el lienzo y el navegador se sustituyan entre sí. La publicación está pendiente de las comprobaciones de release; consulta sus [notas](https://github.com/Naiker12/Sparta-Agent/blob/main/docs/releases/v0.5.4.md).
 
 ## Qué depende de la configuración
 

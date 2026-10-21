@@ -2974,11 +2974,11 @@ def _build_tool_action_nudge(
         tool_tip_parts.append(_TOOL_ARTIFACT_TIP)
     if has_documents:
         tool_tip_parts.append(
-            "For PDF, DOCX, XLSX, CSV, TXT and Markdown documents, prepare the "
+            "For HTML, CSS, JS and other supported source files, or PDF, DOCX, XLSX, CSV, TXT and Markdown documents, prepare the "
             "complete content and use generate_document. Its renderer is already "
             "provided by Sparta: do not probe or install reportlab, fpdf or "
             "other Python libraries for these standard formats. Use Python only "
-            "when computation or custom processing is actually needed. Never "
+            "when computation or custom processing is actually needed. Source files are saved as exact content, never executed, without requiring the Code toggle. For source files in an authorized connected folder use write_file; create_file only creates empty files/directories. A path pasted in a message alone does not connect that folder. Never claim a chat download was saved to that folder. Never "
             "publish an empty placeholder or invent sandbox download links; "
             "the application shows the download card after the tool succeeds."
         )

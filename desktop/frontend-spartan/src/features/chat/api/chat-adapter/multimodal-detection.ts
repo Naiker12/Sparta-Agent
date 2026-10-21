@@ -5,10 +5,10 @@ export type RunMessages = Parameters<ChatModelAdapter["run"]>[0]["messages"];
 export type RunMessage = RunMessages[number];
 
 export const CANVAS_TOOL_INSTRUCTION =
-  "When the user asks for an HTML, CSS, or JavaScript canvas, call render_html once with one complete self-contained HTML document in the code argument. Embed CSS and JavaScript inside the document. After render_html succeeds, do not call it again in the same response unless the user asks for changes. Future user requests for new canvases may call render_html once.";
+  "When the user asks for an HTML, CSS, or JavaScript canvas preview, call render_html once with one complete self-contained HTML document in the code argument. Embed CSS and JavaScript inside the document. A canvas is a preview, not a saved file: if the user requests a file, use the available file-writing tool instead. After render_html succeeds, do not call it again in the same response unless the user asks for changes. Future user requests for new canvases may call render_html once.";
 
 export const CANVAS_FALLBACK_INSTRUCTION =
-  "When the user asks for an HTML, CSS, or JavaScript canvas, return one complete self-contained fenced html code block. Embed CSS and JavaScript inside the document. Do not emit tool-call syntax.";
+  "For an HTML, CSS, or JavaScript canvas preview without a canvas tool, return one complete self-contained fenced html code block with embedded CSS and JavaScript. If the user requests a saved file and a file-writing tool is available, use that tool instead; a fenced block is not a saved file. Never simulate tool-call syntax in prose.";
 
 export function messagesContainImage(messages: RunMessages): boolean {
   const isImage = (part: { type: string }) =>

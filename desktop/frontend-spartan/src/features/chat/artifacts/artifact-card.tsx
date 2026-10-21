@@ -118,7 +118,7 @@ export function ArtifactCard({
         type="button"
         className={cn(
           CARD_BASE,
-          showCodeButton ? "min-w-0 flex-1" : "w-full max-w-md",
+          showCodeButton ? "min-w-0 flex-1" : "min-w-0 w-full",
           isStreaming &&
             "border-border/80 bg-muted/20 dark:border-border/70 dark:bg-muted/15",
         )}
@@ -159,12 +159,12 @@ export function ArtifactCard({
 
   if (!showCodeButton) {
     return (
-      <div className={cn("my-2", className)}>{renderButton("preview")}</div>
+      <div data-chat-artifact-card className={cn("my-2 min-w-0 w-full", className)}>{renderButton("preview")}</div>
     );
   }
 
   return (
-    <div className={cn("my-2 flex w-full max-w-xl gap-2", className)}>
+    <div data-chat-artifact-card className={cn("my-2 flex min-w-0 w-full gap-2", className)}>
       {renderButton("preview")}
       {renderButton("source")}
     </div>

@@ -27,7 +27,9 @@ import { Suspense, lazy } from "react";
 import { PreviewWorkspace } from "./preview-workspace";
 import { PreviewToolbar, PreviewToolbarTarget } from "./preview-toolbar";
 import { LocalSpreadsheetPreview } from "./spreadsheet-preview";
+import { ArtifactHtmlFrame } from "@/features/chat/artifacts/html-frame";
 import { OfficeComponentBanner } from "./office-component-banner";
+import { HighlightedCode } from "@/components/assistant-ui/tool-code-cell";
 const PdfPreview = lazy(() =>
   import("./pdf-preview").then((m) => ({ default: m.PdfPreview })),
 );
@@ -40,11 +42,11 @@ const RichPreview = lazy(() =>
   })),
 );
 import { useWorkspaceStore } from "@/features/chat/stores/use-workspace-store";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { getDocumentFileUrl, getPreviewTarget } from "../api/rag-api";
 import type { PreviewTarget } from "../types/rag";
 import { type LocalPreview, useDocumentPreviewStore } from "./preview-store";
+const TurnChangesPreviewPanel = lazy(() => import("@/components/assistant-ui/turn-changes-summary").then(m => ({ default: m.TurnChangesPreviewPanel })));
 const GitReviewPanel = lazy(() => import("@/components/workspace-rail/git-review-panel").then(m => ({ default: m.GitReviewPanel })));
 
 function LocalTextPreview({
@@ -67,36 +69,45 @@ function LocalTextPreview({
     };
   }, [blob, t]);
   const markdown = /\.(md|markdown)$/i.test(filename);
+  const extension = filename.split(".").pop()?.toLowerCase() ?? "text";
+  const languages: Record<string, string> = {
+    py: "python", ts: "typescript", tsx: "tsx", js: "javascript",
+    jsx: "jsx", json: "json", rs: "rust", sh: "bash", yml: "yaml",
+    yaml: "yaml", html: "html", css: "css", scss: "scss", sass: "sass",
+    less: "less", xml: "xml", sql: "sql", toml: "toml", md: "markdown",
+  };
+  if (kind === "code" && text !== null && blob.size <= 256 * 1024) {
+    return (
+      <div className="flex h-full flex-col">
+        <PreviewToolbar>
+          <span className="px-2 text-xs text-muted-foreground">{languages[extension] ?? extension} · {text.split("\n").length} {t("chat.preview.lines")}</span>
+        </PreviewToolbar>
+        <div className="min-h-0 flex-1 overflow-hidden bg-muted/10 px-2">
+          <div className="file-code-source h-full">
+            <HighlightedCode
+              code={text}
+              language={languages[extension] ?? "text"}
+              expanded
+              lineNumbers
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (
     !source &&
     text !== null &&
-    (markdown || kind === "code") &&
+    markdown &&
     blob.size <= 256 * 1024
   ) {
-    const extension = filename.split(".").pop()?.toLowerCase() ?? "text";
-    const languages: Record<string, string> = {
-      py: "python",
-      ts: "typescript",
-      tsx: "tsx",
-      js: "javascript",
-      jsx: "jsx",
-      json: "json",
-      rs: "rust",
-      sh: "bash",
-      yml: "yaml",
-      yaml: "yaml",
-      html: "html",
-      css: "css",
-    };
     const fence = "`".repeat(
       Math.max(
         3,
         ...Array.from(text.matchAll(/`+/g), (match) => match[0].length + 1),
       ),
     );
-    const content = markdown
-      ? text
-      : `${fence}${languages[extension] ?? "text"}\n${text}\n${fence}`;
+    const content = markdown ? text : `${fence}${languages[extension] ?? "text"}\n${text}\n${fence}`;
     return (
       <div className="flex h-full flex-col">
         <PreviewToolbar>
@@ -224,6 +235,20 @@ function LocalPreviewContent({ preview }: { preview: LocalPreview }) {
     );
   }
   switch (preview.kind) {
+    case "html":
+      return preview.previewCode ? (
+        <div className="h-full overflow-auto bg-background">
+          <ArtifactHtmlFrame
+            code={preview.previewCode}
+            title={preview.filename}
+            fill
+          />
+        </div>
+      ) : (
+        <div className="flex h-full items-center justify-center p-6 text-sm text-muted-foreground">
+          {t("chat.preview.unavailable")}
+        </div>
+      );
     case "image":
       return url ? (
         <div className="flex h-full items-center justify-center overflow-auto p-4">
@@ -317,11 +342,11 @@ class LocalPreviewErrorBoundary extends Component<
   }
 }
 
-// Resizable preview width (px). Default matches the prior fixed 44rem; drag the
-// left edge to widen. Persisted so it survives reopen.
-const PREVIEW_WIDTH_KEY = "unsloth-rag-preview-width";
+// Resizable preview width (px). Start narrower so the panel leaves room for
+// the chat; drag the left edge to widen. Persisted so it survives reopen.
+const PREVIEW_WIDTH_KEY = "unsloth-rag-preview-width-v2";
 const MIN_PREVIEW_WIDTH = 384;
-const DEFAULT_PREVIEW_WIDTH = 704;
+const DEFAULT_PREVIEW_WIDTH = 560;
 
 function getAvailableContentWidth(): number {
   if (typeof window === "undefined") {
@@ -394,7 +419,6 @@ function persistPreviewWidth(w: number) {
 
 export function DocumentPreviewSheet() {
   const t = useT();
-  const isMobile = useIsMobile();
   const [toolbarTarget, setToolbarTarget] = useState<HTMLDivElement | null>(null);
   const {
     open,
@@ -405,6 +429,7 @@ export function DocumentPreviewSheet() {
     page,
     localPreview,
     repositoryPreview,
+    turnChangesPreview,
     closePreview,
     tabs,
     activeTabId,
@@ -418,9 +443,12 @@ export function DocumentPreviewSheet() {
     }
   }, [open]);
 
-  const [wide, setWide] = useState(() => window.innerWidth >= 1100);
+  // Dock beside the chat only when a 560px preview and a usable chat column
+  // can fit together. On smaller windows the sheet becomes a near-fullscreen
+  // modal instead of squeezing the conversation into a narrow strip.
+  const [wide, setWide] = useState(() => window.innerWidth >= 1360);
   useEffect(() => {
-    const query = window.matchMedia("(min-width: 1100px)");
+    const query = window.matchMedia("(min-width: 1360px)");
     const update = () => setWide(query.matches);
     query.addEventListener("change", update);
     return () => query.removeEventListener("change", update);
@@ -554,9 +582,9 @@ export function DocumentPreviewSheet() {
           }
         }}
         style={{
-          width: clampPreviewWidth(previewWidth),
-          maxWidth: isMobile ? "95vw" : `${maxPreviewWidth()}px`,
-          right: isMobile ? 0 : "3rem",
+          width: wide ? clampPreviewWidth(previewWidth) : "95vw",
+          maxWidth: wide ? `${maxPreviewWidth()}px` : "95vw",
+          right: wide ? "3rem" : 0,
         }}
         className={cn(
           "flex w-full flex-col gap-0 p-0 border-t border-r border-border overflow-hidden bg-background",
@@ -593,7 +621,8 @@ export function DocumentPreviewSheet() {
             persistPreviewWidth(DEFAULT_PREVIEW_WIDTH);
           }}
           className={cn(
-            "absolute inset-y-0 left-0 z-20 w-2 cursor-col-resize transition-colors hover:bg-primary/25",
+            "document-preview-resize-handle absolute inset-y-0 left-0 z-20 w-2 cursor-col-resize",
+            !wide && "hidden",
             resizing && "bg-primary/40",
           )}
         />
@@ -672,7 +701,7 @@ export function DocumentPreviewSheet() {
           </div>
           <SheetCloseButton className="static shrink-0" />
         </SheetHeader>
-        {!repositoryPreview && <PreviewWorkspace />}
+        {!repositoryPreview && !turnChangesPreview && <PreviewWorkspace />}
 
         <div id="document-preview-content" role="tabpanel" aria-labelledby={activeTabId ? `preview-tab-${activeTabId}` : undefined} className="min-h-0 flex-1">
           <Suspense
@@ -682,7 +711,9 @@ export function DocumentPreviewSheet() {
               </p>
             }
           >
-            {repositoryPreview ? (
+            {turnChangesPreview ? (
+              <TurnChangesPreviewPanel key={activeTabId} preview={turnChangesPreview} />
+            ) : repositoryPreview ? (
               <GitReviewPanel key={activeTabId} preview={repositoryPreview} />
             ) : loading ? (
               <div className="flex items-center gap-2 p-6 text-sm text-muted-foreground">

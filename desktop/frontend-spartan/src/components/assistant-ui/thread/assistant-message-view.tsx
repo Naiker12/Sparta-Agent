@@ -10,6 +10,7 @@ import { UserMessageAttachments } from "@/components/assistant-ui/attachment";
 import { UserFormSubmission } from "@/components/assistant-ui/user-form-submission";
 import { MarkdownText } from "@/components/assistant-ui/markdown-text";
 import { MessageHtmlArtifacts } from "@/components/assistant-ui/message-html-artifacts";
+import { MessageTurnChangesSummary } from "@/components/assistant-ui/turn-changes-summary";
 import { MessageResponseModelBadge } from "@/components/assistant-ui/message-response-details-sheet";
 import { RagSourcesGroup } from "@/components/assistant-ui/rag-sources";
 import { Reasoning, ReasoningGroup } from "@/components/assistant-ui/reasoning";
@@ -23,6 +24,7 @@ import { ToolFallback } from "@/components/assistant-ui/tool-fallback";
 import { ToolGroup } from "@/components/assistant-ui/tool-group";
 import { CodeExecutionToolUI } from "@/components/assistant-ui/tool-ui-code-execution";
 import { EditFileToolUI } from "@/components/assistant-ui/tool-ui-edit-file";
+import { WorkspaceFileToolUI } from "@/components/assistant-ui/tool-ui-workspace-file";
 import { ImageGenerationToolUI } from "@/components/assistant-ui/tool-ui-image-generation";
 import { KnowledgeBaseToolUI } from "@/components/assistant-ui/tool-ui-knowledge-base";
 import { DocumentToolUI } from "@/components/assistant-ui/tool-ui-document";
@@ -267,6 +269,7 @@ export const KnowledgeBaseToolUIConfirmable =
 export const PythonToolUIConfirmable = withToolConfirmation(PythonToolUI);
 export const TerminalToolUIConfirmable = withToolConfirmation(TerminalToolUI);
 export const EditFileToolUIConfirmable = withToolConfirmation(EditFileToolUI);
+export const WorkspaceFileToolUIConfirmable = withToolConfirmation(WorkspaceFileToolUI);
 export const CodeExecutionToolUIConfirmable =
   withToolConfirmation(CodeExecutionToolUI);
 export const ImageGenerationToolUIConfirmable = withToolConfirmation(
@@ -292,6 +295,10 @@ export const ASSISTANT_PART_COMPONENTS = {
       python: PythonToolUIConfirmable,
       terminal: TerminalToolUIConfirmable,
       edit_file: EditFileToolUIConfirmable,
+      write_file: WorkspaceFileToolUIConfirmable,
+      create_file: WorkspaceFileToolUIConfirmable,
+      delete_path: WorkspaceFileToolUIConfirmable,
+      rename_path: WorkspaceFileToolUIConfirmable,
       code_execution: CodeExecutionToolUIConfirmable,
       image_generation: ImageGenerationToolUIConfirmable,
       render_html: RenderHtmlToolUIConfirmable,
@@ -402,7 +409,7 @@ export const AssistantMessage: FC = () => {
 
   return (
     <MessagePrimitive.Root
-      className="group/assistant-message aui-assistant-message-root relative mx-auto min-w-0 w-full max-w-(--thread-content-max-width) pt-0.5 pb-4 text-ui-15p5 [font-weight:410] tracking-[0.01em] dark:tracking-[0.02em]"
+      className="group/assistant-message aui-assistant-message-root relative mx-auto min-w-0 w-full max-w-(--thread-content-max-width) has-[[data-chat-artifact-card]]:max-w-[48rem] pt-0.5 pb-4 text-ui-15p5 [font-weight:410] tracking-[0.01em] dark:tracking-[0.02em]"
       data-role="assistant"
       data-chat-message-id={messageId}
       tabIndex={0}
@@ -460,6 +467,7 @@ export const AssistantMessage: FC = () => {
                 <SourcesGroup />
                 <RagSourcesGroup />
                 <MessageHtmlArtifacts />
+                <MessageTurnChangesSummary />
                 <ContinueMessageBar />
               </>
             )}

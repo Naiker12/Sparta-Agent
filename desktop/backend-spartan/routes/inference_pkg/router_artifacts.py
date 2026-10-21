@@ -120,6 +120,7 @@ _ARTIFACT_PREVIEW_FRAME_HTML = """<!doctype html>
           if (!data || data.type !== "unsloth:artifact-html" || typeof data.html !== "string") return;
           render(data.html);
         });
+        parent.postMessage({ type: "unsloth:artifact-ready", v: loadVersion }, "*");
       })();
     </script>
   </body>

@@ -20,7 +20,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { WebUpdateBanner } from "@/components/web/update-banner";
 import { fetchDeviceType } from "@/config/env";
 import { getTauriAuthFailure, tauriAutoAuth } from "@/features/auth";
-import { useWorkspaceRelay } from "@/features/chat/hooks/use-workspace-relay";
 import { DeepLinkHandler } from "@/features/deep-links";
 import { NativeIntentDrain } from "@/features/native-intents/native-intent-drain";
 import {
@@ -1017,7 +1016,6 @@ function AppearanceCustomizationEffect() {
 }
 
 function WorkspaceRelayEffect() {
-  useWorkspaceRelay();
   return null;
 }
 

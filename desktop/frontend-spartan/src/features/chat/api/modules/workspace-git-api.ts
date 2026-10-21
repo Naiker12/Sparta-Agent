@@ -10,6 +10,7 @@ export interface GitReviewScope {
 }
 export interface GitReviewFile {
   path: string;
+  status: "added" | "modified" | "deleted";
   additions: number;
   deletions: number;
   binary: boolean;

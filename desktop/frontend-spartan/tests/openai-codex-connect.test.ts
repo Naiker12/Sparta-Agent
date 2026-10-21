@@ -1,6 +1,8 @@
 
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createServer, type ViteDevServer } from "vite";
@@ -31,8 +33,15 @@ let OpenAICodexConnect: ConnectComponent;
 
 before(async () => {
   vite = await createServer({
+    configFile: false,
     appType: "custom",
     server: { middlewareMode: true },
+    resolve: {
+      alias: {
+        "@": path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../src"),
+      },
+    },
+    optimizeDeps: { noDiscovery: true },
   });
   const loaded = await vite.ssrLoadModule(
     "/src/features/chat/openai-codex-connect.tsx",

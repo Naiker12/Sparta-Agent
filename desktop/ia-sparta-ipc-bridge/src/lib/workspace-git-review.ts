@@ -6,6 +6,7 @@ import { isWithinRoot } from "../tools/path-guard";
 
 const exec = promisify(execFile);
 export type ReviewMode = "working" | "staged" | "branch";
+type ChangeStatus = "added" | "modified" | "deleted";
 const options = { windowsHide: true, timeout: 8_000, maxBuffer: 2 * 1024 * 1024 };
 async function git(root: string, args: string[]) {
   return (await exec("git", ["-C", root, "--no-optional-locks", ...args], options)).stdout;
@@ -29,10 +30,21 @@ export async function readGitReview(root: string, mode: ReviewMode) {
   const args = await base(root, mode);
   const initial = await initialWorkingTree(root, mode);
   const raw = await git(root, ["diff", "--relative", "--no-ext-diff", "--no-renames", "--numstat", "-z", ...args, "--"]);
+  const statusRaw = initial ? "" : await git(root, ["diff", "--relative", "--no-ext-diff", "--no-renames", "--name-status", "-z", ...args, "--"]);
+  const statusFields = statusRaw.split("\0").filter(Boolean);
+  const statuses = new Map<string, ChangeStatus>();
+  for (let index = 0; index < statusFields.length;) {
+    const field = statusFields[index++];
+    const tab = field.indexOf("\t");
+    const status = tab < 0 ? field : field.slice(0, tab);
+    const filename = tab < 0 ? statusFields[index++] : field.slice(tab + 1);
+    if (!filename) continue;
+    statuses.set(filename, status[0] === "A" ? "added" : status[0] === "D" ? "deleted" : "modified");
+  }
   const files = raw.split("\0").filter(Boolean).map(entry => {
     const match = /^(\d+|-)\t(\d+|-)\t([\s\S]+)$/.exec(entry);
     if (!match) throw new Error("Invalid Git file statistics");
-    return { path: match[3], additions: Number(match[1]) || 0, deletions: Number(match[2]) || 0, binary: match[1] === "-" };
+    return { path: match[3], status: statuses.get(match[3]) ?? "modified", additions: Number(match[1]) || 0, deletions: Number(match[2]) || 0, binary: match[1] === "-" };
   });
   if (mode === "working") {
     if (initial) files.length = 0;
@@ -49,7 +61,7 @@ export async function readGitReview(root: string, mode: ReviewMode) {
           }
         } catch { /* A file can disappear during the snapshot. */ }
       }
-      files.push({ path: filename, additions, deletions: 0, binary });
+      files.push({ path: filename, status: "added", additions, deletions: 0, binary });
     }
   }
   const history = await git(root, ["log", "-12", "--format=%h%x09%s%x09%an%x09%aI"]).catch(() => "");

@@ -1,3 +1,4 @@
+import { beginTurnChanges, finishTurnChanges, readTurnChangeRefs, TurnChangesError, type TurnChangeRef } from "../modules/turn-changes-api";
 import { translate as uiTranslate } from "@/i18n";
 import { useChatPreferencesStore } from "../../stores/chat-preferences-store";
 import { responsePresentationInstruction } from "../../response-ui/instructions";
@@ -1165,6 +1166,10 @@ export function createOpenAIStreamAdapter(
           ? `${disabledToolGuard} HTML, CSS, or JavaScript canvas requests can still be answered by following the canvas fallback instruction.`
           : disabledToolGuard;
       addSystemInstruction(outboundMessages, effectiveDisabledToolGuard);
+      if (documentGenerationEnabledForThisTurn) {
+        addSystemInstruction(outboundMessages,
+          "Saving source text is not code execution. For requested HTML, CSS, JavaScript or other supported source files, use generate_document with the complete exact source in content, even when Code is off. It writes to the active file storage, not an arbitrary folder mentioned in text. For source files in a connected workspace use write_file and its actual permissions; create_file only creates empty files/directories. Never claim a file was saved to a folder without a successful write there. If a requested folder is not connected, explain how to connect it using the folder control rather than claiming the application cannot create files. For self-contained HTML previews use ordinary JavaScript without eval, new Function or external runtime dependencies. Canvas instructions apply to previews, not as a replacement for saving a requested file.");
+      }
       addSystemInstruction(outboundMessages, artifactInstruction);
       addSystemInstruction(outboundMessages, responsePresentationInstruction(
         useChatPreferencesStore.getState().visualResponses && !continuation && !geminiImageModeForThisTurn,
@@ -1440,7 +1445,21 @@ export function createOpenAIStreamAdapter(
       // Provisional reason on every streamed yield: an abort skips the terminal yields
       // and a reload rebuilds messages as "complete", so a stopped turn would otherwise
       // lose why it was short. The terminal yields overwrite or clear it.
+      const previousChangeMetadata = continuation ? (messages.filter(message => message.role === "assistant").at(-1) as unknown as { metadata?: { custom?: { turnChanges?: unknown } } } | undefined)?.metadata?.custom?.turnChanges : undefined;
+      const turnChanges = readTurnChangeRefs(previousChangeMetadata);
+      let currentTurnChange: TurnChangeRef | undefined;
+      let changeCaptureError: string | undefined;
+      let changeCaptureFinished = false;
+      const finishChangeCapture = async () => {
+        if (!currentTurnChange || changeCaptureFinished) return;
+        try {
+          await finishTurnChanges(currentTurnChange);
+          changeCaptureFinished = true;
+        } catch { /* Keep the persisted reference; the card reports capture failure. */ }
+      };
       const liveCustom = () => ({
+        turnChanges: turnChanges.length ? turnChanges : undefined,
+        changeCaptureError,
         ...reasoningDurationTracker.metadata(),
         openaiCodexReasoning: codexReasoningLedger,
         incomplete: { reason: "cancelled" as const },
@@ -1663,6 +1682,17 @@ export function createOpenAIStreamAdapter(
       // external provider the abort is the stop, since its cancel_id is never registered.
       runtime.registerThreadServerCancel(threadKey, serverCancel);
       try {
+        if (resolvedThreadId && supportsStudioToolsForThisTurn && (workspaceEnabled || ragProjectId) && !runSignal.aborted) {
+          try {
+            currentTurnChange = await beginTurnChanges(resolvedThreadId);
+            turnChanges.push(currentTurnChange);
+          } catch (error) {
+            if (!(error instanceof TurnChangesError && ["workspace_unavailable", "workspace_read_only", "thread_not_found"].includes(error.code))) {
+              changeCaptureError = error instanceof TurnChangesError ? error.code : "capture_unavailable";
+            }
+          }
+          yield { content: liveAssistantContent(), metadata: { custom: liveCustom() } };
+        }
         if (runSignal.aborted) {
           onAbortCancel();
         } else {
@@ -3344,6 +3374,7 @@ export function createOpenAIStreamAdapter(
           finalTokPerSec,
         );
 
+        await finishChangeCapture();
         // Finalize reasoning-only streams.
         reasoningDurationTracker.finishGroup();
         yield {
@@ -3355,6 +3386,8 @@ export function createOpenAIStreamAdapter(
           metadata: {
             timing: finalTiming,
             custom: {
+              turnChanges: turnChanges.length ? turnChanges : undefined,
+              changeCaptureError,
               ...reasoningDurationTracker.metadata(),
               // Persisted so Continue survives a reload; cleared on a normal end.
 
@@ -3438,6 +3471,8 @@ export function createOpenAIStreamAdapter(
               metadata: {
                 timing: partialTiming,
                 custom: {
+                  turnChanges: turnChanges.length ? turnChanges : undefined,
+                  changeCaptureError,
                   ...reasoningDurationTracker.metadata(),
                   // This partial is unfinished too, so it also offers Continue.
                   incomplete: {
@@ -3454,6 +3489,7 @@ export function createOpenAIStreamAdapter(
         }
         throw err;
       } finally {
+        await finishChangeCapture();
         runSignal.removeEventListener("abort", onAbortCancel);
         abortSignal.removeEventListener("abort", forwardAbort);
         // Resolve once: the clears below drop the owner the lookup keys on.

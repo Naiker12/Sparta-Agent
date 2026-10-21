@@ -1,21 +1,32 @@
-import { useT as useUiT } from "@/i18n";
 import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
 import { default as File02Icon } from "@hugeicons/core-free-icons/File02Icon";
 import { default as FolderOpenIcon } from "@hugeicons/core-free-icons/FolderOpenIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
+import { Button } from "@/components/ui/button";
+// Import leaf modules to avoid initializing the chat renderer/tool registry recursively.
+// eslint-disable-next-line no-restricted-imports
+import { useChatArtifactsStore } from "@/features/chat/artifacts/store";
+// Import leaf modules to avoid initializing the chat renderer/tool registry recursively.
+// eslint-disable-next-line no-restricted-imports
+import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
+import { buildSandboxPreview } from "./sandbox-preview";
 import { toast } from "@/lib/toast";
 
 import { Spinner } from "@/components/ui/spinner";
 import { authFetch, getAuthToken } from "@/features/auth";
-import { useWorkspaceStore } from "@/features/chat/stores/use-workspace-store";
+// Import leaf modules to avoid initializing the chat renderer/tool registry recursively.
+// eslint-disable-next-line no-restricted-imports
 import { preloadDocumentPreview } from "@/features/rag/components/document-preview-mount";
+// Import leaf modules to avoid initializing the chat renderer/tool registry recursively.
+// eslint-disable-next-line no-restricted-imports
 import { useDocumentPreviewStore } from "@/features/rag/components/preview-store";
 import { useT } from "@/i18n";
 import { apiUrl, isTauri } from "@/lib/api-base";
 import { getAttachmentFileKind } from "@/lib/attachment-file-kind";
 import { downloadUrlStreaming, isDownloadCancelled } from "@/lib/native-files";
-import { ChevronRightIcon, GlobeIcon } from "lucide-react";
+import { CodeIcon, ChevronRightIcon, GlobeIcon } from "lucide-react";
 
 import { type SandboxFile, sandboxFilePath } from "./sandbox-files";
 import { revealSandbox } from "./sandbox-reveal";
@@ -60,8 +71,8 @@ function SandboxFileRow({
   sessionId: string;
   file: SandboxFile;
 }) {
-  const uiT = useUiT();
-
+  const reduceMotion = useReducedMotion();
+  const isHtmlFile = /\.html?$/i.test(file.name);
   const t = useT();
   const [busy, setBusy] = useState(false);
   const [previewing, setPreviewing] = useState(false);
@@ -69,35 +80,38 @@ function SandboxFileRow({
     (state) => state.openLocalPreview,
   );
 
-  const preview = useCallback(async () => {
+  const preview = useCallback(async (sourceOnly = false) => {
     setPreviewing(true);
     preloadDocumentPreview();
     try {
-      const path = sandboxFilePath(sessionId, file.name);
-      const response = await authFetch(apiUrl(path));
-      if (!response.ok) {
-        throw new Error(
-          t("chat.files.previewRefused", { status: response.status }),
-        );
+      const load = async (name: string) => {
+        const response = await authFetch(apiUrl(sandboxFilePath(sessionId, name)));
+        if (!response.ok) throw new Error(t("chat.files.previewRefused", { status: response.status }) + ` (${name})`);
+        if (Number(response.headers.get("content-length")) > MAX_LOCAL_PREVIEW_BYTES) throw new Error(t("chat.files.previewTooLarge"));
+        const blob = await response.blob();
+        if (blob.size > MAX_LOCAL_PREVIEW_BYTES) throw new Error(t("chat.files.previewTooLarge"));
+        return blob;
+      };
+      if (isHtmlFile && !sourceOnly) {
+        const threadId = useChatRuntimeStore.getState().activeThreadId;
+        const original = await load(file.name);
+        const previewCode = await buildSandboxPreview(file.name, name => name === file.name ? Promise.resolve(original) : load(name));
+        if (useChatRuntimeStore.getState().activeThreadId !== threadId) return;
+        useChatArtifactsStore.getState().closeArtifactSurface();
+        openLocalPreview({
+          blob: original,
+          filename: file.name,
+          kind: "html",
+          previewId: `sandbox:${sessionId}:${file.name}`,
+          previewCode,
+        });
+        return;
       }
-      const contentLength = Number(response.headers.get("content-length"));
-      if (
-        Number.isFinite(contentLength) &&
-        contentLength > MAX_LOCAL_PREVIEW_BYTES
-      ) {
-        throw new Error(t("chat.files.previewTooLarge"));
-      }
-      const blob = await response.blob();
-      if (blob.size > MAX_LOCAL_PREVIEW_BYTES) {
-        throw new Error(t("chat.files.previewTooLarge"));
-      }
+      const blob = await load(file.name);
       openLocalPreview({
         blob,
         filename: file.name,
-        kind: getAttachmentFileKind(
-          file.name,
-          response.headers.get("content-type"),
-        ),
+        kind: getAttachmentFileKind(file.name),
       });
     } catch (error) {
       toast.error(
@@ -108,7 +122,7 @@ function SandboxFileRow({
     } finally {
       setPreviewing(false);
     }
-  }, [file.name, openLocalPreview, sessionId, t]);
+  }, [file.name, isHtmlFile, openLocalPreview, sessionId, t]);
 
   // Streamed to the chosen path rather than buffered: a tool can write a
   // multi-gigabyte artifact, and a Blob plus its IPC copy would be two more of
@@ -143,86 +157,37 @@ function SandboxFileRow({
     }
   }, [file.name, sessionId, t]);
 
-  const isHtmlFile = file.name.endsWith(".html") || file.name.endsWith(".htm");
-
-  const handleOpen = useCallback(() => {
-    if (previewing) return;
-    const path = sandboxFilePath(sessionId, file.name);
-    const targetUrl = apiUrl(path);
-    if (isHtmlFile) {
-      useWorkspaceStore.getState().navigateBrowser(targetUrl, file.name);
-    } else {
-      preview();
-    }
-  }, [file.name, isHtmlFile, preview, previewing, sessionId]);
-
   return (
-    <div
-      onClick={handleOpen}
-      className="group flex w-full max-w-[42rem] items-center justify-between gap-3 p-3.5 rounded-2xl border border-border/60 bg-card hover:bg-muted/40 hover:border-border hover:shadow-xs transition-all cursor-pointer select-none"
-      role="button"
+    <motion.div
+      initial={reduceMotion ? false : { opacity: 0, y: 5 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.18 }}
+      className="group flex w-full max-w-[42rem] items-center gap-2 rounded-2xl border border-border/60 bg-card p-2"
       aria-busy={previewing}
-      aria-disabled={previewing}
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          handleOpen();
-        }
-      }}
     >
-      <div className="flex min-w-0 items-center gap-3">
-        <div
-          aria-hidden={true}
-          className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400 motion-safe:group-hover:scale-105 transition-transform"
-        >
-          {previewing ? (
-            <Spinner
-              label={t("chat.tools.preparingFile")}
-              className="size-5 motion-reduce:animate-none"
-            />
-          ) : isHtmlFile ? (
-            <GlobeIcon className="size-5" />
-          ) : (
-            <HugeiconsIcon icon={File02Icon} className="size-5" />
-          )}
-        </div>
-        <div className="min-w-0 flex-1">
-          <h4 className="truncate text-sm font-semibold text-foreground group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-            {file.name}
-          </h4>
-          <p className="text-xs text-muted-foreground mt-0.5 truncate">
-            {previewing
-              ? t("chat.tools.preparingFile")
-              : isHtmlFile
-                ? uiT("ui.created_web_page")
-                : fileTypeLabel(t, file.name)}
-          </p>
-        </div>
-      </div>
-
-      <div className="flex shrink-0 items-center gap-2">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            void save();
-          }}
-          disabled={busy}
-          title={t("chat.files.download")}
-          className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
-        >
-          {busy ? (
-            <Spinner className="size-4" />
-          ) : (
-            <HugeiconsIcon icon={Download01Icon} className="size-4" />
-          )}
-        </button>
-        <div className="text-muted-foreground/60 group-hover:text-blue-600 dark:group-hover:text-blue-400 motion-safe:group-hover:translate-x-0.5 transition-all">
-          <ChevronRightIcon className="size-5" />
-        </div>
-      </div>
-    </div>
+      <button
+        type="button"
+        disabled={previewing}
+        onClick={() => void preview()}
+        className="flex min-w-0 flex-1 items-center gap-3 rounded-xl p-1.5 text-left hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-70"
+        aria-label={`${t("chat.files.preview")}: ${file.name}`}
+      >
+        <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+          {previewing ? <Spinner className="size-5" /> : isHtmlFile ? <GlobeIcon className="size-5" /> : <HugeiconsIcon icon={File02Icon} className="size-5" />}
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="truncate text-sm font-medium">{file.name}</span>
+          <span className="truncate text-xs text-muted-foreground" role="status">
+            {previewing ? t("chat.tools.preparingFile") : `${fileTypeLabel(t, file.name)}${formatSize(file.size) ? ` · ${formatSize(file.size)}` : ""}`}
+          </span>
+        </span>
+        <ChevronRightIcon aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />
+      </button>
+      {isHtmlFile && <Button type="button" variant="ghost" size="icon-sm" onClick={() => void preview(true)} disabled={previewing} title={t("chat.files.sourceCode")} aria-label={t("chat.files.sourceCode")}><CodeIcon /></Button>}
+      <Button type="button" variant="ghost" size="icon-sm" onClick={() => void save()} disabled={busy} title={t("chat.files.download")} aria-label={`${t("chat.files.download")}: ${file.name}`}>
+        {busy ? <Spinner /> : <HugeiconsIcon icon={Download01Icon} />}
+      </Button>
+    </motion.div>
   );
 }
 
@@ -279,11 +244,13 @@ export function SandboxFiles({
   sessionId: string;
   files: SandboxFile[];
 }) {
+  const t = useT();
   if (!sessionId || files.length === 0) {
     return null;
   }
   return (
     <div className="mt-3 flex w-full max-w-[42rem] flex-col gap-2">
+      <SandboxFolderLabel sessionId={sessionId} label={t("chat.files.outputFolder")} />
       {files.map((file) => (
         <SandboxFileRow key={file.name} sessionId={sessionId} file={file} />
       ))}

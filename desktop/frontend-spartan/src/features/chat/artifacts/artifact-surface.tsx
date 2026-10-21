@@ -12,7 +12,7 @@ import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { CopyIcon, EyeIcon, Maximize2Icon, XIcon } from "lucide-react";
+import { CopyIcon, EyeIcon, FileCode2Icon, Maximize2Icon, XIcon } from "lucide-react";
 import {
   type KeyboardEvent,
   useEffect,
@@ -114,6 +114,12 @@ export function ArtifactSurface({
   const isLoadingArtifact = Boolean(artifact.isStreaming);
   const effectiveViewMode = isLoadingArtifact ? "preview" : viewMode;
   const highlighter = useLazyCodeHighlighter(effectiveViewMode !== "preview");
+  const artifactsById = useChatArtifactsStore((state) => state.artifactsById);
+  const selectArtifact = useChatArtifactsStore((state) => state.selectArtifact);
+  const closeArtifactTab = useChatArtifactsStore((state) => state.closeArtifactTab);
+  const artifactTabs = useMemo(() => Object.values(artifactsById)
+    .filter((item) => artifact.threadId ? item.threadId === artifact.threadId : item.id === artifact.id)
+    .sort((a, b) => a.createdAt - b.createdAt), [artifactsById, artifact.id, artifact.threadId]);
 
   useEffect(() => {
     return () => {
@@ -206,13 +212,12 @@ export function ArtifactSurface({
       className={cn(
         "relative flex min-h-0 flex-col bg-background",
         variant === "panel"
-          ? "artifact-panel-shell mx-2 mb-8 overflow-visible rounded-[28px] border-t border-border/70 bg-card/95"
+          ? "artifact-panel-shell h-full w-full overflow-hidden"
           : "h-[min(92dvh,900px)] w-[min(96vw,1200px)] overflow-hidden rounded-2xl border border-border shadow-xl",
       )}
-      // The chat-model notice is an absolute child of the chat content container, so
-      // it spans this column too, not just the thread pane. Its height is 0 whenever
-      // it is not on screen, which leaves the geometry this panel has always had.
-      // Both edges move, or the panel keeps its height and overflows the bottom.
+      // The inline canvas starts below the desktop chrome and chat header (90px).
+      // The chat-model notice is an absolute child of the shared chat container, so
+      // it covers this column too. Reserve its height at the top and bottom.
       style={
         variant === "panel"
           ? {
@@ -224,10 +229,61 @@ export function ArtifactSurface({
       }
       aria-label={uiT("ui.value0_canvas", { value0: String(artifact.title) })}
     >
+      {variant === "panel" && artifactTabs.length > 1 && (
+        <div
+          role="tablist"
+          aria-label={uiT("chat.preview.openDocuments")}
+          className="flex min-h-11 shrink-0 items-center gap-1 overflow-x-auto border-b border-border bg-background px-2 py-1.5"
+        >
+          {artifactTabs.map((tab, index) => {
+            const active = tab.id === artifact.id;
+            const tabName = getArtifactFilename(tab);
+            return (
+              <div
+                key={tab.id}
+                className={cn(
+                  "flex min-w-0 max-w-64 shrink-0 items-center rounded-md border",
+                  active ? "border-border bg-muted" : "border-transparent text-muted-foreground hover:bg-muted/50",
+                )}
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  id={`artifact-tab-${tab.id}`}
+                  aria-selected={active}
+                  aria-controls="artifact-panel-content"
+                  title={tab.title}
+                  onClick={() => selectArtifact(tab.id)}
+                  onKeyDown={(event) => {
+                    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+                    event.preventDefault();
+                    const next = event.key === "Home" ? 0 : event.key === "End" ? artifactTabs.length - 1 : (index + (event.key === "ArrowRight" ? 1 : -1) + artifactTabs.length) % artifactTabs.length;
+                    selectArtifact(artifactTabs[next].id);
+                    document.getElementById(`artifact-tab-${artifactTabs[next].id}`)?.focus();
+                  }}
+                  className="flex min-w-0 items-center gap-2 px-3 py-2 text-xs"
+                >
+                  <FileCode2Icon className="size-3.5 shrink-0" />
+                  <span className="truncate">{tabName}</span>
+                </button>
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  variant="ghost"
+                  disabled={Boolean(tab.isStreaming)}
+                  aria-label={uiT("chat.preview.closeTab", { filename: tabName })}
+                  onClick={() => closeArtifactTab(tab.id)}
+                >
+                  <XIcon />
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      )}
       <header
         className={cn(
           "relative flex shrink-0 items-center justify-between gap-3 px-2.5 py-2",
-          variant === "panel" && "rounded-t-[28px]",
         )}
       >
         <div
@@ -344,9 +400,11 @@ export function ArtifactSurface({
       </header>
 
       <div
+        id="artifact-panel-content"
+        role={artifactTabs.length > 1 ? "tabpanel" : undefined}
+        aria-labelledby={artifactTabs.length > 1 ? `artifact-tab-${artifact.id}` : undefined}
         className={cn(
           "min-h-0 flex-1 overflow-hidden bg-background",
-          variant === "panel" && "rounded-b-[28px]",
         )}
       >
         {isLoadingArtifact ? (
@@ -354,7 +412,7 @@ export function ArtifactSurface({
         ) : effectiveViewMode === "preview" ? (
           <ArtifactHtmlFrame
             key={artifact.id}
-            code={artifact.code}
+            code={artifact.previewCode ?? artifact.code}
             title={artifact.title}
             fill={true}
             className="h-full"

@@ -42,6 +42,7 @@ import {
   useChatProjects,
 } from "../hooks/use-chat-projects";
 import { workspacePathKey } from "../utils/workspace-path-key";
+import { hasUnconnectedWorkspacePath } from "../utils/workspace-path-mention";
 import { useChatRuntimeStore } from "../stores/chat-runtime-store";
 import {
   type PendingWorkspace,
@@ -77,6 +78,7 @@ export function ThreadWorkspaceChip({
 }: { isRunning?: boolean; threadId?: string }) {
   const t = useT();
   const runtimeThreadId = useAuiState(({ threadListItem }) => threadListItem.remoteId);
+  const composerText = useAuiState(({ composer }) => composer.text);
   const threadId = explicitThreadId ?? runtimeThreadId;
   const isDraft = !threadId || isAssistantLocalThreadId(threadId);
   const ownerRef = useRef(threadId);
@@ -276,6 +278,7 @@ export function ThreadWorkspaceChip({
       ? `sparta-draft:${workspacePathKey(currentPath)}`
       : currentProject?.id);
   const isBinding = Boolean(visibleBinding || visiblePending);
+  const mentionedUnconnectedPath = hasUnconnectedWorkspacePath(composerText, currentPath);
   const gitScopeKey = `${scopeId ?? ""}\0${currentPath ?? ""}`;
   const visibleGitStatus = gitStatus?.scopeKey === gitScopeKey ? gitStatus : null;
   const scope: GitReviewScope | null =
@@ -514,6 +517,21 @@ export function ThreadWorkspaceChip({
           </span>
         ) : null}
       </div>
+      {mentionedUnconnectedPath && !isRunning ? (
+        <div className="flex items-center gap-2 px-2 pb-1 text-xs text-muted-foreground" role="status">
+          <span>{t("chat.workspace.pathNotConnected")}</span>
+          <Button
+            type="button"
+            size="sm"
+            variant="link"
+            className="h-auto shrink-0 p-0 text-xs"
+            disabled={busy}
+            onClick={() => setOpen(true)}
+          >
+            {t("chat.workspace.connectPath")}
+          </Button>
+        </div>
+      ) : null}
     </>
   );
 }

@@ -49,6 +49,18 @@ function ReviewFile({
   useEffect(() => {
     if (!visible) return;
     let cancelled = false;
+    if (item.binary) {
+      setFile({
+        path: item.path,
+        filename: item.path.split("/").at(-1)!,
+        status: item.status,
+        additions: item.additions,
+        deletions: item.deletions,
+        binary: true,
+        diff: "",
+      });
+      return;
+    }
     const bridge = getGitReviewBridge();
     if (!bridge) {
       setError(t("chat.repository.restart"));
@@ -65,9 +77,10 @@ function ReviewFile({
         setFile({
           path: item.path,
           filename: item.path.split("/").at(-1)!,
-          status: "modified",
+          status: item.status,
           additions: item.additions,
           deletions: item.deletions,
+          binary: item.binary,
           diff: result.diff ?? "",
         });
       })

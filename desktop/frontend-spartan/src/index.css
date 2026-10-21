@@ -956,6 +956,7 @@ html[data-chat-font] .aui-root {
   --color-ring-strong: var(--ring-select);
   --color-input: var(--input);
   --color-border: var(--border);
+  --color-diff-added: oklch(0.65 0.17 155);
   --color-destructive: var(--destructive);
   --color-bypass: var(--bypass);
   --color-accent-foreground: var(--accent-foreground);
@@ -2509,14 +2510,6 @@ html[data-chat-font] .aui-root {
     @apply gap-1.5 pl-2.5 pr-2.5;
     white-space: nowrap;
   }
-  .artifact-panel-shell {
-    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.16);
-  }
-
-  .dark .artifact-panel-shell {
-    box-shadow: none;
-  }
-
   .chat-artifact-split[data-artifact-layout-animating="true"] > [data-panel] {
     transition: flex-basis 260ms var(--ease-out-cubic), flex-grow 260ms
       var(--ease-out-cubic), flex-shrink 260ms var(--ease-out-cubic);
@@ -2526,7 +2519,7 @@ html[data-chat-font] .aui-root {
   .chat-artifact-pop-surface {
     pointer-events: none;
     opacity: 0;
-    transform: scale(0.965) translateY(8px);
+    transform: translateX(6px);
     transform-origin: center center;
     transition: opacity 180ms var(--ease-out-cubic), transform 220ms
       var(--ease-out-cubic);
@@ -2536,7 +2529,7 @@ html[data-chat-font] .aui-root {
   .chat-artifact-pop-surface[data-artifact-surface-visible="true"] {
     pointer-events: auto;
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translateX(0);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -2572,67 +2565,6 @@ html[data-chat-font] .aui-root {
       animation: none;
       transform: none;
     }
-  }
-
-  .artifact-panel-shell::before,
-  .artifact-panel-shell::after {
-    content: "";
-    position: absolute;
-    z-index: 20;
-    pointer-events: none;
-    transition: border-color 150ms var(--ease-out-cubic), background-color 150ms
-      var(--ease-out-cubic), box-shadow 150ms var(--ease-out-cubic), transform
-      150ms var(--ease-out-cubic);
-  }
-
-  .artifact-panel-shell::before {
-    inset: 0;
-    border: 2px solid transparent;
-    border-radius: inherit;
-    -webkit-mask: linear-gradient(90deg, #000 0 24px, transparent 24px);
-    mask: linear-gradient(90deg, #000 0 24px, transparent 24px);
-  }
-
-  .artifact-panel-shell::after {
-    top: 50%;
-    left: -2px;
-    height: 28px;
-    width: 4px;
-    border-radius: 999px;
-    background: transparent;
-    transform: translateY(-50%);
-  }
-
-  [data-slot="resizable-handle"]:hover
-    + [data-slot="resizable-panel"]
-    .artifact-panel-shell::before,
-  [data-slot="resizable-handle"]:active
-    + [data-slot="resizable-panel"]
-    .artifact-panel-shell::before,
-  [data-slot="resizable-handle"][data-resize-handle-state="hover"]
-    + [data-slot="resizable-panel"]
-    .artifact-panel-shell::before,
-  [data-slot="resizable-handle"][data-resize-handle-state="drag"]
-    + [data-slot="resizable-panel"]
-    .artifact-panel-shell::before {
-    border-color: color-mix(in oklch, var(--primary) 58%, var(--border));
-  }
-
-  [data-slot="resizable-handle"]:hover
-    + [data-slot="resizable-panel"]
-    .artifact-panel-shell::after,
-  [data-slot="resizable-handle"]:active
-    + [data-slot="resizable-panel"]
-    .artifact-panel-shell::after,
-  [data-slot="resizable-handle"][data-resize-handle-state="hover"]
-    + [data-slot="resizable-panel"]
-    .artifact-panel-shell::after,
-  [data-slot="resizable-handle"][data-resize-handle-state="drag"]
-    + [data-slot="resizable-panel"]
-    .artifact-panel-shell::after {
-    background: color-mix(in oklch, var(--primary) 58%, var(--border));
-    box-shadow: none;
-    transform: translateY(-50%) scaleY(1.06);
   }
 
   @keyframes artifact-card-shimmer {
@@ -2722,6 +2654,35 @@ html[data-chat-font] .aui-root {
   }
 
   /* The file panel already provides a surface, language label and copy action. */
+  .file-code-source [data-streamdown="code-block"] {
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .file-code-source [data-streamdown="code-block-header"] {
+    display: none !important;
+  }
+
+  .file-code-source [data-streamdown="code-block"] code > span::before {
+    content: none !important;
+    display: none !important;
+    margin: 0 !important;
+    width: 0 !important;
+  }
+
+  .file-code-source [data-streamdown="code-block"] pre {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+  }
+
   .workspace-file-source [data-streamdown="code-block"] {
     margin: 0;
     padding: 0;
@@ -3161,6 +3122,32 @@ html[data-chat-font] .aui-root {
 /* Reserve the measured overlay strip; classic scrollbars already take space. */
 .overlay-scrollbar-gutter {
   padding-right: var(--overlay-scrollbar-gutter, 0px);
+}
+
+/* Keep resize targets easy to grab without painting a thick hover strip over
+   the panel edge. The hit area stays 8px; only its 1px center line appears. */
+.workspace-panel-resize-handle::after,
+.document-preview-resize-handle::after {
+  position: absolute;
+  inset-block: 0;
+  left: 50%;
+  width: 1px;
+  background: transparent;
+  content: "";
+  transform: translateX(-50%);
+  transition: background-color 140ms ease;
+}
+
+.workspace-panel-resize-handle:hover::after,
+.workspace-panel-resize-handle:focus-visible::after,
+.document-preview-resize-handle:hover::after,
+.document-preview-resize-handle:focus-visible::after {
+  background: color-mix(in srgb, var(--primary) 55%, transparent);
+}
+
+.workspace-panel-resize-handle:active::after,
+.document-preview-resize-handle:active::after {
+  background: color-mix(in srgb, var(--primary) 75%, transparent);
 }
 
 /* Chat viewport: solid track matching sidebar so the scrollbar reads as a

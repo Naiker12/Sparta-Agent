@@ -65,6 +65,10 @@ export default defineConfig(() => {
     cacheDir: path.join(__dirname, 'node_modules/.vite', `spartan-${frontendDependencyCacheKey()}`),
     resolve: {
       alias: {
+        // The renderer is owned by the nested frontend. Root dependencies also
+        // carry React 18; mixing its JSX runtime with React DOM 19 blanks startup.
+        'react': path.join(__dirname, 'desktop/frontend-spartan/node_modules/react'),
+        'react-dom': path.join(__dirname, 'desktop/frontend-spartan/node_modules/react-dom'),
         '@': path.join(__dirname, 'desktop/frontend-spartan/src'),
         '@/components': path.join(__dirname, 'desktop/frontend-spartan/src/components'),
         'ia-sparta-app-shell': path.join(__dirname, 'desktop/ia-sparta-app-shell/src/index.ts'),

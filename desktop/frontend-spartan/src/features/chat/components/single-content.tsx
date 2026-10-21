@@ -191,8 +191,8 @@ export const SingleContent = memo(function SingleContent({
           <ResizableHandle
             withHandle={false}
             className={cn(
-              "relative z-30 -ml-1 -mr-4 w-5 bg-transparent transition-[width,margin] duration-[260ms] ease-[var(--ease-out-cubic)] hover:bg-transparent hover:shadow-none active:bg-transparent active:shadow-none focus-visible:bg-transparent focus-visible:shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none",
-              !artifactLayoutActive && "pointer-events-none -ml-0 -mr-0 w-0",
+              "relative z-30 w-px bg-border/50 hover:bg-primary/50 hover:shadow-none active:shadow-none focus-visible:shadow-none",
+              !artifactLayoutActive && "pointer-events-none w-0",
             )}
           />
           <ResizablePanel
@@ -212,7 +212,7 @@ export const SingleContent = memo(function SingleContent({
             collapsible={showArtifactPanel}
             collapsedSize="0%"
             className={cn(
-              "h-full min-h-0 min-w-0 overflow-visible",
+              "h-full min-h-0 min-w-0 overflow-hidden",
               !showContextPanel && "pointer-events-none",
             )}
           >
@@ -221,7 +221,7 @@ export const SingleContent = memo(function SingleContent({
                 isArtifactSurfaceVisible ? "true" : "false"
               }
               className={cn(
-                "chat-artifact-pop-surface flex h-full min-h-0 min-w-0 flex-col overflow-visible",
+                "chat-artifact-pop-surface flex h-full min-h-0 min-w-0 flex-col overflow-hidden",
                 showResearchPanel && "border-l border-border/70",
               )}
             >

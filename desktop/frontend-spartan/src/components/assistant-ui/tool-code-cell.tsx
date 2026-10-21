@@ -196,7 +196,7 @@ export function HighlightedCode({
       onScroll={handleScroll}
       className={
         expanded
-          ? "h-full overflow-auto text-xs"
+          ? "h-full overflow-auto text-[13px]"
           : "max-h-48 overflow-auto text-xs"
       }
     >
@@ -204,7 +204,7 @@ export function HighlightedCode({
         {lineNumbers && (
           <div
             aria-hidden="true"
-            className="sticky left-0 z-[1] select-none border-r bg-muted/40 py-4 text-right font-mono leading-5 text-muted-foreground/60"
+            className="sticky left-0 z-[1] select-none border-r border-border/60 bg-muted/30 py-4 text-right font-mono leading-[22px] text-muted-foreground/75"
           >
             {Array.from(
               { length: Math.max(1, source.split("\n").length) },
@@ -219,7 +219,7 @@ export function HighlightedCode({
         <div
           className={
             expanded
-              ? "min-w-0 flex-1 [&_pre]:!m-0 [&_pre]:!bg-transparent [&_pre]:!p-0 [&_pre]:!text-xs [&_pre]:!leading-5 [&_[data-streamdown=code-block]]:!my-0 [&_[data-streamdown=code-block]]:!border-0 [&_[data-streamdown=code-block]]:!p-4"
+              ? "min-w-0 flex-1 [&_pre]:!m-0 [&_pre]:!bg-transparent [&_pre]:!p-0 [&_pre]:!text-[13px] [&_pre]:!leading-[22px] [&_[data-streamdown=code-block]]:!my-0 [&_[data-streamdown=code-block]]:!border-0 [&_[data-streamdown=code-block]]:!p-4"
               : "min-w-0 flex-1 [&_pre]:!m-0 [&_pre]:!bg-transparent [&_pre]:!p-0 [&_pre]:!text-xs [&_[data-streamdown=code-block]]:!my-0 [&_[data-streamdown=code-block]]:!border-0 [&_[data-streamdown=code-block]]:!p-3"
           }
         >
@@ -236,7 +236,7 @@ export function HighlightedCode({
             <div
               className={
                 expanded
-                  ? "whitespace-pre p-4 font-mono text-xs leading-5 text-muted-foreground"
+                  ? "whitespace-pre p-4 font-mono text-[13px] leading-[22px] text-muted-foreground"
                   : "whitespace-pre p-3 font-mono text-xs text-muted-foreground"
               }
             >

@@ -186,7 +186,7 @@ export function ChatPanelsWorkspace({ children, primaryThreadId, projectId }: { 
     return () => window.removeEventListener("spartan:new-chat-pane", add);
   }, []);
   return <ActionsContext.Provider value={{ busy, add: () => void create(), copy: (messages, sourceId) => void create(messages, sourceId) }}>
-    <div data-inline-pane-headers={panes.length > 0 && !mobile ? "true" : undefined} className={cn("chat-panels-workspace relative flex min-h-0 min-w-0 flex-1 flex-col", (!panes.length || mobile) && "pt-[var(--studio-chat-header-height,48px)]")} onDragOver={event => {
+    <div data-inline-pane-headers={panes.length > 0 && !mobile ? "true" : undefined} className={cn("chat-panels-workspace relative flex min-h-0 min-w-0 flex-1 flex-col has-[.artifact-panel-shell]:pt-0", (!panes.length || mobile) && "pt-[var(--studio-chat-header-height,48px)]")} onDragOver={event => {
       if (!event.dataTransfer.types.includes(CHAT_PANE_MIME)) return;
       event.preventDefault(); event.dataTransfer.dropEffect = "copy"; setDragging(true);
     }} onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false); }} onDrop={event => {

@@ -52,10 +52,23 @@ def test_placeholder_document_is_not_published(tmp_path, extension, payload):
     assert list(tmp_path.iterdir()) == []
 
 
-@pytest.mark.parametrize("filename", ["../outside.pdf", "C:\\outside.xlsx", "evil.py", "", ".hidden.pdf"])
+@pytest.mark.parametrize("filename", ["../outside.pdf", "C:\\outside.xlsx", "evil.exe", "", ".hidden.pdf", "CON.html", "LPT1.txt", "trailing.html."])
 def test_rejects_paths_and_unsupported_formats(tmp_path, filename):
     assert generate_document({"filename": filename, "content": "Test"}, tmp_path).startswith("Error:")
     assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize("extension", ["html", "HTML", "htm", "css", "js", "mjs", "ts", "tsx", "jsx", "json", "yaml", "yml", "xml", "svg", "py", "sql", "sh", "ps1"])
+def test_source_files_preserve_exact_utf8_without_execution(tmp_path, extension):
+    source = "# España\r\nraise RuntimeError('must never execute')\n"
+    path = created_path(generate_document({"filename": f"source.{extension}", "title": "Do not prepend", "content": source}, tmp_path), tmp_path)
+    assert path.read_bytes() == source.encode("utf-8")
+
+
+@pytest.mark.parametrize("payload", [{"title": "Only title"}, {"content": "  "}, {"content": "body", "rows": [[1]]}])
+def test_source_requires_content_without_table_data(tmp_path, payload):
+    assert generate_document({"filename": "index.html", **payload}, tmp_path).startswith("Error:")
+    assert not list(tmp_path.iterdir())
 
 
 def test_existing_file_is_preserved_and_scratch_is_removed(tmp_path):

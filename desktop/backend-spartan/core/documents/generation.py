@@ -12,17 +12,20 @@ from pathlib import Path
 
 from core.documents.artifact_validation import validate_generated_artifact
 
+SOURCE_EXTENSIONS = frozenset({".html", ".htm", ".css", ".js", ".mjs", ".ts", ".tsx", ".jsx", ".json", ".yaml", ".yml", ".xml", ".svg", ".py", ".sql", ".sh", ".ps1"})
+_RESERVED_BASENAMES = frozenset({"CON", "PRN", "AUX", "NUL", *(f"COM{i}" for i in range(1, 10)), *(f"LPT{i}" for i in range(1, 10))})
+
 GENERATE_DOCUMENT_TOOL = {
     "type": "function",
     "function": {
         "name": "generate_document",
-        "description": "Create a downloadable PDF, Excel XLSX, Word DOCX, CSV, TXT or Markdown file. Prefer this tool for these formats instead of checking or installing Python libraries. First prepare the complete requested content and verify any facts or calculations needed. Then supply the finished text and/or populated table data, never Python code or an empty placeholder. This works independently of the Code toggle. Use this tool when the user asks for a file; do not claim a file exists until the tool succeeds. The application renders the download card; do not invent sandbox:/ links or local download URLs.",
+        "description": "Create a downloadable document (PDF, XLSX, DOCX, CSV, TXT, Markdown) or source file (HTML, CSS, JS, MJS, TS, TSX, JSX, JSON, YAML, XML, SVG, PY, SQL, SH, PS1) in the active file storage without executing code. For source files pass the exact complete source in content, without Markdown fences, title or table data. For a single HTML page embed CSS and JavaScript. This works independently of the Code toggle: do not use Python or terminal just to save source text. A folder path in the message does not select the output folder. Prefer write_file for source files in an authorized connected workspace; create_file only creates empty files/directories. Do not claim a file exists until the tool succeeds. The application renders the download card; do not invent sandbox links or local download URLs.",
         "parameters": {
             "type": "object",
             "properties": {
-                "filename": {"type": "string", "description": "Filename with extension: .pdf, .xlsx, .docx, .csv, .txt or .md. No directory paths."},
+                "filename": {"type": "string", "description": "Filename with a supported document or source extension, e.g. calculator.html or styles.css. No directory paths."},
                 "title": {"type": "string", "description": "Document title."},
-                "content": {"type": "string", "description": "Finished document text, separated into paragraphs by blank lines."},
+                "content": {"type": "string", "description": "Finished document text, or exact source code for a source file. Source code is saved as UTF-8, never executed."},
                 "headers": {"type": "array", "items": {"type": "string"}, "description": "Optional table column names."},
                 "rows": {"type": "array", "items": {"type": "array", "items": {"type": ["string", "number", "boolean", "null"]}}, "description": "Table or spreadsheet data, one array per row."},
             },
@@ -37,11 +40,11 @@ def _validated_data(arguments):
     if not isinstance(filename, str) or not filename.strip() or len(filename) > 160:
         raise ValueError("A filename of at most 160 characters is required.")
     filename = filename.strip()
-    if filename.startswith(".") or any(char in filename for char in '/\\:<>"|?*') or any(ord(char) < 32 for char in filename):
+    if filename.startswith(".") or filename.endswith((".", " ")) or filename.split(".")[0].upper() in _RESERVED_BASENAMES or any(char in filename for char in '/\\:<>"|?*') or any(ord(char) < 32 for char in filename):
         raise ValueError("Use a filename without directory paths or reserved characters.")
     extension = Path(filename).suffix.lower()
-    if extension not in {".pdf", ".xlsx", ".docx", ".csv", ".txt", ".md"}:
-        raise ValueError("Supported formats: PDF, XLSX, DOCX, CSV, TXT and Markdown.")
+    if extension not in {".pdf", ".xlsx", ".docx", ".csv", ".txt", ".md", *SOURCE_EXTENSIONS}:
+        raise ValueError("Unsupported file extension. Use a supported document or source file format.")
     title = arguments.get("title", "")
     content = arguments.get("content", "")
     headers = arguments.get("headers", [])
@@ -62,13 +65,17 @@ def _validated_data(arguments):
         raise ValueError("Prepare the finished document content or populated table data before creating the file; a title alone is not enough.")
     if extension in {".xlsx", ".csv"} and not populated_table:
         raise ValueError("Provide headers or rows for a spreadsheet.")
+    if extension in SOURCE_EXTENSIONS and (not content.strip() or headers or rows):
+        raise ValueError("Source files require complete source text in content and no table data.")
     return filename, title, content, headers, rows
 
 
 def _render(path, title, content, headers, rows, cancel_event):
     extension = path.suffix.lower()
     table = ([headers] if headers else []) + rows
-    if extension == ".xlsx":
+    if extension in SOURCE_EXTENSIONS:
+        path.write_text(content, encoding="utf-8", newline="")
+    elif extension == ".xlsx":
         from openpyxl import Workbook
         from openpyxl.styles import Font, PatternFill
         from openpyxl.utils import get_column_letter
@@ -166,7 +173,7 @@ def generate_document(arguments, workdir, cancel_event=None):
                 candidate.unlink(missing_ok=True)
                 raise
             entries = [{"name": candidate.name, "size": candidate.stat().st_size}]
-            return f"Created {candidate.name}.\n__FILES__:{json.dumps(entries, ensure_ascii=False)}"
+            return f"Created {candidate.name} in {directory}.\n__FILES__:{json.dumps(entries, ensure_ascii=False)}"
         raise ValueError("Too many documents with the same filename.")
     except ImportError as error:
         return f"Error: Document generation dependency unavailable: {error.name}. Update the desktop backend runtime."

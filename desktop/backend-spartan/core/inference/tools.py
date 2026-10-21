@@ -10477,6 +10477,10 @@ def _render_html_result(arguments: dict) -> str:
     )
 
 
+from core.inference.turn_changes import observe_tool_changes
+
+
+@observe_tool_changes
 def execute_tool(
     name: str,
     arguments: dict,

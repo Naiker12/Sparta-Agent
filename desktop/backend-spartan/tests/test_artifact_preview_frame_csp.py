@@ -135,7 +135,7 @@ def test_the_shell_generator_matches_the_app_one():
     # The strict CSP forbids sharing crypto-boot.js, so keep both copies aligned.
     shell = inf_mod._ARTIFACT_PREVIEW_FRAME_HTML
     boot = (
-        pathlib.Path(__file__).resolve().parents[2] / "frontend/public/crypto-boot.js"
+        pathlib.Path(__file__).resolve().parents[2] / "frontend-spartan/public/crypto-boot.js"
     ).read_text(encoding = "utf-8")
     for expression in (
         '"10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) =>',

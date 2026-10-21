@@ -120,7 +120,7 @@ export function WorkspacePanelContainer({
             aria-valuemin={280}
             aria-valuemax={900}
             aria-valuenow={panelWidth}
-            className="absolute -left-1 top-0 z-30 h-full w-2 cursor-col-resize touch-none hover:bg-primary/20 focus-visible:bg-primary/20"
+            className="workspace-panel-resize-handle absolute -left-1 top-0 z-30 h-full w-2 cursor-col-resize touch-none"
             onKeyDown={(e) => {
               if (e.key === "ArrowLeft") setPanelWidth(panelWidth + 24);
               if (e.key === "ArrowRight") setPanelWidth(panelWidth - 24);

@@ -10,7 +10,9 @@ let browser;
 try {
   await server.listen();
   browser = await chromium.launch({headless:true,...(process.platform==='win32'?{channel:'msedge'}:{})});
-  const page = await browser.newPage({viewport:{width:1280,height:900}});
+  // At this width the shared preview docks beside the chat, so the test can
+  // open another document from the still-interactive conversation surface.
+  const page = await browser.newPage({viewport:{width:1500,height:900}});
   const errors=[];
   let navigations = 0;
   page.on('framenavigated', frame => { if (frame === page.mainFrame()) navigations++; });

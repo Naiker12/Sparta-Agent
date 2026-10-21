@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.5.4] - 2026-10-21
+
+### Corregido
+
+- La generación puede guardar archivos fuente de código como texto sin activar Python ni ejecutar el contenido.
+- Las vistas previas de HTML usan contenido autenticado, agrupan recursos estáticos permitidos y conservan el aislamiento del iframe.
+- El navegador lateral, los lienzos HTML y las vistas de documentos ya no se pisan ni abren una dirección local ficticia.
+- La apertura de archivos del workspace usa el visor compartido; se retiraron los visores antiguos sin referencias.
+- Se corrige el arranque en blanco por resolución duplicada de React entre el Vite raíz y el frontend.
+- La revisión de cambios por respuesta muestra estados de carga/error y evita reemplazar la selección con respuestas atrasadas.
+- Se mejora la lectura del código y se suaviza el hover de los divisores redimensionables.
+
+### Release
+
+- Preparación de instaladores para Windows, macOS Apple silicon/Intel y Linux. La publicación depende de completar las puertas automatizadas de release.
+
 ## [0.5.3] - 2026-10-20
 
 ### Corregido

@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import type { GitReviewScope } from "@/features/chat/api/modules/workspace-git-api";
 
+export interface TurnChangesPreview { id: string; threadId: string; path: string }
+
 export interface RepositoryPreview { scope: GitReviewScope; kind: "changes" | "github" }
 
 export type LocalPreviewKind =
@@ -12,6 +14,7 @@ export type LocalPreviewKind =
   | "excel"
   | "csv"
   | "code"
+  | "html"
   | "text"
   | "powerpoint"
   | "archive"
@@ -21,8 +24,12 @@ export interface LocalPreview {
   blob: Blob;
   filename: string;
   kind: LocalPreviewKind;
+  /** Bundled, sandboxed render source for generated HTML files. */
+  previewCode?: string;
   /** Composer attachment that owns this preview, if any. */
   attachmentId?: string;
+  /** Stable identity for files whose Blob is reloaded on each open. */
+  previewId?: string;
   /** Present only for files read from a connected project workspace. */
   workspaceSource?: { projectId: string; path: string };
 }
@@ -39,6 +46,8 @@ interface DocumentPreviewState {
   page: number | null;
   localPreview: LocalPreview | null;
   repositoryPreview: RepositoryPreview | null;
+  turnChangesPreview: TurnChangesPreview | null;
+  openTurnChangesPreview: (preview: TurnChangesPreview, title: string) => void;
   openRepositoryPreview: (preview: RepositoryPreview, title: string) => void;
   tabs: PreviewTab[];
   activeTabId: string | null;
@@ -63,6 +72,7 @@ export interface PreviewTab {
   page: number | null;
   localPreview: LocalPreview | null;
   repositoryPreview?: RepositoryPreview;
+  turnChangesPreview?: TurnChangesPreview;
 }
 
 function selectedTab(tab?: PreviewTab) {
@@ -72,6 +82,7 @@ function selectedTab(tab?: PreviewTab) {
     filename: tab?.filename ?? null, page: tab?.page ?? null,
     localPreview: tab?.localPreview ?? null,
     repositoryPreview: tab?.repositoryPreview ?? null,
+    turnChangesPreview: tab?.turnChangesPreview ?? null,
   };
 }
 
@@ -84,6 +95,12 @@ export const useDocumentPreviewStore = create<DocumentPreviewState>((set) => ({
   page: null,
   localPreview: null,
   repositoryPreview: null,
+  turnChangesPreview: null,
+  openTurnChangesPreview: (turnChangesPreview, title) => set((state) => {
+    const tab: PreviewTab = { id: `turn-changes:${turnChangesPreview.threadId}:${turnChangesPreview.id}`, documentId: null, chunkId: null, filename: title, page: null, localPreview: null, turnChangesPreview };
+    const exists = state.tabs.some(item => item.id === tab.id);
+    return { ...selectedTab(tab), revision: state.revision + 1, tabs: exists ? state.tabs.map(item => item.id === tab.id ? tab : item) : [...state.tabs, tab] };
+  }),
   tabs: [],
   activeTabId: null,
   openRepositoryPreview: (repositoryPreview, title) => set((state) => {
@@ -124,10 +141,11 @@ export const useDocumentPreviewStore = create<DocumentPreviewState>((set) => ({
         const other = tab.localPreview;
         if (!other) return false;
         if (localPreview.attachmentId) return other.attachmentId === localPreview.attachmentId;
+        if (localPreview.previewId) return other.previewId === localPreview.previewId;
         if (localPreview.workspaceSource) return other.workspaceSource?.projectId === localPreview.workspaceSource.projectId && other.workspaceSource?.path === localPreview.workspaceSource.path;
         return other.blob === localPreview.blob;
       });
-      const tab: PreviewTab = { id: existing?.id ?? `local:${crypto.randomUUID()}`, documentId: null, chunkId: null, filename: localPreview.filename, page: null, localPreview };
+      const tab: PreviewTab = { id: existing?.id ?? `local:${localPreview.previewId ?? crypto.randomUUID()}`, documentId: null, chunkId: null, filename: localPreview.filename, page: null, localPreview };
       return { ...selectedTab(tab), revision: state.revision + 1, tabs: existing ? state.tabs.map((item) => item.id === tab.id ? tab : item) : [...state.tabs, tab] };
     }),
   // The rendered preview can hold a large Blob (and parsers often create an
@@ -141,6 +159,7 @@ export const useDocumentPreviewStore = create<DocumentPreviewState>((set) => ({
       page: null,
       localPreview: null,
       repositoryPreview: null,
+      turnChangesPreview: null,
       tabs: [],
       activeTabId: null,
     }),

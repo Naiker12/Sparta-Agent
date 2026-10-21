@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { ArtifactViewMode } from "./html-frame";
 import type { ChatArtifact, ChatArtifactSurface } from "./types";
+import { useWorkspaceStore } from "../stores/use-workspace-store";
 
 const autoOpenedArtifactIds = new Set<string>();
 
@@ -26,6 +27,8 @@ type ChatArtifactsState = {
     artifact: ChatArtifact,
     options?: { surface?: ChatArtifactSurface; view?: ArtifactViewMode },
   ) => void;
+  selectArtifact: (id: string) => void;
+  closeArtifactTab: (id: string) => void;
   updateArtifact: (artifact: ChatArtifact) => void;
   closeArtifactSurface: () => void;
   clearArtifactsForThread: (threadId: string | null | undefined) => void;
@@ -38,7 +41,11 @@ export const useChatArtifactsStore = create<ChatArtifactsState>((set) => ({
   selectedArtifactId: null,
   surface: "panel",
   requestedView: "preview",
-  openArtifact: (artifact, options) =>
+  openArtifact: (artifact, options) => {
+    // All artifact entry points (fences, tools, files) share this action.
+    // Keep the browser preview from occupying a second column beside the canvas.
+    const workspace = useWorkspaceStore.getState();
+    if (workspace.isOpen && workspace.activeTab === "browser") workspace.setOpen(false);
     set((state) => ({
       artifactsById: {
         ...state.artifactsById,
@@ -47,7 +54,29 @@ export const useChatArtifactsStore = create<ChatArtifactsState>((set) => ({
       selectedArtifactId: artifact.id,
       surface: options?.surface ?? state.surface,
       requestedView: options?.view ?? "preview",
-    })),
+    }));
+  },
+  selectArtifact: (id) =>
+    set((state) => state.artifactsById[id]
+      ? { selectedArtifactId: id, requestedView: "preview" }
+      : state),
+  closeArtifactTab: (id) =>
+    set((state) => {
+      const artifact = state.artifactsById[id];
+      if (!artifact) return state;
+      const artifactsById = { ...state.artifactsById };
+      delete artifactsById[id];
+      if (state.selectedArtifactId !== id) return { artifactsById };
+      const next = Object.values(artifactsById)
+        .filter((item) => artifact.threadId ? item.threadId === artifact.threadId : item.id !== id && !item.threadId)
+        .sort((a, b) => b.createdAt - a.createdAt)[0];
+      return {
+        artifactsById,
+        selectedArtifactId: next?.id ?? null,
+        surface: next ? state.surface : "panel",
+        requestedView: "preview",
+      };
+    }),
   updateArtifact: (artifact) =>
     set((state) =>
       state.artifactsById[artifact.id]

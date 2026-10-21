@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useT } from "@/i18n";
 import { apiUrl } from "@/lib/api-base";
 import { cn } from "@/lib/utils";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useChatRuntimeStore } from "../stores/chat-runtime-store";
 import { hashArtifactCode } from "./types";
 
@@ -138,8 +138,8 @@ export function ArtifactHtmlFrame({
     return apiUrl(`/api/inference/artifact-preview-frame?${query.toString()}`);
   }, [networkAllowed, codeVersion]);
   // Feed only parent-initiated loads, so a self-navigated frame can't self-upgrade.
-  const pendingPostRef = useRef(false);
-  useEffect(() => {
+  const pendingPostRef = useRef(true);
+  useLayoutEffect(() => {
     pendingPostRef.current = true;
   }, [src]);
   const postArtifactHtml = useCallback(() => {
@@ -161,6 +161,10 @@ export function ArtifactHtmlFrame({
         return;
       }
       if (event.origin !== "null") {
+        return;
+      }
+      if (event.data?.type === "unsloth:artifact-ready" && event.data.v === codeVersion) {
+        postArtifactHtml();
         return;
       }
       if (event.data?.type === "unsloth:artifact-blocked") {

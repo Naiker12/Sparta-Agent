@@ -125,6 +125,9 @@ export function DiffViewer({ file }: { file: WorkspaceChangedFile }) {
           <ChevronRightIcon aria-hidden="true" className={cn("size-3.5 shrink-0 transition-transform motion-reduce:transition-none", expanded && "rotate-90")} />
           <FileCodeIcon className="size-4 shrink-0 text-muted-foreground" />
           <span title={file.path} className="truncate font-medium">{file.path}</span>
+          <span className="shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">
+            {t(file.status === "added" || file.status === "untracked" ? "chat.repository.statusAdded" : file.status === "deleted" ? "chat.repository.statusDeleted" : "chat.repository.statusModified")}
+          </span>
         </button>
         <div className="flex items-center gap-2 shrink-0 font-medium text-[11px]">
           {expanded && chunks.length > 0 && <Button
@@ -145,8 +148,8 @@ export function DiffViewer({ file }: { file: WorkspaceChangedFile }) {
       </div>
 
       {expanded && <div id={contentId} className="min-w-0 overflow-x-auto text-[12px] font-mono leading-relaxed select-text">
-        {chunks.length === 0 && <p className="px-4 py-3 font-sans text-xs text-muted-foreground">{t("ui.no_text_differences_available_for_this_file")}</p>}
-        {chunks.map((chunk, chunkIdx) => (
+        {file.binary ? <p className="px-4 py-3 font-sans text-xs text-muted-foreground">{t("chat.changes.binaryHelp")}</p> : chunks.length === 0 && <p className="px-4 py-3 font-sans text-xs text-muted-foreground">{t("ui.no_text_differences_available_for_this_file")}</p>}
+        {!file.binary && chunks.map((chunk, chunkIdx) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: diff chunks have no ids
           <div key={chunkIdx} className="w-full">
             <div className="px-4 py-1 bg-muted/20 text-muted-foreground/80 text-[11px] font-semibold border-b border-border/20">

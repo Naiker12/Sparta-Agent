@@ -1,4 +1,7 @@
 import { create } from "zustand";
+// Import the leaf state directly; this also keeps the store testable outside Vite aliases.
+import { useDocumentPreviewStore } from "../../rag/components/preview-store";
+import { useChatArtifactsStore } from "../artifacts/store";
 
 export type WorkspaceTab =
   | "files"
@@ -16,6 +19,7 @@ export interface WorkspaceChangedFile {
   additions: number;
   deletions: number;
   diff?: string;
+  binary?: boolean;
   oldPath?: string;
 }
 
@@ -78,10 +82,10 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   selectedFilePath: null,
   selectedDiffFile: null,
 
-  browserUrl: "http://localhost:4200",
-  browserTitle: "MiSitio",
-  browserHistory: ["http://localhost:4200"],
-  browserHistoryIndex: 0,
+  browserUrl: "",
+  browserTitle: "",
+  browserHistory: [],
+  browserHistoryIndex: -1,
   browserReloadKey: 0,
 
   changedFiles: [],
@@ -93,20 +97,21 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     hasBrowser: false,
   },
 
-  setOpen: (isOpen) => set({ isOpen }),
-  toggleOpen: () => set((state) => ({ isOpen: !state.isOpen })),
+  setOpen: (isOpen) => {
+    if (isOpen && get().activeTab === "browser") useChatArtifactsStore.getState().closeArtifactSurface();
+    set({ isOpen });
+  },
+  toggleOpen: () => get().setOpen(!get().isOpen),
 
-  setActiveTab: (activeTab) =>
+  setActiveTab: (activeTab) => {
+    if (activeTab === "browser") useChatArtifactsStore.getState().closeArtifactSurface();
     set({
       activeTab,
       isOpen: true,
-    }),
+    });
+  },
 
-  openTab: (tab) =>
-    set({
-      activeTab: tab,
-      isOpen: true,
-    }),
+  openTab: (tab) => get().setActiveTab(tab),
 
   setSearchQuery: (searchQuery) => set({ searchQuery }),
 
@@ -136,6 +141,8 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   setBrowserUrl: (browserUrl) => set({ browserUrl }),
 
   navigateBrowser: (url, title) => {
+    useDocumentPreviewStore.getState().closePreview();
+    useChatArtifactsStore.getState().closeArtifactSurface();
     const { browserHistory, browserHistoryIndex } = get();
     const newHistory = browserHistory.slice(0, browserHistoryIndex + 1);
     newHistory.push(url);

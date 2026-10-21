@@ -118,24 +118,13 @@ export async function buildLocalTokenCountExtras(
     : false;
   const ragOn = ragEnabled || projectRagEnabled;
   const panelUiEnabled = useChatPreferencesStore.getState().visualResponses;
-  if (
-    !(
-      panelUiEnabled || toolsEnabled ||
-      codeToolsEnabled ||
-      artifactsEnabled ||
-      mcpEnabledForChat ||
-      ragOn ||
-      workspaceEnabled
-    )
-  ) {
-    return { enable_tools: false, bypass_permissions: bypassPermissions };
-  }
 
   return {
     enable_tools: true,
     auto_heal_tool_calls: autoHealToolCalls,
     bypass_permissions: bypassPermissions,
     enabled_tools: [
+      "generate_document", "propose_automation",
       ...(panelUiEnabled ? ["present_ui"] : []),
       ...(ragOn ? ["search_knowledge_base"] : []),
       ...(toolsEnabled ? ["web_search"] : []),

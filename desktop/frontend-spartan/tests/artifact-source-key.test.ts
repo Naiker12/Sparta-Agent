@@ -11,11 +11,23 @@ import {
   createArtifactId,
   createChatArtifact,
   hashArtifactCode,
+  getArtifactFilename,
 } from "../src/features/chat/artifacts/types.ts";
 import { openingTag } from "./helpers/tsx-ast.ts";
 
 // The shipped helper the component keys on, not a copy of it.
 const sourceKey = buildArtifactSourceKey;
+
+test("file previews retain original source and filename separately from their dependency bundle", () => {
+  const artifact = createChatArtifact({ source: "tool", code: '<link rel="stylesheet" href="style.css">', previewCode: "<style>body{color:red}</style>", filename: "Página.HTML", title: "Página.HTML" });
+  assert.equal(artifact.code, '<link rel="stylesheet" href="style.css">');
+  assert.equal(artifact.previewCode, "<style>body{color:red}</style>");
+  assert.equal(getArtifactFilename(artifact), "Página.HTML");
+});
+
+test("artifact exports do not accept paths as filenames", () => {
+  assert.equal(getArtifactFilename({ title: "Safe title", filename: "../outside.html" }), "safe-title.html");
+});
 
 const toolInput = (code: string) => ({
   code,

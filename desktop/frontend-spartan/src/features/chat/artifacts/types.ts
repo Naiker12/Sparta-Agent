@@ -5,6 +5,9 @@ export interface ChatArtifact {
   id: string;
   title: string;
   code: string;
+  /** In-memory dependency bundle; source and export remain the original file. */
+  previewCode?: string;
+  filename?: string;
   source: ChatArtifactSource;
   sourceMessageId?: string | null;
   sourceToolCallId?: string | null;
@@ -16,6 +19,8 @@ export interface ChatArtifact {
 export interface ChatArtifactInput {
   title?: string | null;
   code: string;
+  previewCode?: string;
+  filename?: string;
   source: ChatArtifactSource;
   sourceMessageId?: string | null;
   sourceToolCallId?: string | null;
@@ -68,6 +73,8 @@ export function createChatArtifact(input: ChatArtifactInput): ChatArtifact {
     id: createArtifactId(input),
     title: normalizeArtifactTitle(input.title),
     code: input.code,
+    previewCode: input.previewCode,
+    filename: input.filename,
     source: input.source,
     sourceMessageId: input.sourceMessageId ?? null,
     sourceToolCallId: input.sourceToolCallId ?? null,
@@ -78,8 +85,9 @@ export function createChatArtifact(input: ChatArtifactInput): ChatArtifact {
 }
 
 export function getArtifactFilename(
-  artifact: Pick<ChatArtifact, "title">,
+  artifact: Pick<ChatArtifact, "title" | "filename">,
 ): string {
+  if (artifact.filename && !/[\\/]/.test(artifact.filename) && ![...artifact.filename].some(char => char.charCodeAt(0) < 32)) return artifact.filename;
   const slug = artifact.title
     .trim()
     .toLowerCase()
