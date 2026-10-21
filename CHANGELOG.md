@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.5.3] - 2026-10-20
+
+### Corregido
+
+- El backend empaquetado ahora inicia aunque la edición API-only no incluya el router RAG ni su motor completo.
+- La validación del paquete comprueba que la configuración opcional de RAG esté presente y evita repetir un instalador que falla al importar `routes.rag_pkg`.
+
+### Release
+
+- Preparación de instaladores para Windows, macOS Apple silicon/Intel y Linux, con validación automatizada antes de publicar.
+
 ## [0.5.2] - 2026-10-20
 
 ### Corregido

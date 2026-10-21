@@ -45,6 +45,10 @@ Estas guías explican el comportamiento de la versión publicada. Comprueba las 
 
 La versión 0.5.2 corrige un error de JavaScript en el proceso principal de Electron que impedía iniciar la aplicación en Windows. El bundle ESM proporciona el soporte `require` que necesitan las dependencias CommonJS para cargar módulos de Node.js como `fs`.
 
+## Corrección preparada para 0.5.3
+
+La siguiente versión corrige el arranque del backend empaquetado cuando la edición API-only omite el router RAG y su motor. Esta preparación permite continuar la instalación; no incluye las funciones RAG que dependen de ese motor.
+
 ## Qué depende de la configuración
 
 La visión, el razonamiento, las llamadas de herramientas y los límites de contexto dependen del modelo y su API. Las vistas de Git, GitHub, subagentes o navegador dependen de las capacidades del proyecto. Una conexión exitosa no verifica todas las operaciones de un servicio.

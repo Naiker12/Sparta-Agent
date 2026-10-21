@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, statSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs'
 import { join, dirname, resolve } from 'node:path'
 import { extractFile, listPackage } from '@electron/asar'
 import packageJson from '../package.json' with { type: 'json' }
@@ -61,6 +61,15 @@ for (const archive of archives) {
     if (!existsSync(join(dirname(archive), 'backend', required))) {
       throw new Error(`Missing packaged API backend resource: ${required}`)
     }
+  }
+  const backendMain = readFileSync(join(backendRoot, 'main.py'), 'utf8')
+  if (
+    existsSync(join(backendRoot, 'routes/rag_pkg')) ||
+    !backendMain.includes('except ModuleNotFoundError as exc:') ||
+    !backendMain.includes('rag_router = None') ||
+    !backendMain.includes('if rag_router is not None:')
+  ) {
+    throw new Error('Packaged API backend must start when its intentionally omitted RAG router is unavailable.')
   }
   const entries = listPackage(archive).map((entry) => entry.replaceAll('\\', '/'))
   for (const required of ['/dist/index.html', '/dist-electron/electron-main.js', '/package.json']) {

@@ -291,7 +291,15 @@ from routes import (
     youtube_router,
 )
 from routes.project_files import router as project_files_router
-from routes.rag_pkg import router as rag_router
+# The source checkout can include the optional RAG engine, but API-only
+# desktop packages deliberately omit routes/rag_pkg and core/rag. Keep the
+# main application importable in both distributions.
+try:
+    from routes.rag_pkg import router as rag_router
+except ModuleNotFoundError as exc:
+    if exc.name not in {"routes.rag_pkg", "core.rag"}:
+        raise
+    rag_router = None
 from routes.preview import router as preview_router
 from picker.routes import templates_router as picker_templates_router
 from routes.settings import router as settings_router
@@ -1253,7 +1261,8 @@ async def unhandled_api_error(request: Request, exc: Exception):
 
 app.include_router(auth_router, prefix = "/api/auth", tags = ["auth"])
 app.include_router(chat_history_router, prefix = "/api/chat", tags = ["chat"])
-app.include_router(rag_router, prefix = "/api/rag", tags = ["rag"])
+if rag_router is not None:
+    app.include_router(rag_router, prefix = "/api/rag", tags = ["rag"])
 app.include_router(project_files_router, prefix = "/api/chat", tags = ["project-files"])
 app.include_router(research_runs_router, prefix = "/api/chat/research-runs", tags = ["research-runs"])
 app.include_router(inference_router, prefix = "/api/inference", tags = ["inference"])
