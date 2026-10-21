@@ -17,7 +17,8 @@ import {
   usePromptQueueUI,
 } from "@/features/chat/stores/prompt-queue-ui-store";
 import { cn } from "@/lib/utils";
-import { Delete02Icon, Edit03Icon } from "@hugeicons/core-free-icons";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as Edit03Icon } from "@hugeicons/core-free-icons/Edit03Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CornerDownRightIcon } from "lucide-react";
 import {

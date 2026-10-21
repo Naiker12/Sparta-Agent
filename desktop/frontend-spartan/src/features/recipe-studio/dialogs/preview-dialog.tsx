@@ -17,12 +17,10 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { ChevronDownStandardIcon } from "@/lib/chevron-icons";
 import { cn } from "@/lib/utils";
-import {
-  AlertCircleIcon,
-  CheckmarkCircle02Icon,
-  CookBookIcon,
-  TestTube01Icon,
-} from "@hugeicons/core-free-icons";
+import { default as AlertCircleIcon } from "@hugeicons/core-free-icons/AlertCircleIcon";
+import { default as CheckmarkCircle02Icon } from "@hugeicons/core-free-icons/CheckmarkCircle02Icon";
+import { default as CookBookIcon } from "@hugeicons/core-free-icons/CookBookIcon";
+import { default as TestTube01Icon } from "@hugeicons/core-free-icons/TestTube01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type ReactElement, type ReactNode, useState } from "react";
 import type { RecipeExecutionKind } from "../execution-types";

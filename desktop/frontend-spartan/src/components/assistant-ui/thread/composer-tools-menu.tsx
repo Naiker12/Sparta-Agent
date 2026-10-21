@@ -44,19 +44,17 @@ import { applyQwenThinkingParams } from "@/features/chat/utils/qwen-params";
 import { useT } from "@/i18n";
 import { isDownloadCancelled } from "@/lib/native-files";
 import { useAui, useAuiState } from "@assistant-ui/react";
-import {
-  AttachmentIcon,
-  Bookmark02Icon,
-  CodeIcon,
-  Download01Icon,
-  Folder01Icon,
-  FolderAddIcon,
-  Image03Icon,
-  McpServerIcon,
-  PencilRulerIcon,
-  Telescope02Icon,
-  Tick02Icon,
-} from "@hugeicons/core-free-icons";
+import { default as AttachmentIcon } from "@hugeicons/core-free-icons/AttachmentIcon";
+import { default as Bookmark02Icon } from "@hugeicons/core-free-icons/Bookmark02Icon";
+import { default as CodeIcon } from "@hugeicons/core-free-icons/CodeIcon";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
+import { default as Folder01Icon } from "@hugeicons/core-free-icons/Folder01Icon";
+import { default as FolderAddIcon } from "@hugeicons/core-free-icons/FolderAddIcon";
+import { default as Image03Icon } from "@hugeicons/core-free-icons/Image03Icon";
+import { default as McpServerIcon } from "@hugeicons/core-free-icons/McpServerIcon";
+import { default as PencilRulerIcon } from "@hugeicons/core-free-icons/PencilRulerIcon";
+import { default as Telescope02Icon } from "@hugeicons/core-free-icons/Telescope02Icon";
+import { default as Tick02Icon } from "@hugeicons/core-free-icons/Tick02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate } from "@tanstack/react-router";
 import {

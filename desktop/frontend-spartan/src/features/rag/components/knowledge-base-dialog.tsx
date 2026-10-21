@@ -1,10 +1,8 @@
 import { translate as uiTranslate } from "@/i18n";
 import { useT as useUiT } from "@/i18n";
-import {
-  Delete02Icon,
-  Edit03Icon,
-  PlusSignIcon,
-} from "@hugeicons/core-free-icons";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as Edit03Icon } from "@hugeicons/core-free-icons/Edit03Icon";
+import { default as PlusSignIcon } from "@hugeicons/core-free-icons/PlusSignIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ChevronLeftIcon, UploadIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";

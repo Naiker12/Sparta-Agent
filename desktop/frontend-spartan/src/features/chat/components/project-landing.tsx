@@ -6,20 +6,18 @@ import { useT as useUiT } from "@/i18n";
  */
 
 import { useT } from "@/i18n";
-import {
-  Archive03Icon,
-  BookOpen01Icon,
-  Delete02Icon,
-  Download01Icon,
-  Edit03Icon,
-  Folder01Icon,
-  Folder02Icon,
-  FolderExportIcon,
-  MoreHorizontalIcon,
-  MoreVerticalIcon,
-  PinIcon,
-  PinOffIcon,
-} from "@hugeicons/core-free-icons";
+import { default as Archive03Icon } from "@hugeicons/core-free-icons/Archive03Icon";
+import { default as BookOpen01Icon } from "@hugeicons/core-free-icons/BookOpen01Icon";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
+import { default as Edit03Icon } from "@hugeicons/core-free-icons/Edit03Icon";
+import { default as Folder01Icon } from "@hugeicons/core-free-icons/Folder01Icon";
+import { default as Folder02Icon } from "@hugeicons/core-free-icons/Folder02Icon";
+import { default as FolderExportIcon } from "@hugeicons/core-free-icons/FolderExportIcon";
+import { default as MoreHorizontalIcon } from "@hugeicons/core-free-icons/MoreHorizontalIcon";
+import { default as MoreVerticalIcon } from "@hugeicons/core-free-icons/MoreVerticalIcon";
+import { default as PinIcon } from "@hugeicons/core-free-icons/PinIcon";
+import { default as PinOffIcon } from "@hugeicons/core-free-icons/PinOffIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate } from "@tanstack/react-router";
 import {

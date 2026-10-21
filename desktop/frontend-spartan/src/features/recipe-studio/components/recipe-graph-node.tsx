@@ -4,24 +4,22 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
-import {
-  BalanceScaleIcon,
-  Clock01Icon,
-  CodeIcon,
-  CodeSimpleIcon,
-  DiceFaces03Icon,
-  EqualSignIcon,
-  FingerPrintIcon,
-  FunctionIcon,
-  Parabola02Icon,
-  PencilEdit02Icon,
-  Plant01Icon,
-  Plug01Icon,
-  Shield02Icon,
-  Tag01Icon,
-  TagsIcon,
-  UserAccountIcon,
-} from "@hugeicons/core-free-icons";
+import { default as BalanceScaleIcon } from "@hugeicons/core-free-icons/BalanceScaleIcon";
+import { default as Clock01Icon } from "@hugeicons/core-free-icons/Clock01Icon";
+import { default as CodeIcon } from "@hugeicons/core-free-icons/CodeIcon";
+import { default as CodeSimpleIcon } from "@hugeicons/core-free-icons/CodeSimpleIcon";
+import { default as DiceFaces03Icon } from "@hugeicons/core-free-icons/DiceFaces03Icon";
+import { default as EqualSignIcon } from "@hugeicons/core-free-icons/EqualSignIcon";
+import { default as FingerPrintIcon } from "@hugeicons/core-free-icons/FingerPrintIcon";
+import { default as FunctionIcon } from "@hugeicons/core-free-icons/FunctionIcon";
+import { default as Parabola02Icon } from "@hugeicons/core-free-icons/Parabola02Icon";
+import { default as PencilEdit02Icon } from "@hugeicons/core-free-icons/PencilEdit02Icon";
+import { default as Plant01Icon } from "@hugeicons/core-free-icons/Plant01Icon";
+import { default as Plug01Icon } from "@hugeicons/core-free-icons/Plug01Icon";
+import { default as Shield02Icon } from "@hugeicons/core-free-icons/Shield02Icon";
+import { default as Tag01Icon } from "@hugeicons/core-free-icons/Tag01Icon";
+import { default as TagsIcon } from "@hugeicons/core-free-icons/TagsIcon";
+import { default as UserAccountIcon } from "@hugeicons/core-free-icons/UserAccountIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   type NodeProps,

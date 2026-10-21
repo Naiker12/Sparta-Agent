@@ -8,12 +8,10 @@ import { hasAuthToken, mustChangePassword } from "@/features/auth/session";
 import { isTauri } from "@/lib/api-base";
 import { ChevronDownStandardIcon } from "@/lib/chevron-icons";
 import { cn } from "@/lib/utils";
-import {
-  Alert02Icon,
-  Cancel01Icon,
-  CheckmarkCircle02Icon,
-  Download01Icon,
-} from "@hugeicons/core-free-icons";
+import { default as Alert02Icon } from "@hugeicons/core-free-icons/Alert02Icon";
+import { default as Cancel01Icon } from "@hugeicons/core-free-icons/Cancel01Icon";
+import { default as CheckmarkCircle02Icon } from "@hugeicons/core-free-icons/CheckmarkCircle02Icon";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useRouterState } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";

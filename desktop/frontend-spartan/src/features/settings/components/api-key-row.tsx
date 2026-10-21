@@ -7,11 +7,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { type Locale, formatRelativeTime, useLocale, useT } from "@/i18n";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
-import {
-  Copy01Icon,
-  Delete02Icon,
-  MoreHorizontalIcon,
-} from "@hugeicons/core-free-icons";
+import { default as Copy01Icon } from "@hugeicons/core-free-icons/Copy01Icon";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as MoreHorizontalIcon } from "@hugeicons/core-free-icons/MoreHorizontalIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { ApiKey } from "../api/api-keys";
 

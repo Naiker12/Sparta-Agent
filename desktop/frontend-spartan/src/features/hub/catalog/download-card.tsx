@@ -16,12 +16,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import {
-  ArrowReloadHorizontalIcon,
-  Delete02Icon,
-  Download01Icon,
-  Settings02Icon,
-} from "@hugeicons/core-free-icons";
+import { default as ArrowReloadHorizontalIcon } from "@hugeicons/core-free-icons/ArrowReloadHorizontalIcon";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
+import { default as Settings02Icon } from "@hugeicons/core-free-icons/Settings02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { ReactNode } from "react";
 import {

@@ -1,4 +1,5 @@
-import { Cancel01Icon, PauseIcon } from "@hugeicons/core-free-icons";
+import { default as Cancel01Icon } from "@hugeicons/core-free-icons/Cancel01Icon";
+import { default as PauseIcon } from "@hugeicons/core-free-icons/PauseIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 /** What stopping this download costs. HTTP keeps the partial to continue from,

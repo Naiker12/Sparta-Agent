@@ -11,7 +11,7 @@ import { translate, useLocale } from "@/i18n";
 import type { CopySupportDiagnosticsResult } from "@/lib/tauri-diagnostics";
 
 import { LanguageSelect } from "@/features/settings/components/language-select";
-import { ChevronDown as ChevronDownIcon } from "@hugeicons/core-free-icons";
+import { default as ChevronDownIcon } from "@hugeicons/core-free-icons/ArrowDown01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { type ReactNode, useEffect, useState } from "react";

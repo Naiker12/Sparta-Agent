@@ -1,8 +1,6 @@
 import { useT as useUiT } from "@/i18n";
-import {
-  DocumentAttachmentIcon,
-  PlusSignIcon,
-} from "@hugeicons/core-free-icons";
+import { default as DocumentAttachmentIcon } from "@hugeicons/core-free-icons/DocumentAttachmentIcon";
+import { default as PlusSignIcon } from "@hugeicons/core-free-icons/PlusSignIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Background,

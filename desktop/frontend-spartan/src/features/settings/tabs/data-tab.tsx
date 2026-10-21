@@ -42,14 +42,12 @@ import {
 } from "@/lib/chevron-icons";
 import { isDownloadCancelled, pickNativeChatImport } from "@/lib/native-files";
 import { toast } from "@/lib/toast";
-import {
-  Archive02Icon,
-  ArrowLeft01Icon,
-  Delete02Icon,
-  Download01Icon,
-  Tick02Icon,
-  Upload01Icon,
-} from "@hugeicons/core-free-icons";
+import { default as Archive02Icon } from "@hugeicons/core-free-icons/Archive02Icon";
+import { default as ArrowLeft01Icon } from "@hugeicons/core-free-icons/ArrowLeft01Icon";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
+import { default as Tick02Icon } from "@hugeicons/core-free-icons/Tick02Icon";
+import { default as Upload01Icon } from "@hugeicons/core-free-icons/Upload01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";

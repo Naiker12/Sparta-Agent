@@ -35,17 +35,15 @@ import {
 import { isTauri } from "@/lib/api-base";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
-import {
-  Delete02Icon,
-  DownloadCircle01Icon,
-  FileSearchIcon,
-  FolderAddIcon,
-  FolderExportIcon,
-  FolderOpenIcon,
-  FolderSearchIcon,
-  PlusSignIcon,
-  RefreshIcon,
-} from "@hugeicons/core-free-icons";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as DownloadCircle01Icon } from "@hugeicons/core-free-icons/DownloadCircle01Icon";
+import { default as FileSearchIcon } from "@hugeicons/core-free-icons/FileSearchIcon";
+import { default as FolderAddIcon } from "@hugeicons/core-free-icons/FolderAddIcon";
+import { default as FolderExportIcon } from "@hugeicons/core-free-icons/FolderExportIcon";
+import { default as FolderOpenIcon } from "@hugeicons/core-free-icons/FolderOpenIcon";
+import { default as FolderSearchIcon } from "@hugeicons/core-free-icons/FolderSearchIcon";
+import { default as PlusSignIcon } from "@hugeicons/core-free-icons/PlusSignIcon";
+import { default as RefreshIcon } from "@hugeicons/core-free-icons/RefreshIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 

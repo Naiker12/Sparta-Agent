@@ -1,9 +1,7 @@
 import { useT as useUiT } from "@/i18n";
-import {
-  Download01Icon,
-  File02Icon,
-  FolderOpenIcon,
-} from "@hugeicons/core-free-icons";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
+import { default as File02Icon } from "@hugeicons/core-free-icons/File02Icon";
+import { default as FolderOpenIcon } from "@hugeicons/core-free-icons/FolderOpenIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useState } from "react";
 import { toast } from "@/lib/toast";

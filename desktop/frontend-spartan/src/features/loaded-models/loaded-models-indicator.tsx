@@ -18,14 +18,12 @@ import { ChevronDownStandardIcon } from "@/lib/chevron-icons";
 import { subscribeModelLifecycle } from "@/lib/model-lifecycle-events";
 import { SparkleIcon } from "@/lib/sparkle-icon";
 import { cn } from "@/lib/utils";
-import {
-  Cancel01Icon,
-  DragDropVerticalIcon,
-  Message01Icon,
-  Mic01Icon,
-  RemoveCircleIcon,
-  VolumeHighIcon,
-} from "@hugeicons/core-free-icons";
+import { default as Cancel01Icon } from "@hugeicons/core-free-icons/Cancel01Icon";
+import { default as DragDropVerticalIcon } from "@hugeicons/core-free-icons/DragDropVerticalIcon";
+import { default as Message01Icon } from "@hugeicons/core-free-icons/Message01Icon";
+import { default as Mic01Icon } from "@hugeicons/core-free-icons/Mic01Icon";
+import { default as RemoveCircleIcon } from "@hugeicons/core-free-icons/RemoveCircleIcon";
+import { default as VolumeHighIcon } from "@hugeicons/core-free-icons/VolumeHighIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef } from "react";

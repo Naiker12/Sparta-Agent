@@ -8,7 +8,8 @@ import {
 import { useT } from "@/i18n";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
-import { File02Icon, FolderAddIcon } from "@hugeicons/core-free-icons";
+import { default as File02Icon } from "@hugeicons/core-free-icons/File02Icon";
+import { default as FolderAddIcon } from "@hugeicons/core-free-icons/FolderAddIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { XIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";

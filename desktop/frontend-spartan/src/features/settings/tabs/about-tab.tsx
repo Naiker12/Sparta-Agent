@@ -6,13 +6,11 @@ import { getAuthToken } from "@/features/auth";
 import { type HardwareInfo, useHardwareInfo } from "@/hooks/use-hardware-info";
 import { type TranslationKey, useT } from "@/i18n";
 import { apiUrl, isTauri } from "@/lib/api-base";
-import {
-  ArrowUpRight01Icon,
-  Book03Icon,
-  Cancel01Icon,
-  MessageNotification01Icon,
-  NewReleasesIcon,
-} from "@hugeicons/core-free-icons";
+import { default as ArrowUpRight01Icon } from "@hugeicons/core-free-icons/ArrowUpRight01Icon";
+import { default as Book03Icon } from "@hugeicons/core-free-icons/Book03Icon";
+import { default as Cancel01Icon } from "@hugeicons/core-free-icons/Cancel01Icon";
+import { default as MessageNotification01Icon } from "@hugeicons/core-free-icons/MessageNotification01Icon";
+import { default as NewReleasesIcon } from "@hugeicons/core-free-icons/NewReleasesIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useRef, useState } from "react";
 import { SettingsRow } from "../components/settings-row";

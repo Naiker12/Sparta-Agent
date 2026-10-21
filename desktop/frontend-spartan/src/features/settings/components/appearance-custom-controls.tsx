@@ -19,11 +19,9 @@ import { type TranslationKey, useT } from "@/i18n";
 import { ChevronDownStandardIcon } from "@/lib/chevron-icons";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
-import {
-  Cancel01Icon,
-  Folder01Icon,
-  Upload01Icon,
-} from "@hugeicons/core-free-icons";
+import { default as Cancel01Icon } from "@hugeicons/core-free-icons/Cancel01Icon";
+import { default as Folder01Icon } from "@hugeicons/core-free-icons/Folder01Icon";
+import { default as Upload01Icon } from "@hugeicons/core-free-icons/Upload01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { motion, useReducedMotionConfig } from "motion/react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";

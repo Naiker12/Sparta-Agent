@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useCopyFeedback } from "@/features/hub/hooks/use-copy-feedback";
 import { useT } from "@/i18n";
 import { stripAnsi } from "@/lib/strip-ansi";
-import { Tick02Icon } from "@hugeicons/core-free-icons";
+import { default as Tick02Icon } from "@hugeicons/core-free-icons/Tick02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {

@@ -13,12 +13,10 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toastError, toastSuccess } from "@/shared/toast";
-import {
-  ArrowRight01Icon,
-  CheckmarkCircle02Icon,
-  Copy01Icon,
-  Key01Icon,
-} from "@hugeicons/core-free-icons";
+import { default as ArrowRight01Icon } from "@hugeicons/core-free-icons/ArrowRight01Icon";
+import { default as CheckmarkCircle02Icon } from "@hugeicons/core-free-icons/CheckmarkCircle02Icon";
+import { default as Copy01Icon } from "@hugeicons/core-free-icons/Copy01Icon";
+import { default as Key01Icon } from "@hugeicons/core-free-icons/Key01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type ReactElement, useEffect, useMemo, useState } from "react";
 import type { RecipeExecutionRecord } from "../../execution-types";

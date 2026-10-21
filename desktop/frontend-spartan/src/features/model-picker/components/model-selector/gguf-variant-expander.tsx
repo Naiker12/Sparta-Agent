@@ -27,7 +27,7 @@ import {
   useGgufVariantsCacheVersions,
 } from "@/features/hub";
 import { cn } from "@/lib/utils";
-import { ViewIcon } from "@hugeicons/core-free-icons";
+import { default as ViewIcon } from "@hugeicons/core-free-icons/ViewIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   type ReactNode,

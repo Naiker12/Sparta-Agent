@@ -11,7 +11,7 @@ import {
   useAuiState,
   useToolArgsStatus,
 } from "@assistant-ui/react";
-import { BrowserIcon } from "@hugeicons/core-free-icons";
+import { default as BrowserIcon } from "@hugeicons/core-free-icons/BrowserIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { memo, useEffect } from "react";
 

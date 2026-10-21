@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { Spinner } from "@/components/ui/spinner";
-import { GithubIcon } from "@hugeicons/core-free-icons";
+import { default as GithubIcon } from "@hugeicons/core-free-icons/GithubIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import type { ReactElement } from "react";

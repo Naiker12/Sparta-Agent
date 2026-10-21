@@ -28,13 +28,11 @@ import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 import { usePinnedChatsStore } from "@/features/chat/stores/pinned-chats-store";
 import { isDownloadCancelled } from "@/lib/native-files";
 import { toast } from "@/lib/toast";
-import {
-  Archive02Icon,
-  Delete02Icon,
-  Download01Icon,
-  Folder01Icon,
-  PinIcon,
-} from "@hugeicons/core-free-icons";
+import { default as Archive02Icon } from "@hugeicons/core-free-icons/Archive02Icon";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
+import { default as Folder01Icon } from "@hugeicons/core-free-icons/Folder01Icon";
+import { default as PinIcon } from "@hugeicons/core-free-icons/PinIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useRef, useState } from "react";

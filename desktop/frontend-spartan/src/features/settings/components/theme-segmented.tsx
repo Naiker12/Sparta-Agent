@@ -1,6 +1,8 @@
 import { type TranslationKey, useT } from "@/i18n";
 import { cn } from "@/lib/utils";
-import { LaptopIcon, Moon02Icon, Sun02Icon } from "@hugeicons/core-free-icons";
+import { default as LaptopIcon } from "@hugeicons/core-free-icons/LaptopIcon";
+import { default as Moon02Icon } from "@hugeicons/core-free-icons/Moon02Icon";
+import { default as Sun02Icon } from "@hugeicons/core-free-icons/Sun02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { motion, useReducedMotion } from "motion/react";
 import { type Theme, useTheme } from "../stores/theme-store";

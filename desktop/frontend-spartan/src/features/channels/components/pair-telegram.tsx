@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { TelegramIcon, Cancel01Icon } from "@hugeicons/core-free-icons";
+import { default as TelegramIcon } from "@hugeicons/core-free-icons/TelegramIcon";
+import { default as Cancel01Icon } from "@hugeicons/core-free-icons/Cancel01Icon";
 import { useT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";

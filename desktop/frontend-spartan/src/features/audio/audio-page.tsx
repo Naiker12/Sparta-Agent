@@ -1,15 +1,13 @@
 import { translate as uiTranslate } from "@/i18n";
 import { useT as useUiT } from "@/i18n";
-import {
-  AudioWave01Icon,
-  Copy01Icon,
-  Delete02Icon,
-  Download01Icon,
-  Mic01Icon,
-  MoreVerticalIcon,
-  SparklesIcon,
-  StopIcon,
-} from "@hugeicons/core-free-icons";
+import { default as AudioWave01Icon } from "@hugeicons/core-free-icons/AudioWave01Icon";
+import { default as Copy01Icon } from "@hugeicons/core-free-icons/Copy01Icon";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
+import { default as Mic01Icon } from "@hugeicons/core-free-icons/Mic01Icon";
+import { default as MoreVerticalIcon } from "@hugeicons/core-free-icons/MoreVerticalIcon";
+import { default as SparklesIcon } from "@hugeicons/core-free-icons/SparklesIcon";
+import { default as StopIcon } from "@hugeicons/core-free-icons/StopIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   type ReactNode,

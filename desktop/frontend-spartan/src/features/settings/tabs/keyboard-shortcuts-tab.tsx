@@ -7,13 +7,11 @@ import {
 } from "@/components/ui/tooltip";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
-import {
-  Alert01Icon,
-  ArrowTurnBackwardIcon,
-  Delete02Icon,
-  PencilEdit02Icon,
-  Search01Icon,
-} from "@hugeicons/core-free-icons";
+import { default as Alert01Icon } from "@hugeicons/core-free-icons/Alert01Icon";
+import { default as ArrowTurnBackwardIcon } from "@hugeicons/core-free-icons/ArrowTurnBackwardIcon";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as PencilEdit02Icon } from "@hugeicons/core-free-icons/PencilEdit02Icon";
+import { default as Search01Icon } from "@hugeicons/core-free-icons/Search01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useMemo, useState } from "react";
 import { SettingsRow } from "../components/settings-row";

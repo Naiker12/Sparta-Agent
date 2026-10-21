@@ -5,7 +5,7 @@ import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { downloadUrl, isDownloadCancelled } from "@/lib/native-files";
 import { toast } from "@/lib/toast";
-import { Download01Icon } from "@hugeicons/core-free-icons";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { PauseIcon, PlayIcon } from "lucide-react";
 import { type ChangeEvent, type FC, useRef, useState } from "react";

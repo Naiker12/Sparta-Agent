@@ -9,7 +9,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useT } from "@/i18n";
 import { toast } from "@/lib/toast";
-import { Folder01Icon, FolderAddIcon } from "@hugeicons/core-free-icons";
+import { default as Folder01Icon } from "@hugeicons/core-free-icons/Folder01Icon";
+import { default as FolderAddIcon } from "@hugeicons/core-free-icons/FolderAddIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ChevronDownIcon, GitBranchIcon } from "lucide-react";
 

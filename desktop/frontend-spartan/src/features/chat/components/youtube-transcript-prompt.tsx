@@ -5,7 +5,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { getLocale } from "@/i18n";
 import { toast } from "@/lib/toast";
 import { useAui } from "@assistant-ui/react";
-import { YoutubeIcon } from "@hugeicons/core-free-icons";
+import { default as YoutubeIcon } from "@hugeicons/core-free-icons/YoutubeIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {

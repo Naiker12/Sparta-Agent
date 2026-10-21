@@ -1,6 +1,6 @@
 # Preparación de release — Sparta Agent 0.5.0
 
-**Estado:** validaciones locales aprobadas; pendiente de empaquetado multiplataforma y publicación.  
+**Estado:** lint, typecheck, suites y compilación Vite del frontend aprobados; el empaquetado completo local alcanzó el límite de heap de 10 GB y no terminó. Pendiente validar empaquetados multiplataforma y publicación en CI.
 **Versión anterior publicada:** 0.4.1.  
 **Rama de trabajo:** `main`, con cambios locales aún sin commit.
 
@@ -23,13 +23,13 @@ Los manifiestos del producto y los metadatos raíz de sus lockfiles se prepararo
 
 - `node scripts/check-product-version.mjs v0.5.0`: aprobado; manifiestos, lockfiles y notas coinciden.
 - En `landing`: `npm run docs:check` aprobó 33 páginas, 63 enlaces internos y navegación; `npm run build:gh` terminó correctamente. La compilación advierte que el chunk `sparta-preview` supera 500 kB (aprox. 570 kB minificado).
-- En el repositorio: `npm run typecheck`, `npm run lint`, `npm run i18n:check`, `npm test` (84/84) y `npm run test:electron` (8/8) aprobaron.
+- En el repositorio: `npm run typecheck`, `npm run lint`, `npm run i18n:check`, `npm test` (84/84) y `npm run test:electron` (8/8) aprobaron. Tras el arreglo de iconos, `desktop/frontend-spartan`: `npm run typecheck` y `npm test` (3.668/3.668) también aprobaron.
 - Backend: las suites seleccionadas de canales, archivos, bucle de herramientas y voz aprobaron con **364 aprobadas, 2 omitidas**; apareció una advertencia de Starlette.
 - En la primera repetición completa del frontend se corrigieron tres pruebas desfasadas: la selección de proyecto por ejecución, la ubicación del componente de navegación de chats y el mock de React de la cola. La suite final aprobó **3.668/3.668**.
 - Pruebas de navegador: `npm run test:automations:browser` pasó el flujo de activación, ejecución y aprobación explícita; `npm run test:documents:browser` pasó apertura en frío, Word, PDF, hoja de cálculo, Markdown y reapertura.
 - `npm run test:assets:electron` pasó navegación de archivos empaquetados, logos de proveedores, navegación atrás/recarga, consulta del hilo, anclas y redirección de autenticación.
 - Las comprobaciones locales se ejecutaron con Node **24.19.0**. El workflow de release usa Node 22 y volverá a ejecutar sus puertas de calidad en CI.
-- Los dos primeros intentos de empaquetado de `v0.5.0` pasaron calidad, pero Linux y Windows agotaron el heap al límite de 8 GB y luego 10 GB. Se elevó el heap máximo a 12 GB y se limitó a 100 la cantidad de archivos que Rollup carga en paralelo. Ambos destinos de macOS se construyen en Intel, con la arquitectura explícita (`arm64` o `x64`) seleccionada por `TARGET_PLATFORM`. La tercera ejecución del tag validará estos ajustes.
+- Los primeros intentos de empaquetado agotaron memoria durante la transformación de iconos. La causa era importar el índice completo de `@hugeicons/core-free-icons`, que expone más de 10.000 módulos aunque la aplicación usa una fracción pequeña. Se cambiaron 566 referencias en 149 archivos para cargar únicamente los módulos usados y se añadieron declaraciones de tipos para las rutas individuales. La compilación local de Vite del frontend pasó con heap máximo de 8 GB y transformó 8.257 módulos. El build combinado de escritorio en Windows superó el límite de 8 GB durante Vite; el workflow y el script quedan en 12 GB para validar en runners con más memoria. El empaquetado completo local no pudo concluir en el equipo de 12 GB disponibles. Se mantienen los dos destinos de macOS en Intel, seleccionando explícitamente `arm64` o `x64` según `TARGET_PLATFORM`. Falta validar los cuatro empaquetados en CI.
 - Todavía no hay instaladores multiplataforma validados ni se probaron integraciones con un bot/cuentas reales.
 
 ## Pendiente antes de aprobar la publicación

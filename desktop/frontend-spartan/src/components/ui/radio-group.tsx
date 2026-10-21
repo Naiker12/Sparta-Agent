@@ -3,7 +3,7 @@ import { RadioGroup as RadioGroupPrimitive } from "radix-ui";
 import type * as React from "react";
 
 import { cn } from "@/lib/utils";
-import { CircleIcon } from "@hugeicons/core-free-icons";
+import { default as CircleIcon } from "@hugeicons/core-free-icons/CircleIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 function RadioGroup({

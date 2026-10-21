@@ -10,18 +10,16 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Tick02Icon } from "@/lib/tick-icon";
-import {
-  ArrowLeft02Icon,
-  ArrowRight01Icon,
-  CodeIcon,
-  Copy02Icon,
-  type Database02Icon,
-  DocumentAttachmentIcon,
-  DragDropVerticalIcon,
-  PlusSignIcon,
-  Search01Icon,
-  Upload01Icon,
-} from "@hugeicons/core-free-icons";
+import { default as ArrowLeft02Icon } from "@hugeicons/core-free-icons/ArrowLeft02Icon";
+import { default as ArrowRight01Icon } from "@hugeicons/core-free-icons/ArrowRight01Icon";
+import { default as CodeIcon } from "@hugeicons/core-free-icons/CodeIcon";
+import { default as Copy02Icon } from "@hugeicons/core-free-icons/Copy02Icon";
+import { default as Database02Icon } from "@hugeicons/core-free-icons/Database02Icon";
+import { default as DocumentAttachmentIcon } from "@hugeicons/core-free-icons/DocumentAttachmentIcon";
+import { default as DragDropVerticalIcon } from "@hugeicons/core-free-icons/DragDropVerticalIcon";
+import { default as PlusSignIcon } from "@hugeicons/core-free-icons/PlusSignIcon";
+import { default as Search01Icon } from "@hugeicons/core-free-icons/Search01Icon";
+import { default as Upload01Icon } from "@hugeicons/core-free-icons/Upload01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   type DragEvent as ReactDragEvent,

@@ -4,7 +4,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { InformationCircleIcon } from "@hugeicons/core-free-icons";
+import { default as InformationCircleIcon } from "@hugeicons/core-free-icons/InformationCircleIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { ReactNode } from "react";
 

@@ -36,7 +36,7 @@ import {
   useSidebarWidth,
 } from "@/hooks/use-sidebar-width"
 import { HugeiconsIcon } from "@hugeicons/react"
-import { LayoutAlignLeftIcon } from "@hugeicons/core-free-icons"
+import { default as LayoutAlignLeftIcon } from "@hugeicons/core-free-icons/LayoutAlignLeftIcon"
 
 const noop = () => {}
 

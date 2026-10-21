@@ -20,7 +20,7 @@ import {
 } from "@/features/chat";
 import { cn } from "@/lib/utils";
 import { useAuiState, useMessageTiming } from "@assistant-ui/react";
-import { HelpCircleIcon } from "@hugeicons/core-free-icons";
+import { default as HelpCircleIcon } from "@hugeicons/core-free-icons/HelpCircleIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { FC, ReactNode } from "react";
 

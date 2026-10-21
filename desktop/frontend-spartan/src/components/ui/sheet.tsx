@@ -7,7 +7,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DialogPortalContainerContext } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { Cancel01Icon } from "@hugeicons/core-free-icons";
+import { default as Cancel01Icon } from "@hugeicons/core-free-icons/Cancel01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 // Windows/Linux custom titlebar paints over the viewport at z-70, so a fixed

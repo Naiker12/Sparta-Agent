@@ -5,19 +5,17 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import {
-  BrainIcon,
-  Chat01Icon,
-  CodeIcon,
-  GlobeIcon,
-  HeadphonesIcon,
-  ImageIcon,
-  LockIcon,
-  LockKeyIcon,
-  SparklesIcon,
-  ViewIcon,
-  Wrench01Icon,
-} from "@hugeicons/core-free-icons";
+import { default as BrainIcon } from "@hugeicons/core-free-icons/BrainIcon";
+import { default as Chat01Icon } from "@hugeicons/core-free-icons/Chat01Icon";
+import { default as CodeIcon } from "@hugeicons/core-free-icons/CodeIcon";
+import { default as GlobeIcon } from "@hugeicons/core-free-icons/GlobeIcon";
+import { default as HeadphonesIcon } from "@hugeicons/core-free-icons/HeadphonesIcon";
+import { default as ImageIcon } from "@hugeicons/core-free-icons/Image01Icon";
+import { default as LockIcon } from "@hugeicons/core-free-icons/LockIcon";
+import { default as LockKeyIcon } from "@hugeicons/core-free-icons/LockKeyIcon";
+import { default as SparklesIcon } from "@hugeicons/core-free-icons/SparklesIcon";
+import { default as ViewIcon } from "@hugeicons/core-free-icons/ViewIcon";
+import { default as Wrench01Icon } from "@hugeicons/core-free-icons/Wrench01Icon";
 import type { IconSvgElement } from "@hugeicons/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { Capability, CapabilityKey } from "../lib/model-capabilities";

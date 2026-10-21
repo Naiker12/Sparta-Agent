@@ -91,27 +91,25 @@ import { translate, useT } from "@/i18n";
 import { isTauri } from "@/lib/api-base";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
-import {
-  ArrowDown01Icon,
-  ArrowUp01Icon,
-  BookOpen01Icon,
-  BubbleChatIcon,
-  CubeIcon,
-  ChefHatIcon,
-  Delete02Icon,
-  Edit03Icon,
-  Folder01Icon,
-  Globe02Icon,
-  Message01Icon,
-  MoreHorizontalIcon,
-  MoreVerticalIcon,
-  PencilEdit02Icon,
-  PinIcon,
-  PinOffIcon,
-  PlusSignIcon,
-  Search01Icon,
-  Settings02Icon,
-} from "@hugeicons/core-free-icons";
+import { default as ArrowDown01Icon } from "@hugeicons/core-free-icons/ArrowDown01Icon";
+import { default as ArrowUp01Icon } from "@hugeicons/core-free-icons/ArrowUp01Icon";
+import { default as BookOpen01Icon } from "@hugeicons/core-free-icons/BookOpen01Icon";
+import { default as BubbleChatIcon } from "@hugeicons/core-free-icons/BubbleChatIcon";
+import { default as CubeIcon } from "@hugeicons/core-free-icons/CubeIcon";
+import { default as ChefHatIcon } from "@hugeicons/core-free-icons/ChefHatIcon";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as Edit03Icon } from "@hugeicons/core-free-icons/Edit03Icon";
+import { default as Folder01Icon } from "@hugeicons/core-free-icons/Folder01Icon";
+import { default as Globe02Icon } from "@hugeicons/core-free-icons/Globe02Icon";
+import { default as Message01Icon } from "@hugeicons/core-free-icons/Message01Icon";
+import { default as MoreHorizontalIcon } from "@hugeicons/core-free-icons/MoreHorizontalIcon";
+import { default as MoreVerticalIcon } from "@hugeicons/core-free-icons/MoreVerticalIcon";
+import { default as PencilEdit02Icon } from "@hugeicons/core-free-icons/PencilEdit02Icon";
+import { default as PinIcon } from "@hugeicons/core-free-icons/PinIcon";
+import { default as PinOffIcon } from "@hugeicons/core-free-icons/PinOffIcon";
+import { default as PlusSignIcon } from "@hugeicons/core-free-icons/PlusSignIcon";
+import { default as Search01Icon } from "@hugeicons/core-free-icons/Search01Icon";
+import { default as Settings02Icon } from "@hugeicons/core-free-icons/Settings02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate, useRouter, useRouterState } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";

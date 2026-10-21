@@ -38,11 +38,9 @@ import { Tick02Icon } from "@/lib/tick-icon";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
 import { useAui } from "@assistant-ui/react";
-import {
-  AttachmentIcon,
-  FileDatabaseIcon,
-  Folder02Icon,
-} from "@hugeicons/core-free-icons";
+import { default as AttachmentIcon } from "@hugeicons/core-free-icons/AttachmentIcon";
+import { default as FileDatabaseIcon } from "@hugeicons/core-free-icons/FileDatabaseIcon";
+import { default as Folder02Icon } from "@hugeicons/core-free-icons/Folder02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {

@@ -27,16 +27,14 @@ import { useSettingsDialogStore } from "@/features/settings";
 import { TOUR_OPEN_EVENT } from "@/features/tour";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
-import {
-  ArrowRight02Icon,
-  BadgeInfoIcon,
-  CursorInfo02Icon,
-  Globe02Icon,
-  HelpCircleIcon,
-  PowerIcon,
-  Settings02Icon,
-  Sun03Icon,
-} from "@hugeicons/core-free-icons";
+import { default as ArrowRight02Icon } from "@hugeicons/core-free-icons/ArrowRight02Icon";
+import { default as BadgeInfoIcon } from "@hugeicons/core-free-icons/BadgeInfoIcon";
+import { default as CursorInfo02Icon } from "@hugeicons/core-free-icons/CursorInfo02Icon";
+import { default as Globe02Icon } from "@hugeicons/core-free-icons/Globe02Icon";
+import { default as HelpCircleIcon } from "@hugeicons/core-free-icons/HelpCircleIcon";
+import { default as PowerIcon } from "@hugeicons/core-free-icons/PowerIcon";
+import { default as Settings02Icon } from "@hugeicons/core-free-icons/Settings02Icon";
+import { default as Sun03Icon } from "@hugeicons/core-free-icons/Sun03Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Moon } from "lucide-react";
 import type { ReactElement, Ref } from "react";

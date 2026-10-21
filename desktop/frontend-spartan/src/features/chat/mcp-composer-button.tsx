@@ -1,7 +1,7 @@
 import { translate as uiTranslate } from "@/i18n";
 import { useT as useUiT } from "@/i18n";
 import { Tick02Icon } from "@/lib/tick-icon";
-import { McpServerIcon } from "@hugeicons/core-free-icons";
+import { default as McpServerIcon } from "@hugeicons/core-free-icons/McpServerIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { XIcon } from "lucide-react";
 import { type FC, useCallback, useEffect, useState } from "react";

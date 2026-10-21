@@ -14,14 +14,12 @@ import type { HfTaskFilter } from "@/features/hub/hooks/use-hub-model-search";
 import { useT } from "@/i18n";
 import { ChevronDownStandardIcon } from "@/lib/chevron-icons";
 import { cn } from "@/lib/utils";
-import {
-  CheckmarkCircle02Icon,
-  CloudIcon,
-  DashboardSquare01Icon,
-  Download01Icon,
-  RemoveCircleIcon,
-  StarIcon,
-} from "@hugeicons/core-free-icons";
+import { default as CheckmarkCircle02Icon } from "@hugeicons/core-free-icons/CheckmarkCircle02Icon";
+import { default as CloudIcon } from "@hugeicons/core-free-icons/CloudIcon";
+import { default as DashboardSquare01Icon } from "@hugeicons/core-free-icons/DashboardSquare01Icon";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
+import { default as RemoveCircleIcon } from "@hugeicons/core-free-icons/RemoveCircleIcon";
+import { default as StarIcon } from "@hugeicons/core-free-icons/StarIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate } from "@tanstack/react-router";
 import {

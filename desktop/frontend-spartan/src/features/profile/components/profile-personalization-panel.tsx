@@ -12,12 +12,10 @@ import { getAuthToken } from "@/features/auth";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { toastError, toastSuccess } from "@/shared/toast";
-import {
-  Delete02Icon,
-  Edit03Icon,
-  Image01Icon,
-  Upload01Icon,
-} from "@hugeicons/core-free-icons";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as Edit03Icon } from "@hugeicons/core-free-icons/Edit03Icon";
+import { default as Image01Icon } from "@hugeicons/core-free-icons/Image01Icon";
+import { default as Upload01Icon } from "@hugeicons/core-free-icons/Upload01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useRef, useState } from "react";
 import {

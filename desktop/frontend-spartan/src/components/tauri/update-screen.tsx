@@ -4,7 +4,7 @@ import type { UpdateStatus } from "@/hooks/use-tauri-update";
 import { useT } from "@/i18n";
 import type { CopySupportDiagnosticsResult } from "@/lib/tauri-diagnostics";
 
-import { ChevronDown as ChevronDownIcon } from "@hugeicons/core-free-icons";
+import { default as ChevronDownIcon } from "@hugeicons/core-free-icons/ArrowDown01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";

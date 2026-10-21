@@ -1,7 +1,8 @@
 import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { GithubIcon, PlayCircleIcon } from "@hugeicons/core-free-icons";
+import { default as GithubIcon } from "@hugeicons/core-free-icons/GithubIcon";
+import { default as PlayCircleIcon } from "@hugeicons/core-free-icons/PlayCircleIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type ReactElement, useEffect, useMemo, useState } from "react";
 import { LocalRecipeModelSelector } from "../dialogs/models/local-recipe-model-selector";

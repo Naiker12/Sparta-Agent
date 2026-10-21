@@ -4,7 +4,7 @@ import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { ToolCallMessagePartComponent } from "@assistant-ui/react";
-import { Download01Icon } from "@hugeicons/core-free-icons";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ImageIcon, PencilIcon } from "lucide-react";
 import type { CSSProperties, MouseEvent } from "react";

@@ -6,7 +6,7 @@ import type * as React from "react";
 
 import { Tick02Icon } from "@/lib/tick-icon";
 import { cn } from "@/lib/utils";
-import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { default as ArrowRight01Icon } from "@hugeicons/core-free-icons/ArrowRight01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 function ContextMenu({

@@ -7,7 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { InformationCircleIcon } from "@hugeicons/core-free-icons";
+import { default as InformationCircleIcon } from "@hugeicons/core-free-icons/InformationCircleIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 /** Small "i" affordance that reveals a styled tooltip on hover/focus. The

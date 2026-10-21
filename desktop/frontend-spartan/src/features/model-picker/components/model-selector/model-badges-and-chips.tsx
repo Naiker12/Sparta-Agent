@@ -23,13 +23,11 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { VramFitStatus } from "@/lib/vram";
-import {
-  AudioWave01Icon,
-  Download01Icon,
-  FlimSlateIcon,
-  Image03Icon,
-  ViewIcon,
-} from "@hugeicons/core-free-icons";
+import { default as AudioWave01Icon } from "@hugeicons/core-free-icons/AudioWave01Icon";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
+import { default as FlimSlateIcon } from "@hugeicons/core-free-icons/FlimSlateIcon";
+import { default as Image03Icon } from "@hugeicons/core-free-icons/Image03Icon";
+import { default as ViewIcon } from "@hugeicons/core-free-icons/ViewIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { type ReactNode, useContext } from "react";

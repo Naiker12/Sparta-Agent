@@ -18,11 +18,9 @@ import {
   usePinnedModelsStore,
 } from "@/features/model-picker";
 import { cn, formatCompact } from "@/lib/utils";
-import {
-  Download01Icon,
-  FavouriteIcon,
-  PackageIcon,
-} from "@hugeicons/core-free-icons";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
+import { default as FavouriteIcon } from "@hugeicons/core-free-icons/FavouriteIcon";
+import { default as PackageIcon } from "@hugeicons/core-free-icons/PackageIcon";
 import type { IconSvgElement } from "@hugeicons/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useVirtualizer } from "@tanstack/react-virtual";

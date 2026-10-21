@@ -37,7 +37,7 @@ import {
   useAui,
   useAuiState,
 } from "@assistant-ui/react";
-import { TextAlignLeft01Icon } from "@hugeicons/core-free-icons";
+import { default as TextAlignLeft01Icon } from "@hugeicons/core-free-icons/TextAlignLeft01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ChevronRightIcon, PlusIcon, XIcon } from "lucide-react";
 import {

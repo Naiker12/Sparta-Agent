@@ -4,12 +4,10 @@ import {
   consumeNativePathToken,
   useNativeFileDrop,
 } from "@/features/native-intents";
-import {
-  Alert02Icon,
-  Cancel01Icon,
-  CheckmarkCircle02Icon,
-  CloudUploadIcon,
-} from "@hugeicons/core-free-icons";
+import { default as Alert02Icon } from "@hugeicons/core-free-icons/Alert02Icon";
+import { default as Cancel01Icon } from "@hugeicons/core-free-icons/Cancel01Icon";
+import { default as CheckmarkCircle02Icon } from "@hugeicons/core-free-icons/CheckmarkCircle02Icon";
+import { default as CloudUploadIcon } from "@hugeicons/core-free-icons/CloudUploadIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useRef } from "react";
 import { removeUnstructuredFile, uploadUnstructuredFile } from "../../api";

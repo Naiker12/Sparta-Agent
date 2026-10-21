@@ -39,13 +39,11 @@ import { MicIcon } from "@/lib/mic-icon";
 import { Tick02Icon } from "@/lib/tick-icon";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
-import {
-  AttachmentIcon,
-  CodeIcon,
-  Download01Icon,
-  Image03Icon,
-  PencilRulerIcon,
-} from "@hugeicons/core-free-icons";
+import { default as AttachmentIcon } from "@hugeicons/core-free-icons/AttachmentIcon";
+import { default as CodeIcon } from "@hugeicons/core-free-icons/CodeIcon";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
+import { default as Image03Icon } from "@hugeicons/core-free-icons/Image03Icon";
+import { default as PencilRulerIcon } from "@hugeicons/core-free-icons/PencilRulerIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate } from "@tanstack/react-router";
 import {

@@ -1,7 +1,7 @@
 import { DeleteConfirmDialog } from "@/features/hub";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
-import { Delete02Icon } from "@hugeicons/core-free-icons";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type ReactNode, useCallback, useState } from "react";
 

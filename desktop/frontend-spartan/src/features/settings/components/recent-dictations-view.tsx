@@ -31,14 +31,12 @@ import {
 import { useT } from "@/i18n";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { toast } from "@/lib/toast";
-import {
-  ArrowLeft01Icon,
-  Copy01Icon,
-  Delete02Icon,
-  Message01Icon,
-  Search01Icon,
-  ViewIcon,
-} from "@hugeicons/core-free-icons";
+import { default as ArrowLeft01Icon } from "@hugeicons/core-free-icons/ArrowLeft01Icon";
+import { default as Copy01Icon } from "@hugeicons/core-free-icons/Copy01Icon";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as Message01Icon } from "@hugeicons/core-free-icons/Message01Icon";
+import { default as Search01Icon } from "@hugeicons/core-free-icons/Search01Icon";
+import { default as ViewIcon } from "@hugeicons/core-free-icons/ViewIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";

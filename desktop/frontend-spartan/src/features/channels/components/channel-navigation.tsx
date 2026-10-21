@@ -1,5 +1,5 @@
 import { HugeiconsIcon } from "@hugeicons/react";
-import { BubbleChatIcon } from "@hugeicons/core-free-icons";
+import { default as BubbleChatIcon } from "@hugeicons/core-free-icons/BubbleChatIcon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/i18n";

@@ -1,6 +1,7 @@
 import { useT as useUiT } from "@/i18n";
 import { Button } from "@/components/ui/button";
-import { CookBookIcon, TestTube01Icon } from "@hugeicons/core-free-icons";
+import { default as CookBookIcon } from "@hugeicons/core-free-icons/CookBookIcon";
+import { default as TestTube01Icon } from "@hugeicons/core-free-icons/TestTube01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { ReactElement } from "react";
 import type { RecipeExecutionKind } from "../../execution-types";

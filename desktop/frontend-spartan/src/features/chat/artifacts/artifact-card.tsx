@@ -4,7 +4,7 @@ import { useT as useUiT } from "@/i18n";
 import { CodeToggleIcon } from "@/components/assistant-ui/code-toggle-icon";
 import { cn } from "@/lib/utils";
 import { useAuiState } from "@assistant-ui/react";
-import { LayoutTwoColumnIcon as Layout2ColumnIcon } from "@hugeicons/core-free-icons";
+import { default as Layout2ColumnIcon } from "@hugeicons/core-free-icons/LayoutTwoColumnIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useLayoutEffect, useMemo, useRef } from "react";
 import { useChatRuntimeStore } from "../stores/chat-runtime-store";

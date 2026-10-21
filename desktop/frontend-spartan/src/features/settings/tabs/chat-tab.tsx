@@ -16,14 +16,12 @@ import { DEFAULT_INFERENCE_PARAMS } from "@/features/chat/types/runtime";
 import { PASTED_TEXT_THRESHOLD_CHOICES } from "@/features/chat/utils/pasted-text";
 import { useUserProfileStore } from "@/features/profile";
 import { type TranslationKey, useT } from "@/i18n";
-import {
-  Bookmark02Icon,
-  Download01Icon,
-  Folder01Icon,
-  McpServerIcon,
-  PencilRulerIcon,
-  ShieldBanIcon,
-} from "@hugeicons/core-free-icons";
+import { default as Bookmark02Icon } from "@hugeicons/core-free-icons/Bookmark02Icon";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
+import { default as Folder01Icon } from "@hugeicons/core-free-icons/Folder01Icon";
+import { default as McpServerIcon } from "@hugeicons/core-free-icons/McpServerIcon";
+import { default as PencilRulerIcon } from "@hugeicons/core-free-icons/PencilRulerIcon";
+import { default as ShieldBanIcon } from "@hugeicons/core-free-icons/ShieldBanIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Columns2Icon } from "lucide-react";
 import { useEffect } from "react";

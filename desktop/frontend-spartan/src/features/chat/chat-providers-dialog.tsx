@@ -23,13 +23,11 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  ArrowLeft02Icon,
-  Delete02Icon,
-  Edit03Icon,
-  PlusSignIcon,
-  Wifi02Icon,
-} from "@hugeicons/core-free-icons";
+import { default as ArrowLeft02Icon } from "@hugeicons/core-free-icons/ArrowLeft02Icon";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as Edit03Icon } from "@hugeicons/core-free-icons/Edit03Icon";
+import { default as PlusSignIcon } from "@hugeicons/core-free-icons/PlusSignIcon";
+import { default as Wifi02Icon } from "@hugeicons/core-free-icons/Wifi02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Eye, EyeOff } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";

@@ -8,7 +8,7 @@ import {
 import { useT } from "@/i18n";
 import { ChevronDownStandardIcon } from "@/lib/chevron-icons";
 import { Tick02Icon } from "@/lib/tick-icon";
-import { Folder01Icon } from "@hugeicons/core-free-icons";
+import { default as Folder01Icon } from "@hugeicons/core-free-icons/Folder01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type ReactElement, useState } from "react";
 import { useChatActive } from "../runtime-provider";

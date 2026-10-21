@@ -36,17 +36,15 @@ import { useT } from "@/i18n";
 import { isTauri } from "@/lib/api-base";
 import { isDownloadCancelled, pickNativeChatImport } from "@/lib/native-files";
 import { toast } from "@/lib/toast";
-import {
-  Delete02Icon,
-  Download01Icon,
-  Edit03Icon,
-  Folder02Icon,
-  FolderAddIcon,
-  PinIcon,
-  PinOffIcon,
-  Search01Icon,
-  Upload01Icon,
-} from "@hugeicons/core-free-icons";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
+import { default as Edit03Icon } from "@hugeicons/core-free-icons/Edit03Icon";
+import { default as Folder02Icon } from "@hugeicons/core-free-icons/Folder02Icon";
+import { default as FolderAddIcon } from "@hugeicons/core-free-icons/FolderAddIcon";
+import { default as PinIcon } from "@hugeicons/core-free-icons/PinIcon";
+import { default as PinOffIcon } from "@hugeicons/core-free-icons/PinOffIcon";
+import { default as Search01Icon } from "@hugeicons/core-free-icons/Search01Icon";
+import { default as Upload01Icon } from "@hugeicons/core-free-icons/Upload01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { MoreHorizontalIcon } from "lucide-react";

@@ -9,11 +9,9 @@ import {
   useFloatingPanelZIndex,
 } from "@/lib/floating-panel-order";
 import { cn } from "@/lib/utils";
-import {
-  ArrowExpand01Icon,
-  DragDropVerticalIcon,
-  Globe02Icon,
-} from "@hugeicons/core-free-icons";
+import { default as ArrowExpand01Icon } from "@hugeicons/core-free-icons/ArrowExpand01Icon";
+import { default as DragDropVerticalIcon } from "@hugeicons/core-free-icons/DragDropVerticalIcon";
+import { default as Globe02Icon } from "@hugeicons/core-free-icons/Globe02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { XIcon } from "lucide-react";

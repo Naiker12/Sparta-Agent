@@ -112,12 +112,10 @@ import {
   useAuiState,
 } from "@assistant-ui/react";
 import { flushTapSync } from "@assistant-ui/tap";
-import {
-  AttachmentIcon,
-  BubbleChatTemporaryIcon,
-  Download01Icon,
-  Folder01Icon,
-} from "@hugeicons/core-free-icons";
+import { default as AttachmentIcon } from "@hugeicons/core-free-icons/AttachmentIcon";
+import { default as BubbleChatTemporaryIcon } from "@hugeicons/core-free-icons/BubbleChatTemporaryIcon";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
+import { default as Folder01Icon } from "@hugeicons/core-free-icons/Folder01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { XIcon } from "lucide-react";
 import {

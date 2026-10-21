@@ -16,7 +16,8 @@ import { type SidebarItem, deleteChatItem, unarchiveChatItem, useChatSidebarItem
 import { useChatPreferencesStore } from "@/features/chat/stores/chat-preferences-store";
 import { useChatRuntimeStore } from "@/features/chat/stores/chat-runtime-store";
 import { toast } from "@/lib/toast";
-import { ArchiveRestoreIcon, Delete02Icon } from "@hugeicons/core-free-icons";
+import { default as ArchiveRestoreIcon } from "@hugeicons/core-free-icons/ArchiveRestoreIcon";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";

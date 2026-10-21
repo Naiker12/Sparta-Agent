@@ -1,9 +1,7 @@
-import {
-  TelegramIcon,
-  DiscordIcon,
-  WhatsappIcon,
-  SlackIcon,
-} from "@hugeicons/core-free-icons";
+import { default as TelegramIcon } from "@hugeicons/core-free-icons/TelegramIcon";
+import { default as DiscordIcon } from "@hugeicons/core-free-icons/DiscordIcon";
+import { default as WhatsappIcon } from "@hugeicons/core-free-icons/WhatsappIcon";
+import { default as SlackIcon } from "@hugeicons/core-free-icons/SlackIcon";
 
 export type ChannelPlatform = "telegram" | "discord" | "whatsapp" | "slack";
 export const platforms = [

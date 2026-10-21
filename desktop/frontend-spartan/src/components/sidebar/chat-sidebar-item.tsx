@@ -43,21 +43,19 @@ import { useT } from "@/i18n";
 import { isDownloadCancelled } from "@/lib/native-files";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
-import {
-  Archive03Icon,
-  BookOpen01Icon,
-  BubbleChatIcon,
-  Delete02Icon,
-  Download01Icon,
-  Edit03Icon,
-  Folder01Icon,
-  FolderAddIcon,
-  FolderExportIcon,
-  FolderOpenIcon,
-  MoreVerticalIcon,
-  PinIcon,
-  PinOffIcon,
-} from "@hugeicons/core-free-icons";
+import { default as Archive03Icon } from "@hugeicons/core-free-icons/Archive03Icon";
+import { default as BookOpen01Icon } from "@hugeicons/core-free-icons/BookOpen01Icon";
+import { default as BubbleChatIcon } from "@hugeicons/core-free-icons/BubbleChatIcon";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
+import { default as Edit03Icon } from "@hugeicons/core-free-icons/Edit03Icon";
+import { default as Folder01Icon } from "@hugeicons/core-free-icons/Folder01Icon";
+import { default as FolderAddIcon } from "@hugeicons/core-free-icons/FolderAddIcon";
+import { default as FolderExportIcon } from "@hugeicons/core-free-icons/FolderExportIcon";
+import { default as FolderOpenIcon } from "@hugeicons/core-free-icons/FolderOpenIcon";
+import { default as MoreVerticalIcon } from "@hugeicons/core-free-icons/MoreVerticalIcon";
+import { default as PinIcon } from "@hugeicons/core-free-icons/PinIcon";
+import { default as PinOffIcon } from "@hugeicons/core-free-icons/PinOffIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { KeyboardEvent, MouseEvent, ReactElement } from "react";
 import {

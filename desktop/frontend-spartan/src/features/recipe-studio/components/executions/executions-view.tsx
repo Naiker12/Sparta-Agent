@@ -4,11 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import {
-  CheckmarkCircle02Icon,
-  Flag02Icon,
-  Share08Icon,
-} from "@hugeicons/core-free-icons";
+import { default as CheckmarkCircle02Icon } from "@hugeicons/core-free-icons/CheckmarkCircle02Icon";
+import { default as Flag02Icon } from "@hugeicons/core-free-icons/Flag02Icon";
+import { default as Share08Icon } from "@hugeicons/core-free-icons/Share08Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { ColumnDef } from "@tanstack/react-table";
 import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";

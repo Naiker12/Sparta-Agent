@@ -33,17 +33,15 @@ import { useT } from "@/i18n";
 import { isDownloadCancelled } from "@/lib/native-files";
 import { Tick02Icon } from "@/lib/tick-icon";
 import { toast } from "@/lib/toast";
-import {
-  AttachmentIcon,
-  Bookmark02Icon,
-  CodeIcon,
-  Download01Icon,
-  Folder01Icon,
-  FolderAddIcon,
-  Image03Icon,
-  McpServerIcon,
-  PencilRulerIcon,
-} from "@hugeicons/core-free-icons";
+import { default as AttachmentIcon } from "@hugeicons/core-free-icons/AttachmentIcon";
+import { default as Bookmark02Icon } from "@hugeicons/core-free-icons/Bookmark02Icon";
+import { default as CodeIcon } from "@hugeicons/core-free-icons/CodeIcon";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
+import { default as Folder01Icon } from "@hugeicons/core-free-icons/Folder01Icon";
+import { default as FolderAddIcon } from "@hugeicons/core-free-icons/FolderAddIcon";
+import { default as Image03Icon } from "@hugeicons/core-free-icons/Image03Icon";
+import { default as McpServerIcon } from "@hugeicons/core-free-icons/McpServerIcon";
+import { default as PencilRulerIcon } from "@hugeicons/core-free-icons/PencilRulerIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Columns2Icon,

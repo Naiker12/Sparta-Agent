@@ -10,7 +10,7 @@ import { downloadFile, isDownloadCancelled } from "@/lib/native-files";
 import { Tick02Icon } from "@/lib/tick-icon";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
-import { Download01Icon } from "@hugeicons/core-free-icons";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { CopyIcon, EyeIcon, Maximize2Icon, XIcon } from "lucide-react";
 import {

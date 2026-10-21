@@ -1,4 +1,4 @@
-import { ShieldBanIcon } from "@hugeicons/core-free-icons";
+import { default as ShieldBanIcon } from "@hugeicons/core-free-icons/ShieldBanIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 import {

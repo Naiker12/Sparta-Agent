@@ -11,7 +11,7 @@ import { useCollapseScrollLock } from "@/hooks/use-collapse-scroll-lock";
 import { cn } from "@/lib/utils";
 import { useAuiState } from "@assistant-ui/react";
 import { useT } from "@/i18n";
-import { Wrench01Icon } from "@hugeicons/core-free-icons";
+import { default as Wrench01Icon } from "@hugeicons/core-free-icons/Wrench01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type VariantProps, cva } from "class-variance-authority";
 import { ChevronDownIcon } from "lucide-react";

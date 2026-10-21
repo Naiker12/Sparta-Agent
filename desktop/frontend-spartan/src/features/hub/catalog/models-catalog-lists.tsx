@@ -6,12 +6,10 @@ import {
   pinKey,
   usePinnedModelsStore,
 } from "@/features/model-picker";
-import {
-  CubeIcon,
-  DownloadCircle02Icon,
-  PinIcon,
-  Search01Icon,
-} from "@hugeicons/core-free-icons";
+import { default as CubeIcon } from "@hugeicons/core-free-icons/CubeIcon";
+import { default as DownloadCircle02Icon } from "@hugeicons/core-free-icons/DownloadCircle02Icon";
+import { default as PinIcon } from "@hugeicons/core-free-icons/PinIcon";
+import { default as Search01Icon } from "@hugeicons/core-free-icons/Search01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { Ref } from "react";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";

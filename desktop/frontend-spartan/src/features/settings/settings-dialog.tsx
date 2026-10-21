@@ -11,21 +11,19 @@ import { type TranslationKey, useT } from "@/i18n";
 import { isTauri } from "@/lib/api-base";
 import { scheduleIdleTask } from "@/lib/schedule-idle-task";
 import { cn } from "@/lib/utils";
-import {
-  Cancel01Icon,
-  CloudIcon,
-  ComputerTerminal01Icon,
-  DatabaseSettingIcon,
-  Globe02Icon,
-  HelpCircleIcon,
-  KeyboardIcon,
-  Message01Icon,
-  Mic01Icon,
-  PaintBrush02Icon,
-  Search01Icon,
-  Settings02Icon,
-  UserIcon,
-} from "@hugeicons/core-free-icons";
+import { default as Cancel01Icon } from "@hugeicons/core-free-icons/Cancel01Icon";
+import { default as CloudIcon } from "@hugeicons/core-free-icons/CloudIcon";
+import { default as ComputerTerminal01Icon } from "@hugeicons/core-free-icons/ComputerTerminal01Icon";
+import { default as DatabaseSettingIcon } from "@hugeicons/core-free-icons/DatabaseSettingIcon";
+import { default as Globe02Icon } from "@hugeicons/core-free-icons/Globe02Icon";
+import { default as HelpCircleIcon } from "@hugeicons/core-free-icons/HelpCircleIcon";
+import { default as KeyboardIcon } from "@hugeicons/core-free-icons/KeyboardIcon";
+import { default as Message01Icon } from "@hugeicons/core-free-icons/Message01Icon";
+import { default as Mic01Icon } from "@hugeicons/core-free-icons/Mic01Icon";
+import { default as PaintBrush02Icon } from "@hugeicons/core-free-icons/PaintBrush02Icon";
+import { default as Search01Icon } from "@hugeicons/core-free-icons/Search01Icon";
+import { default as Settings02Icon } from "@hugeicons/core-free-icons/Settings02Icon";
+import { default as UserIcon } from "@hugeicons/core-free-icons/UserIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { motion, useReducedMotion } from "motion/react";
 import {

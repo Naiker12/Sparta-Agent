@@ -27,18 +27,16 @@ import { ShineBorder } from "@/components/ui/shine-border";
 import { ChevronDownStandardIcon } from "@/lib/chevron-icons";
 import { OPEN_LEARNING_RECIPES_ON_ARRIVAL_KEY } from "@/lib/navigation-intents";
 import { toastError } from "@/shared/toast";
-import {
-  Album02Icon,
-  CodeIcon,
-  CookBookIcon,
-  Database02Icon,
-  Delete02Icon,
-  DocumentAttachmentIcon,
-  FunctionIcon,
-  GithubIcon,
-  Plant01Icon,
-  PlusSignIcon,
-} from "@hugeicons/core-free-icons";
+import { default as Album02Icon } from "@hugeicons/core-free-icons/Album02Icon";
+import { default as CodeIcon } from "@hugeicons/core-free-icons/CodeIcon";
+import { default as CookBookIcon } from "@hugeicons/core-free-icons/CookBookIcon";
+import { default as Database02Icon } from "@hugeicons/core-free-icons/Database02Icon";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as DocumentAttachmentIcon } from "@hugeicons/core-free-icons/DocumentAttachmentIcon";
+import { default as FunctionIcon } from "@hugeicons/core-free-icons/FunctionIcon";
+import { default as GithubIcon } from "@hugeicons/core-free-icons/GithubIcon";
+import { default as Plant01Icon } from "@hugeicons/core-free-icons/Plant01Icon";
+import { default as PlusSignIcon } from "@hugeicons/core-free-icons/PlusSignIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate } from "@tanstack/react-router";
 import type { ReactElement } from "react";

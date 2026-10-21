@@ -10,7 +10,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useDocumentPreviewStore } from "@/features/rag/components/preview-store";
 import { useT } from "@/i18n";
 import { getAttachmentFileKind } from "@/lib/attachment-file-kind";
-import { File02Icon, Folder01Icon } from "@hugeicons/core-free-icons";
+import { default as File02Icon } from "@hugeicons/core-free-icons/File02Icon";
+import { default as Folder01Icon } from "@hugeicons/core-free-icons/Folder01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useState } from "react";
 

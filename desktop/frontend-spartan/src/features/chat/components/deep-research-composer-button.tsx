@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ChevronDownStandardIcon } from "@/lib/chevron-icons";
 import { cn } from "@/lib/utils";
-import { Telescope02Icon } from "@hugeicons/core-free-icons";
+import { default as Telescope02Icon } from "@hugeicons/core-free-icons/Telescope02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { XIcon } from "lucide-react";
 import { type KeyboardEvent, useState } from "react";

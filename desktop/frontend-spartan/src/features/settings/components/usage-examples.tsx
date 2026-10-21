@@ -18,11 +18,9 @@ import { isTauri } from "@/lib/api-base";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { Tick02Icon } from "@/lib/tick-icon";
 import { cn } from "@/lib/utils";
-import {
-  ArrowUpRight01Icon,
-  Copy01Icon,
-  InformationCircleIcon,
-} from "@hugeicons/core-free-icons";
+import { default as ArrowUpRight01Icon } from "@hugeicons/core-free-icons/ArrowUpRight01Icon";
+import { default as Copy01Icon } from "@hugeicons/core-free-icons/Copy01Icon";
+import { default as InformationCircleIcon } from "@hugeicons/core-free-icons/InformationCircleIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Streamdown } from "streamdown";

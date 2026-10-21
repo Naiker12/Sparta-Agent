@@ -11,11 +11,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import {
-  SecurityWarningIcon,
-  ShieldBanIcon,
-  SourceCodeSquareIcon,
-} from "@hugeicons/core-free-icons";
+import { default as SecurityWarningIcon } from "@hugeicons/core-free-icons/SecurityWarningIcon";
+import { default as ShieldBanIcon } from "@hugeicons/core-free-icons/ShieldBanIcon";
+import { default as SourceCodeSquareIcon } from "@hugeicons/core-free-icons/SourceCodeSquareIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { severityTone } from "../lib/severity-tone";
 import { useRemoteCodeConsentDialogStore } from "../stores/remote-code-consent-dialog-store";

@@ -30,15 +30,13 @@ import {
   useAui,
   useAuiState,
 } from "@assistant-ui/react";
-import {
-  BookOpen01Icon,
-  Copy01Icon,
-  Delete02Icon,
-  Download01Icon,
-  Edit03Icon,
-  HelpCircleIcon,
-  Tick02Icon,
-} from "@hugeicons/core-free-icons";
+import { default as BookOpen01Icon } from "@hugeicons/core-free-icons/BookOpen01Icon";
+import { default as Copy01Icon } from "@hugeicons/core-free-icons/Copy01Icon";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
+import { default as Edit03Icon } from "@hugeicons/core-free-icons/Edit03Icon";
+import { default as HelpCircleIcon } from "@hugeicons/core-free-icons/HelpCircleIcon";
+import { default as Tick02Icon } from "@hugeicons/core-free-icons/Tick02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ChevronLeftIcon,

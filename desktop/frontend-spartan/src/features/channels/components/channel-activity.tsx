@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  CheckmarkCircle01Icon,
-  AlertCircleIcon,
-  Link01Icon,
-  Clock01Icon,
-} from "@hugeicons/core-free-icons";
+import { default as CheckmarkCircle01Icon } from "@hugeicons/core-free-icons/CheckmarkCircle01Icon";
+import { default as AlertCircleIcon } from "@hugeicons/core-free-icons/AlertCircleIcon";
+import { default as Link01Icon } from "@hugeicons/core-free-icons/Link01Icon";
+import { default as Clock01Icon } from "@hugeicons/core-free-icons/Clock01Icon";
 import { useLocale, useT } from "@/i18n";
 import {
   Card,

@@ -5,7 +5,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { Settings02Icon } from "@hugeicons/core-free-icons";
+import { default as Settings02Icon } from "@hugeicons/core-free-icons/Settings02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 export function ModelLoadSettingsAction({

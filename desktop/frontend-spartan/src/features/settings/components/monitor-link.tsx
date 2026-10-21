@@ -7,7 +7,8 @@ import { useApiMonitorOverlayStore } from "@/features/api-monitor/overlay-store"
 import { getApiMonitor } from "@/features/chat/api/chat-api";
 import type { ApiMonitorResponse } from "@/features/chat/types/api";
 import { useLocale, useT } from "@/i18n";
-import { ActivityIcon, ArrowRight02Icon } from "@hugeicons/core-free-icons";
+import { default as ActivityIcon } from "@hugeicons/core-free-icons/Activity01Icon";
+import { default as ArrowRight02Icon } from "@hugeicons/core-free-icons/ArrowRight02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { type ReactElement, useEffect, useState } from "react";

@@ -20,7 +20,8 @@ import { safeMarkdownUrl } from "@/lib/safe-markdown-url";
 import { Tick02Icon } from "@/lib/tick-icon";
 import { toast } from "@/lib/toast";
 import { INTERNAL, useAuiState, useMessagePartText } from "@assistant-ui/react";
-import { Copy01Icon, Download01Icon } from "@hugeicons/core-free-icons";
+import { default as Copy01Icon } from "@hugeicons/core-free-icons/Copy01Icon";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   type ComponentProps,

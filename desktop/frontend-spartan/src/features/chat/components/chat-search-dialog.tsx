@@ -7,11 +7,9 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { useShortcut } from "@/features/settings/hooks/use-shortcut";
-import {
-  Cancel01Icon,
-  Message01Icon,
-  Search01Icon,
-} from "@hugeicons/core-free-icons";
+import { default as Cancel01Icon } from "@hugeicons/core-free-icons/Cancel01Icon";
+import { default as Message01Icon } from "@hugeicons/core-free-icons/Message01Icon";
+import { default as Search01Icon } from "@hugeicons/core-free-icons/Search01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { Command as CommandPrimitive } from "cmdk";

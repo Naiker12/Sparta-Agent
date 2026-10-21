@@ -12,14 +12,12 @@ import {
   CONVERSATION_MARKDOWN_LABEL,
 } from "@/features/chat";
 import type { TranslationKey, useT } from "@/i18n";
-import {
-  CloudIcon,
-  CpuIcon,
-  Message01Icon,
-  PaintBrush02Icon,
-  UserIcon,
-  type ZapIcon,
-} from "@hugeicons/core-free-icons";
+import { default as CloudIcon } from "@hugeicons/core-free-icons/CloudIcon";
+import { default as CpuIcon } from "@hugeicons/core-free-icons/CpuIcon";
+import { default as Message01Icon } from "@hugeicons/core-free-icons/Message01Icon";
+import { default as PaintBrush02Icon } from "@hugeicons/core-free-icons/PaintBrush02Icon";
+import { default as UserIcon } from "@hugeicons/core-free-icons/UserIcon";
+import { default as ZapIcon } from "@hugeicons/core-free-icons/ZapIcon";
 import type { ReactNode } from "react";
 
 export const EMPHASIS_MARKER = "__UNSLOTH_I18N_EMPHASIS_MARKER__";

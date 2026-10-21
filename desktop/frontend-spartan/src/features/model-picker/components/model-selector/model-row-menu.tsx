@@ -23,14 +23,12 @@ import {
 } from "@/features/hub";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
-import {
-  Delete02Icon,
-  Folder01Icon,
-  MoreVerticalIcon,
-  PinIcon,
-  PinOffIcon,
-  Settings02Icon,
-} from "@hugeicons/core-free-icons";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as Folder01Icon } from "@hugeicons/core-free-icons/Folder01Icon";
+import { default as MoreVerticalIcon } from "@hugeicons/core-free-icons/MoreVerticalIcon";
+import { default as PinIcon } from "@hugeicons/core-free-icons/PinIcon";
+import { default as PinOffIcon } from "@hugeicons/core-free-icons/PinOffIcon";
+import { default as Settings02Icon } from "@hugeicons/core-free-icons/Settings02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { RefreshCw } from "lucide-react";
 import {

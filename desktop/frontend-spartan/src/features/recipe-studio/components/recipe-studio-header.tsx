@@ -8,12 +8,10 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Alert02Icon,
-  AlertDiamondIcon,
-  CookBookIcon,
-  FloppyDiskIcon,
-} from "@hugeicons/core-free-icons";
+import { default as Alert02Icon } from "@hugeicons/core-free-icons/Alert02Icon";
+import { default as AlertDiamondIcon } from "@hugeicons/core-free-icons/AlertDiamondIcon";
+import { default as CookBookIcon } from "@hugeicons/core-free-icons/CookBookIcon";
+import { default as FloppyDiskIcon } from "@hugeicons/core-free-icons/FloppyDiskIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type KeyboardEvent, type ReactElement, useState } from "react";
 import type { RecipeStudioView } from "../execution-types";

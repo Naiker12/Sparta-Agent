@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
-import { AiSecurity03Icon } from "@hugeicons/core-free-icons";
+import { default as AiSecurity03Icon } from "@hugeicons/core-free-icons/AiSecurity03Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { hfApiToken, useHfTokenStore } from "../stores/hf-token-store";
 

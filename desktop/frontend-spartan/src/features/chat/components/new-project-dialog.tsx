@@ -17,7 +17,7 @@ import {
 } from "@/features/rag/components/project-source-dropzone";
 import { useT } from "@/i18n";
 import { toast } from "@/lib/toast";
-import { Folder02Icon } from "@hugeicons/core-free-icons";
+import { default as Folder02Icon } from "@hugeicons/core-free-icons/Folder02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 import { createChatProject } from "../hooks/use-chat-projects";

@@ -17,7 +17,7 @@ import { downloadFile, isDownloadCancelled } from "@/lib/native-files";
 import { saveMarkdownAsProjectSource } from "@/features/rag";
 import { Tick02Icon } from "@/lib/tick-icon";
 import { cn } from "@/lib/utils";
-import { Search01Icon } from "@hugeicons/core-free-icons";
+import { default as Search01Icon } from "@hugeicons/core-free-icons/Search01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   BookmarkIcon,

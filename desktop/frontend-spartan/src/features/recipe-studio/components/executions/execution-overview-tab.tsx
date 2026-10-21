@@ -9,12 +9,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Database01Icon,
-  Database02Icon,
-  Flag02Icon,
-  GithubIcon,
-} from "@hugeicons/core-free-icons";
+import { default as Database01Icon } from "@hugeicons/core-free-icons/Database01Icon";
+import { default as Database02Icon } from "@hugeicons/core-free-icons/Database02Icon";
+import { default as Flag02Icon } from "@hugeicons/core-free-icons/Flag02Icon";
+import { default as GithubIcon } from "@hugeicons/core-free-icons/GithubIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { ReactElement, RefObject, UIEvent } from "react";
 import type { RecipeExecutionRecord } from "../../execution-types";

@@ -26,19 +26,17 @@ import {
 } from "@/features/hub/lib/view-models";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { cn, formatCompact } from "@/lib/utils";
-import {
-  ArrowLeft01Icon,
-  ArrowUpDownIcon,
-  Copy01Icon,
-  Download01Icon,
-  FavouriteIcon,
-  LayoutTwoColumnIcon,
-  LeftToRightListBulletIcon,
-  LinkSquare02Icon,
-  MoreVerticalIcon,
-  Refresh01Icon,
-  ViewSidebarLeftIcon,
-} from "@hugeicons/core-free-icons";
+import { default as ArrowLeft01Icon } from "@hugeicons/core-free-icons/ArrowLeft01Icon";
+import { default as ArrowUpDownIcon } from "@hugeicons/core-free-icons/ArrowUpDownIcon";
+import { default as Copy01Icon } from "@hugeicons/core-free-icons/Copy01Icon";
+import { default as Download01Icon } from "@hugeicons/core-free-icons/Download01Icon";
+import { default as FavouriteIcon } from "@hugeicons/core-free-icons/FavouriteIcon";
+import { default as LayoutTwoColumnIcon } from "@hugeicons/core-free-icons/LayoutTwoColumnIcon";
+import { default as LeftToRightListBulletIcon } from "@hugeicons/core-free-icons/LeftToRightListBulletIcon";
+import { default as LinkSquare02Icon } from "@hugeicons/core-free-icons/LinkSquare02Icon";
+import { default as MoreVerticalIcon } from "@hugeicons/core-free-icons/MoreVerticalIcon";
+import { default as Refresh01Icon } from "@hugeicons/core-free-icons/Refresh01Icon";
+import { default as ViewSidebarLeftIcon } from "@hugeicons/core-free-icons/ViewSidebarLeftIcon";
 import type { IconSvgElement } from "@hugeicons/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Fragment, type ReactNode, memo, useMemo } from "react";

@@ -1,10 +1,8 @@
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  Add01Icon,
-  Shield01Icon,
-  TelegramIcon,
-  ArrowRight01Icon,
-} from "@hugeicons/core-free-icons";
+import { default as Add01Icon } from "@hugeicons/core-free-icons/Add01Icon";
+import { default as Shield01Icon } from "@hugeicons/core-free-icons/Shield01Icon";
+import { default as TelegramIcon } from "@hugeicons/core-free-icons/TelegramIcon";
+import { default as ArrowRight01Icon } from "@hugeicons/core-free-icons/ArrowRight01Icon";
 import { useT } from "@/i18n";
 import { Button } from "@/components/ui/button";
 import {

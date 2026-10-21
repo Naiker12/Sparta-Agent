@@ -28,11 +28,9 @@ import {
 import { isTauri } from "@/lib/api-base";
 import { downloadFile, isDownloadCancelled } from "@/lib/native-files";
 import { toast } from "@/lib/toast";
-import {
-  ArrowUpRight01Icon,
-  Delete02Icon,
-  File02Icon,
-} from "@hugeicons/core-free-icons";
+import { default as ArrowUpRight01Icon } from "@hugeicons/core-free-icons/ArrowUpRight01Icon";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as File02Icon } from "@hugeicons/core-free-icons/File02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useEffect, useRef, useState } from "react";

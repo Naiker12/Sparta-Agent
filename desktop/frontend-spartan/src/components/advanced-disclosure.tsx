@@ -2,7 +2,7 @@ import { UiText } from "@/i18n/ui-text";
 import { useT as useUiT } from "@/i18n";
 import type { ReactNode } from "react";
 
-import { Settings02Icon } from "@hugeicons/core-free-icons";
+import { default as Settings02Icon } from "@hugeicons/core-free-icons/Settings02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ChevronDown } from "lucide-react";
 

@@ -1,11 +1,9 @@
 import { useMemoryT as useUiT } from "./memory-i18n";
 import { useMemo, useState } from "react";
-import {
-  AiBrain01Icon,
-  Add01Icon,
-  ReloadIcon,
-  Search01Icon,
-} from "@hugeicons/core-free-icons";
+import { default as AiBrain01Icon } from "@hugeicons/core-free-icons/AiBrain01Icon";
+import { default as Add01Icon } from "@hugeicons/core-free-icons/Add01Icon";
+import { default as ReloadIcon } from "@hugeicons/core-free-icons/ReloadIcon";
+import { default as Search01Icon } from "@hugeicons/core-free-icons/Search01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

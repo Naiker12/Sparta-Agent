@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { DashboardSquare01Icon } from "@hugeicons/core-free-icons";
+import { default as DashboardSquare01Icon } from "@hugeicons/core-free-icons/DashboardSquare01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 import { isCustomProviderType } from "./external-providers";

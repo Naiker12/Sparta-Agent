@@ -1,10 +1,8 @@
 
-import {
-  Alert02Icon,
-  CheckmarkCircle02Icon,
-  InformationCircleIcon,
-  MultiplicationSignCircleIcon,
-} from "@hugeicons/core-free-icons";
+import { default as Alert02Icon } from "@hugeicons/core-free-icons/Alert02Icon";
+import { default as CheckmarkCircle02Icon } from "@hugeicons/core-free-icons/CheckmarkCircle02Icon";
+import { default as InformationCircleIcon } from "@hugeicons/core-free-icons/InformationCircleIcon";
+import { default as MultiplicationSignCircleIcon } from "@hugeicons/core-free-icons/MultiplicationSignCircleIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useTheme } from "@/features/settings/stores/theme-store";
 import { createLoadingToastIcon } from "@/lib/toast";

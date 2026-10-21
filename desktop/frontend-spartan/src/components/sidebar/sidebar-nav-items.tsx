@@ -19,7 +19,8 @@ import {
 } from "@/components/ui/tooltip";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
-import { FolderOpenIcon, type ZapIcon } from "@hugeicons/core-free-icons";
+import { default as FolderOpenIcon } from "@hugeicons/core-free-icons/FolderOpenIcon";
+import { default as ZapIcon } from "@hugeicons/core-free-icons/ZapIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type ReactNode, useState } from "react";
 

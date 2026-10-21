@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
+import { default as ArrowRight01Icon } from "@hugeicons/core-free-icons/ArrowRight01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type ReactElement, type RefObject, useMemo, useRef } from "react";
 import { useRecipeStudioStore } from "../../stores/recipe-studio";

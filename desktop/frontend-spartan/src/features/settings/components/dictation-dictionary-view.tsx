@@ -1,11 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useT } from "@/i18n";
-import {
-  ArrowLeft01Icon,
-  Delete02Icon,
-  PlusSignIcon,
-} from "@hugeicons/core-free-icons";
+import { default as ArrowLeft01Icon } from "@hugeicons/core-free-icons/ArrowLeft01Icon";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as PlusSignIcon } from "@hugeicons/core-free-icons/PlusSignIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useState } from "react";
 import { useVoiceSettingsStore } from "../stores/voice-settings-store";

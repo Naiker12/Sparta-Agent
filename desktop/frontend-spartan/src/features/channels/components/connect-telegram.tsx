@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Cancel01Icon } from "@hugeicons/core-free-icons";
+import { default as Cancel01Icon } from "@hugeicons/core-free-icons/Cancel01Icon";
 import { useLocale, useT } from "@/i18n";
 import { Spinner } from "@/components/ui/spinner";
 import { TELEGRAM_BOTFATHER_URL } from "../links";

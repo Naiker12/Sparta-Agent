@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
-import { PackageIcon } from "@hugeicons/core-free-icons";
+import { default as PackageIcon } from "@hugeicons/core-free-icons/PackageIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { upgradeDialogActions } from "../lib/upgrade-dialog-actions";
 import { useTransformersUpgradeDialogStore } from "../stores/transformers-upgrade-dialog-store";

@@ -1,17 +1,15 @@
 import { Switch } from "@/components/ui/switch";
 import { useT } from "@/i18n";
 import type { TranslationKey } from "@/i18n";
-import {
-  AudioWave01Icon,
-  BookOpen01Icon,
-  ChefHatIcon,
-  DownloadSquare01Icon,
-  DragDropVerticalIcon,
-  Folder01Icon,
-  Globe02Icon,
-  MoreHorizontalIcon,
-  PencilEdit02Icon,
-} from "@hugeicons/core-free-icons";
+import { default as AudioWave01Icon } from "@hugeicons/core-free-icons/AudioWave01Icon";
+import { default as BookOpen01Icon } from "@hugeicons/core-free-icons/BookOpen01Icon";
+import { default as ChefHatIcon } from "@hugeicons/core-free-icons/ChefHatIcon";
+import { default as DownloadSquare01Icon } from "@hugeicons/core-free-icons/DownloadSquare01Icon";
+import { default as DragDropVerticalIcon } from "@hugeicons/core-free-icons/DragDropVerticalIcon";
+import { default as Folder01Icon } from "@hugeicons/core-free-icons/Folder01Icon";
+import { default as Globe02Icon } from "@hugeicons/core-free-icons/Globe02Icon";
+import { default as MoreHorizontalIcon } from "@hugeicons/core-free-icons/MoreHorizontalIcon";
+import { default as PencilEdit02Icon } from "@hugeicons/core-free-icons/PencilEdit02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { IconSvgElement } from "@hugeicons/react";
 import { Reorder, useDragControls } from "motion/react";

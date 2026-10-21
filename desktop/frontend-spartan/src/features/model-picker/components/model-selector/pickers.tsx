@@ -68,18 +68,16 @@ import { toast } from "@/lib/toast";
 import { cn, formatCompact } from "@/lib/utils";
 import type { VramFitStatus } from "@/lib/vram";
 import { checkVramFit, estimateLoadingVram } from "@/lib/vram";
-import {
-  Add01Icon,
-  ArrowUpDownIcon,
-  Cancel01Icon,
-  DashboardCircleIcon,
-  Flag01Icon,
-  Folder02Icon,
-  HelpCircleIcon,
-  PinIcon,
-  RemoveCircleIcon,
-  Search01Icon,
-} from "@hugeicons/core-free-icons";
+import { default as Add01Icon } from "@hugeicons/core-free-icons/Add01Icon";
+import { default as ArrowUpDownIcon } from "@hugeicons/core-free-icons/ArrowUpDownIcon";
+import { default as Cancel01Icon } from "@hugeicons/core-free-icons/Cancel01Icon";
+import { default as DashboardCircleIcon } from "@hugeicons/core-free-icons/DashboardCircleIcon";
+import { default as Flag01Icon } from "@hugeicons/core-free-icons/Flag01Icon";
+import { default as Folder02Icon } from "@hugeicons/core-free-icons/Folder02Icon";
+import { default as HelpCircleIcon } from "@hugeicons/core-free-icons/HelpCircleIcon";
+import { default as PinIcon } from "@hugeicons/core-free-icons/PinIcon";
+import { default as RemoveCircleIcon } from "@hugeicons/core-free-icons/RemoveCircleIcon";
+import { default as Search01Icon } from "@hugeicons/core-free-icons/Search01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useNavigate } from "@tanstack/react-router";
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";

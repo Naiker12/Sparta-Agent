@@ -1,17 +1,15 @@
-import {
-  AudioWave01Icon,
-  Csv02Icon,
-  Doc02Icon,
-  File02Icon,
-  FileCodeIcon,
-  FileUnknownIcon,
-  FileVideoIcon,
-  FileZipIcon,
-  Image02Icon,
-  Pdf02Icon,
-  Ppt02Icon,
-  Xls02Icon,
-} from "@hugeicons/core-free-icons";
+import { default as AudioWave01Icon } from "@hugeicons/core-free-icons/AudioWave01Icon";
+import { default as Csv02Icon } from "@hugeicons/core-free-icons/Csv02Icon";
+import { default as Doc02Icon } from "@hugeicons/core-free-icons/Doc02Icon";
+import { default as File02Icon } from "@hugeicons/core-free-icons/File02Icon";
+import { default as FileCodeIcon } from "@hugeicons/core-free-icons/FileCodeIcon";
+import { default as FileUnknownIcon } from "@hugeicons/core-free-icons/FileUnknownIcon";
+import { default as FileVideoIcon } from "@hugeicons/core-free-icons/FileVideoIcon";
+import { default as FileZipIcon } from "@hugeicons/core-free-icons/FileZipIcon";
+import { default as Image02Icon } from "@hugeicons/core-free-icons/Image02Icon";
+import { default as Pdf02Icon } from "@hugeicons/core-free-icons/Pdf02Icon";
+import { default as Ppt02Icon } from "@hugeicons/core-free-icons/Ppt02Icon";
+import { default as Xls02Icon } from "@hugeicons/core-free-icons/Xls02Icon";
 
 export type AttachmentFileKind =
   | "pdf"

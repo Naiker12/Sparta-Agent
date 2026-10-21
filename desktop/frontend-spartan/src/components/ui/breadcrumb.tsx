@@ -4,10 +4,8 @@ import { Slot } from "radix-ui";
 import type * as React from "react";
 
 import { cn } from "@/lib/utils";
-import {
-  ArrowRight01Icon,
-  MoreHorizontalCircle01Icon,
-} from "@hugeicons/core-free-icons";
+import { default as ArrowRight01Icon } from "@hugeicons/core-free-icons/ArrowRight01Icon";
+import { default as MoreHorizontalCircle01Icon } from "@hugeicons/core-free-icons/MoreHorizontalCircle01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 
 function Breadcrumb({ className, ...props }: React.ComponentProps<"nav">) {

@@ -3,7 +3,7 @@ import { Badge } from "@/components/assistant-ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 import { getAttachmentIcon } from "@/lib/attachment-file-kind";
 import { cn } from "@/lib/utils";
-import { Folder02Icon } from "@hugeicons/core-free-icons";
+import { default as Folder02Icon } from "@hugeicons/core-free-icons/Folder02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { XIcon } from "lucide-react";
 import type { DocumentStatus } from "../types/rag";

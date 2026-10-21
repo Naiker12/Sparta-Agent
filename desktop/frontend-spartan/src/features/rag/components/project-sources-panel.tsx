@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useNativeFileDrop } from "@/features/native-intents";
 import type { NativeIntent } from "@/features/native-intents";
 import { cn } from "@/lib/utils";
-import { FolderAddIcon } from "@hugeicons/core-free-icons";
+import { default as FolderAddIcon } from "@hugeicons/core-free-icons/FolderAddIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useCallback, useEffect, useRef } from "react";
 import {

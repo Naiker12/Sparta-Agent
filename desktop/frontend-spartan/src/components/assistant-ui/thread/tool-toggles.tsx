@@ -14,11 +14,9 @@ import { toolStatusKind } from "@/features/chat/utils/tool-status";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { useAuiState } from "@assistant-ui/react";
-import {
-  CodeIcon,
-  Image03Icon,
-  PencilRulerIcon,
-} from "@hugeicons/core-free-icons";
+import { default as CodeIcon } from "@hugeicons/core-free-icons/CodeIcon";
+import { default as Image03Icon } from "@hugeicons/core-free-icons/Image03Icon";
+import { default as PencilRulerIcon } from "@hugeicons/core-free-icons/PencilRulerIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { GlobeIcon, TerminalIcon } from "lucide-react";
 import { type FC, useEffect, useRef, useState } from "react";

@@ -1,13 +1,11 @@
 import { translate as uiTranslate } from "@/i18n";
 import { useT as useUiT } from "@/i18n";
 import type { HubFailure } from "@/features/hub/lib/network";
-import {
-  CloudOffIcon,
-  CubeIcon,
-  FilterIcon,
-  Refresh01Icon,
-  WifiDisconnected02Icon,
-} from "@hugeicons/core-free-icons";
+import { default as CloudOffIcon } from "@hugeicons/core-free-icons/CloudOffIcon";
+import { default as CubeIcon } from "@hugeicons/core-free-icons/CubeIcon";
+import { default as FilterIcon } from "@hugeicons/core-free-icons/FilterIcon";
+import { default as Refresh01Icon } from "@hugeicons/core-free-icons/Refresh01Icon";
+import { default as WifiDisconnected02Icon } from "@hugeicons/core-free-icons/WifiDisconnected02Icon";
 import type { IconSvgElement } from "@hugeicons/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { ReactNode } from "react";

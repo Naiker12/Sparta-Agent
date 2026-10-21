@@ -25,14 +25,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { SidebarChatSort, SidebarOrganizeBy } from "@/features/chat";
 import { useT } from "@/i18n";
-import {
-  Archive03Icon,
-  BubbleChatIcon,
-  Delete02Icon,
-  MoreHorizontalIcon,
-  PinIcon,
-  PinOffIcon,
-} from "@hugeicons/core-free-icons";
+import { default as Archive03Icon } from "@hugeicons/core-free-icons/Archive03Icon";
+import { default as BubbleChatIcon } from "@hugeicons/core-free-icons/BubbleChatIcon";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as MoreHorizontalIcon } from "@hugeicons/core-free-icons/MoreHorizontalIcon";
+import { default as PinIcon } from "@hugeicons/core-free-icons/PinIcon";
+import { default as PinOffIcon } from "@hugeicons/core-free-icons/PinOffIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { ReactElement } from "react";
 import {

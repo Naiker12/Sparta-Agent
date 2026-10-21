@@ -1,10 +1,8 @@
 import { useT as useUiT } from "@/i18n";
-import {
-  DocumentAttachmentIcon,
-  DocumentCodeIcon,
-  GithubIcon,
-  Plant01Icon,
-} from "@hugeicons/core-free-icons";
+import { default as DocumentAttachmentIcon } from "@hugeicons/core-free-icons/DocumentAttachmentIcon";
+import { default as DocumentCodeIcon } from "@hugeicons/core-free-icons/DocumentCodeIcon";
+import { default as GithubIcon } from "@hugeicons/core-free-icons/GithubIcon";
+import { default as Plant01Icon } from "@hugeicons/core-free-icons/Plant01Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { ReactElement } from "react";
 import type { SeedConfig } from "../../types";

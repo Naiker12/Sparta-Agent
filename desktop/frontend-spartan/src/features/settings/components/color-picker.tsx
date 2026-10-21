@@ -5,7 +5,7 @@ import {
 } from "@/components/ui/popover";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
-import { ColorPickerIcon } from "@hugeicons/core-free-icons";
+import { default as ColorPickerIcon } from "@hugeicons/core-free-icons/ColorPickerIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useEffect, useRef, useState } from "react";
 

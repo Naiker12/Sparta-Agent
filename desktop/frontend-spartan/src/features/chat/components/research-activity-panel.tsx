@@ -26,7 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { openLink } from "@/lib/open-link";
 import { toast } from "@/lib/toast";
 import { cn } from "@/lib/utils";
-import { Telescope02Icon } from "@hugeicons/core-free-icons";
+import { default as Telescope02Icon } from "@hugeicons/core-free-icons/Telescope02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowDown,

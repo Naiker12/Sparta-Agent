@@ -25,16 +25,14 @@ import { getApiBase, isTauri } from "@/lib/api-base";
 import { copyToClipboard } from "@/lib/copy-to-clipboard";
 import { Tick02Icon } from "@/lib/tick-icon";
 import { cn } from "@/lib/utils";
-import {
-  Copy01Icon,
-  Delete02Icon,
-  Globe02Icon,
-  PauseIcon,
-  PlayIcon,
-  PowerSocket01Icon,
-  RefreshIcon,
-  Settings02Icon,
-} from "@hugeicons/core-free-icons";
+import { default as Copy01Icon } from "@hugeicons/core-free-icons/Copy01Icon";
+import { default as Delete02Icon } from "@hugeicons/core-free-icons/Delete02Icon";
+import { default as Globe02Icon } from "@hugeicons/core-free-icons/Globe02Icon";
+import { default as PauseIcon } from "@hugeicons/core-free-icons/PauseIcon";
+import { default as PlayIcon } from "@hugeicons/core-free-icons/PlayIcon";
+import { default as PowerSocket01Icon } from "@hugeicons/core-free-icons/PowerSocket01Icon";
+import { default as RefreshIcon } from "@hugeicons/core-free-icons/RefreshIcon";
+import { default as Settings02Icon } from "@hugeicons/core-free-icons/Settings02Icon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 import { SavedModelSettingsPanel } from "./components/saved-model-settings";

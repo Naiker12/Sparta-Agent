@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { LinkSquare02Icon } from "@hugeicons/core-free-icons";
+import { default as LinkSquare02Icon } from "@hugeicons/core-free-icons/LinkSquare02Icon";
 import {
   voiceProviderOptions as providers,
   type VoiceProvider as Provider,
