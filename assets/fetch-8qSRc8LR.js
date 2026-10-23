@@ -1,0 +1,1 @@
+import{t as e}from"./search-default-X8NxqdJA.js";export{e as fetchClient};
