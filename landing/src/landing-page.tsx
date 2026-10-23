@@ -12,6 +12,7 @@ import {
   Menu,
   Monitor,
   ShieldCheck,
+  PackageCheck,
   Terminal,
   X,
 } from "lucide-react";
@@ -302,9 +303,8 @@ export default function LandingPage({
             <h2 id="tools-title">Del pedido al archivo, en la conversación.</h2>
             <p>
               Estas funciones requieren un modelo compatible con herramientas.
-              Esta versión amplía los flujos de archivos
-              y permisos en Telegram, además de mejorar la lectura de actividad
-              y resultados.
+              La versión 0.5.4 mejoró la creación de archivos y las vistas
+              previas del espacio de trabajo.
             </p>
           </div>
           <div className="benefits-grid">
@@ -390,13 +390,13 @@ export default function LandingPage({
         <section className="benefits-section site-container" aria-labelledby="release-title">
           <div className="section-heading">
             <span className="eyebrow">NOVEDADES · v{release.version}</span>
-            <h2 id="release-title">Una actualización para trabajar con más continuidad.</h2>
-            <p>Esta versión reúne mejoras del espacio de trabajo, la memoria, los canales de Telegram, la voz y la presentación de herramientas.</p>
+            <h2 id="release-title">Sparta mantiene su identidad en Windows.</h2>
+            <p>La versión 0.5.5 corrige el icono de la aplicación en el instalador, el ejecutable y la barra de tareas de Windows.</p>
           </div>
           <div className="benefits-grid">
-            <article><GitBranch aria-hidden="true" /><h3>Un espacio de trabajo más continuo.</h3><p>Consulta archivos y cambios junto a la conversación, con paneles para organizar el trabajo y vistas que se cierran al salir del chat.</p></article>
-            <article><FileText aria-hidden="true" /><h3>Archivos en Telegram con confirmación.</h3><p>Lee documentos, prepara archivos y solicita su envío con permisos por persona y confirmación antes de la entrega.</p></article>
-            <article><Check aria-hidden="true" /><h3>Memoria y voz más completas.</h3><p>Explora episodios en un mapa dinámico y configura transcripción y respuestas habladas en Telegram con sus límites explícitos.</p></article>
+            <article><Monitor aria-hidden="true" /><h3>Icono correcto en la barra de tareas.</h3><p>El empaquetado de Windows conserva el icono de Sparta después de instalar la aplicación y al abrir su ventana.</p></article>
+            <article><PackageCheck aria-hidden="true" /><h3>Instalador y accesos directos alineados.</h3><p>El ejecutable y los accesos directos usan el mismo icono de marca para identificar la aplicación.</p></article>
+            <article><ShieldCheck aria-hidden="true" /><h3>Icono incluido y validado.</h3><p>La comprobación del paquete detecta si falta el archivo de icono requerido por la aplicación de escritorio.</p></article>
           </div>
           <div className="integration-note"><BookOpen aria-hidden="true" />Conoce las mejoras y los requisitos de uso.<a href={release.url} target="_blank" rel="noopener noreferrer">Notas de v{release.version} <ArrowUpRight /></a></div>
         </section>
