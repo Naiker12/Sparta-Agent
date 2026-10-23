@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.5.5] - En preparación
+
+### Corregido
+
+- El empaquetado de Windows utiliza el icono `spartan.ico` para la aplicación, el instalador y los accesos directos, evitando el icono genérico en la barra de tareas.
+- La validación del paquete comprueba que el icono de Windows esté incluido.
+
+### Release
+
+- Preparar y validar el nuevo instalador de Windows x64 antes de publicar la versión.
+
 ## [0.5.4] - 2026-10-21
 
 ### Corregido

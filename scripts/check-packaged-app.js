@@ -80,6 +80,11 @@ for (const archive of archives) {
   }
 
   const entrySet = new Set(entries)
+  for (const required of ['/dist/spartan.ico']) {
+    if (!entrySet.has(required)) {
+      throw new Error(`Missing packaged Windows taskbar icon in ${archive}: ${required}`)
+    }
+  }
   for (const asset of expectedPublicAssets) {
     if (!entrySet.has(`/dist/${asset}`)) {
       throw new Error(`Missing renderer public asset in ${archive}: ${asset}`)

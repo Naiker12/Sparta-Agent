@@ -4,7 +4,7 @@
   <p><strong>Un espacio de trabajo para construir software con agentes, proveedores de IA por API y control humano.</strong></p>
 
   <p>
-    <a href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.5.4"><img src="https://img.shields.io/badge/version-v0.5.4-111827?style=flat-square&logo=github&logoColor=white" alt="Versión preparada" /></a>
+    <a href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.5.5"><img src="https://img.shields.io/badge/version-v0.5.5-111827?style=flat-square&logo=github&logoColor=white" alt="Versión en preparación" /></a>
     <img src="https://img.shields.io/badge/desktop-Electron-47848F?style=flat-square&logo=electron&logoColor=white" alt="Electron" />
     <img src="https://img.shields.io/badge/interface-React%2019-111827?style=flat-square&logo=react&logoColor=white" alt="React 19" />
     <img src="https://img.shields.io/badge/license-MIT-111827?style=flat-square" alt="Licencia MIT" />
@@ -32,17 +32,16 @@
 
 ## Empieza aquí
 
-**Próxima versión: Sparta Agent 0.5.4.** Corrige la creación y vista previa de archivos de código, la apertura de HTML y la coordinación de los paneles del espacio de trabajo. La publicación se realizará después de completar las comprobaciones automatizadas.
+**Versión preparada: Sparta Agent 0.5.5.** La versión publicada y descargable actualmente es 0.5.4. Esta actualización corrige el icono de Windows en la aplicación instalada y la barra de tareas.
 
-| Plataforma | Descargar 0.5.4 |
+| Plataforma | Descarga 0.5.5 |
 | --- | --- |
-| Windows x64 | [Instalador EXE](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.4/Sparta-Agent-Windows-0.5.4-Setup.exe) |
-| macOS Apple silicon | [Instalador DMG](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.4/Sparta-Agent-Mac-0.5.4-arm64-Installer.dmg) |
-| macOS Intel | [Instalador DMG](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.4/Sparta-Agent-Mac-0.5.4-x64-Installer.dmg) |
-| Linux x64 | [AppImage](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.4/Sparta-Agent-Linux-0.5.4.AppImage) |
+| Windows x64 | [Instalador EXE (próximamente)](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.5/Sparta-Agent-Windows-0.5.5-Setup.exe) |
+| macOS Apple silicon | [Instalador DMG (próximamente)](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.5/Sparta-Agent-Mac-0.5.5-arm64-Installer.dmg) |
+| macOS Intel | [Instalador DMG (próximamente)](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.5/Sparta-Agent-Mac-0.5.5-x64-Installer.dmg) |
+| Linux x64 | [AppImage (próximamente)](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.5/Sparta-Agent-Linux-0.5.5.AppImage) |
 
-**Novedades preparadas para 0.5.4:** creación de archivos fuente sin activar Python, vista previa local de HTML aislada y paneles de archivos y cambios coordinados. Consulta las [releases disponibles](https://github.com/Naiker12/Sparta-Agent/releases) para las versiones publicadas.
-
+**Corrección de 0.5.5:** el empaquetado de Windows usa el icono de marca para el instalador y la barra de tareas. Los enlaces estarán disponibles cuando se publique la release. Consulta las [releases disponibles](https://github.com/Naiker12/Sparta-Agent/releases) para descargar una versión publicada.
 Para desarrollo:
 
 ```bash
