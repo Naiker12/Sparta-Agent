@@ -4,7 +4,7 @@
   <p><strong>Un espacio de trabajo para construir software con agentes, proveedores de IA por API y control humano.</strong></p>
 
   <p>
-    <a href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.5.4"><img src="https://img.shields.io/badge/version-v0.5.4-111827?style=flat-square&logo=github&logoColor=white" alt="Versión preparada" /></a>
+    <a href="https://github.com/Naiker12/Sparta-Agent/releases/tag/v0.5.4"><img src="https://img.shields.io/badge/version-v0.5.4-111827?style=flat-square&logo=github&logoColor=white" alt="Versión publicada" /></a>
     <img src="https://img.shields.io/badge/desktop-Electron-47848F?style=flat-square&logo=electron&logoColor=white" alt="Electron" />
     <img src="https://img.shields.io/badge/interface-React%2019-111827?style=flat-square&logo=react&logoColor=white" alt="React 19" />
     <img src="https://img.shields.io/badge/license-MIT-111827?style=flat-square" alt="Licencia MIT" />
@@ -32,7 +32,7 @@
 
 ## Empieza aquí
 
-**Próxima versión: Sparta Agent 0.5.4.** Corrige la creación y vista previa de archivos de código, la apertura de HTML y la coordinación de los paneles del espacio de trabajo. La publicación se realizará después de completar las comprobaciones automatizadas.
+**Versión estable: Sparta Agent 0.5.4.** Corrige la creación y vista previa de archivos de código, la apertura de HTML y la coordinación de los paneles del espacio de trabajo.
 
 | Plataforma | Descargar 0.5.4 |
 | --- | --- |
@@ -41,7 +41,7 @@
 | macOS Intel | [Instalador DMG](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.4/Sparta-Agent-Mac-0.5.4-x64-Installer.dmg) |
 | Linux x64 | [AppImage](https://github.com/Naiker12/Sparta-Agent/releases/download/v0.5.4/Sparta-Agent-Linux-0.5.4.AppImage) |
 
-**Novedades preparadas para 0.5.4:** creación de archivos fuente sin activar Python, vista previa local de HTML aislada y paneles de archivos y cambios coordinados. Consulta las [releases disponibles](https://github.com/Naiker12/Sparta-Agent/releases) para las versiones publicadas.
+**Novedades de 0.5.4:** creación de archivos fuente sin activar Python, vista previa local de HTML aislada y paneles de archivos y cambios coordinados. Consulta las [releases disponibles](https://github.com/Naiker12/Sparta-Agent/releases) para descargar la versión correspondiente a tu plataforma.
 
 Para desarrollo:
 
@@ -163,7 +163,7 @@ tests/                  # Pruebas del proyecto
 
 ## Contribuir y soporte
 
-Los problemas, ideas y propuestas son bienvenidos en los [issues](https://github.com/Naiker12/Sparta-Agent/issues). Antes de abrir un cambio, ejecuta los comandos de validación anteriores y conserva los límites entre renderer, IPC y proceso principal.
+¡La comunidad puede ayudar a mejorar Sparta Agent! Reporta errores, comparte ideas o propone cambios en los [issues](https://github.com/Naiker12/Sparta-Agent/issues). Para enviar código, revisa [cómo contribuir](CONTRIBUTING.md) y abre un pull request hacia `main`; cada propuesta se revisará antes de integrarse.
 
 ## Licencia
 
