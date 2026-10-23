@@ -76,9 +76,9 @@ module.exports = {
       ],
     },
   ],
-  // Keep the Windows executable, Start Menu shortcut and taskbar identity on
-  // the same multi-resolution icon. macOS uses its own platform icon source.
-  icon: 'public/spartan.ico',
+  // Keep a cross-platform source format here. Windows overrides this with its
+  // multi-resolution ICO below; Linux's icon-set generator cannot read ICO.
+  icon: 'public/sparta-escritorio.png',
   mac: {
     // Squirrel.Mac consumes the ZIP and latest-mac.yml; the DMG is only the
     // manual installer. Keep both artifacts in every macOS release.
